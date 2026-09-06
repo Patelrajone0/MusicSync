@@ -52,6 +52,8 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
   const [networkIp, setNetworkIp] = useState<string>('');
   const [qrMode, setQrMode] = useState<'network' | 'direct'>('network');
   const [showUsersModal, setShowUsersModal] = useState(false);
+  const [showExitModal, setShowExitModal] = useState(false);
+  const [userToKick, setUserToKick] = useState<User | null>(null);
   const [historyCount, setHistoryCount] = useState<number>(() => userTasteEngine.getHistory().length);
 
   React.useEffect(() => {
@@ -79,6 +81,8 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
       if (e.key === 'Escape') {
         setShowQrModal(false);
         setShowUsersModal(false);
+        setShowExitModal(false);
+        setUserToKick(null);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -174,9 +178,7 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
 
   const handleKickUser = (targetUser: User) => {
     if (!isHost || targetUser.id === hostId) return;
-    if (window.confirm(`Are you sure you want to remove "${targetUser.name}" from this room?`)) {
-      socket.emit('kick_user', { targetUserId: targetUser.id });
-    }
+    setUserToKick(targetUser);
   };
 
   const handleRefresh = () => {
@@ -630,18 +632,21 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
             )}
           </div>
 
-          {/* Leave Party Room Button */}
+          {/* Exit Room Button */}
           {onLeaveRoom && (
             <button
-              onClick={() => {
-                if (window.confirm('Are you sure you want to leave this room?')) {
-                  onLeaveRoom();
-                }
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setShowExitModal(true);
               }}
-              className="p-1.5 sm:p-2 rounded-xl bg-dark-850 hover:bg-red-500/15 border border-white/10 hover:border-red-500/30 text-slate-400 hover:text-red-400 transition-all active:scale-95 shrink-0"
-              title="Leave Party Room"
+              className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-dark-850 hover:bg-red-500/15 border border-white/10 hover:border-red-500/30 text-slate-300 hover:text-red-400 text-xs font-semibold transition-all active:scale-95 shrink-0 select-none cursor-pointer"
+              title="Exit Room"
             >
-              <LogOut className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-rose-400/90" />
+              <LogOut className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-rose-400 shrink-0" />
+              <span>Exit</span>
+              <span className="hidden sm:inline">Room</span>
             </button>
           )}
         </div>
@@ -656,6 +661,98 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
           }}
           className="fixed inset-0 z-40 bg-black/25 backdrop-blur-[1px]"
         />
+      )}
+
+      {/* Custom Exit Room Confirmation Modal (iOS Safari & Mobile Bulletproof) */}
+      {showExitModal && (
+        <div
+          onClick={() => setShowExitModal(false)}
+          className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-dark-900 border border-white/15 rounded-2xl p-5 max-w-sm w-full shadow-2xl animate-popover-spring space-y-4"
+          >
+            <div className="flex items-center gap-3">
+              <div className="p-3 rounded-xl bg-red-500/15 text-red-400 border border-red-500/30 shrink-0">
+                <LogOut className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-white">Exit Room</h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Are you sure you want to leave Room <span className="font-mono font-semibold text-white">{roomCode}</span>?
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowExitModal(false)}
+                className="flex-1 py-2.5 rounded-xl bg-dark-800 hover:bg-dark-750 text-slate-300 text-xs font-semibold border border-white/10 transition-colors active:scale-95 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowExitModal(false);
+                  onLeaveRoom?.();
+                }}
+                className="flex-1 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-xs font-bold transition-all shadow-lg shadow-red-500/20 active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>Exit Room</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Kick Device Confirmation Modal (iOS Safari & Mobile Bulletproof) */}
+      {userToKick && (
+        <div
+          onClick={() => setUserToKick(null)}
+          className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-dark-900 border border-white/15 rounded-2xl p-5 max-w-sm w-full shadow-2xl animate-popover-spring space-y-4"
+          >
+            <div className="flex items-center gap-3">
+              <div className="p-3 rounded-xl bg-red-500/15 text-red-400 border border-red-500/30 shrink-0">
+                <UserX className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-white">Remove Device</h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Disconnect <span className="text-white font-semibold">{userToKick.name}</span> from this room?
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setUserToKick(null)}
+                className="flex-1 py-2.5 rounded-xl bg-dark-800 hover:bg-dark-750 text-slate-300 text-xs font-semibold border border-white/10 transition-colors active:scale-95 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  socket.emit('kick_user', { targetUserId: userToKick.id });
+                  setUserToKick(null);
+                }}
+                className="flex-1 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-xs font-bold transition-all shadow-lg shadow-red-500/20 active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <UserX className="w-3.5 h-3.5" />
+                <span>Remove</span>
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </header>
   );
