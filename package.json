@@ -8,6 +8,7 @@
     "dev:server": "node server/index.js",
     "dev": "concurrently -n \"SERVER,CLIENT\" -c \"magenta,cyan\" \"node server/index.js\" \"vite\"",
     "build": "tsc && vite build",
+    "prestart": "npm run build",
     "preview": "vite preview",
     "start": "node server/index.js"
   },
