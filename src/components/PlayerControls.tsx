@@ -165,33 +165,33 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
   const progressPercent = Math.min(100, (currentPosition / trackDuration) * 100);
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-40 bg-dark-900/90 backdrop-blur-2xl border-t border-white/10 px-4 py-3 md:px-8">
+    <div className="fixed bottom-0 left-0 right-0 z-40 bg-dark-900/95 backdrop-blur-2xl border-t border-white/10 px-3 py-2 sm:px-4 sm:py-3 md:px-8 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))] sm:pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]">
       {/* Audio Unlock Warning Banner if browser muted */}
       {!isAudioUnlocked && (
-        <div className="max-w-6xl mx-auto mb-2.5">
-          <div className="bg-gradient-to-r from-electric-purple/30 to-electric-cyan/30 border border-electric-cyan/40 px-4 py-2 rounded-xl flex items-center justify-between text-xs md:text-sm">
-            <div className="flex items-center gap-2">
-              <span className="flex h-2.5 w-2.5 relative">
+        <div className="max-w-6xl mx-auto mb-2 sm:mb-2.5">
+          <div className="bg-gradient-to-r from-electric-purple/30 to-electric-cyan/30 border border-electric-cyan/40 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl flex items-center justify-between text-xs sm:text-sm gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="flex h-2 w-2 sm:h-2.5 sm:w-2.5 relative shrink-0">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-electric-cyan opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-electric-cyan"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 sm:h-2.5 sm:w-2.5 bg-electric-cyan"></span>
               </span>
-              <span className="text-white font-medium">
-                Speaker output requires one tap to synchronize audio hardware.
+              <span className="text-white font-medium truncate text-[11px] sm:text-xs">
+                Tap to sync speaker audio
               </span>
             </div>
             <button
               onClick={onUnlockAudio}
-              className="bg-electric-cyan text-black px-3.5 py-1 rounded-lg font-semibold text-xs hover:bg-white transition-all shadow-md active:scale-95"
+              className="bg-electric-cyan text-black px-2.5 py-1 sm:px-3.5 sm:py-1 rounded-lg font-semibold text-[11px] sm:text-xs hover:bg-white transition-all shadow-md active:scale-95 shrink-0"
             >
-              Activate Speaker
+              Activate
             </button>
           </div>
         </div>
       )}
 
       {/* Scrubber Bar across top */}
-      <div className="max-w-6xl mx-auto flex items-center gap-3 text-xs text-slate-400 mb-2">
-        <span className="w-10 text-right font-mono text-[11px]">{formatTime(isDragging ? seekValue : currentPosition)}</span>
+      <div className="max-w-6xl mx-auto flex items-center gap-2 sm:gap-3 text-xs text-slate-400 mb-1.5 sm:mb-2">
+        <span className="w-8 sm:w-10 text-right font-mono text-[10px] sm:text-[11px] shrink-0">{formatTime(isDragging ? seekValue : currentPosition)}</span>
         <div className="relative flex-1 group">
           <input
             type="range"
@@ -214,24 +214,24 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
             className="w-full h-1.5 bg-dark-800 rounded-lg appearance-none cursor-pointer accent-electric-cyan focus:outline-none"
           />
         </div>
-        <span className="w-10 font-mono text-[11px]">{formatTime(trackDuration)}</span>
+        <span className="w-8 sm:w-10 font-mono text-[10px] sm:text-[11px] shrink-0">{formatTime(trackDuration)}</span>
       </div>
 
       {/* Controls Container */}
-      <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
+      <div className="max-w-6xl mx-auto flex items-center justify-between gap-2 sm:gap-4">
         {/* Track Info (Left) */}
-        <div className="flex items-center gap-3 min-w-0 flex-1 md:max-w-xs">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 md:max-w-xs">
           {currentTrack ? (
             <>
               <div className="relative group shrink-0">
                 <img
                   src={currentTrack.artwork || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=100'}
                   alt={currentTrack.title}
-                  className="w-12 h-12 md:w-14 md:h-14 rounded-xl object-cover border border-white/10 shadow-lg"
+                  className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-xl object-cover border border-white/10 shadow-lg"
                 />
                 {isPlaying && (
                   <div className="absolute inset-0 bg-black/40 rounded-xl flex items-center justify-center">
-                    <div className="flex items-end gap-0.5 h-4">
+                    <div className="flex items-end gap-0.5 h-3 sm:h-4">
                       <div className="w-0.5 bg-electric-cyan animate-pulse h-full"></div>
                       <div className="w-0.5 bg-electric-cyan animate-pulse delay-75 h-2/3"></div>
                       <div className="w-0.5 bg-electric-cyan animate-pulse delay-150 h-4/5"></div>
@@ -239,10 +239,10 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
                   </div>
                 )}
               </div>
-              <div className="min-w-0 overflow-hidden">
-                <h4 className="text-sm font-semibold text-white truncate">{currentTrack.title}</h4>
-                <p className="text-xs text-slate-400 truncate">{currentTrack.artist}</p>
-                <div className="flex items-center gap-1.5 mt-0.5">
+              <div className="min-w-0 overflow-hidden pr-1">
+                <h4 className="text-xs sm:text-sm font-semibold text-white truncate">{currentTrack.title}</h4>
+                <p className="text-[11px] sm:text-xs text-slate-400 truncate">{currentTrack.artist}</p>
+                <div className="hidden sm:flex items-center gap-1.5 mt-0.5">
                   <span className="text-[10px] px-1.5 py-0.5 rounded bg-dark-800 border border-white/5 text-slate-400 font-mono">
                     {currentTrack.source}
                   </span>
@@ -250,17 +250,17 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
               </div>
             </>
           ) : (
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-dark-800 flex items-center justify-center text-slate-500 border border-white/5">
-                <Radio className="w-5 h-5 text-slate-400" />
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-xl bg-dark-800 flex items-center justify-center text-slate-500 border border-white/5 shrink-0">
+                <Radio className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400" />
               </div>
-              <div>
-                <p className="text-sm font-medium text-slate-400">No song playing</p>
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm font-medium text-slate-400 truncate">No song playing</p>
                 <button
                   onClick={onOpenSearch}
-                  className="text-xs text-cyan-400 hover:underline font-medium"
+                  className="text-[11px] sm:text-xs text-cyan-400 hover:underline font-medium"
                 >
-                  + Add a song
+                  + Add song
                 </button>
               </div>
             </div>
@@ -268,11 +268,11 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
         </div>
 
         {/* Master Playback Controls (Center) */}
-        <div className="flex items-center gap-4 md:gap-6">
+        <div className="flex items-center gap-2.5 sm:gap-4 md:gap-6 shrink-0">
           <button
             onClick={handleTogglePlay}
             disabled={!currentTrack && !canControl}
-            className={`w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center transition-all shadow-lg active:scale-90 btn-play-active ${
+            className={`w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center transition-all shadow-lg active:scale-95 btn-play-active ${
               isPlaying
                 ? 'bg-electric-cyan text-black hover:bg-white neon-glow-cyan'
                 : 'bg-white text-black hover:bg-electric-cyan'
@@ -280,28 +280,28 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
             title={isPlaying ? 'Pause for all devices' : 'Play synced across room'}
           >
             {isPlaying ? (
-              <Pause className="w-6 h-6 fill-current transition-transform active:scale-90" />
+              <Pause className="w-5 h-5 sm:w-6 sm:h-6 fill-current transition-transform active:scale-90" />
             ) : (
-              <Play className="w-6 h-6 fill-current ml-0.5 transition-transform active:scale-90" />
+              <Play className="w-5 h-5 sm:w-6 sm:h-6 fill-current ml-0.5 transition-transform active:scale-90" />
             )}
           </button>
 
           <button
             onClick={handleSkip}
             disabled={!canControl}
-            className={`p-2.5 rounded-full text-slate-300 hover:text-white hover:bg-dark-800 transition-colors active:scale-95 ${
+            className={`p-2 sm:p-2.5 rounded-full text-slate-300 hover:text-white hover:bg-dark-800 transition-colors active:scale-95 ${
               !canControl ? 'opacity-40 cursor-not-allowed' : ''
             }`}
             title="Skip to next track"
           >
-            <SkipForward className="w-5 h-5" />
+            <SkipForward className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
         </div>
 
         {/* Right Section: Volume Controls */}
-        <div className="flex items-center justify-end gap-2 sm:gap-3 flex-1 md:max-w-md">
+        <div className="flex items-center justify-end gap-1.5 sm:gap-3 flex-1 md:max-w-md">
           {/* Volume Control Dock */}
-          <div className="relative flex items-center gap-2">
+          <div className="relative flex items-center gap-1 sm:gap-2">
             {/* Master Volume Notice HUD Toast */}
             {masterVolumeNotice && (
               <div className="absolute -top-10 right-0 pointer-events-none z-50 animate-popover-spring whitespace-nowrap bg-dark-900/95 border border-amber-500/40 px-2.5 py-1 rounded-full shadow-2xl flex items-center gap-1.5 text-[11px] text-amber-300 font-medium">

@@ -144,13 +144,13 @@ export const LiveChatAndReactions: React.FC<LiveChatAndReactionsProps> = ({
           </div>
         </div>
 
-        {/* Reaction Emoji Strip (Compact) */}
-        <div className="px-2.5 py-1.5 bg-dark-950/70 border-b border-white/5 flex items-center justify-between gap-1 overflow-x-auto no-scrollbar">
+        {/* Reaction Emoji Strip (Comfortable Touch Targets) */}
+        <div className="px-1.5 sm:px-2.5 py-1.5 bg-dark-950/70 border-b border-white/5 flex items-center justify-around gap-0.5 sm:gap-1 overflow-x-auto no-scrollbar">
           {REACTION_EMOJIS.map((emoji) => (
             <button
               key={emoji}
               onClick={() => handleSendReaction(emoji)}
-              className="text-base md:text-lg p-1 rounded-lg hover:bg-dark-800 hover:scale-125 transition-transform active:scale-95"
+              className="text-lg sm:text-base min-w-[34px] min-h-[34px] sm:min-w-0 sm:min-h-0 p-1 sm:p-1 rounded-lg hover:bg-dark-800 hover:scale-125 transition-transform active:scale-95 flex items-center justify-center shrink-0"
               title={`Send ${emoji} reaction`}
             >
               {emoji}
@@ -219,7 +219,7 @@ export const LiveChatAndReactions: React.FC<LiveChatAndReactionsProps> = ({
               })}
             </div>
 
-            {/* Chat Input (Compact) */}
+            {/* Chat Input (Compact & Mobile zoom-proof) */}
             <form onSubmit={handleSendMessage} className="p-1.5 bg-dark-950/90 border-t border-white/5 flex gap-1.5">
               <input
                 type="text"
@@ -227,14 +227,14 @@ export const LiveChatAndReactions: React.FC<LiveChatAndReactionsProps> = ({
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
                 maxLength={300}
-                className="flex-1 bg-dark-900 border border-white/10 rounded-lg px-2.5 py-1 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 transition-colors"
+                className="flex-1 bg-dark-900 border border-white/10 rounded-lg px-2.5 py-1.5 text-base sm:text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 transition-colors"
               />
               <button
                 type="submit"
                 disabled={!inputText.trim()}
-                className="p-1.5 bg-cyan-400 text-black rounded-lg hover:bg-white disabled:opacity-40 disabled:hover:bg-cyan-400 transition-colors"
+                className="px-2.5 py-1.5 bg-cyan-400 text-black rounded-lg hover:bg-white disabled:opacity-40 disabled:hover:bg-cyan-400 transition-colors flex items-center justify-center shrink-0"
               >
-                <Send className="w-3 h-3" />
+                <Send className="w-3.5 h-3.5" />
               </button>
             </form>
           </div>

@@ -515,11 +515,11 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
 
         {/* Tab 1: Search & Limitless Suggestions Catalog */}
         {activeTab === 'search' && (
-          <div className="p-4 flex-1 flex flex-col min-h-0">
+          <div className="p-3 sm:p-4 flex-1 flex flex-col min-h-0">
             {/* Search Input with Live Autocomplete */}
             <div ref={searchInputContainerRef} className="relative mb-3">
               <form onSubmit={handleSearch} className="relative">
-                <Search className="absolute left-3.5 top-3 w-4 h-4 text-slate-400" />
+                <Search className="absolute left-3 sm:left-3.5 top-3 w-4 h-4 text-slate-400" />
                 <input
                   type="text"
                   value={query}
@@ -530,18 +530,18 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
                   }}
                   placeholder={
                     selectedLanguage === 'for_you'
-                      ? 'Search within your recommendations...'
+                      ? 'Search recommendations...'
                       : selectedLanguage === 'trending'
-                      ? 'Search viral trending songs...'
+                      ? 'Search trending songs...'
                       : selectedLanguage === 'hindi'
-                      ? 'Search Hindi songs (e.g. Arijit Singh, Kesariya, Atif)...'
+                      ? 'Search Hindi songs...'
                       : selectedLanguage === 'gujarati'
-                      ? 'Search Gujarati songs (e.g. Aditya Gadhvi, Khalasi, Garba)...'
+                      ? 'Search Gujarati songs...'
                       : selectedLanguage === 'punjabi'
-                      ? 'Search Punjabi songs (e.g. Diljit Dosanjh, Lover, Sidhu)...'
-                      : 'Search English, Hindi, Gujarati & Punjabi songs...'
+                      ? 'Search Punjabi songs...'
+                      : 'Search English, Hindi, Gujarati & Punjabi...'
                   }
-                  className="w-full bg-dark-950 border border-white/10 rounded-xl pl-10 pr-24 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-electric-cyan transition-colors"
+                  className="w-full bg-dark-950 border border-white/10 rounded-xl pl-9 sm:pl-10 pr-20 sm:pr-24 py-2.5 text-base sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-electric-cyan transition-colors"
                   autoFocus={!inline}
                 />
                 {query && (
@@ -551,14 +551,14 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
                       setQuery('');
                       loadDefaultResults(selectedLanguage);
                     }}
-                    className="absolute right-20 top-2.5 text-slate-400 hover:text-white"
+                    className="absolute right-16 sm:right-20 top-2.5 text-slate-400 hover:text-white p-1"
                   >
-                    <X className="w-4 h-4" />
+                    <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   </button>
                 )}
                 <button
                   type="submit"
-                  className="absolute right-2 top-1.5 px-3 py-1.5 bg-electric-cyan text-black font-semibold text-xs rounded-lg hover:bg-white transition-colors"
+                  className="absolute right-1.5 sm:right-2 top-1.5 px-2.5 sm:px-3 py-1.5 bg-electric-cyan text-black font-semibold text-xs rounded-lg hover:bg-white transition-colors"
                 >
                   Search
                 </button>
@@ -597,16 +597,16 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
 
             {/* Personalized "For You" Banner */}
             {selectedLanguage === 'for_you' && (
-              <div className="p-3 bg-purple-950/40 border border-purple-500/30 rounded-xl mb-3 flex items-center justify-between text-xs text-purple-200 shadow-inner">
+              <div className="p-2.5 sm:p-3 bg-purple-950/40 border border-purple-500/30 rounded-xl mb-3 flex items-center justify-between text-xs text-purple-200 shadow-inner">
                 <div className="flex items-center gap-2 min-w-0">
                   <Sparkles className="w-4 h-4 text-purple-400 shrink-0 animate-pulse" />
-                  <span className="truncate">
+                  <span className="truncate text-[11px] sm:text-xs">
                     {tasteSummary.topArtists.length > 0 ? (
                       <>
                         Curated for you based on: <strong className="text-white">{tasteSummary.topArtists.slice(0, 3).join(', ')}</strong>
                       </>
                     ) : (
-                      <>Queue tracks in rooms to train your personalized listening engine!</>
+                      <>Queue songs in rooms to train your personalized listening engine!</>
                     )}
                   </span>
                 </div>
@@ -640,7 +640,7 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
                     }`}
                   >
                     <Flame className="w-3.5 h-3.5 text-amber-400" />
-                    Trending Artists ({currentArtists.length})
+                    <span>Artists ({currentArtists.length})</span>
                   </button>
                   <span className="text-slate-600">•</span>
                   <button
@@ -651,7 +651,7 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
                     }`}
                   >
                     <Compass className="w-3.5 h-3.5 text-purple-400" />
-                    Vibes & Moods ({currentMoods.length})
+                    <span>Vibes ({currentMoods.length})</span>
                   </button>
                 </div>
                 <span className="text-[10px] text-slate-500 font-mono hidden sm:inline">
@@ -699,8 +699,8 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
             <div
               ref={resultsContainerRef}
               onScroll={handleScroll}
-              className={`overflow-y-auto space-y-2 pr-1 relative ${
-                inline ? 'max-h-[520px] min-h-[300px]' : 'flex-1 min-h-0'
+              className={`overflow-y-auto space-y-1.5 sm:space-y-2 pr-1 relative ${
+                inline ? 'max-h-[460px] sm:max-h-[520px] min-h-[300px]' : 'flex-1 min-h-0'
               }`}
             >
               {isLoading ? (
@@ -709,7 +709,7 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
                   <span>Searching music databases for full tracks...</span>
                 </div>
               ) : results.length === 0 ? (
-                <div className="text-center py-12 px-6">
+                <div className="text-center py-10 sm:py-12 px-4 sm:px-6">
                   <div className="inline-flex items-center justify-center p-3 rounded-full bg-electric-cyan/10 text-electric-cyan mb-3">
                     <Sparkles className="w-6 h-6" />
                   </div>
@@ -717,7 +717,7 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
                     {serverMessage || 'No tracks found matching your query'}
                   </h4>
                   <p className="text-xs text-slate-400 max-w-sm mx-auto">
-                    MusicSync exclusively curates full songs in <span className="text-electric-cyan font-medium">English, Hindi, Gujarati & Punjabi</span>.
+                    MusicSync curates full songs in <span className="text-electric-cyan font-medium">English, Hindi, Gujarati & Punjabi</span>.
                   </p>
                 </div>
               ) : (
@@ -729,7 +729,7 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
                     return (
                       <div
                         key={track.id}
-                        className={`flex items-center justify-between p-2.5 rounded-xl border transition-colors group ${
+                        className={`flex items-center justify-between p-2 sm:p-2.5 rounded-xl border transition-colors group ${
                           track.isTrending
                             ? 'bg-gradient-to-r from-amber-950/20 via-dark-950 to-dark-950 border-amber-500/20 hover:border-amber-500/40'
                             : track.isRecommended
@@ -737,9 +737,9 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
                             : 'bg-dark-950 border-white/5 hover:border-white/10'
                         }`}
                       >
-                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
                           {/* Artwork with Preview Play Button */}
-                          <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-dark-800 shrink-0">
+                          <div className="relative w-11 h-11 sm:w-12 sm:h-12 rounded-lg overflow-hidden bg-dark-800 shrink-0">
                             <img
                               src={track.artwork || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=100'}
                               alt={track.title}
@@ -761,34 +761,34 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
                           </div>
 
                           {/* Title & Artist */}
-                          <div className="min-w-0">
-                            <h4 className="text-sm font-semibold text-white truncate flex items-center gap-1.5">
+                          <div className="min-w-0 flex-1">
+                            <h4 className="text-xs sm:text-sm font-semibold text-white truncate flex items-center gap-1.5">
                               {track.title}
                             </h4>
-                            <p className="text-xs text-slate-400 truncate">{track.artist}</p>
-                            <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                            <p className="text-[11px] sm:text-xs text-slate-400 truncate">{track.artist}</p>
+                            <div className="flex items-center gap-1 sm:gap-1.5 mt-1 flex-wrap">
                               {track.isTrending && (
-                                <span className="text-[10px] px-2 py-0.5 rounded-full font-mono bg-amber-500/15 text-amber-300 border border-amber-500/40 font-bold flex items-center gap-1 shadow-sm">
-                                  <Flame className="w-3 h-3 text-amber-400 fill-current animate-pulse" />
-                                  {track.trendingRank ? `Trending #${track.trendingRank}` : 'Trending'}
+                                <span className="text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 rounded-full font-mono bg-amber-500/15 text-amber-300 border border-amber-500/40 font-bold flex items-center gap-0.5 shadow-sm">
+                                  <Flame className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-amber-400 fill-current animate-pulse" />
+                                  <span>{track.trendingRank ? `#${track.trendingRank}` : 'Trending'}</span>
                                 </span>
                               )}
                               {track.isRecommended && (
-                                <span className="text-[10px] px-2 py-0.5 rounded-full font-mono bg-purple-500/15 text-purple-300 border border-purple-500/40 font-semibold flex items-center gap-1">
-                                  <Sparkles className="w-3 h-3 text-purple-400" />
-                                  For You
+                                <span className="text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 rounded-full font-mono bg-purple-500/15 text-purple-300 border border-purple-500/40 font-semibold flex items-center gap-0.5">
+                                  <Sparkles className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-purple-400" />
+                                  <span>For You</span>
                                 </span>
                               )}
-                              <span className="text-[10px] px-2 py-0.5 rounded-full font-mono bg-emerald-950/80 text-emerald-400 border border-emerald-500/30 font-semibold flex items-center gap-1">
+                              <span className="text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 rounded-full font-mono bg-emerald-950/80 text-emerald-400 border border-emerald-500/30 font-semibold flex items-center gap-1">
                                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                                Full Song • {Math.floor(track.duration / 60)}:{(track.duration % 60).toString().padStart(2, '0')}
+                                <span>{Math.floor(track.duration / 60)}:{(track.duration % 60).toString().padStart(2, '0')}</span>
                               </span>
                               {track.languageBadge && (
-                                <span className="text-[10px] px-2 py-0.5 rounded-full font-mono bg-dark-800 text-slate-200 border border-white/10">
+                                <span className="text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 rounded-full font-mono bg-dark-800 text-slate-200 border border-white/10">
                                   {track.languageBadge}
                                 </span>
                               )}
-                              <span className="text-[10px] text-slate-400 font-mono">
+                              <span className="text-[10px] text-slate-400 font-mono hidden sm:inline-block">
                                 {track.source}
                               </span>
                             </div>
@@ -798,7 +798,7 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
                         {/* Add Button */}
                         <button
                           onClick={() => handleAddTrack(track)}
-                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all active:scale-95 shrink-0 ${
+                          className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-2 rounded-xl text-xs font-semibold transition-all active:scale-95 shrink-0 ml-1.5 ${
                             isAdded
                               ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
                               : 'bg-electric-cyan text-black hover:bg-white shadow-md'
@@ -819,6 +819,7 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
                       </div>
                     );
                   })}
+
 
                   {/* Endless Scroll Bottom State & Load More Button */}
                   <div className="pt-2 pb-4 text-center">

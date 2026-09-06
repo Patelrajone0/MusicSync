@@ -149,7 +149,7 @@ export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' 
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-center items-center px-4 py-12 relative overflow-hidden">
+    <div className="min-h-screen flex flex-col justify-center items-center px-3 sm:px-4 py-6 sm:py-12 relative overflow-hidden">
       {/* Background ambient lighting */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-electric-cyan/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-1/4 left-1/2 -translate-x-1/2 translate-y-1/2 w-96 h-96 bg-electric-purple/10 rounded-full blur-3xl pointer-events-none" />
@@ -157,7 +157,7 @@ export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' 
       {/* Main Container */}
       <div className="max-w-md w-full z-10">
         {/* Logo & Headline */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-6 sm:mb-8">
           <a
             href="/"
             onClick={(e) => {
@@ -169,13 +169,13 @@ export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' 
           >
             <Logo size="lg" layout="vertical" showTagline={true} />
           </a>
-          <p className="text-sm text-slate-400 mt-2 max-w-sm mx-auto">
+          <p className="text-xs sm:text-sm text-slate-400 mt-2 max-w-sm mx-auto px-2">
             Zero-latency synchronized music streaming. Turn any group of phones and laptops into an acoustic speaker system.
           </p>
         </div>
 
         {/* Identity & Room Action Card */}
-        <div className="bg-dark-900/80 backdrop-blur-2xl border border-white/10 rounded-3xl p-6 shadow-2xl space-y-6">
+        <div className="bg-dark-900/80 backdrop-blur-2xl border border-white/10 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-2xl space-y-5 sm:space-y-6">
           {/* Guest Identity Generator */}
           <div>
             <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
@@ -189,7 +189,7 @@ export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' 
                   onChange={handleNameChange}
                   placeholder="Guest Username"
                   maxLength={24}
-                  className="w-full bg-dark-950 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white font-semibold focus:outline-none focus:border-electric-cyan transition-colors"
+                  className="w-full bg-dark-950 border border-white/10 rounded-xl px-3.5 py-2.5 text-base sm:text-sm text-white font-semibold focus:outline-none focus:border-electric-cyan transition-colors"
                 />
               </div>
               <button
@@ -238,14 +238,14 @@ export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' 
                 type="text"
                 value={roomCodeInput}
                 onChange={(e) => setRoomCodeInput(e.target.value.toUpperCase())}
-                placeholder="Enter 5-Letter Code (e.g. BEAT1)"
+                placeholder="Room Code (e.g. BEAT1)"
                 maxLength={8}
-                className="flex-1 bg-dark-950 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm font-mono tracking-widest text-center text-white placeholder-slate-600 uppercase focus:outline-none focus:border-electric-cyan transition-colors"
+                className="flex-1 bg-dark-950 border border-white/10 rounded-xl px-3 py-2.5 text-base sm:text-sm font-mono tracking-widest text-center text-white placeholder-slate-600 uppercase focus:outline-none focus:border-electric-cyan transition-colors"
               />
               <button
                 type="submit"
                 disabled={!roomCodeInput.trim() || isJoining}
-                className="px-5 py-2.5 rounded-xl bg-dark-850 hover:bg-dark-800 border border-white/10 hover:border-electric-cyan/40 text-white font-semibold text-xs transition-all active:scale-95 disabled:opacity-40"
+                className="px-4 sm:px-5 py-2.5 rounded-xl bg-dark-850 hover:bg-dark-800 border border-white/10 hover:border-electric-cyan/40 text-white font-semibold text-xs transition-all active:scale-95 disabled:opacity-40 shrink-0"
               >
                 {isJoining ? (
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -268,21 +268,21 @@ export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' 
         </div>
 
         {/* Feature Highlights Footer */}
-        <div className="grid grid-cols-3 gap-3 mt-6 text-center text-[11px] text-slate-400">
-          <div className="p-3 rounded-2xl bg-dark-900/40 border border-white/5">
-            <Zap className="w-4 h-4 text-electric-cyan mx-auto mb-1" />
-            <span className="font-semibold text-slate-200">NTP Sync</span>
-            <p className="text-[10px] text-slate-500 mt-0.5">Sub-50ms accuracy</p>
+        <div className="grid grid-cols-3 gap-2 sm:gap-3 mt-5 sm:mt-6 text-center text-[11px] text-slate-400">
+          <div className="p-2.5 sm:p-3 rounded-xl sm:rounded-2xl bg-dark-900/40 border border-white/5">
+            <Zap className="w-3.5 sm:w-4 h-3.5 sm:h-4 text-electric-cyan mx-auto mb-1" />
+            <span className="font-semibold text-slate-200 block text-[10px] sm:text-[11px]">NTP Sync</span>
+            <p className="text-[9px] sm:text-[10px] text-slate-500 mt-0.5">Sub-50ms sync</p>
           </div>
-          <div className="p-3 rounded-2xl bg-dark-900/40 border border-white/5">
-            <Music className="w-4 h-4 text-electric-purple mx-auto mb-1" />
-            <span className="font-semibold text-slate-200">Universal Catalog</span>
-            <p className="text-[10px] text-slate-500 mt-0.5">Audius + iTunes</p>
+          <div className="p-2.5 sm:p-3 rounded-xl sm:rounded-2xl bg-dark-900/40 border border-white/5">
+            <Music className="w-3.5 sm:w-4 h-3.5 sm:h-4 text-electric-purple mx-auto mb-1" />
+            <span className="font-semibold text-slate-200 block text-[10px] sm:text-[11px]">Universal</span>
+            <p className="text-[9px] sm:text-[10px] text-slate-500 mt-0.5">Audius + iTunes</p>
           </div>
-          <div className="p-3 rounded-2xl bg-dark-900/40 border border-white/5">
-            <Users className="w-4 h-4 text-emerald-400 mx-auto mb-1" />
-            <span className="font-semibold text-slate-200">Shared Queue</span>
-            <p className="text-[10px] text-slate-500 mt-0.5">Democratic voting</p>
+          <div className="p-2.5 sm:p-3 rounded-xl sm:rounded-2xl bg-dark-900/40 border border-white/5">
+            <Users className="w-3.5 sm:w-4 h-3.5 sm:h-4 text-emerald-400 mx-auto mb-1" />
+            <span className="font-semibold text-slate-200 block text-[10px] sm:text-[11px]">Shared Queue</span>
+            <p className="text-[9px] sm:text-[10px] text-slate-500 mt-0.5">Synced playlist</p>
           </div>
         </div>
       </div>

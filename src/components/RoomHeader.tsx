@@ -175,10 +175,10 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-dark-950/80 backdrop-blur-xl border-b border-white/10 px-4 py-3 md:px-8">
-      <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
+    <header className="sticky top-0 z-40 bg-dark-950/85 backdrop-blur-xl border-b border-white/10 px-3 py-2 sm:px-4 sm:py-3 md:px-8">
+      <div className="max-w-6xl mx-auto flex items-center justify-between gap-2 sm:gap-4">
         {/* Logo & Room Code */}
-        <div className="flex items-center gap-3 md:gap-5">
+        <div className="flex items-center gap-2 sm:gap-3 md:gap-5">
           <a
             href="/"
             onClick={(e) => {
@@ -191,16 +191,16 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
             <Logo size="sm" />
           </a>
 
-          <div className="h-5 w-[1px] bg-white/10 hidden sm:block"></div>
+          <div className="h-4 sm:h-5 w-[1px] bg-white/10"></div>
 
           {/* Room Code Badge */}
-          <div className="flex items-center gap-1.5 bg-dark-900 border border-white/10 px-3 py-1.5 rounded-xl shadow-inner">
-            <span className="text-[10px] uppercase font-mono tracking-wider text-slate-400">Room:</span>
-            <span className="font-mono font-bold text-electric-cyan text-sm tracking-widest">{roomCode}</span>
+          <div className="flex items-center gap-1 sm:gap-1.5 bg-dark-900 border border-white/10 px-2 sm:px-3 py-1 sm:py-1.5 rounded-xl shadow-inner">
+            <span className="text-[10px] uppercase font-mono tracking-wider text-slate-400 hidden xs:inline">Room:</span>
+            <span className="font-mono font-bold text-electric-cyan text-xs sm:text-sm tracking-widest">{roomCode}</span>
             <button
               onClick={handleCopyCode}
               title="Copy Room Code"
-              className="p-1 hover:text-electric-cyan text-slate-400 transition-colors ml-1"
+              className="p-1 hover:text-electric-cyan text-slate-400 transition-colors ml-0.5 sm:ml-1"
             >
               {copiedCode ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
             </button>
@@ -208,16 +208,17 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
         </div>
 
         {/* Action Controls & Connected Members */}
-        <div className="flex items-center gap-2 md:gap-3">
+        <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3">
           {/* Quick Share Link Button */}
           <button
             onClick={handleCopyLink}
-            className="flex items-center gap-1.5 bg-dark-850 hover:bg-dark-800 border border-white/10 hover:border-electric-cyan/40 text-slate-200 px-3 py-1.5 rounded-xl text-xs font-medium transition-all shadow-sm active:scale-95"
+            className="flex items-center gap-1.5 bg-dark-850 hover:bg-dark-800 border border-white/10 hover:border-electric-cyan/40 text-slate-200 p-2 sm:px-3 sm:py-1.5 rounded-xl text-xs font-medium transition-all shadow-sm active:scale-95"
+            title="Copy shareable room link"
           >
             {copiedLink ? (
               <>
                 <Check className="w-3.5 h-3.5 text-emerald-400" />
-                <span className="text-emerald-400">Copied!</span>
+                <span className="text-emerald-400 hidden sm:inline">Copied!</span>
               </>
             ) : (
               <>
@@ -227,10 +228,10 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
             )}
           </button>
 
-          {/* Playback History Button */}
+          {/* Playback History Button (Hidden on extra small screens since it is in main action toolbar) */}
           <button
             onClick={onOpenHistory}
-            className="flex items-center gap-1.5 bg-dark-850 hover:bg-dark-800 border border-white/10 hover:border-electric-cyan/40 text-slate-200 px-3 py-1.5 rounded-xl text-xs font-medium transition-all shadow-sm active:scale-95"
+            className="hidden sm:flex items-center gap-1.5 bg-dark-850 hover:bg-dark-800 border border-white/10 hover:border-electric-cyan/40 text-slate-200 px-3 py-1.5 rounded-xl text-xs font-medium transition-all shadow-sm active:scale-95"
             title="View Music Playback History"
           >
             <History className="w-3.5 h-3.5 text-electric-cyan" />
@@ -260,7 +261,7 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
             {showQrModal && (
               <div
                 onClick={(e) => e.stopPropagation()}
-                className="absolute right-0 top-full mt-2 z-50 w-72 sm:w-80 bg-dark-900 border border-white/15 rounded-2xl shadow-2xl overflow-hidden animate-popover-spring flex flex-col"
+                className="absolute right-0 top-full mt-2 z-50 w-72 sm:w-80 max-w-[calc(100vw-24px)] bg-dark-900 border border-white/15 rounded-2xl shadow-2xl overflow-hidden animate-popover-spring flex flex-col"
               >
                 {/* Popover Header */}
                 <div className="p-3 border-b border-white/10 flex items-center justify-between bg-dark-950/70 shrink-0">
@@ -380,7 +381,7 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
           <div className="relative">
             <button
               onClick={handleOpenUsers}
-              className={`flex items-center gap-2 border px-3 py-1.5 rounded-xl text-xs transition-all active:scale-95 ${
+              className={`flex items-center gap-1.5 sm:gap-2 border px-2 sm:px-3 py-1.5 rounded-xl text-xs transition-all active:scale-95 ${
                 showUsersModal
                   ? 'bg-electric-cyan/20 border-electric-cyan text-white shadow-lg shadow-electric-cyan/20'
                   : 'bg-dark-850 hover:bg-dark-800 border-white/10'
@@ -405,7 +406,7 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
             {showUsersModal && (
               <div
                 onClick={(e) => e.stopPropagation()}
-                className="absolute right-0 top-full mt-2 z-50 w-72 sm:w-84 max-h-[70vh] bg-dark-900 border border-white/15 rounded-2xl shadow-2xl overflow-hidden animate-popover-spring flex flex-col"
+                className="absolute right-0 top-full mt-2 z-50 w-72 sm:w-84 max-w-[calc(100vw-24px)] max-h-[70vh] bg-dark-900 border border-white/15 rounded-2xl shadow-2xl overflow-hidden animate-popover-spring flex flex-col"
               >
                 {/* Popover Header */}
                 <div className="p-3 border-b border-white/10 flex items-center justify-between bg-dark-950/70 shrink-0">

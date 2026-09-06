@@ -407,7 +407,7 @@ export function App() {
       onClick={() => {
         if (!isAudioUnlocked) handleUnlockAudio();
       }}
-      className="min-h-screen bg-dark-950 text-slate-100 flex flex-col relative pb-32"
+      className="min-h-screen bg-dark-950 text-slate-100 flex flex-col relative pb-36 sm:pb-32 w-full max-w-full overflow-x-hidden"
     >
       {/* 1. Sticky Room Navigation Header */}
       <RoomHeader
@@ -421,14 +421,14 @@ export function App() {
       />
 
       {/* 2. Main Synchronized Party Content */}
-      <main className="max-w-6xl mx-auto w-full px-4 py-5 flex-1 flex flex-col gap-5">
+      <main className="max-w-6xl mx-auto w-full px-3 py-3 sm:px-4 sm:py-5 flex-1 flex flex-col gap-3.5 sm:gap-5">
         {/* Action Toolbar: Music Picker & Utility Options */}
-        <div className="flex flex-wrap items-center justify-between gap-2.5 bg-dark-900/40 border border-white/5 p-2 rounded-2xl">
+        <div className="flex items-center justify-between gap-2 bg-dark-900/40 border border-white/5 p-1.5 sm:p-2 rounded-2xl">
           {/* Quick Primary Actions */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             <button
               onClick={handleOpenSearch}
-              className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-cyan-400 hover:bg-white text-black font-semibold text-xs transition-all shadow-sm active:scale-95"
+              className="flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 sm:px-3.5 rounded-xl bg-cyan-400 hover:bg-white text-black font-semibold text-xs transition-all shadow-sm active:scale-95"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Select Music</span>
@@ -436,7 +436,7 @@ export function App() {
 
             <button
               onClick={() => setIsHistoryOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-dark-800 hover:bg-dark-750 border border-white/5 text-slate-300 hover:text-white text-xs font-medium transition-colors"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 rounded-xl bg-dark-800 hover:bg-dark-750 border border-white/5 text-slate-300 hover:text-white text-xs font-medium transition-colors"
             >
               <History className="w-3.5 h-3.5 text-slate-400" />
               <span>History</span>
@@ -446,7 +446,7 @@ export function App() {
           {/* Toggle Chat Button */}
           <button
             onClick={() => setIsChatVisible(!isChatVisible)}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-medium border transition-all ${
+            className={`flex items-center gap-1.5 sm:gap-2 px-2.5 py-1.5 sm:px-3 rounded-xl text-xs font-medium border transition-all ${
               isChatVisible
                 ? 'bg-cyan-500/15 border-cyan-500/30 text-cyan-300'
                 : 'bg-dark-800 hover:bg-dark-750 border-white/5 text-slate-400 hover:text-white'
@@ -454,7 +454,7 @@ export function App() {
             title={isChatVisible ? 'Hide chat to maximize music space' : 'Open live room chat'}
           >
             <MessageSquare className="w-3.5 h-3.5 text-cyan-400" />
-            <span>{isChatVisible ? 'Hide Chat' : 'Live Chat'}</span>
+            <span>{isChatVisible ? 'Hide Chat' : 'Chat'}</span>
             <span className="px-1.5 py-0.2 rounded-full bg-dark-900 text-[10px] font-mono text-slate-300 border border-white/5">
               {chatMessages.length}
             </span>
@@ -462,18 +462,18 @@ export function App() {
         </div>
 
         {/* Section 1: Clean Now Playing + Optional Compact Chat */}
-        <section className={`grid grid-cols-1 ${isChatVisible ? 'lg:grid-cols-12' : ''} gap-5 items-start`}>
-          {/* Compact Now Playing Card (No heavy animations, minimal & functional) */}
-          <div className={`${isChatVisible ? 'lg:col-span-7' : 'w-full'} bg-dark-900/60 backdrop-blur-xl border border-white/10 rounded-2xl p-4 md:p-5 relative flex flex-col justify-between shadow-xl`}>
+        <section className={`grid grid-cols-1 ${isChatVisible ? 'lg:grid-cols-12' : ''} gap-3.5 sm:gap-5 items-start`}>
+          {/* Compact Now Playing Card */}
+          <div className={`${isChatVisible ? 'lg:col-span-7' : 'w-full'} bg-dark-900/60 backdrop-blur-xl border border-white/10 rounded-2xl p-3.5 sm:p-4 md:p-5 relative flex flex-col justify-between shadow-xl`}>
             {/* Top Bar */}
-            <div className="flex items-center justify-between mb-3.5">
+            <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <span
                   className={`w-2 h-2 rounded-full ${
                     isPlaying ? 'bg-cyan-400' : 'bg-slate-500'
                   }`}
                 />
-                <span className="text-[11px] font-mono uppercase tracking-wider text-slate-400">
+                <span className="text-[10px] sm:text-[11px] font-mono uppercase tracking-wider text-slate-400">
                   {isPlaying ? 'Synced Broadcast' : 'Playback Paused'}
                 </span>
               </div>
@@ -489,22 +489,22 @@ export function App() {
 
             {/* Track Metadata */}
             {currentTrack ? (
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex items-center gap-3.5 min-w-0 flex-1">
+              <div className="flex items-center justify-between gap-3 sm:gap-4">
+                <div className="flex items-center gap-3 sm:gap-3.5 min-w-0 flex-1">
                   <img
                     src={currentTrack.artwork || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=160'}
                     alt={currentTrack.title}
-                    className="w-16 h-16 md:w-20 md:h-20 rounded-xl object-cover border border-white/10 shadow-md shrink-0"
+                    className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-xl object-cover border border-white/10 shadow-md shrink-0"
                   />
                   <div className="min-w-0 flex-1">
                     <span className="text-[10px] font-mono uppercase tracking-wider text-cyan-400 font-semibold">
                       Now Playing
                     </span>
-                    <h2 className="text-base md:text-lg font-bold text-white truncate tracking-tight">
+                    <h2 className="text-sm sm:text-base md:text-lg font-bold text-white truncate tracking-tight">
                       {currentTrack.title}
                     </h2>
                     <p className="text-xs md:text-sm text-slate-300 truncate mt-0.5">{currentTrack.artist}</p>
-                    <div className="flex items-center gap-2 mt-2">
+                    <div className="flex items-center gap-1.5 sm:gap-2 mt-1.5 sm:mt-2 flex-wrap">
                       <span className="text-[10px] px-2 py-0.5 rounded-full bg-dark-800 border border-white/5 text-slate-400 font-mono">
                         {currentTrack.genre || 'Music'}
                       </span>
@@ -516,7 +516,7 @@ export function App() {
                 </div>
               </div>
             ) : (
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 rounded-xl bg-dark-950/50 border border-dashed border-white/10 text-center sm:text-left">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-3.5 sm:p-4 rounded-xl bg-dark-950/50 border border-dashed border-white/10 text-center sm:text-left">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-dark-800 flex items-center justify-center text-slate-400 border border-white/5 shrink-0">
                     <Music2 className="w-5 h-5 text-slate-400" />
