@@ -1,17 +1,12 @@
 import React from 'react';
 import {
-  ThumbsUp,
-  ThumbsDown,
   Trash2,
   Play,
   Music2,
-  Plus,
-  Flame,
-  User as UserIcon
+  Plus
 } from 'lucide-react';
 import { Track, UserRole } from '../types';
 import { socket } from '../services/socket';
-import { userTasteEngine } from '../services/userTaste';
 
 interface QueueListProps {
   queue: Track[];
@@ -29,16 +24,6 @@ export const QueueList: React.FC<QueueListProps> = ({
   onOpenSearch,
 }) => {
   const canControl = userRole === 'host' || userRole === 'dj';
-
-  const handleVote = (queueId: string, type: 'up' | 'down') => {
-    socket.emit('queue_vote', { queueId, type });
-    if (type === 'up') {
-      const target = queue.find((t) => (t.queueId || t.id) === queueId);
-      if (target) {
-        userTasteEngine.recordInteraction(target, 'upvoted');
-      }
-    }
-  };
 
   const handleRemove = (queueId: string) => {
     if (!canControl) return;
@@ -94,7 +79,7 @@ export const QueueList: React.FC<QueueListProps> = ({
           </div>
           <p className="text-sm font-semibold text-slate-200">No songs lined up next</p>
           <p className="text-xs text-slate-400 max-w-xs mt-1 mb-4">
-            Add songs to the playlist! Everyone in the room can vote on what plays next.
+            Add songs to the playlist to keep the music playing smoothly!
           </p>
           <button
             onClick={onOpenSearch}
@@ -106,12 +91,6 @@ export const QueueList: React.FC<QueueListProps> = ({
       ) : (
         <div className="space-y-2 overflow-y-auto max-h-[440px] pr-1">
           {queue.map((track, idx) => {
-            const upvotes = track.upvotes || [];
-            const downvotes = track.downvotes || [];
-            const score = upvotes.length - downvotes.length;
-            const hasUpvoted = currentUserId ? upvotes.includes(currentUserId) : false;
-            const hasDownvoted = currentUserId ? downvotes.includes(currentUserId) : false;
-
             return (
               <div
                 key={track.queueId || track.id}
@@ -130,7 +109,7 @@ export const QueueList: React.FC<QueueListProps> = ({
                   />
 
                   <div className="min-w-0 flex-1">
-                    <h4 className="text-sm font-semibold text-white truncate group-hover:text-electric-cyan transition-colors">
+                    <h4 className="text-sm font-semibold text-white truncate group-hover:text-cyan-400 transition-colors">
                       {track.title}
                     </h4>
                     <p className="text-xs text-slate-400 truncate">{track.artist}</p>
@@ -145,52 +124,13 @@ export const QueueList: React.FC<QueueListProps> = ({
                   </div>
                 </div>
 
-                {/* Democratic Voting Controls */}
-                <div className="flex items-center gap-2 shrink-0 ml-2">
-                  <div className="flex items-center bg-dark-900 rounded-xl border border-white/10 p-1 shadow-inner">
-                    <button
-                      onClick={() => track.queueId && handleVote(track.queueId, 'up')}
-                      className={`p-1.5 rounded-lg transition-all ${
-                        hasUpvoted
-                          ? 'bg-emerald-500 text-black font-bold scale-105'
-                          : 'text-slate-400 hover:text-white hover:bg-dark-800'
-                      }`}
-                      title="Upvote track"
-                    >
-                      <ThumbsUp className="w-3.5 h-3.5" />
-                    </button>
-
-                    <span
-                      className={`px-2 text-xs font-mono font-bold ${
-                        score > 0
-                          ? 'text-emerald-400'
-                          : score < 0
-                          ? 'text-rose-400'
-                          : 'text-slate-400'
-                      }`}
-                    >
-                      {score > 0 ? `+${score}` : score}
-                    </span>
-
-                    <button
-                      onClick={() => track.queueId && handleVote(track.queueId, 'down')}
-                      className={`p-1.5 rounded-lg transition-all ${
-                        hasDownvoted
-                          ? 'bg-rose-500 text-black font-bold scale-105'
-                          : 'text-slate-400 hover:text-white hover:bg-dark-800'
-                      }`}
-                      title="Downvote track"
-                    >
-                      <ThumbsDown className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-
-                  {/* DJ / Host Quick Actions */}
-                  {canControl && (
+                {/* Actions */}
+                <div className="flex items-center gap-1 shrink-0 ml-2">
+                  {canControl ? (
                     <div className="flex items-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
                       <button
                         onClick={() => handleForcePlay(track)}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-electric-cyan hover:bg-dark-800 transition-colors"
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-cyan-400 hover:bg-dark-800 transition-colors"
                         title="Play Now across room"
                       >
                         <Play className="w-3.5 h-3.5 fill-current" />
@@ -203,6 +143,10 @@ export const QueueList: React.FC<QueueListProps> = ({
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
+                  ) : (
+                    <span className="text-[10px] font-mono text-slate-500 px-2 py-0.5 rounded bg-dark-900 border border-white/5">
+                      Queued
+                    </span>
                   )}
                 </div>
               </div>

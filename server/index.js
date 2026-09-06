@@ -101,14 +101,7 @@ function calculateCurrentTrackPosition(room) {
 }
 
 function sortQueue(queue) {
-  return [...queue].sort((a, b) => {
-    const scoreA = (a.upvotes?.length || 0) - (a.downvotes?.length || 0);
-    const scoreB = (b.upvotes?.length || 0) - (b.downvotes?.length || 0);
-    if (scoreB !== scoreA) {
-      return scoreB - scoreA;
-    }
-    return a.addedAt - b.addedAt;
-  });
+  return [...queue].sort((a, b) => (a.addedAt || 0) - (b.addedAt || 0));
 }
 
 // ----------------------------------------------------

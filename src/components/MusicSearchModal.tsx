@@ -606,7 +606,7 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
                         Curated for you based on: <strong className="text-white">{tasteSummary.topArtists.slice(0, 3).join(', ')}</strong>
                       </>
                     ) : (
-                      <>Queue or upvote tracks in rooms to train your personalized listening engine!</>
+                      <>Queue tracks in rooms to train your personalized listening engine!</>
                     )}
                   </span>
                 </div>
