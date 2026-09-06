@@ -175,10 +175,10 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-dark-950/85 backdrop-blur-xl border-b border-white/10 px-3 py-2 sm:px-4 sm:py-3 md:px-8">
-      <div className="max-w-6xl mx-auto flex items-center justify-between gap-2 sm:gap-4">
+    <header className="sticky top-0 z-40 bg-dark-950/85 backdrop-blur-xl border-b border-white/10 px-2.5 py-1.5 sm:px-4 sm:py-3 md:px-8">
+      <div className="max-w-6xl mx-auto flex items-center justify-between gap-1.5 sm:gap-4">
         {/* Logo & Room Code */}
-        <div className="flex items-center gap-2 sm:gap-3 md:gap-5">
+        <div className="flex items-center gap-1.5 sm:gap-3 md:gap-5 shrink-0">
           <a
             href="/"
             onClick={(e) => {
@@ -186,21 +186,22 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
               handleRefresh();
             }}
             title="Refresh MusicSync"
-            className="flex items-center group cursor-pointer focus:outline-none transition-transform active:scale-95"
+            className="flex items-center group cursor-pointer focus:outline-none transition-transform active:scale-95 shrink-0"
           >
-            <Logo size="sm" />
+            <Logo size="sm" showText={false} className="sm:hidden" />
+            <Logo size="sm" showText={true} className="hidden sm:flex" />
           </a>
 
-          <div className="h-4 sm:h-5 w-[1px] bg-white/10"></div>
+          <div className="h-4 sm:h-5 w-[1px] bg-white/10 shrink-0"></div>
 
           {/* Room Code Badge */}
-          <div className="flex items-center gap-1 sm:gap-1.5 bg-dark-900 border border-white/10 px-2 sm:px-3 py-1 sm:py-1.5 rounded-xl shadow-inner">
-            <span className="text-[10px] uppercase font-mono tracking-wider text-slate-400 hidden xs:inline">Room:</span>
-            <span className="font-mono font-bold text-electric-cyan text-xs sm:text-sm tracking-widest">{roomCode}</span>
+          <div className="flex items-center gap-1 sm:gap-1.5 bg-dark-900 border border-white/10 px-1.5 sm:px-3 py-1 sm:py-1.5 rounded-xl shadow-inner shrink-0">
+            <span className="text-[10px] uppercase font-mono tracking-wider text-slate-400 hidden sm:inline">Room:</span>
+            <span className="font-mono font-bold text-electric-cyan text-xs sm:text-sm tracking-wider sm:tracking-widest">{roomCode}</span>
             <button
               onClick={handleCopyCode}
               title="Copy Room Code"
-              className="p-1 hover:text-electric-cyan text-slate-400 transition-colors ml-0.5 sm:ml-1"
+              className="p-0.5 sm:p-1 hover:text-electric-cyan text-slate-400 transition-colors ml-0.5"
             >
               {copiedCode ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
             </button>
@@ -208,11 +209,11 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
         </div>
 
         {/* Action Controls & Connected Members */}
-        <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3">
+        <div className="flex items-center gap-1 sm:gap-2 md:gap-3 shrink-0">
           {/* Quick Share Link Button */}
           <button
             onClick={handleCopyLink}
-            className="flex items-center gap-1.5 bg-dark-850 hover:bg-dark-800 border border-white/10 hover:border-electric-cyan/40 text-slate-200 p-2 sm:px-3 sm:py-1.5 rounded-xl text-xs font-medium transition-all shadow-sm active:scale-95"
+            className="flex items-center gap-1 sm:gap-1.5 bg-dark-850 hover:bg-dark-800 border border-white/10 hover:border-electric-cyan/40 text-slate-200 p-1.5 sm:px-3 sm:py-1.5 rounded-xl text-xs font-medium transition-all shadow-sm active:scale-95 shrink-0"
             title="Copy shareable room link"
           >
             {copiedLink ? (
@@ -247,14 +248,14 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
           <div className="relative">
             <button
               onClick={handleOpenQr}
-              className={`p-2 rounded-xl border transition-all active:scale-95 ${
+              className={`p-1.5 sm:p-2 rounded-xl border transition-all active:scale-95 shrink-0 ${
                 showQrModal
                   ? 'bg-electric-purple/20 border-electric-purple text-electric-purple shadow-lg shadow-electric-purple/20'
                   : 'bg-dark-850 hover:bg-dark-800 border-white/10 text-slate-300 hover:text-white'
               }`}
               title="Show QR Code for phones"
             >
-              <QrCode className="w-4 h-4 text-electric-purple" />
+              <QrCode className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-electric-purple" />
             </button>
 
             {/* QR Popover Menu */}
@@ -378,28 +379,32 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
           </div>
 
           {/* Connected Speakers Popover right at the button */}
-          <div className="relative">
+          <div className="relative shrink-0">
             <button
               onClick={handleOpenUsers}
-              className={`flex items-center gap-1.5 sm:gap-2 border px-2 sm:px-3 py-1.5 rounded-xl text-xs transition-all active:scale-95 ${
+              className={`flex items-center gap-1 sm:gap-2 border px-1.5 sm:px-3 py-1.5 rounded-xl text-xs transition-all active:scale-95 shrink-0 ${
                 showUsersModal
                   ? 'bg-electric-cyan/20 border-electric-cyan text-white shadow-lg shadow-electric-cyan/20'
                   : 'bg-dark-850 hover:bg-dark-800 border-white/10'
               }`}
+              title="Connected Party Speakers"
             >
-              <div className="flex -space-x-1.5 overflow-hidden">
-                {users.slice(0, 3).map((u) => (
-                  <div
-                    key={u.id}
-                    style={{ backgroundColor: u.avatarColor || '#00f0ff' }}
-                    className="w-5 h-5 rounded-full border border-dark-900 flex items-center justify-center text-[9px] font-bold text-black"
-                  >
-                    {u.name.charAt(0)}
-                  </div>
-                ))}
+              <div className="flex items-center gap-1">
+                <Users className="w-3.5 h-3.5 text-electric-cyan sm:hidden" />
+                <div className="hidden sm:flex -space-x-1.5 overflow-hidden">
+                  {users.slice(0, 3).map((u) => (
+                    <div
+                      key={u.id}
+                      style={{ backgroundColor: u.avatarColor || '#00f0ff' }}
+                      className="w-5 h-5 rounded-full border border-dark-900 flex items-center justify-center text-[9px] font-bold text-black"
+                    >
+                      {u.name.charAt(0)}
+                    </div>
+                  ))}
+                </div>
+                <span className="font-semibold text-white text-xs">{users.length}</span>
+                <span className="text-slate-400 hidden lg:inline">Speakers</span>
               </div>
-              <span className="font-semibold text-white">{users.length}</span>
-              <span className="text-slate-400 hidden lg:inline">Speakers</span>
             </button>
 
             {/* Speakers Popover Menu */}
@@ -612,10 +617,10 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
                   onLeaveRoom();
                 }
               }}
-              className="p-2 rounded-xl bg-dark-850 hover:bg-red-500/15 border border-white/10 hover:border-red-500/30 text-slate-400 hover:text-red-400 transition-all active:scale-95"
+              className="p-1.5 sm:p-2 rounded-xl bg-dark-850 hover:bg-red-500/15 border border-white/10 hover:border-red-500/30 text-slate-400 hover:text-red-400 transition-all active:scale-95 shrink-0"
               title="Leave Party Room"
             >
-              <LogOut className="w-4 h-4" />
+              <LogOut className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-rose-400/90" />
             </button>
           )}
         </div>
