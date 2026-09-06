@@ -55,6 +55,7 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
   const [showUsersModal, setShowUsersModal] = useState(false);
   const [showExitModal, setShowExitModal] = useState(false);
   const [userToKick, setUserToKick] = useState<User | null>(null);
+  const [userToMakeHost, setUserToMakeHost] = useState<User | null>(null);
   const [historyCount, setHistoryCount] = useState<number>(() => userTasteEngine.getHistory().length);
 
   React.useEffect(() => {
@@ -84,6 +85,7 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
         setShowUsersModal(false);
         setShowExitModal(false);
         setUserToKick(null);
+        setUserToMakeHost(null);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -177,10 +179,9 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
     setShowQrModal(false);
   };
 
-  const handleToggleRole = (targetUser: User) => {
-    if (!isHost || targetUser.id === hostId) return;
-    const newRole: UserRole = targetUser.role === 'dj' ? 'listener' : 'dj';
-    socket.emit('set_user_role', { targetUserId: targetUser.id, newRole });
+  const handleMakeHost = (targetUser: User) => {
+    if (!isHost || targetUser.id === currentUser?.id) return;
+    setUserToMakeHost(targetUser);
   };
 
   const handleKickUser = (targetUser: User) => {
@@ -615,19 +616,16 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
                           </div>
                         </div>
 
-                        {/* Host controls: Role toggle & Kick Device */}
+                        {/* Host controls: Make Host & Kick Device */}
                         {canManage ? (
                           <div className="flex items-center gap-1.5 shrink-0 ml-2">
                             <button
-                              onClick={() => handleToggleRole(u)}
-                              className={`text-[10px] px-2 py-1 rounded-lg border font-medium transition-colors ${
-                                isUserDj
-                                  ? 'bg-purple-950/50 text-purple-300 border-purple-500/40 hover:bg-purple-900/60'
-                                  : 'bg-dark-850 text-slate-300 border-white/10 hover:border-purple-500/30 hover:text-purple-300'
-                              }`}
-                              title={isUserDj ? 'Demote to listener' : 'Promote to DJ'}
+                              onClick={() => handleMakeHost(u)}
+                              className="p-1 px-2 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/35 hover:border-amber-500/60 text-amber-400 hover:text-amber-300 text-[10px] font-bold flex items-center gap-1 transition-all active:scale-95 shadow-sm shadow-amber-500/10"
+                              title={`Make "${u.name}" the Room Host`}
                             >
-                              {isUserDj ? 'DJ' : 'Make DJ'}
+                              <Crown className="w-3 h-3" />
+                              <span>Make Host</span>
                             </button>
 
                             <button
@@ -654,7 +652,7 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
                         <span>1 Device Connected (Host)</span>
                       </div>
                       <p className="text-[11px] text-slate-400 leading-relaxed px-1">
-                        You cannot kick your own device. When other phones or laptops join using Room Code <span className="font-mono text-electric-cyan font-bold">{roomCode}</span> or QR code, a red <span className="text-red-400 font-bold">Kick</span> button will appear next to their name.
+                        You cannot kick your own device. When other phones or laptops join using Room Code <span className="font-mono text-electric-cyan font-bold">{roomCode}</span> or QR code, the <span className="text-amber-400 font-bold">Make Host</span> and <span className="text-red-400 font-bold">Kick</span> buttons will appear next to their name.
                       </p>
                       <div className="flex items-center justify-center gap-2 pt-1 flex-wrap">
                         <button
@@ -682,7 +680,7 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
                   {isHost && users.filter((u) => u.id !== currentUser?.id).length > 0 && (
                     <div className="flex items-center justify-between px-1 pt-1.5 text-[10px]">
                       <span className="text-slate-500">
-                        Tap <span className="text-red-400 font-semibold">Kick</span> to disconnect any device
+                        Tap <span className="text-amber-400 font-semibold">Make Host</span> to transfer host, or <span className="text-red-400 font-semibold">Kick</span> to remove
                       </span>
                       <button
                         onClick={handleSimulateGuest}
@@ -825,6 +823,56 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
               >
                 <UserX className="w-3.5 h-3.5" />
                 <span>Remove</span>
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Custom Make Host Confirmation Modal (Rendered in Portal for true viewport centering) */}
+      {userToMakeHost && typeof document !== 'undefined' && createPortal(
+        <div
+          onClick={() => setUserToMakeHost(null)}
+          className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-dark-900 border border-amber-500/30 rounded-2xl p-5 sm:p-6 max-w-sm w-full shadow-2xl shadow-amber-500/10 animate-popover-spring space-y-4 my-auto"
+          >
+            <div className="flex items-center gap-3">
+              <div className="p-3 rounded-xl bg-amber-500/15 text-amber-400 border border-amber-500/30 shrink-0">
+                <Crown className="w-5 h-5" />
+              </div>
+              <div className="min-w-0">
+                <h3 className="text-sm sm:text-base font-bold text-white leading-tight">Make Room Host</h3>
+                <p className="text-xs text-slate-400 mt-1">
+                  Transfer Host privileges to <span className="text-white font-semibold">{userToMakeHost.name}</span>?
+                </p>
+                <p className="text-[11px] text-slate-400 mt-0.5">
+                  They will gain control over master volume and room device management.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => setUserToMakeHost(null)}
+                className="flex-1 py-2.5 rounded-xl bg-dark-800 hover:bg-dark-750 text-slate-300 hover:text-white text-xs font-semibold border border-white/10 transition-colors active:scale-95 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  socket.emit('make_host', { targetUserId: userToMakeHost.id });
+                  setUserToMakeHost(null);
+                }}
+                className="flex-1 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-black text-xs font-bold transition-all shadow-lg shadow-amber-500/20 active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <Crown className="w-3.5 h-3.5" />
+                <span>Make Host</span>
               </button>
             </div>
           </div>

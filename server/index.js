@@ -935,7 +935,76 @@ io.on('connection', (socket) => {
     io.to(currentRoomCode).emit('queue_updated', { queue: [] });
   });
 
-  // 7. Role Management (DJ Promotion / Demotion)
+  // 7. Make Host & Transfer Host Privileges (Host Only)
+  socket.on('make_host', ({ targetUserId }) => {
+    if (!currentRoomCode) return;
+    const room = rooms.get(currentRoomCode);
+    if (!room) return;
+
+    const host = room.users.get(socket.id);
+    if (!host || host.role !== 'host') {
+      return socket.emit('error_message', 'Only Room Host can transfer host permissions.');
+    }
+
+    if (!targetUserId || targetUserId === socket.id) {
+      return socket.emit('error_message', 'Cannot transfer host to yourself.');
+    }
+
+    const target = room.users.get(targetUserId);
+    if (target) {
+      host.role = 'dj';
+      target.role = 'host';
+      room.hostId = targetUserId;
+
+      io.to(currentRoomCode).emit('room_users_updated', {
+        users: Array.from(room.users.values()),
+        hostId: room.hostId
+      });
+
+      const promoMsg = {
+        id: `msg-${Date.now()}`,
+        user: { name: 'System', role: 'system', avatarColor: '#ffb703' },
+        text: `👑 ${target.name} is now the Room Host!`,
+        timestamp: Date.now(),
+        isSystem: true
+      };
+      room.chatMessages.push(promoMsg);
+      io.to(currentRoomCode).emit('new_chat_message', promoMsg);
+    }
+  });
+
+  socket.on('reclaim_host', () => {
+    if (!currentRoomCode) return;
+    const room = rooms.get(currentRoomCode);
+    if (!room) return;
+
+    const user = room.users.get(socket.id);
+    if (!user) return;
+
+    const currentHost = room.users.get(room.hostId);
+    if (!currentHost || currentHost.isDemo) {
+      if (currentHost) currentHost.role = 'listener';
+      user.role = 'host';
+      room.hostId = socket.id;
+
+      io.to(currentRoomCode).emit('room_users_updated', {
+        users: Array.from(room.users.values()),
+        hostId: room.hostId
+      });
+
+      const reclaimMsg = {
+        id: `msg-${Date.now()}`,
+        user: { name: 'System', role: 'system', avatarColor: '#ffb703' },
+        text: `👑 ${user.name} reclaimed Room Host!`,
+        timestamp: Date.now(),
+        isSystem: true
+      };
+      room.chatMessages.push(reclaimMsg);
+      io.to(currentRoomCode).emit('new_chat_message', reclaimMsg);
+    }
+  });
+
+  // 7b. Role Management (DJ Promotion / Demotion)
   socket.on('set_user_role', ({ targetUserId, newRole }) => {
     if (!currentRoomCode) return;
     const room = rooms.get(currentRoomCode);
