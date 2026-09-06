@@ -59,10 +59,10 @@ export const QueueList: React.FC<QueueListProps> = ({
     <div className="bg-dark-900/60 backdrop-blur-xl border border-white/10 rounded-2xl p-4 md:p-5 flex flex-col h-full">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <Music2 className="w-5 h-5 text-electric-cyan" />
-          <h3 className="text-base font-bold text-white">Upcoming Queue</h3>
-          <span className="px-2 py-0.5 rounded-full bg-dark-800 text-xs font-mono font-semibold text-electric-cyan border border-white/5">
+        <div className="flex items-center gap-2.5">
+          <Music2 className="w-5 h-5 text-cyan-400" />
+          <h3 className="text-base font-bold text-white">Up Next</h3>
+          <span className="px-2 py-0.5 rounded-full bg-dark-800 text-xs font-mono font-semibold text-cyan-400 border border-white/5">
             {queue.length}
           </span>
         </div>
@@ -78,10 +78,10 @@ export const QueueList: React.FC<QueueListProps> = ({
           )}
           <button
             onClick={onOpenSearch}
-            className="flex items-center gap-1.5 bg-electric-cyan/15 hover:bg-electric-cyan/25 text-electric-cyan border border-electric-cyan/30 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all active:scale-95"
+            className="flex items-center gap-1.5 bg-cyan-400/15 hover:bg-cyan-400/25 text-cyan-400 border border-cyan-400/30 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all active:scale-95"
           >
             <Plus className="w-3.5 h-3.5" />
-            <span>Add Track</span>
+            <span>Add Song</span>
           </button>
         </div>
       </div>
@@ -90,17 +90,17 @@ export const QueueList: React.FC<QueueListProps> = ({
       {queue.length === 0 ? (
         <div className="flex-1 flex flex-col items-center justify-center py-10 text-center text-slate-500 border border-dashed border-white/5 rounded-xl p-6">
           <div className="w-12 h-12 rounded-2xl bg-dark-850 flex items-center justify-center text-slate-400 mb-3 border border-white/5">
-            <Music2 className="w-6 h-6" />
+            <Music2 className="w-6 h-6 text-slate-400" />
           </div>
-          <p className="text-sm font-medium text-slate-300">No tracks in queue</p>
-          <p className="text-xs text-slate-500 max-w-xs mt-1 mb-4">
-            Anyone in the room can add songs. The room votes to choose what plays next!
+          <p className="text-sm font-semibold text-slate-200">No songs lined up next</p>
+          <p className="text-xs text-slate-400 max-w-xs mt-1 mb-4">
+            Add songs to the playlist! Everyone in the room can vote on what plays next.
           </p>
           <button
             onClick={onOpenSearch}
-            className="px-4 py-2 rounded-xl bg-electric-cyan text-black font-semibold text-xs hover:bg-white transition-all shadow-md active:scale-95"
+            className="px-4 py-2 rounded-xl bg-cyan-400 text-black font-semibold text-xs hover:bg-white transition-all shadow-md active:scale-95"
           >
-            Browse Music Catalog
+            Browse & Add Songs
           </button>
         </div>
       ) : (

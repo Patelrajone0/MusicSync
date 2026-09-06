@@ -254,15 +254,15 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
           ) : (
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-xl bg-dark-800 flex items-center justify-center text-slate-500 border border-white/5">
-                <Radio className="w-5 h-5 animate-pulse" />
+                <Radio className="w-5 h-5 text-slate-400" />
               </div>
               <div>
-                <p className="text-sm font-medium text-slate-400">Queue is empty</p>
+                <p className="text-sm font-medium text-slate-400">No song playing</p>
                 <button
                   onClick={onOpenSearch}
-                  className="text-xs text-electric-cyan hover:underline font-medium"
+                  className="text-xs text-cyan-400 hover:underline font-medium"
                 >
-                  + Add tracks
+                  + Add a song
                 </button>
               </div>
             </div>

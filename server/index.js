@@ -551,14 +551,7 @@ io.on('connection', (socket) => {
       createdAt: Date.now(),
       hostId: socket.id,
       users: new Map([[socket.id, user]]),
-      queue: [CURATED_TRACKS[0], CURATED_TRACKS[1]].map((t, idx) => ({
-        ...t,
-        queueId: `q-${Date.now()}-${idx}`,
-        addedBy: 'Auto-DJ',
-        addedAt: Date.now() + idx,
-        upvotes: [],
-        downvotes: []
-      })),
+      queue: [],
       currentTrack: null,
       playbackState: {
         status: 'stopped',

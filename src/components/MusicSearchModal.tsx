@@ -43,11 +43,16 @@ function formatTimeAgo(timestamp: number): string {
 }
 
 interface MusicSearchModalProps {
-  isOpen: boolean;
-  onClose: () => void;
+  isOpen?: boolean;
+  onClose?: () => void;
+  inline?: boolean;
 }
 
-export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({ isOpen, onClose }) => {
+export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
+  isOpen = false,
+  onClose = () => {},
+  inline = false,
+}) => {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<Track[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -94,9 +99,9 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({ isOpen, onCl
     return unsub;
   }, []);
 
-  // Initial load when modal opens or filter changes
+  // Initial load when modal opens, inline mounts, or filter changes
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen || inline) {
       setTasteSummary(userTasteEngine.getTasteSummary());
       setHistoryItems(userTasteEngine.getHistory());
       loadDefaultResults(selectedLanguage);
@@ -104,11 +109,11 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({ isOpen, onCl
       stopPreview();
       setShowAutocomplete(false);
     }
-  }, [isOpen, selectedLanguage]);
+  }, [isOpen, inline, selectedLanguage]);
 
   // Escape key closes search modal
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || inline) return;
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         stopPreview();
@@ -117,7 +122,7 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({ isOpen, onCl
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
+  }, [isOpen, inline, onClose]);
 
   // Live autocomplete debounced fetch
   useEffect(() => {
@@ -396,44 +401,43 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({ isOpen, onCl
   const currentArtists = limitlessArtists[selectedLanguage] || limitlessArtists.all;
   const currentMoods = limitlessMoods[selectedLanguage] || limitlessMoods.all;
 
-  if (!isOpen) return null;
+  if (!inline && !isOpen) return null;
 
-  return (
+  const content = (
     <div
-      onClick={() => {
-        stopPreview();
-        onClose();
-      }}
-      className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4"
+      id="universal-music-library"
+      onClick={(e) => e.stopPropagation()}
+      className={`bg-dark-900 border border-white/10 rounded-2xl flex flex-col shadow-xl overflow-hidden ${
+        inline
+          ? 'w-full bg-dark-900/60 backdrop-blur-xl'
+          : 'max-w-2xl w-full max-h-[88vh] animate-modal-spring'
+      }`}
     >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        className="bg-dark-900 border border-white/10 rounded-2xl max-w-2xl w-full max-h-[88vh] flex flex-col shadow-2xl overflow-hidden animate-modal-spring"
-      >
-        {/* Header */}
-        <div className="p-4 border-b border-white/10 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-electric-cyan/10 text-electric-cyan">
-              <Music className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-base font-bold text-white">Universal Music Library</h3>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-electric-cyan/10 text-electric-cyan border border-electric-cyan/30 font-mono font-bold uppercase tracking-wider">
-                  Limitless Catalog
-                </span>
-                {tasteSummary.totalInteractions > 0 && (
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-300 border border-purple-500/30 font-mono font-semibold hidden sm:inline-flex items-center gap-1">
-                    <Heart className="w-2.5 h-2.5 fill-current text-purple-400" />
-                    Taste AI Calibrated
-                  </span>
-                )}
-              </div>
-              <p className="text-xs text-slate-400">
-                Trending chartbusters & personalized suggestions in <strong className="text-white">English, Hindi, Gujarati & Punjabi</strong>
-              </p>
-            </div>
+      {/* Header */}
+      <div className="p-4 md:p-5 border-b border-white/10 flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <div className="p-2 rounded-xl bg-electric-cyan/10 text-electric-cyan">
+            <Music className="w-5 h-5" />
           </div>
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="text-base font-bold text-white">Universal Music Library</h3>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-electric-cyan/10 text-electric-cyan border border-electric-cyan/30 font-mono font-bold uppercase tracking-wider">
+                Limitless Catalog
+              </span>
+              {tasteSummary.totalInteractions > 0 && (
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-300 border border-purple-500/30 font-mono font-semibold hidden sm:inline-flex items-center gap-1">
+                  <Heart className="w-2.5 h-2.5 fill-current text-purple-400" />
+                  Taste AI Calibrated
+                </span>
+              )}
+            </div>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Trending chartbusters & personalized suggestions in <strong className="text-white">English, Hindi, Gujarati & Punjabi</strong>
+            </p>
+          </div>
+        </div>
+        {!inline && (
           <button
             onClick={() => {
               stopPreview();
@@ -443,7 +447,8 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({ isOpen, onCl
           >
             <X className="w-5 h-5" />
           </button>
-        </div>
+        )}
+      </div>
 
         {/* Filter Pills Bar (For You, Trending, Languages) */}
         <div className="bg-dark-950 px-4 py-2 border-b border-white/5 flex items-center gap-2 overflow-x-auto no-scrollbar">
@@ -538,7 +543,7 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({ isOpen, onCl
                       : 'Search English, Hindi, Gujarati & Punjabi songs...'
                   }
                   className="w-full bg-dark-950 border border-white/10 rounded-xl pl-10 pr-24 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-electric-cyan transition-colors"
-                  autoFocus
+                  autoFocus={!inline}
                 />
                 {query && (
                   <button
@@ -695,7 +700,9 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({ isOpen, onCl
             <div
               ref={resultsContainerRef}
               onScroll={handleScroll}
-              className="flex-1 overflow-y-auto space-y-2 pr-1 min-h-0 relative"
+              className={`overflow-y-auto space-y-2 pr-1 relative ${
+                inline ? 'max-h-[520px] min-h-[300px]' : 'flex-1 min-h-0'
+              }`}
             >
               {isLoading ? (
                 <div className="flex flex-col items-center justify-center py-12 text-slate-400 text-sm gap-2">
@@ -880,7 +887,11 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({ isOpen, onCl
             </div>
 
             {/* History List */}
-            <div className="flex-1 overflow-y-auto space-y-2 pr-1 min-h-0">
+            <div
+              className={`overflow-y-auto space-y-2 pr-1 relative ${
+                inline ? 'max-h-[500px] min-h-[260px]' : 'flex-1 min-h-0'
+              }`}
+            >
               {historyItems.length === 0 ? (
                 <div className="text-center py-16 px-6">
                   <div className="inline-flex items-center justify-center p-3 rounded-full bg-electric-cyan/10 text-electric-cyan mb-3">
@@ -1069,6 +1080,21 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({ isOpen, onCl
           </div>
         )}
       </div>
+  );
+
+  if (inline) {
+    return content;
+  }
+
+  return (
+    <div
+      onClick={() => {
+        stopPreview();
+        onClose();
+      }}
+      className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4"
+    >
+      {content}
     </div>
   );
 };

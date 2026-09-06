@@ -13,6 +13,7 @@ class SyncEngine {
   private lastRtt: number = 0;
   private isNtpSynced: boolean = false;
   private ntpIntervalId: any = null;
+  private hardwareDelayOffset: number = 0; // ms for Bluetooth/Soundbar calibration
 
   // Playback state
   private currentTrack: Track | null = null;
@@ -29,9 +30,18 @@ class SyncEngine {
   private onTrackEndedCallback: (() => void) | null = null;
 
   constructor() {
+    try {
+      const savedDelay = localStorage.getItem('musicsync_hardware_delay');
+      if (savedDelay !== null) {
+        this.hardwareDelayOffset = parseInt(savedDelay, 10) || 0;
+      }
+    } catch (e) {}
+
     this.initAudio();
     this.setupSocketListeners();
-    this.startNtpSync();
+    if (socket.connected) {
+      this.startNtpSync();
+    }
   }
 
   // 1. Audio Initialization
@@ -120,28 +130,99 @@ class SyncEngine {
   }
 
   // 3. High Precision NTP Clock Synchronization
-  private startNtpSync() {
-    // Initial burst of 6 pings to rapidly find low-jitter network baseline
+  public startNtpSync() {
+    if (this.ntpIntervalId) clearInterval(this.ntpIntervalId);
+
+    // Initial burst of 5 pings to rapidly find low-jitter network baseline
     let burstCount = 0;
     const burstInterval = setInterval(() => {
       this.pingServer();
       burstCount++;
-      if (burstCount >= 6) {
+      if (burstCount >= 5) {
         clearInterval(burstInterval);
-        // Continue regular sync every 5 seconds
+        // Continue regular sync every 3.5 seconds
         this.ntpIntervalId = setInterval(() => {
           this.pingServer();
-        }, 5000);
+        }, 3500);
       }
-    }, 400);
+    }, 250);
   }
 
   public pingServer() {
+    if (!socket.connected) return;
     const t0 = performance.now();
     socket.emit('ntp_ping', { t0 });
   }
 
+  public async recalibrate(): Promise<SyncStats> {
+    return new Promise((resolve) => {
+      let pingsDone = 0;
+      const samples: { rtt: number; offset: number }[] = [];
+
+      const tempListener = ({ t0, serverTime }: { t0: number; serverTime: number }) => {
+        const t1 = performance.now();
+        const rtt = t1 - t0;
+        const estimatedServerNow = serverTime + rtt / 2;
+        const measuredOffset = estimatedServerNow - Date.now();
+        samples.push({ rtt, offset: measuredOffset });
+        pingsDone++;
+
+        if (pingsDone >= 4) {
+          socket.off('ntp_pong', tempListener);
+          samples.sort((a, b) => a.rtt - b.rtt);
+          const best = samples[0];
+          this.lastRtt = best.rtt;
+          this.clockOffset = best.offset;
+          this.isNtpSynced = true;
+          this.notifyStats();
+          resolve(this.getStats());
+        }
+      };
+
+      socket.on('ntp_pong', tempListener);
+
+      for (let i = 0; i < 4; i++) {
+        setTimeout(() => {
+          this.pingServer();
+        }, i * 100);
+      }
+
+      setTimeout(() => {
+        socket.off('ntp_pong', tempListener);
+        this.notifyStats();
+        resolve(this.getStats());
+      }, 1200);
+    });
+  }
+
+  public setHardwareDelayOffset(ms: number) {
+    this.hardwareDelayOffset = ms;
+    try {
+      localStorage.setItem('musicsync_hardware_delay', ms.toString());
+    } catch (e) {}
+
+    if (this.isPlaying && this.audioElement) {
+      const serverNow = this.getServerTime();
+      const elapsedSec = (serverNow - this.scheduledServerTime - this.hardwareDelayOffset) / 1000;
+      const expectedPos = Math.max(0, this.startPosition + elapsedSec);
+      this.audioElement.currentTime = expectedPos;
+    }
+    this.notifyStats();
+  }
+
+  public getHardwareDelayOffset(): number {
+    return this.hardwareDelayOffset;
+  }
+
   private setupSocketListeners() {
+    socket.on('connect', () => {
+      this.startNtpSync();
+    });
+
+    socket.on('reconnect', () => {
+      this.startNtpSync();
+    });
+
     socket.on('ntp_pong', ({ t0, serverTime }: { t0: number; serverTime: number }) => {
       const t1 = performance.now();
       const rtt = t1 - t0;
@@ -189,7 +270,8 @@ class SyncEngine {
     }
 
     const currentServerTime = this.getServerTime();
-    const delayMs = scheduledServerTime - currentServerTime;
+    // Factor in hardware delay offset (soundbar / Bluetooth latency)
+    const delayMs = scheduledServerTime - currentServerTime - this.hardwareDelayOffset;
 
     if (delayMs > 0) {
       // Future scheduled start: prepare position and wait
@@ -257,7 +339,7 @@ class SyncEngine {
       if (!this.isPlaying || !this.audioElement || this.audioElement.paused) return;
 
       const serverNow = this.getServerTime();
-      const elapsedSec = (serverNow - this.scheduledServerTime) / 1000;
+      const elapsedSec = (serverNow - this.scheduledServerTime - this.hardwareDelayOffset) / 1000;
       const expectedPos = this.startPosition + elapsedSec;
       const actualPos = this.audioElement.currentTime;
 
@@ -266,7 +348,7 @@ class SyncEngine {
       this.lastDriftMs = Math.round(driftMs);
 
       // Micro-Rate Adjustment:
-      // If drift is between 30ms and 200ms, gently nudge playback speed to lock in phase without audible pitch clicks!
+      // If drift is between 25ms and 250ms, gently nudge playback speed to lock in phase without audible pitch clicks!
       if (Math.abs(driftMs) < 25) {
         // Locked within 25 milliseconds (human ear imperceptible)
         if (this.audioElement.playbackRate !== 1.0) {
@@ -279,7 +361,7 @@ class SyncEngine {
         // Playing slightly behind: speed up 2%
         this.audioElement.playbackRate = 1.02;
       } else if (Math.abs(driftMs) >= 250) {
-        // Significant desync (>250ms, e.g. tab minimized or buffer hiccup): smooth seek to exact sync point
+        // Significant desync (>250ms): smooth seek to exact sync point
         this.audioElement.currentTime = Math.max(0, expectedPos);
         this.audioElement.playbackRate = 1.0;
       }
@@ -327,21 +409,29 @@ class SyncEngine {
     this.onTrackEndedCallback = cb;
   }
 
-  private notifyStats() {
+  public getStats(): SyncStats {
     const absDrift = Math.abs(this.lastDriftMs);
     let quality: SyncStats['syncQuality'] = 'excellent';
     if (absDrift > 80 || this.lastRtt > 120) quality = 'good';
     if (absDrift > 180 || this.lastRtt > 250) quality = 'fair';
     if (absDrift > 350 || this.lastRtt > 500) quality = 'poor';
 
-    const stats: SyncStats = {
+    // Accurately determine if locked:
+    // When playing: audio drift must be within 45ms
+    // When paused/stopped: NTP must be synced and RTT healthy (<350ms)
+    const isLocked = this.isNtpSynced && (this.isPlaying ? absDrift < 45 : (this.lastRtt > 0 && this.lastRtt < 350));
+
+    return {
       rtt: Math.round(this.lastRtt),
       clockOffset: Math.round(this.clockOffset),
       drift: this.lastDriftMs,
-      isLocked: this.isPlaying && absDrift < 45,
+      isLocked,
       syncQuality: quality,
     };
+  }
 
+  private notifyStats() {
+    const stats = this.getStats();
     this.onStatsChangeCallbacks.forEach((cb) => cb(stats));
   }
 

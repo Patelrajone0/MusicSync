@@ -12,14 +12,14 @@ import {
 } from './types';
 import { Lobby } from './components/Lobby';
 import { RoomHeader } from './components/RoomHeader';
-import { AudioVisualizer } from './components/AudioVisualizer';
 import { PlayerControls } from './components/PlayerControls';
 import { QueueList } from './components/QueueList';
 import { LiveChatAndReactions } from './components/LiveChatAndReactions';
 import { MusicSearchModal } from './components/MusicSearchModal';
 import { SyncDiagnosticsModal } from './components/SyncDiagnosticsModal';
 import { PlaybackHistoryModal } from './components/PlaybackHistoryModal';
-import { Volume2, Radio, Disc, Sparkles, Layers, ShieldCheck } from 'lucide-react';
+import { Logo } from './components/Logo';
+import { Volume2, Radio, Disc, Sparkles, Layers, ShieldCheck, Plus, History, MessageSquare, Music2 } from 'lucide-react';
 
 import { userTasteEngine } from './services/userTaste';
 
@@ -109,6 +109,7 @@ export function App() {
   const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
   const [isDiagnosticsOpen, setIsDiagnosticsOpen] = useState<boolean>(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState<boolean>(false);
+  const [isChatVisible, setIsChatVisible] = useState<boolean>(false);
 
   // Auto-reconnect state on page refresh
   const [isReconnecting, setIsReconnecting] = useState<boolean>(() => {
@@ -358,19 +359,25 @@ export function App() {
     };
   }, []);
 
+  // Prevent browser from automatically scrolling down on entering room or reloading
+  useEffect(() => {
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
+    }
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, [roomCode]);
+
   // Reconnecting splash screen during page refresh
   if (isReconnecting) {
     return (
-      <div className="min-h-screen bg-dark-950 flex flex-col items-center justify-center p-4">
-        <div className="flex flex-col items-center gap-4 text-center max-w-sm">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-electric-cyan to-electric-purple flex items-center justify-center font-black text-black text-2xl shadow-xl animate-pulse">
-            MS
-          </div>
+      <div className="min-h-screen bg-dark-950 flex flex-col items-center justify-center p-4 select-none">
+        <div className="flex flex-col items-center gap-5 text-center max-w-sm">
+          <Logo size="lg" layout="vertical" showText={false} />
           <div className="space-y-1">
-            <h3 className="text-base font-bold text-white">Reconnecting to Party...</h3>
+            <h3 className="text-base font-semibold text-white tracking-tight">Reloading Please wait...</h3>
             <p className="text-xs text-slate-400">Restoring your synchronized room session</p>
           </div>
-          <div className="w-6 h-6 border-2 border-electric-cyan border-t-transparent rounded-full animate-spin"></div>
+          <div className="w-5 h-5 border-2 border-cyan-400/20 border-t-cyan-400 rounded-full animate-spin mt-1"></div>
         </div>
       </div>
     );
@@ -383,6 +390,19 @@ export function App() {
 
   const isPlaying = playbackState.status === 'playing';
   const myRole: UserRole = currentUser?.role || 'listener';
+
+  const handleOpenSearch = () => {
+    const el = document.getElementById('universal-music-library');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' });
+      const input = el.querySelector('input');
+      if (input) {
+        input.focus();
+      }
+    } else {
+      setIsSearchOpen(true);
+    }
+  };
 
   return (
     <div
@@ -403,103 +423,159 @@ export function App() {
       />
 
       {/* 2. Main Synchronized Party Content */}
-      <main className="max-w-6xl mx-auto w-full px-4 py-6 flex-1 flex flex-col gap-6">
-        {/* Hero Section: Currently Playing + Beat-Responsive Visualizer */}
-        <section className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-          {/* Visualizer & Now Playing Display (7 Cols) */}
-          <div className="lg:col-span-7 bg-dark-900/70 backdrop-blur-xl border border-white/10 rounded-3xl p-6 relative overflow-hidden flex flex-col justify-between shadow-2xl min-h-[320px]">
-            {/* Embedded Beat-Responsive Audio Visualizer Canvas */}
-            <div className="absolute inset-0 opacity-85 pointer-events-auto">
-              <AudioVisualizer isPlaying={isPlaying} className="w-full h-full" />
-            </div>
+      <main className="max-w-6xl mx-auto w-full px-4 py-5 flex-1 flex flex-col gap-5">
+        {/* Action Toolbar: Music Picker & Utility Options */}
+        <div className="flex flex-wrap items-center justify-between gap-2.5 bg-dark-900/40 border border-white/5 p-2 rounded-2xl">
+          {/* Quick Primary Actions */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleOpenSearch}
+              className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-cyan-400 hover:bg-white text-black font-semibold text-xs transition-all shadow-sm active:scale-95"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Select Music</span>
+            </button>
 
-            {/* Subtle Gradient Overlay for readability */}
-            <div className="absolute inset-0 bg-gradient-to-t from-dark-950/95 via-dark-950/40 to-transparent pointer-events-none" />
+            <button
+              onClick={() => setIsHistoryOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-dark-800 hover:bg-dark-750 border border-white/5 text-slate-300 hover:text-white text-xs font-medium transition-colors"
+            >
+              <History className="w-3.5 h-3.5 text-slate-400" />
+              <span>History</span>
+            </button>
 
-            {/* Top Status Bar over Visualizer */}
-            <div className="relative z-10 flex items-center justify-between">
-              <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-dark-950/80 backdrop-blur-md border border-white/10 text-xs font-mono">
+            <button
+              onClick={() => setIsDiagnosticsOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-dark-800 hover:bg-dark-750 border border-white/5 text-slate-300 hover:text-white text-xs font-medium transition-colors"
+            >
+              <ShieldCheck className="w-3.5 h-3.5 text-cyan-400" />
+              <span>Sync Health</span>
+            </button>
+          </div>
+
+          {/* Toggle Chat Button */}
+          <button
+            onClick={() => setIsChatVisible(!isChatVisible)}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-medium border transition-all ${
+              isChatVisible
+                ? 'bg-cyan-500/15 border-cyan-500/30 text-cyan-300'
+                : 'bg-dark-800 hover:bg-dark-750 border-white/5 text-slate-400 hover:text-white'
+            }`}
+            title={isChatVisible ? 'Hide chat to maximize music space' : 'Open live room chat'}
+          >
+            <MessageSquare className="w-3.5 h-3.5 text-cyan-400" />
+            <span>{isChatVisible ? 'Hide Chat' : 'Live Chat'}</span>
+            <span className="px-1.5 py-0.2 rounded-full bg-dark-900 text-[10px] font-mono text-slate-300 border border-white/5">
+              {chatMessages.length}
+            </span>
+          </button>
+        </div>
+
+        {/* Section 1: Clean Now Playing + Optional Compact Chat */}
+        <section className={`grid grid-cols-1 ${isChatVisible ? 'lg:grid-cols-12' : ''} gap-5 items-start`}>
+          {/* Compact Now Playing Card (No heavy animations, minimal & functional) */}
+          <div className={`${isChatVisible ? 'lg:col-span-7' : 'w-full'} bg-dark-900/60 backdrop-blur-xl border border-white/10 rounded-2xl p-4 md:p-5 relative flex flex-col justify-between shadow-xl`}>
+            {/* Top Bar */}
+            <div className="flex items-center justify-between mb-3.5">
+              <div className="flex items-center gap-2">
                 <span
                   className={`w-2 h-2 rounded-full ${
-                    isPlaying ? 'bg-electric-cyan animate-pulse' : 'bg-slate-500'
+                    isPlaying ? 'bg-cyan-400' : 'bg-slate-500'
                   }`}
                 />
-                <span className="text-slate-300 uppercase tracking-wider text-[10px]">
-                  {isPlaying ? 'Synced Speaker Broadcast' : 'Paused'}
+                <span className="text-[11px] font-mono uppercase tracking-wider text-slate-400">
+                  {isPlaying ? 'Synced Broadcast' : 'Playback Paused'}
                 </span>
               </div>
 
               <button
-                onClick={() => setIsDiagnosticsOpen(true)}
-                className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-dark-950/80 backdrop-blur-md border border-white/10 text-xs font-mono text-slate-300 hover:text-white transition-colors"
+                onClick={handleOpenSearch}
+                className="text-xs text-cyan-400 hover:text-white font-medium transition-colors flex items-center gap-1"
               >
-                <ShieldCheck className="w-3.5 h-3.5 text-electric-cyan" />
-                <span>Zero Latency</span>
+                <span>Browse Songs</span>
+                <span>→</span>
               </button>
             </div>
 
-            {/* Bottom Current Track Metadata */}
-            <div className="relative z-10 pt-16">
-              {currentTrack ? (
-                <div className="flex items-end justify-between gap-4">
-                  <div className="min-w-0">
-                    <span className="text-[11px] font-mono uppercase tracking-widest text-electric-cyan font-bold">
+            {/* Track Metadata */}
+            {currentTrack ? (
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3.5 min-w-0 flex-1">
+                  <img
+                    src={currentTrack.artwork || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=160'}
+                    alt={currentTrack.title}
+                    className="w-16 h-16 md:w-20 md:h-20 rounded-xl object-cover border border-white/10 shadow-md shrink-0"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <span className="text-[10px] font-mono uppercase tracking-wider text-cyan-400 font-semibold">
                       Now Playing
                     </span>
-                    <h2 className="text-2xl md:text-3xl font-extrabold text-white truncate tracking-tight">
+                    <h2 className="text-base md:text-lg font-bold text-white truncate tracking-tight">
                       {currentTrack.title}
                     </h2>
-                    <p className="text-sm text-slate-300 truncate mt-0.5">{currentTrack.artist}</p>
+                    <p className="text-xs md:text-sm text-slate-300 truncate mt-0.5">{currentTrack.artist}</p>
                     <div className="flex items-center gap-2 mt-2">
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-dark-800/80 border border-white/10 text-slate-400 font-mono">
-                        {currentTrack.genre || 'Electronic'}
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-dark-800 border border-white/5 text-slate-400 font-mono">
+                        {currentTrack.genre || 'Music'}
                       </span>
-                      <span className="text-xs text-slate-500 font-mono">
+                      <span className="text-[10px] text-slate-500 font-mono">
                         Added by {currentTrack.addedBy || 'Host'}
                       </span>
                     </div>
                   </div>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 rounded-xl bg-dark-950/50 border border-dashed border-white/10 text-center sm:text-left">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-dark-800 flex items-center justify-center text-slate-400 border border-white/5 shrink-0">
+                    <Music2 className="w-5 h-5 text-slate-400" />
+                  </div>
+                  <div>
+                    <p className="text-xs md:text-sm font-semibold text-white">No track currently playing</p>
+                    <p className="text-[11px] text-slate-400">Pick a song to play across all synced speakers</p>
+                  </div>
+                </div>
+                <button
+                  onClick={handleOpenSearch}
+                  className="px-3 py-1.5 rounded-xl bg-cyan-400 hover:bg-white text-black text-xs font-semibold transition-all shadow-sm shrink-0 active:scale-95"
+                >
+                  Pick a Track
+                </button>
+              </div>
+            )}
+          </div>
 
-                  {/* Album Artwork Preview */}
-                  <img
-                    src={currentTrack.artwork || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=160'}
-                    alt={currentTrack.title}
-                    className="w-20 h-20 md:w-24 md:h-24 rounded-2xl object-cover border border-white/20 shadow-2xl shrink-0"
-                  />
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <p className="text-sm text-slate-400">Nothing currently playing.</p>
-                  <button
-                    onClick={() => setIsSearchOpen(true)}
-                    className="mt-2 text-xs text-electric-cyan hover:underline font-semibold"
-                  >
-                    Select a song from the library to kick off the party →
-                  </button>
-                </div>
-              )}
+          {/* Compact Live Chat (Rendered when toggled open) */}
+          {isChatVisible && (
+            <div className="lg:col-span-5 flex flex-col">
+              <LiveChatAndReactions
+                messages={chatMessages}
+                currentUser={currentUser}
+                onHide={() => setIsChatVisible(false)}
+              />
             </div>
-          </div>
-
-          {/* Collaborative Live Chat & Floating Reaction Panel (5 Cols) */}
-          <div className="lg:col-span-5 flex flex-col">
-            <LiveChatAndReactions messages={chatMessages} currentUser={currentUser} />
-          </div>
+          )}
         </section>
 
-        {/* Section 2: Democratic Collaborative Queue */}
+        {/* Section 2: Up Next Collaborative Queue (Spacious) */}
         <section className="flex-1">
           <QueueList
             queue={queue}
             currentTrack={currentTrack}
             userRole={myRole}
             currentUserId={currentUser?.id}
-            onOpenSearch={() => setIsSearchOpen(true)}
+            onOpenSearch={handleOpenSearch}
           />
+        </section>
+
+        {/* Section 3: Universal Music Library (Directly under Up Next) */}
+        <section className="w-full">
+          <MusicSearchModal inline={true} />
         </section>
       </main>
 
-      {/* 3. Bottom Master Playback Dock */}
+      {/* 4. Bottom Master Playback Dock */}
       <PlayerControls
         currentTrack={currentTrack}
         playbackState={playbackState}
@@ -507,17 +583,19 @@ export function App() {
         syncStats={syncStats}
         isAudioUnlocked={isAudioUnlocked}
         onUnlockAudio={handleUnlockAudio}
-        onOpenSearch={() => setIsSearchOpen(true)}
+        onOpenSearch={handleOpenSearch}
         onOpenDiagnostics={() => setIsDiagnosticsOpen(true)}
         masterVolume={masterVolume}
         masterVolumeNotice={masterVolumeNotice}
       />
 
-      {/* 4. Universal Music Library Search Modal */}
-      <MusicSearchModal
-        isOpen={isSearchOpen}
-        onClose={() => setIsSearchOpen(false)}
-      />
+      {/* 5. Fallback Modal if opened standalone */}
+      {isSearchOpen && (
+        <MusicSearchModal
+          isOpen={isSearchOpen}
+          onClose={() => setIsSearchOpen(false)}
+        />
+      )}
 
       {/* 5. NTP Telemetry & Sync Diagnostics Modal */}
       <SyncDiagnosticsModal
