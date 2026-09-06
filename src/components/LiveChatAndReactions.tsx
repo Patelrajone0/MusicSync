@@ -25,6 +25,7 @@ interface LiveChatAndReactionsProps {
 }
 
 const REACTION_EMOJIS = ['🔥', '❤️', '🎉', '⚡', '🚀', '🔊', '💃', '🤯'];
+const CHAT_QUICK_EMOJIS = ['❤️', '🔥', '🎉', '👏', '🎶', '🎧', '😍', '🙌', '💯', '😂', '✨', '⚡'];
 
 export const LiveChatAndReactions: React.FC<LiveChatAndReactionsProps> = ({
   messages,
@@ -34,7 +35,9 @@ export const LiveChatAndReactions: React.FC<LiveChatAndReactionsProps> = ({
   const [inputText, setInputText] = useState('');
   const [reactions, setReactions] = useState<ReactionItem[]>([]);
   const [isChatOpen, setIsChatOpen] = useState(true);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const chatContainerRef = useRef<HTMLDivElement | null>(null);
+  const seenReactionIds = useRef<Set<string>>(new Set());
 
   // Auto-scroll internal chat container to bottom on new message (WITHOUT scrolling the main page/window)
   useEffect(() => {
@@ -43,44 +46,73 @@ export const LiveChatAndReactions: React.FC<LiveChatAndReactionsProps> = ({
     }
   }, [messages, isChatOpen]);
 
-  // Listen to real-time reaction events from other users
-  useEffect(() => {
-    const handleReaction = (payload: { id: string; emoji: string; userName: string }) => {
-      const newReaction: ReactionItem = {
-        id: payload.id || `r-${Date.now()}-${Math.random()}`,
-        emoji: payload.emoji,
-        userName: payload.userName || 'Guest',
-        xPosition: Math.floor(15 + Math.random() * 70), // Random horizontal %
-        timestamp: Date.now(),
-      };
+  const spawnReaction = (payload: { id: string; emoji: string; userName: string }) => {
+    if (!payload || !payload.emoji) return;
+    if (seenReactionIds.current.has(payload.id)) return;
+    seenReactionIds.current.add(payload.id);
 
-      setReactions((prev) => [...prev, newReaction]);
+    if (seenReactionIds.current.size > 200) {
+      const arr = Array.from(seenReactionIds.current);
+      seenReactionIds.current = new Set(arr.slice(100));
+    }
 
-      // Trigger party confetti for celebration emojis
-      if (payload.emoji === '🎉' || payload.emoji === '🔥') {
-        confetti({
-          particleCount: 20,
-          spread: 55,
-          origin: { y: 0.8 },
-          colors: ['#00f0ff', '#9d4edd', '#ff007f'],
-        });
-      }
-
-      // Automatically remove reaction item after animation completes
-      setTimeout(() => {
-        setReactions((prev) => prev.filter((r) => r.id !== newReaction.id));
-      }, 3500);
+    const newReaction: ReactionItem = {
+      id: payload.id,
+      emoji: payload.emoji,
+      userName: payload.userName || 'Guest',
+      xPosition: Math.floor(10 + Math.random() * 80), // Random horizontal %
+      timestamp: Date.now(),
     };
 
+    setReactions((prev) => [...prev, newReaction]);
+
+    // Trigger party confetti for celebration emojis
+    if (payload.emoji === '🎉' || payload.emoji === '🔥') {
+      try {
+        confetti({
+          particleCount: 25,
+          spread: 60,
+          origin: { y: 0.8 },
+          colors: ['#00f0ff', '#9d4edd', '#ff007f', '#ffb703'],
+        });
+      } catch (e) {
+        // Safe failover
+      }
+    }
+
+    // Automatically remove reaction item after animation completes
+    setTimeout(() => {
+      setReactions((prev) => prev.filter((r) => r.id !== newReaction.id));
+    }, 3200);
+  };
+
+  // Listen to real-time reaction events from other users (both new_reaction and reaction_received)
+  useEffect(() => {
+    const handleReaction = (payload: { id: string; emoji: string; userName: string }) => {
+      spawnReaction(payload);
+    };
+
+    socket.on('new_reaction', handleReaction);
     socket.on('reaction_received', handleReaction);
 
     return () => {
+      socket.off('new_reaction', handleReaction);
       socket.off('reaction_received', handleReaction);
     };
   }, []);
 
   const handleSendReaction = (emoji: string) => {
-    socket.emit('send_reaction', { emoji });
+    const reactionId = `react-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+
+    // 1. Instant local floating reaction (zero delay)
+    spawnReaction({
+      id: reactionId,
+      emoji,
+      userName: currentUser?.name || 'You',
+    });
+
+    // 2. Broadcast to room
+    socket.emit('send_reaction', { emoji, reactionId });
   };
 
   const handleSendMessage = (e: React.FormEvent) => {
@@ -88,22 +120,23 @@ export const LiveChatAndReactions: React.FC<LiveChatAndReactionsProps> = ({
     if (!inputText.trim()) return;
     socket.emit('send_chat', { text: inputText.trim() });
     setInputText('');
+    setShowEmojiPicker(false);
   };
 
   return (
     <>
       {/* 1. Full-Screen Floating Real-Time Emoji Layer */}
-      <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
+      <div className="fixed inset-0 pointer-events-none z-[100] overflow-hidden">
         {reactions.map((r) => (
           <div
             key={r.id}
-            style={{ left: `${r.xPosition}%`, bottom: '90px' }}
+            style={{ left: `${r.xPosition}%`, bottom: '110px' }}
             className="absolute animate-float-up flex flex-col items-center select-none"
           >
-            <span className="text-3xl md:text-5xl filter drop-shadow-[0_0_12px_rgba(0,240,255,0.6)]">
+            <span className="text-4xl md:text-5xl filter drop-shadow-[0_0_16px_rgba(0,240,255,0.7)]">
               {r.emoji}
             </span>
-            <span className="text-[10px] font-mono text-cyan-400 bg-dark-950/80 px-1.5 py-0.5 rounded-full border border-white/10 mt-1 whitespace-nowrap">
+            <span className="text-[10px] font-mono font-semibold text-cyan-300 bg-dark-950/90 px-2 py-0.5 rounded-full border border-cyan-400/30 mt-1 whitespace-nowrap shadow-lg">
               {r.userName}
             </span>
           </div>
@@ -144,14 +177,14 @@ export const LiveChatAndReactions: React.FC<LiveChatAndReactionsProps> = ({
           </div>
         </div>
 
-        {/* Reaction Emoji Strip (Comfortable Touch Targets) */}
+        {/* Reaction Emoji Strip (Floating Reaction Blaster) */}
         <div className="px-1.5 sm:px-2.5 py-1.5 bg-dark-950/70 border-b border-white/5 flex items-center justify-around gap-0.5 sm:gap-1 overflow-x-auto no-scrollbar">
           {REACTION_EMOJIS.map((emoji) => (
             <button
               key={emoji}
               onClick={() => handleSendReaction(emoji)}
-              className="text-lg sm:text-base min-w-[34px] min-h-[34px] sm:min-w-0 sm:min-h-0 p-1 sm:p-1 rounded-lg hover:bg-dark-800 hover:scale-125 transition-transform active:scale-95 flex items-center justify-center shrink-0"
-              title={`Send ${emoji} reaction`}
+              className="text-lg sm:text-base min-w-[34px] min-h-[34px] sm:min-w-0 sm:min-h-0 p-1 rounded-lg hover:bg-dark-800 hover:scale-125 transition-transform active:scale-95 flex items-center justify-center shrink-0 cursor-pointer"
+              title={`Blast ${emoji} floating reaction to room`}
             >
               {emoji}
             </button>
@@ -219,8 +252,40 @@ export const LiveChatAndReactions: React.FC<LiveChatAndReactionsProps> = ({
               })}
             </div>
 
+            {/* Quick Emoji Picker Drawer above input */}
+            {showEmojiPicker && (
+              <div className="p-1.5 bg-dark-900 border-t border-white/10 flex items-center gap-1.5 overflow-x-auto no-scrollbar animate-fade-in">
+                <span className="text-[10px] text-slate-400 font-semibold px-1 shrink-0">Add emoji:</span>
+                {CHAT_QUICK_EMOJIS.map((emoji) => (
+                  <button
+                    key={emoji}
+                    type="button"
+                    onClick={() => {
+                      setInputText((prev) => prev + emoji);
+                    }}
+                    className="text-base p-1 rounded-lg hover:bg-dark-800 active:scale-125 transition-transform shrink-0 cursor-pointer"
+                    title={`Insert ${emoji} into message`}
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+            )}
+
             {/* Chat Input (Compact & Mobile zoom-proof) */}
-            <form onSubmit={handleSendMessage} className="p-1.5 bg-dark-950/90 border-t border-white/5 flex gap-1.5">
+            <form onSubmit={handleSendMessage} className="p-1.5 bg-dark-950/90 border-t border-white/5 flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                className={`p-1.5 rounded-lg border transition-colors ${
+                  showEmojiPicker
+                    ? 'bg-cyan-400/20 text-cyan-300 border-cyan-400/40'
+                    : 'text-slate-400 hover:text-white border-transparent hover:bg-dark-850'
+                }`}
+                title="Toggle emoji keyboard"
+              >
+                <Smile className="w-4 h-4" />
+              </button>
               <input
                 type="text"
                 placeholder="Say something to room..."
@@ -232,7 +297,7 @@ export const LiveChatAndReactions: React.FC<LiveChatAndReactionsProps> = ({
               <button
                 type="submit"
                 disabled={!inputText.trim()}
-                className="px-2.5 py-1.5 bg-cyan-400 text-black rounded-lg hover:bg-white disabled:opacity-40 disabled:hover:bg-cyan-400 transition-colors flex items-center justify-center shrink-0"
+                className="px-2.5 py-1.5 bg-cyan-400 text-black rounded-lg hover:bg-white disabled:opacity-40 disabled:hover:bg-cyan-400 transition-colors flex items-center justify-center shrink-0 cursor-pointer"
               >
                 <Send className="w-3.5 h-3.5" />
               </button>

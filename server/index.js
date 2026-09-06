@@ -1153,14 +1153,14 @@ io.on('connection', (socket) => {
     io.to(currentRoomCode).emit('new_chat_message', chatMsg);
   });
 
-  socket.on('send_reaction', ({ emoji }) => {
+  socket.on('send_reaction', ({ emoji, reactionId }) => {
     if (!currentRoomCode || !emoji) return;
     const room = rooms.get(currentRoomCode);
     if (!room) return;
 
     const user = room.users.get(socket.id);
     const reactionPayload = {
-      id: `react-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      id: reactionId || `react-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
       emoji,
       userId: socket.id,
       userName: user ? user.name : 'Guest',
@@ -1168,6 +1168,7 @@ io.on('connection', (socket) => {
     };
 
     io.to(currentRoomCode).emit('new_reaction', reactionPayload);
+    io.to(currentRoomCode).emit('reaction_received', reactionPayload);
   });
 
   // 9. Disconnect Handling

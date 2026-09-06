@@ -35,9 +35,10 @@ export default {
       },
       keyframes: {
         floatUp: {
-          '0%': { transform: 'translateY(0) scale(0.6)', opacity: '1' },
-          '50%': { opacity: '0.9' },
-          '100%': { transform: 'translateY(-240px) scale(1.3)', opacity: '0' },
+          '0%': { transform: 'translateY(0) scale(0.65)', opacity: '1' },
+          '20%': { transform: 'translateY(-12vh) scale(1.1)', opacity: '1' },
+          '65%': { transform: 'translateY(-45vh) scale(1.25)', opacity: '0.9' },
+          '100%': { transform: 'translateY(-75vh) scale(1.4)', opacity: '0' },
         },
         glow: {
           '0%': { boxShadow: '0 0 10px rgba(0, 240, 255, 0.2)' },
