@@ -302,13 +302,13 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
   };
 
   const languageOptions = [
-    { id: 'for_you', label: '✨ For You', glow: true },
-    { id: 'trending', label: '🔥 Trending Now', glow: true },
-    { id: 'all', label: '🌐 All Languages' },
-    { id: 'english', label: '🇬🇧 English' },
-    { id: 'hindi', label: '🇮🇳 Hindi' },
-    { id: 'punjabi', label: '🎶 Punjabi' },
-    { id: 'gujarati', label: '🪘 Gujarati' },
+    { id: 'all', label: 'All' },
+    { id: 'trending', label: 'Trending' },
+    { id: 'for_you', label: 'For You' },
+    { id: 'english', label: 'English' },
+    { id: 'hindi', label: 'Hindi' },
+    { id: 'punjabi', label: 'Punjabi' },
+    { id: 'gujarati', label: 'Gujarati' },
   ] as const;
 
   const limitlessArtists: Record<string, string[]> = {
@@ -343,58 +343,58 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
 
   const limitlessMoods: Record<string, { label: string; q: string }[]> = {
     for_you: [
-      { label: '🎯 My Mix', q: userTasteEngine.getPersonalizedQuery() || 'trending' },
-      { label: '⚡ Energy Boost', q: 'high bass party' },
-      { label: '🌙 Late Night Chill', q: 'lofi chill' }
+      { label: 'My Mix', q: userTasteEngine.getPersonalizedQuery() || 'trending' },
+      { label: 'Energy Boost', q: 'high bass party' },
+      { label: 'Late Night Chill', q: 'lofi chill' }
     ],
     trending: [
-      { label: '🔥 Top 10 Chartbusters', q: 'trending chartbusters 2024' },
-      { label: '⚡ Viral Bass Drops', q: 'viral high bass songs' },
-      { label: '🚀 Club Anthems', q: 'trending party club' }
+      { label: 'Top Chartbusters', q: 'trending chartbusters 2024' },
+      { label: 'Viral Bass Drops', q: 'viral high bass songs' },
+      { label: 'Club Anthems', q: 'trending party club' }
     ],
     all: [
-      { label: '⚡ High Bass Party', q: 'party dance high bass' },
-      { label: '🌙 Midnight Lofi', q: 'lofi chill midnight' },
-      { label: '💖 Romantic Ballads', q: 'romantic love songs' },
-      { label: '🚗 Car Bass Drive', q: 'car bass songs' },
-      { label: '🪘 Garba & Dandiya', q: 'gujarati garba non stop' },
-      { label: '🕺 Bhangra Energy', q: 'punjabi bhangra dhol' },
-      { label: '🏋️ Gym Workout EDM', q: 'gym edm workout' },
-      { label: '🎧 Acoustic Chill', q: 'acoustic guitar unplugged' },
-      { label: '📻 90s Nostalgia', q: '90s classic melodies' }
+      { label: 'Party Dance', q: 'party dance high bass' },
+      { label: 'Midnight Lofi', q: 'lofi chill midnight' },
+      { label: 'Romantic Ballads', q: 'romantic love songs' },
+      { label: 'Car Bass Drive', q: 'car bass songs' },
+      { label: 'Garba & Dandiya', q: 'gujarati garba non stop' },
+      { label: 'Bhangra Energy', q: 'punjabi bhangra dhol' },
+      { label: 'Gym Workout EDM', q: 'gym edm workout' },
+      { label: 'Acoustic Chill', q: 'acoustic guitar unplugged' },
+      { label: '90s Melodies', q: '90s classic melodies' }
     ],
     hindi: [
-      { label: '💖 Bollywood Romance', q: 'arijit singh romantic hits' },
-      { label: '🌙 Bollywood Lofi', q: 'bollywood lofi chill' },
-      { label: '⚡ Party Dance Anthems', q: 'bollywood party dance' },
-      { label: '📻 90s Golden Era', q: '90s bollywood melodies' },
-      { label: '🚗 Desi Hip-Hop Bass', q: 'desi hip hop divine seedhe maut' },
-      { label: '💔 Emotional & Sad', q: 'sad hindi songs arijit' },
-      { label: '🎸 Acoustic Unplugged', q: 'hindi acoustic cover' }
+      { label: 'Bollywood Romance', q: 'arijit singh romantic hits' },
+      { label: 'Bollywood Lofi', q: 'bollywood lofi chill' },
+      { label: 'Party Dance Anthems', q: 'bollywood party dance' },
+      { label: '90s Golden Era', q: '90s bollywood melodies' },
+      { label: 'Desi Hip-Hop', q: 'desi hip hop divine seedhe maut' },
+      { label: 'Emotional & Sad', q: 'sad hindi songs arijit' },
+      { label: 'Acoustic Unplugged', q: 'hindi acoustic cover' }
     ],
     punjabi: [
-      { label: '🕺 Bhangra Dhol Beats', q: 'punjabi bhangra dhol' },
-      { label: '🚗 Car Bass & 808s', q: 'punjabi car bass 808' },
-      { label: '👑 Sidhu Moosetape', q: 'sidhu moose wala moosetape' },
-      { label: '⚡ Club Soundclash', q: 'punjabi club party mix' },
-      { label: '💖 Romantic Punjabi', q: 'punjabi romantic love' },
-      { label: '🔥 UK Punjabi Bass', q: 'uk punjabi bass' }
+      { label: 'Bhangra Dhol Beats', q: 'punjabi bhangra dhol' },
+      { label: 'Car Bass & 808s', q: 'punjabi car bass 808' },
+      { label: 'Sidhu Moosetape', q: 'sidhu moose wala moosetape' },
+      { label: 'Club Soundclash', q: 'punjabi club party mix' },
+      { label: 'Romantic Punjabi', q: 'punjabi romantic love' },
+      { label: 'UK Punjabi Bass', q: 'uk punjabi bass' }
     ],
     gujarati: [
-      { label: '🪘 Non-Stop Garba Raas', q: 'gujarati garba non stop' },
-      { label: '✨ Coke Studio Folk', q: 'khalasi aditya gadhvi' },
-      { label: '🎉 Dandiya Dholida High Bass', q: 'dholida garba high bass' },
-      { label: '🔥 Titoda & Sanedo', q: 'sanedo titoda non stop' },
-      { label: '🎶 Dayro & Lokgeet', q: 'gujarati dayro lokgeet' },
-      { label: '🌟 Kinjal & Geeta Hits', q: 'kinjal dave geeta rabari' }
+      { label: 'Non-Stop Garba Raas', q: 'gujarati garba non stop' },
+      { label: 'Coke Studio Folk', q: 'khalasi aditya gadhvi' },
+      { label: 'Dandiya Dholida', q: 'dholida garba high bass' },
+      { label: 'Titoda & Sanedo', q: 'sanedo titoda non stop' },
+      { label: 'Dayro & Lokgeet', q: 'gujarati dayro lokgeet' },
+      { label: 'Kinjal & Geeta Hits', q: 'kinjal dave geeta rabari' }
     ],
     english: [
-      { label: '⚡ Synthwave & Cyberpunk', q: 'synthwave 80s cyberpunk' },
-      { label: '🌙 Midnight Lofi Beats', q: 'chillhop lofi english beats' },
-      { label: '🔥 Global Pop Hits', q: 'top billboard pop 2024' },
-      { label: '🎧 Deep House Club', q: 'deep house club mix' },
-      { label: '🏋️ Festival EDM Anthem', q: 'edm festival anthem' },
-      { label: '🎸 80s Retro Rock', q: 'retro classic rock 80s' }
+      { label: 'Synthwave & Cyberpunk', q: 'synthwave 80s cyberpunk' },
+      { label: 'Midnight Lofi Beats', q: 'chillhop lofi english beats' },
+      { label: 'Global Pop Hits', q: 'top billboard pop 2024' },
+      { label: 'Deep House Club', q: 'deep house club mix' },
+      { label: 'Festival EDM Anthem', q: 'edm festival anthem' },
+      { label: '80s Retro Rock', q: 'retro classic rock 80s' }
     ]
   };
 
@@ -450,26 +450,25 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
         )}
       </div>
 
-        {/* Filter Pills Bar (For You, Trending, Languages) */}
-        <div className="bg-dark-950 px-4 py-2 border-b border-white/5 flex items-center gap-2 overflow-x-auto no-scrollbar">
-          <span className="text-[11px] font-mono text-slate-400 uppercase tracking-wider shrink-0">Explore:</span>
-          {languageOptions.map((opt) => (
-            <button
-              key={opt.id}
-              onClick={() => handleLanguageChange(opt.id)}
-              className={`px-3 py-1 rounded-full text-xs whitespace-nowrap transition-all flex items-center gap-1 ${
-                selectedLanguage === opt.id
-                  ? opt.id === 'for_you'
-                    ? 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white shadow-md font-bold'
-                    : opt.id === 'trending'
-                    ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-black shadow-md font-bold'
-                    : 'bg-electric-cyan text-black shadow-md font-bold'
-                  : 'bg-dark-850 hover:bg-dark-800 text-slate-300 hover:text-white border border-white/5 font-semibold'
-              }`}
-            >
-              {opt.label}
-            </button>
-          ))}
+        {/* Filter Pills Bar (Explore Section - Clean & Simple) */}
+        <div className="bg-dark-950 px-4 py-2.5 border-b border-white/5 flex items-center gap-2 overflow-x-auto no-scrollbar">
+          <span className="text-[11px] font-mono text-slate-400 uppercase tracking-wider shrink-0 mr-1">Explore:</span>
+          {languageOptions.map((opt) => {
+            const isSelected = selectedLanguage === opt.id;
+            return (
+              <button
+                key={opt.id}
+                onClick={() => handleLanguageChange(opt.id)}
+                className={`px-3.5 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
+                  isSelected
+                    ? 'bg-cyan-400 text-black font-semibold shadow-sm'
+                    : 'bg-dark-850 hover:bg-dark-800 text-slate-300 hover:text-white border border-white/5'
+                }`}
+              >
+                {opt.label}
+              </button>
+            );
+          })}
         </div>
 
         {/* Tab Toggle */}
@@ -1067,7 +1066,7 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
               </div>
 
               <div className="p-3 rounded-xl bg-dark-950 border border-white/5 text-xs text-slate-400">
-                💡 <strong className="text-slate-300">Tip:</strong> You can paste any direct web audio stream or hosted sound file. When queued, all connected devices will synchronize playback to this URL simultaneously!
+                <strong className="text-slate-300">Tip:</strong> You can paste any direct web audio stream or hosted sound file. When queued, all connected devices will synchronize playback to this URL simultaneously!
               </div>
 
               <button
