@@ -592,9 +592,12 @@ io.on('connection', (socket) => {
     const finalName = (userName && userName.trim()) ? userName.trim() : generateGuestName();
     const avatarColor = savedColor || AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)];
 
-    // Role persistence: If room has 0 active users, or previousRole was host, restore host status
+    // Role persistence: Only restore host if room was empty or user is existing host
     let role = 'listener';
-    if (room.users.size === 0 || previousRole === 'host' || room.hostId === socket.id) {
+    if (room.users.size === 0 || room.hostId === socket.id) {
+      role = 'host';
+      room.hostId = socket.id;
+    } else if (previousRole === 'host' && (!room.hostId || !room.users.has(room.hostId))) {
       role = 'host';
       room.hostId = socket.id;
     } else if (previousRole === 'dj') {
@@ -628,7 +631,8 @@ io.on('connection', (socket) => {
 
     // Broadcast updated user list and join message
     io.to(code).emit('room_users_updated', {
-      users: Array.from(room.users.values())
+      users: Array.from(room.users.values()),
+      hostId: room.hostId
     });
     io.to(code).emit('new_chat_message', joinMessage);
 
@@ -647,7 +651,8 @@ io.on('connection', (socket) => {
     if (user) {
       user.isAudioReady = !!isReady;
       io.to(currentRoomCode).emit('room_users_updated', {
-        users: Array.from(room.users.values())
+        users: Array.from(room.users.values()),
+        hostId: room.hostId
       });
     }
   });
@@ -945,7 +950,8 @@ io.on('connection', (socket) => {
     if (target && targetUserId !== room.hostId) {
       target.role = newRole === 'dj' ? 'dj' : 'listener';
       io.to(currentRoomCode).emit('room_users_updated', {
-        users: Array.from(room.users.values())
+        users: Array.from(room.users.values()),
+        hostId: room.hostId
       });
 
       const promoMsg = {
@@ -1006,6 +1012,48 @@ io.on('connection', (socket) => {
       room.chatMessages.push(kickMsg);
       io.to(currentRoomCode).emit('new_chat_message', kickMsg);
     }
+  });
+
+  // 7c. Simulate Demo Guest Device (for instant host kick testing)
+  socket.on('simulate_guest_join', () => {
+    if (!currentRoomCode) return;
+    const room = rooms.get(currentRoomCode);
+    if (!room) return;
+
+    const host = room.users.get(socket.id);
+    if (!host || host.role !== 'host') return;
+
+    const demoId = `demo-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    const demoDevices = ['iPhone 15 Pro', 'Pixel 8', 'Galaxy S24', 'iPad Air', 'MacBook Air', 'OnePlus 12'];
+    const demoName = `${demoDevices[Math.floor(Math.random() * demoDevices.length)]} (Guest)`;
+    const demoColor = AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)];
+
+    const demoUser = {
+      id: demoId,
+      name: demoName,
+      role: 'listener',
+      isAudioReady: true,
+      avatarColor: demoColor,
+      joinedAt: Date.now(),
+      isDemo: true
+    };
+
+    room.users.set(demoId, demoUser);
+
+    io.to(currentRoomCode).emit('room_users_updated', {
+      users: Array.from(room.users.values()),
+      hostId: room.hostId
+    });
+
+    const joinMsg = {
+      id: `msg-${Date.now()}`,
+      user: { name: 'System', role: 'system', avatarColor: '#00f0ff' },
+      text: `📱 ${demoName} joined the party!`,
+      timestamp: Date.now(),
+      isSystem: true
+    };
+    room.chatMessages.push(joinMsg);
+    io.to(currentRoomCode).emit('new_chat_message', joinMsg);
   });
 
   // 8. Live Chat & Floating Reactions

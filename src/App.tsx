@@ -221,10 +221,8 @@ export function App() {
       if (data.hostId) setHostId(data.hostId);
 
       // Update current user's role if modified
-      if (currentUser) {
-        const updatedSelf = data.users.find((u) => u.id === socket.id);
-        if (updatedSelf) setCurrentUser(updatedSelf);
-      }
+      const updatedSelf = data.users.find((u) => u.id === socket.id || (currentUser && u.id === currentUser.id));
+      if (updatedSelf) setCurrentUser(updatedSelf);
     };
 
     const handleQueueUpdated = (data: { queue: Track[] }) => {

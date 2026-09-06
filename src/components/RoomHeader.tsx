@@ -90,7 +90,13 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  const isHost = currentUser?.id === hostId || currentUser?.role === 'host';
+  const isHost = Boolean(
+    currentUser && (
+      currentUser.role === 'host' ||
+      (hostId && currentUser.id === hostId) ||
+      users.some((u) => u.id === currentUser.id && u.role === 'host')
+    )
+  );
 
   const currentPort = window.location.port ? `:${window.location.port}` : '';
   const mobileRoomUrl = networkIp
@@ -178,8 +184,12 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
   };
 
   const handleKickUser = (targetUser: User) => {
-    if (!isHost || targetUser.id === hostId) return;
+    if (!isHost || targetUser.id === currentUser?.id) return;
     setUserToKick(targetUser);
+  };
+
+  const handleSimulateGuest = () => {
+    socket.emit('simulate_guest_join');
   };
 
   const handleRefresh = () => {
@@ -423,7 +433,7 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
             {showUsersModal && (
               <div
                 onClick={(e) => e.stopPropagation()}
-                className="absolute right-0 top-full mt-2 z-50 w-72 sm:w-84 max-w-[calc(100vw-24px)] max-h-[70vh] bg-dark-900 border border-white/15 rounded-2xl shadow-2xl overflow-hidden animate-popover-spring flex flex-col"
+                className="absolute right-0 top-full mt-2 z-50 w-80 sm:w-96 max-w-[calc(100vw-24px)] max-h-[75vh] bg-dark-900 border border-white/15 rounded-2xl shadow-2xl overflow-hidden animate-popover-spring flex flex-col"
               >
                 {/* Popover Header */}
                 <div className="p-3 border-b border-white/10 flex items-center justify-between bg-dark-950/70 shrink-0">
@@ -546,39 +556,51 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
                   {users.map((u) => {
                     const isUserHost = u.id === hostId || u.role === 'host';
                     const isUserDj = u.role === 'dj';
-                    const isMe = u.id === currentUser?.id;
+                    const isMe = Boolean(
+                      currentUser && (u.id === currentUser.id || (socket.id && u.id === socket.id))
+                    );
+                    const canManage = isHost && !isMe;
 
                     return (
                       <div
                         key={u.id}
-                        className="flex items-center justify-between p-2 rounded-xl bg-dark-950 border border-white/5 hover:border-white/10 transition-colors"
+                        className={`flex items-center justify-between p-2.5 rounded-xl border transition-colors ${
+                          isMe
+                            ? 'bg-dark-950/90 border-electric-cyan/20 shadow-sm'
+                            : 'bg-dark-950 border-white/5 hover:border-white/10'
+                        }`}
                       >
-                        <div className="flex items-center gap-2 min-w-0">
+                        <div className="flex items-center gap-2.5 min-w-0">
                           <div
                             style={{ backgroundColor: u.avatarColor || '#00f0ff' }}
-                            className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-black shadow-sm shrink-0"
+                            className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-black shadow-sm shrink-0"
                           >
                             {u.name.charAt(0)}
                           </div>
                           <div className="min-w-0">
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-xs font-semibold text-white truncate">
-                                {u.name} {isMe && '(You)'}
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="text-xs font-semibold text-white truncate max-w-[110px] sm:max-w-[140px]">
+                                {u.name}
                               </span>
+                              {isMe && (
+                                <span className="text-[9px] bg-electric-cyan/15 text-electric-cyan px-1.5 py-0.2 rounded-full border border-electric-cyan/30 font-semibold shrink-0">
+                                  You
+                                </span>
+                              )}
                               {isUserHost && (
-                                <span className="flex items-center gap-0.5 text-[9px] bg-amber-500/20 text-amber-400 px-1.5 py-0.2 rounded-full border border-amber-500/30 shrink-0">
+                                <span className="flex items-center gap-0.5 text-[9px] bg-amber-500/20 text-amber-400 px-1.5 py-0.2 rounded-full border border-amber-500/30 shrink-0 font-medium">
                                   <Crown className="w-2.5 h-2.5" /> Host
                                 </span>
                               )}
                               {isUserDj && !isUserHost && (
-                                <span className="flex items-center gap-0.5 text-[9px] bg-purple-500/20 text-purple-300 px-1.5 py-0.2 rounded-full border border-purple-500/30 shrink-0">
+                                <span className="flex items-center gap-0.5 text-[9px] bg-purple-500/20 text-purple-300 px-1.5 py-0.2 rounded-full border border-purple-500/30 shrink-0 font-medium">
                                   <Disc3 className="w-2.5 h-2.5" /> DJ
                                 </span>
                               )}
                             </div>
-                            <div className="flex items-center gap-1.5 text-[10px] text-slate-400">
+                            <div className="flex items-center gap-1.5 text-[10px] text-slate-400 mt-0.5">
                               {u.isAudioReady ? (
-                                <span className="flex items-center gap-1 text-emerald-400">
+                                <span className="flex items-center gap-1 text-emerald-400 font-medium">
                                   <Volume2 className="w-2.5 h-2.5" /> Active
                                 </span>
                               ) : (
@@ -586,18 +608,21 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
                                   <VolumeX className="w-2.5 h-2.5" /> Tap to play
                                 </span>
                               )}
+                              {isMe && isHost && (
+                                <span className="text-slate-500 text-[9px]">• Host device</span>
+                              )}
                             </div>
                           </div>
                         </div>
 
                         {/* Host controls: Role toggle & Kick Device */}
-                        {isHost && !isUserHost && (
-                          <div className="flex items-center gap-1 shrink-0 ml-1">
+                        {canManage ? (
+                          <div className="flex items-center gap-1.5 shrink-0 ml-2">
                             <button
                               onClick={() => handleToggleRole(u)}
-                              className={`text-[10px] px-2 py-0.5 rounded-lg border font-medium transition-colors ${
+                              className={`text-[10px] px-2 py-1 rounded-lg border font-medium transition-colors ${
                                 isUserDj
-                                  ? 'bg-purple-950/40 text-purple-300 border-purple-500/30 hover:bg-purple-900/50'
+                                  ? 'bg-purple-950/50 text-purple-300 border-purple-500/40 hover:bg-purple-900/60'
                                   : 'bg-dark-850 text-slate-300 border-white/10 hover:border-purple-500/30 hover:text-purple-300'
                               }`}
                               title={isUserDj ? 'Demote to listener' : 'Promote to DJ'}
@@ -607,17 +632,66 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
 
                             <button
                               onClick={() => handleKickUser(u)}
-                              className="p-1 px-1.5 rounded-lg bg-red-950/40 hover:bg-red-900/60 border border-red-500/30 hover:border-red-500/60 text-red-400 hover:text-red-300 text-[10px] font-medium flex items-center gap-1 transition-all active:scale-95"
+                              className="p-1 px-2 rounded-lg bg-red-500/15 hover:bg-red-500/25 border border-red-500/35 hover:border-red-500/60 text-red-400 hover:text-red-300 text-[10px] font-bold flex items-center gap-1 transition-all active:scale-95 shadow-sm shadow-red-500/10"
                               title={`Kick "${u.name}" from room`}
                             >
                               <UserX className="w-3 h-3" />
                               <span>Kick</span>
                             </button>
                           </div>
-                        )}
+                        ) : isMe ? (
+                          <span className="text-[10px] text-slate-500 italic pr-1">Host</span>
+                        ) : null}
                       </div>
                     );
                   })}
+
+                  {/* If no other devices connected yet, explain clearly how Kick works & offer 1-click test */}
+                  {isHost && users.filter((u) => u.id !== currentUser?.id).length === 0 && (
+                    <div className="p-3 rounded-xl bg-dark-950/80 border border-dashed border-white/15 text-center space-y-2 mt-2">
+                      <div className="flex items-center justify-center gap-1.5 text-amber-400 text-xs font-semibold">
+                        <Crown className="w-3.5 h-3.5" />
+                        <span>1 Device Connected (Host)</span>
+                      </div>
+                      <p className="text-[11px] text-slate-400 leading-relaxed px-1">
+                        You cannot kick your own device. When other phones or laptops join using Room Code <span className="font-mono text-electric-cyan font-bold">{roomCode}</span> or QR code, a red <span className="text-red-400 font-bold">Kick</span> button will appear next to their name.
+                      </p>
+                      <div className="flex items-center justify-center gap-2 pt-1 flex-wrap">
+                        <button
+                          onClick={() => {
+                            setShowUsersModal(false);
+                            setShowQrModal(true);
+                          }}
+                          className="text-[11px] px-2.5 py-1.5 rounded-lg bg-electric-cyan/15 hover:bg-electric-cyan/25 text-electric-cyan border border-electric-cyan/30 transition-all flex items-center gap-1 font-semibold active:scale-95"
+                        >
+                          <QrCode className="w-3.5 h-3.5" />
+                          <span>Scan QR to Connect Device</span>
+                        </button>
+                        <button
+                          onClick={handleSimulateGuest}
+                          className="text-[11px] px-2.5 py-1.5 rounded-lg bg-purple-500/15 hover:bg-purple-500/25 text-purple-300 border border-purple-500/30 transition-all flex items-center gap-1 font-semibold active:scale-95"
+                          title="Add a demo guest device to test Kick feature immediately"
+                        >
+                          <span>⚡ Add Demo Device to Test</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Helpful footer text when guest devices exist */}
+                  {isHost && users.filter((u) => u.id !== currentUser?.id).length > 0 && (
+                    <div className="flex items-center justify-between px-1 pt-1.5 text-[10px]">
+                      <span className="text-slate-500">
+                        Tap <span className="text-red-400 font-semibold">Kick</span> to disconnect any device
+                      </span>
+                      <button
+                        onClick={handleSimulateGuest}
+                        className="text-purple-400 hover:text-purple-300 underline font-medium"
+                      >
+                        + Add test device
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Popover Footer */}
