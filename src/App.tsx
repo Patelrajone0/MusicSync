@@ -188,6 +188,30 @@ export function App() {
     });
   }, [currentUser, currentTrack, isAudioUnlocked]);
 
+  const handleLeaveRoom = () => {
+    clearStoredSession();
+    setRoomCode(null);
+    setCurrentUser(null);
+    setUsers([]);
+    setQueue([]);
+    setCurrentTrack(null);
+    setPlaybackState({
+      status: 'stopped',
+      scheduledServerTime: 0,
+      scheduledPosition: 0,
+      lastPausedPosition: 0,
+      duration: 0,
+    });
+    setChatMessages([]);
+    syncEngine.pausePlayback();
+    mediaSessionService.updateMetadata(null);
+    socket.disconnect();
+    socket.connect();
+
+    const cleanUrl = window.location.pathname;
+    window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
+  };
+
   // Socket.io Real-Time Room Event Listeners
   useEffect(() => {
     if (!roomCode) return;
@@ -260,6 +284,11 @@ export function App() {
       }, 3500);
     };
 
+    const handleKickedFromRoom = (data: { reason?: string }) => {
+      alert(data?.reason || 'You were removed from the room by the host.');
+      handleLeaveRoom();
+    };
+
     socket.on('room_users_updated', handleRoomUsersUpdated);
     socket.on('queue_updated', handleQueueUpdated);
     socket.on('playback_scheduled', handlePlaybackScheduled);
@@ -267,6 +296,7 @@ export function App() {
     socket.on('playback_seeked', handlePlaybackSeeked);
     socket.on('new_chat_message', handleNewChatMessage);
     socket.on('master_volume_updated', handleMasterVolumeUpdated);
+    socket.on('kicked_from_room', handleKickedFromRoom);
 
     return () => {
       socket.off('room_users_updated', handleRoomUsersUpdated);
@@ -276,6 +306,7 @@ export function App() {
       socket.off('playback_seeked', handlePlaybackSeeked);
       socket.off('new_chat_message', handleNewChatMessage);
       socket.off('master_volume_updated', handleMasterVolumeUpdated);
+      socket.off('kicked_from_room', handleKickedFromRoom);
     };
   }, [roomCode, currentUser]);
 
@@ -320,28 +351,6 @@ export function App() {
         room.playbackState.scheduledPosition
       );
     }
-  };
-
-  const handleLeaveRoom = () => {
-    clearStoredSession();
-    setRoomCode(null);
-    setCurrentUser(null);
-    setUsers([]);
-    setQueue([]);
-    setCurrentTrack(null);
-    setPlaybackState({
-      status: 'stopped',
-      scheduledServerTime: 0,
-      scheduledPosition: 0,
-      lastPausedPosition: 0,
-      duration: 0,
-    });
-    setChatMessages([]);
-    socket.disconnect();
-    socket.connect();
-
-    const cleanUrl = window.location.pathname;
-    window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
   };
 
   // Auto-reconnect on refresh effect: restores room session seamlessly

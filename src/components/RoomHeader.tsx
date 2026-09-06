@@ -5,6 +5,8 @@ import {
   Check,
   QrCode,
   Users,
+  UserX,
+  Smartphone,
   Crown,
   Disc3,
   Headphones,
@@ -170,6 +172,13 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
     socket.emit('set_user_role', { targetUserId: targetUser.id, newRole });
   };
 
+  const handleKickUser = (targetUser: User) => {
+    if (!isHost || targetUser.id === hostId) return;
+    if (window.confirm(`Are you sure you want to remove "${targetUser.name}" from this room?`)) {
+      socket.emit('kick_user', { targetUserId: targetUser.id });
+    }
+  };
+
   const handleRefresh = () => {
     window.location.reload();
   };
@@ -271,7 +280,7 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
                       <QrCode className="w-4 h-4" />
                     </div>
                     <div>
-                      <h4 className="text-xs font-bold text-white leading-tight">Join as Speaker</h4>
+                      <h4 className="text-xs font-bold text-white leading-tight">Connect Device</h4>
                       <p className="text-[10px] text-slate-400 leading-tight">Scan with phone camera</p>
                     </div>
                   </div>
@@ -378,7 +387,7 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
             )}
           </div>
 
-          {/* Connected Speakers Popover right at the button */}
+          {/* Connected Devices Popover right at the button */}
           <div className="relative shrink-0">
             <button
               onClick={handleOpenUsers}
@@ -387,10 +396,10 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
                   ? 'bg-electric-cyan/20 border-electric-cyan text-white shadow-lg shadow-electric-cyan/20'
                   : 'bg-dark-850 hover:bg-dark-800 border-white/10'
               }`}
-              title="Connected Party Speakers"
+              title="Connected Devices"
             >
               <div className="flex items-center gap-1">
-                <Users className="w-3.5 h-3.5 text-electric-cyan sm:hidden" />
+                <Smartphone className="w-3.5 h-3.5 text-electric-cyan sm:hidden" />
                 <div className="hidden sm:flex -space-x-1.5 overflow-hidden">
                   {users.slice(0, 3).map((u) => (
                     <div
@@ -403,11 +412,11 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
                   ))}
                 </div>
                 <span className="font-semibold text-white text-xs">{users.length}</span>
-                <span className="text-slate-400 hidden lg:inline">Speakers</span>
+                <span className="text-slate-400 hidden lg:inline">Devices</span>
               </div>
             </button>
 
-            {/* Speakers Popover Menu */}
+            {/* Devices Popover Menu */}
             {showUsersModal && (
               <div
                 onClick={(e) => e.stopPropagation()}
@@ -417,16 +426,16 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
                 <div className="p-3 border-b border-white/10 flex items-center justify-between bg-dark-950/70 shrink-0">
                   <div className="flex items-center gap-2">
                     <div className="p-1.5 rounded-lg bg-electric-cyan/10 text-electric-cyan">
-                      <Users className="w-4 h-4" />
+                      <Smartphone className="w-4 h-4" />
                     </div>
                     <div>
                       <div className="flex items-center gap-1.5">
-                        <h4 className="text-xs font-bold text-white leading-tight">Party Speakers</h4>
+                        <h4 className="text-xs font-bold text-white leading-tight">Connected Devices</h4>
                         <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-electric-cyan/10 text-electric-cyan border border-electric-cyan/30 font-mono font-bold">
                           {users.length}
                         </span>
                       </div>
-                      <p className="text-[10px] text-slate-400 leading-tight">Connected & synced</p>
+                      <p className="text-[10px] text-slate-400 leading-tight">Synced audio network</p>
                     </div>
                   </div>
                   <button
@@ -578,18 +587,30 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
                           </div>
                         </div>
 
-                        {/* Host role control */}
+                        {/* Host controls: Role toggle & Kick Device */}
                         {isHost && !isUserHost && (
-                          <button
-                            onClick={() => handleToggleRole(u)}
-                            className={`text-[10px] px-2 py-0.5 rounded-lg border font-medium transition-colors shrink-0 ml-1 ${
-                              isUserDj
-                                ? 'bg-red-950/40 text-red-400 border-red-500/30 hover:bg-red-900/50'
-                                : 'bg-purple-950/40 text-purple-300 border-purple-500/30 hover:bg-purple-900/50'
-                            }`}
-                          >
-                            {isUserDj ? 'Demote' : 'Make DJ'}
-                          </button>
+                          <div className="flex items-center gap-1 shrink-0 ml-1">
+                            <button
+                              onClick={() => handleToggleRole(u)}
+                              className={`text-[10px] px-2 py-0.5 rounded-lg border font-medium transition-colors ${
+                                isUserDj
+                                  ? 'bg-purple-950/40 text-purple-300 border-purple-500/30 hover:bg-purple-900/50'
+                                  : 'bg-dark-850 text-slate-300 border-white/10 hover:border-purple-500/30 hover:text-purple-300'
+                              }`}
+                              title={isUserDj ? 'Demote to listener' : 'Promote to DJ'}
+                            >
+                              {isUserDj ? 'DJ' : 'Make DJ'}
+                            </button>
+
+                            <button
+                              onClick={() => handleKickUser(u)}
+                              className="p-1 px-1.5 rounded-lg bg-red-950/40 hover:bg-red-900/60 border border-red-500/30 hover:border-red-500/60 text-red-400 hover:text-red-300 text-[10px] font-medium flex items-center gap-1 transition-all active:scale-95"
+                              title={`Kick "${u.name}" from room`}
+                            >
+                              <UserX className="w-3 h-3" />
+                              <span>Kick</span>
+                            </button>
+                          </div>
                         )}
                       </div>
                     );

@@ -960,6 +960,54 @@ io.on('connection', (socket) => {
     }
   });
 
+  // 7b. Kick Device / User from Room (Host Only)
+  socket.on('kick_user', ({ targetUserId }) => {
+    if (!currentRoomCode) return;
+    const room = rooms.get(currentRoomCode);
+    if (!room) return;
+
+    const host = room.users.get(socket.id);
+    if (!host || host.role !== 'host') {
+      return socket.emit('error_message', 'Only Room Host can remove devices.');
+    }
+
+    if (!targetUserId || targetUserId === room.hostId || targetUserId === socket.id) {
+      return socket.emit('error_message', 'Cannot remove host device.');
+    }
+
+    const target = room.users.get(targetUserId);
+    if (target) {
+      room.users.delete(targetUserId);
+
+      // Notify the target socket that they were removed
+      io.to(targetUserId).emit('kicked_from_room', {
+        reason: 'You were removed from the room by the host.'
+      });
+
+      // Leave socket.io room channel
+      const targetSocket = io.sockets.sockets.get(targetUserId);
+      if (targetSocket) {
+        targetSocket.leave(currentRoomCode);
+      }
+
+      // Broadcast updated users list
+      io.to(currentRoomCode).emit('room_users_updated', {
+        users: Array.from(room.users.values()),
+        hostId: room.hostId
+      });
+
+      const kickMsg = {
+        id: `msg-${Date.now()}`,
+        user: { name: 'System', role: 'system', avatarColor: '#f43f5e' },
+        text: `🚪 ${target.name} was removed from the room by the host.`,
+        timestamp: Date.now(),
+        isSystem: true
+      };
+      room.chatMessages.push(kickMsg);
+      io.to(currentRoomCode).emit('new_chat_message', kickMsg);
+    }
+  });
+
   // 8. Live Chat & Floating Reactions
   socket.on('send_chat', ({ text }) => {
     if (!currentRoomCode || !text || !text.trim()) return;
