@@ -1,5 +1,6 @@
 import { socket } from './socket';
 import { SyncStats, Track } from '../types';
+import { mediaSessionService } from './mediaSession';
 
 class SyncEngine {
   private audioContext: AudioContext | null = null;
@@ -258,6 +259,8 @@ class SyncEngine {
     this.scheduledServerTime = scheduledServerTime;
     this.startPosition = startPosition;
     this.isPlaying = true;
+    mediaSessionService.updateMetadata(track);
+    mediaSessionService.setPlaybackState('playing');
 
     this.initAudio();
 
@@ -312,6 +315,7 @@ class SyncEngine {
   public pausePlayback(atPosition?: number) {
     this.clearScheduledTimers();
     this.isPlaying = false;
+    mediaSessionService.setPlaybackState('paused');
 
     if (this.audioElement) {
       this.audioElement.pause();
@@ -436,7 +440,23 @@ class SyncEngine {
   }
 
   private notifyPositionUpdate(pos: number, dur: number) {
+    mediaSessionService.setPositionState(pos, dur, this.audioElement?.playbackRate || 1.0);
     this.onPositionUpdateCallbacks.forEach((cb) => cb(pos, dur));
+  }
+
+  public getCurrentPosition(): number {
+    return this.audioElement ? this.audioElement.currentTime : 0;
+  }
+
+  public getCurrentTrack(): Track | null {
+    return this.currentTrack;
+  }
+
+  public resumeLocalAudio() {
+    if (this.audioElement) {
+      this.executePlay(this.audioElement.currentTime);
+      mediaSessionService.setPlaybackState('playing');
+    }
   }
 
   public cleanup() {

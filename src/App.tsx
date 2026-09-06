@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { socket } from './services/socket';
 import { syncEngine } from './services/syncEngine';
+import { mediaSessionService } from './services/mediaSession';
 import {
   Track,
   User,
@@ -134,6 +135,58 @@ export function App() {
     });
     return unsub;
   }, []);
+
+  // Synchronize Room Code with Native MediaSession
+  useEffect(() => {
+    if (roomCode) {
+      mediaSessionService.setRoomCode(roomCode);
+    }
+  }, [roomCode]);
+
+  // Register Native Mobile Lock Screen, Apple Watch, & Bluetooth Car Audio Action Handlers
+  useEffect(() => {
+    mediaSessionService.setHandlers({
+      onPlay: () => {
+        if (!isAudioUnlocked) {
+          handleUnlockAudio();
+        }
+        if (currentUser?.role === 'host' || currentUser?.role === 'dj') {
+          socket.emit('request_play', {
+            track: currentTrack,
+            position: syncEngine.getCurrentPosition(),
+          });
+        } else {
+          syncEngine.resumeLocalAudio();
+        }
+      },
+      onPause: () => {
+        if (currentUser?.role === 'host' || currentUser?.role === 'dj') {
+          socket.emit('request_pause');
+        } else {
+          syncEngine.pausePlayback();
+        }
+      },
+      onSkip: () => {
+        if (currentUser?.role === 'host' || currentUser?.role === 'dj') {
+          socket.emit('request_skip');
+        }
+      },
+      onPrevious: () => {
+        if (currentUser?.role === 'host' || currentUser?.role === 'dj') {
+          socket.emit('request_seek', { position: 0 });
+        } else {
+          syncEngine.seekPlayback(0);
+        }
+      },
+      onSeek: (seekTime: number) => {
+        if (currentUser?.role === 'host' || currentUser?.role === 'dj') {
+          socket.emit('request_seek', { position: seekTime });
+        } else {
+          syncEngine.seekPlayback(seekTime);
+        }
+      },
+    });
+  }, [currentUser, currentTrack, isAudioUnlocked]);
 
   // Socket.io Real-Time Room Event Listeners
   useEffect(() => {

@@ -242,9 +242,16 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
               <div className="min-w-0 overflow-hidden pr-1">
                 <h4 className="text-xs sm:text-sm font-semibold text-white truncate">{currentTrack.title}</h4>
                 <p className="text-[11px] sm:text-xs text-slate-400 truncate">{currentTrack.artist}</p>
-                <div className="hidden sm:flex items-center gap-1.5 mt-0.5">
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-dark-800 border border-white/5 text-slate-400 font-mono">
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <span className="hidden sm:inline-block text-[10px] px-1.5 py-0.5 rounded bg-dark-800 border border-white/5 text-slate-400 font-mono">
                     {currentTrack.source}
+                  </span>
+                  <span
+                    className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded bg-cyan-950/60 border border-cyan-500/20 text-cyan-300 font-mono"
+                    title="Lock Screen, Apple Watch & Bluetooth Car Audio synced via MediaSession"
+                  >
+                    <Radio className="w-2.5 h-2.5 text-cyan-400 animate-pulse" />
+                    <span>Lock Screen Sync</span>
                   </span>
                 </div>
               </div>
