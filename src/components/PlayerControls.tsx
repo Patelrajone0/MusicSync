@@ -24,7 +24,6 @@ interface PlayerControlsProps {
   isAudioUnlocked: boolean;
   onUnlockAudio: () => void;
   onOpenSearch: () => void;
-  onOpenDiagnostics: () => void;
   masterVolume?: number;
   masterVolumeNotice?: { volume: number; setBy: string } | null;
 }
@@ -37,7 +36,6 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
   isAudioUnlocked,
   onUnlockAudio,
   onOpenSearch,
-  onOpenDiagnostics,
   masterVolume,
   masterVolumeNotice,
 }) => {
@@ -300,26 +298,8 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
           </button>
         </div>
 
-        {/* Right Section: Volume & Sync Diagnostics */}
+        {/* Right Section: Volume Controls */}
         <div className="flex items-center justify-end gap-2 sm:gap-3 flex-1 md:max-w-md">
-          {/* Sync status pill */}
-          <button
-            onClick={onOpenDiagnostics}
-            className={`hidden sm:flex items-center gap-2 px-2.5 py-1.5 rounded-full text-xs font-mono border transition-all active:scale-95 ${
-              syncStats.isLocked
-                ? 'bg-emerald-950/40 text-emerald-400 border-emerald-500/30 hover:border-emerald-400'
-                : 'bg-dark-850 text-slate-400 border-white/10 hover:border-electric-cyan/40'
-            }`}
-            title="Open Sync & NTP Calibration Diagnostics"
-          >
-            <span
-              className={`w-2 h-2 rounded-full ${
-                syncStats.isLocked ? 'bg-emerald-400 animate-ping' : 'bg-electric-cyan'
-              }`}
-            />
-            <span>{syncStats.rtt}ms RTT</span>
-          </button>
-
           {/* Volume Control Dock */}
           <div className="relative flex items-center gap-2">
             {/* Master Volume Notice HUD Toast */}

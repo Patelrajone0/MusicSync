@@ -16,10 +16,9 @@ import { PlayerControls } from './components/PlayerControls';
 import { QueueList } from './components/QueueList';
 import { LiveChatAndReactions } from './components/LiveChatAndReactions';
 import { MusicSearchModal } from './components/MusicSearchModal';
-import { SyncDiagnosticsModal } from './components/SyncDiagnosticsModal';
 import { PlaybackHistoryModal } from './components/PlaybackHistoryModal';
 import { Logo } from './components/Logo';
-import { Volume2, Radio, Disc, Sparkles, Layers, ShieldCheck, Plus, History, MessageSquare, Music2 } from 'lucide-react';
+import { Volume2, Radio, Disc, Sparkles, Layers, Plus, History, MessageSquare, Music2 } from 'lucide-react';
 
 import { userTasteEngine } from './services/userTaste';
 
@@ -107,7 +106,6 @@ export function App() {
 
   // Modals state
   const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
-  const [isDiagnosticsOpen, setIsDiagnosticsOpen] = useState<boolean>(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState<boolean>(false);
   const [isChatVisible, setIsChatVisible] = useState<boolean>(false);
 
@@ -443,14 +441,6 @@ export function App() {
               <History className="w-3.5 h-3.5 text-slate-400" />
               <span>History</span>
             </button>
-
-            <button
-              onClick={() => setIsDiagnosticsOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-dark-800 hover:bg-dark-750 border border-white/5 text-slate-300 hover:text-white text-xs font-medium transition-colors"
-            >
-              <ShieldCheck className="w-3.5 h-3.5 text-cyan-400" />
-              <span>Sync Health</span>
-            </button>
           </div>
 
           {/* Toggle Chat Button */}
@@ -584,7 +574,6 @@ export function App() {
         isAudioUnlocked={isAudioUnlocked}
         onUnlockAudio={handleUnlockAudio}
         onOpenSearch={handleOpenSearch}
-        onOpenDiagnostics={() => setIsDiagnosticsOpen(true)}
         masterVolume={masterVolume}
         masterVolumeNotice={masterVolumeNotice}
       />
@@ -596,13 +585,6 @@ export function App() {
           onClose={() => setIsSearchOpen(false)}
         />
       )}
-
-      {/* 5. NTP Telemetry & Sync Diagnostics Modal */}
-      <SyncDiagnosticsModal
-        isOpen={isDiagnosticsOpen}
-        onClose={() => setIsDiagnosticsOpen(false)}
-        syncStats={syncStats}
-      />
 
       {/* 6. Playback History Modal */}
       <PlaybackHistoryModal
