@@ -227,6 +227,9 @@ export function App() {
 
     const handleQueueUpdated = (data: { queue: Track[] }) => {
       setQueue(data.queue);
+      if (data.queue && data.queue.length > 0 && data.queue[0]) {
+        syncEngine.preloadNextTrack(data.queue[0]);
+      }
     };
 
     const handlePlaybackScheduled = (data: {

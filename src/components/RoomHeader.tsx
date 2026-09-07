@@ -189,10 +189,6 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
     setUserToKick(targetUser);
   };
 
-  const handleSimulateGuest = () => {
-    socket.emit('simulate_guest_join');
-  };
-
   const handleRefresh = () => {
     window.location.reload();
   };
@@ -654,23 +650,16 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
                       <p className="text-[11px] text-slate-400 leading-relaxed px-1">
                         You cannot kick your own device. When other phones or laptops join using Room Code <span className="font-mono text-electric-cyan font-bold">{roomCode}</span> or QR code, the <span className="text-amber-400 font-bold">Make Host</span> and <span className="text-red-400 font-bold">Kick</span> buttons will appear next to their name.
                       </p>
-                      <div className="flex items-center justify-center gap-2 pt-1 flex-wrap">
+                      <div className="flex items-center justify-center pt-1">
                         <button
                           onClick={() => {
                             setShowUsersModal(false);
                             setShowQrModal(true);
                           }}
-                          className="text-[11px] px-2.5 py-1.5 rounded-lg bg-electric-cyan/15 hover:bg-electric-cyan/25 text-electric-cyan border border-electric-cyan/30 transition-all flex items-center gap-1 font-semibold active:scale-95"
+                          className="text-[11px] px-3 py-1.5 rounded-lg bg-electric-cyan/15 hover:bg-electric-cyan/25 text-electric-cyan border border-electric-cyan/30 transition-all flex items-center gap-1.5 font-semibold active:scale-95"
                         >
                           <QrCode className="w-3.5 h-3.5" />
                           <span>Scan QR to Connect Device</span>
-                        </button>
-                        <button
-                          onClick={handleSimulateGuest}
-                          className="text-[11px] px-2.5 py-1.5 rounded-lg bg-purple-500/15 hover:bg-purple-500/25 text-purple-300 border border-purple-500/30 transition-all flex items-center gap-1 font-semibold active:scale-95"
-                          title="Add a demo guest device to test Kick feature immediately"
-                        >
-                          <span>⚡ Add Demo Device to Test</span>
                         </button>
                       </div>
                     </div>
@@ -678,16 +667,8 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
 
                   {/* Helpful footer text when guest devices exist */}
                   {isHost && users.filter((u) => u.id !== currentUser?.id).length > 0 && (
-                    <div className="flex items-center justify-between px-1 pt-1.5 text-[10px]">
-                      <span className="text-slate-500">
-                        Tap <span className="text-amber-400 font-semibold">Make Host</span> to transfer host, or <span className="text-red-400 font-semibold">Kick</span> to remove
-                      </span>
-                      <button
-                        onClick={handleSimulateGuest}
-                        className="text-purple-400 hover:text-purple-300 underline font-medium"
-                      >
-                        + Add test device
-                      </button>
+                    <div className="px-1 pt-1.5 text-[10px] text-slate-500 text-center">
+                      Tap <span className="text-amber-400 font-semibold">Make Host</span> to transfer host, or <span className="text-red-400 font-semibold">Kick</span> to remove
                     </div>
                   )}
                 </div>

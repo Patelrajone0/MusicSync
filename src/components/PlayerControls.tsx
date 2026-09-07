@@ -126,6 +126,26 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
     });
   }, [repeatMode, canControl, currentTrack]);
 
+  // Preload upcoming queue track in standby deck for zero-gap transition
+  useEffect(() => {
+    if (queue && queue.length > 0 && queue[0]) {
+      syncEngine.preloadNextTrack(queue[0]);
+    }
+  }, [queue]);
+
+  // Sync repeat mode updates from room host
+  useEffect(() => {
+    const handleRepeatUpdated = ({ repeatMode: mode }: { repeatMode: 'off' | 'all' | 'one' }) => {
+      if (['off', 'all', 'one'].includes(mode)) {
+        setRepeatMode(mode);
+      }
+    };
+    socket.on('repeat_mode_updated', handleRepeatUpdated);
+    return () => {
+      socket.off('repeat_mode_updated', handleRepeatUpdated);
+    };
+  }, []);
+
   // Trigger smooth micro-bounce animation on click
   const triggerBtnAnimation = (btnName: string) => {
     setAnimatingBtn(btnName);
@@ -208,6 +228,10 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
     try {
       localStorage.setItem('musicsync_repeat_mode', nextMode);
     } catch {}
+
+    if (canControl) {
+      socket.emit('set_repeat_mode', { mode: nextMode });
+    }
 
     if (nextMode === 'one') {
       setStatusToast('Repeat: Track');
@@ -620,6 +644,27 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
                 )}
               </button>
             )}
+
+            {/* Gapless Crossfade Mode Badge */}
+            <button
+              type="button"
+              onClick={() => {
+                const cur = syncEngine.getCrossfadeDuration();
+                const next = cur > 0 ? 0 : 2.5;
+                syncEngine.setCrossfadeDuration(next);
+                setStatusToast(next > 0 ? '✨ 2.5s DJ Crossfade Active' : 'Crossfade Off (Cut)');
+                setTimeout(() => setStatusToast(null), 1800);
+              }}
+              className={`hidden lg:flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono border transition-all active:scale-95 ${
+                syncEngine.getCrossfadeDuration() > 0
+                  ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/20'
+                  : 'bg-dark-850 text-slate-500 border-white/5 hover:text-slate-400'
+              }`}
+              title="Click to toggle Gapless DJ Audio Crossfade between songs"
+            >
+              <Sparkles className="w-2.5 h-2.5 text-emerald-400" />
+              <span>{syncEngine.getCrossfadeDuration() > 0 ? '2.5s Fade' : 'Cut'}</span>
+            </button>
 
             {/* Mute Button */}
             <button

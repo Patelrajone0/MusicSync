@@ -105,6 +105,131 @@ function sortQueue(queue) {
 }
 
 // ----------------------------------------------------
+// SERVER-SIDE AUTHORITATIVE AUTO-ADVANCE & REPEAT CORE
+// ----------------------------------------------------
+const BUFFER_LEAD_MS = 1200;
+
+function clearServerAutoAdvance(room) {
+  if (room && room.autoAdvanceTimer) {
+    clearTimeout(room.autoAdvanceTimer);
+    room.autoAdvanceTimer = null;
+  }
+}
+
+function scheduleServerAutoAdvance(roomCode) {
+  if (!roomCode) return;
+  const room = rooms.get(roomCode);
+  if (!room || !room.currentTrack || room.playbackState.status !== 'playing') {
+    return;
+  }
+
+  clearServerAutoAdvance(room);
+
+  const duration = room.playbackState.duration || room.currentTrack.duration || 0;
+  if (!duration || duration <= 0) return;
+
+  const scheduledServerTime = room.playbackState.scheduledServerTime || Date.now();
+  const startPosition = room.playbackState.scheduledPosition || 0;
+  const remainingSec = Math.max(0, duration - startPosition);
+  const finishTime = scheduledServerTime + (remainingSec * 1000);
+  // Trigger transition with lead time for seamless gapless crossfade
+  const delayMs = Math.max(500, finishTime - Date.now() - 400);
+
+  room.autoAdvanceTimer = setTimeout(() => {
+    executeAutoAdvance(roomCode);
+  }, delayMs);
+}
+
+function executeAutoAdvance(roomCode) {
+  const room = rooms.get(roomCode);
+  if (!room || room.playbackState.status !== 'playing' || !room.currentTrack) return;
+
+  // 1. Repeat Single Track Mode
+  if (room.repeatMode === 'one') {
+    const scheduledTime = Date.now() + BUFFER_LEAD_MS;
+    room.playbackState = {
+      status: 'playing',
+      scheduledServerTime: scheduledTime,
+      scheduledPosition: 0,
+      lastPausedPosition: 0,
+      duration: room.currentTrack.duration || 0
+    };
+
+    io.to(roomCode).emit('playback_scheduled', {
+      track: room.currentTrack,
+      status: 'playing',
+      scheduledServerTime: scheduledTime,
+      startPosition: 0,
+      serverTime: Date.now()
+    });
+
+    scheduleServerAutoAdvance(roomCode);
+    return;
+  }
+
+  // 2. Advance to next queued track
+  if (room.queue.length > 0) {
+    const nextTrack = room.queue.shift();
+    room.currentTrack = nextTrack;
+    const scheduledTime = Date.now() + BUFFER_LEAD_MS;
+
+    room.playbackState = {
+      status: 'playing',
+      scheduledServerTime: scheduledTime,
+      scheduledPosition: 0,
+      lastPausedPosition: 0,
+      duration: nextTrack.duration || 0
+    };
+
+    io.to(roomCode).emit('queue_updated', { queue: room.queue });
+    io.to(roomCode).emit('playback_scheduled', {
+      track: nextTrack,
+      status: 'playing',
+      scheduledServerTime: scheduledTime,
+      startPosition: 0,
+      serverTime: Date.now()
+    });
+
+    scheduleServerAutoAdvance(roomCode);
+    return;
+  }
+
+  // 3. Queue empty: Repeat All Mode
+  if (room.repeatMode === 'all') {
+    const scheduledTime = Date.now() + BUFFER_LEAD_MS;
+    room.playbackState = {
+      status: 'playing',
+      scheduledServerTime: scheduledTime,
+      scheduledPosition: 0,
+      lastPausedPosition: 0,
+      duration: room.currentTrack.duration || 0
+    };
+
+    io.to(roomCode).emit('playback_scheduled', {
+      track: room.currentTrack,
+      status: 'playing',
+      scheduledServerTime: scheduledTime,
+      startPosition: 0,
+      serverTime: Date.now()
+    });
+
+    scheduleServerAutoAdvance(roomCode);
+    return;
+  }
+
+  // Otherwise, stop playback gracefully
+  room.playbackState.status = 'stopped';
+  room.playbackState.lastPausedPosition = 0;
+  room.playbackState.scheduledPosition = 0;
+  room.playbackState.scheduledServerTime = 0;
+
+  io.to(roomCode).emit('playback_paused', {
+    position: 0,
+    serverTime: Date.now()
+  });
+}
+
+// ----------------------------------------------------
 // REST API ENDPOINTS
 // ----------------------------------------------------
 
@@ -562,7 +687,9 @@ io.on('connection', (socket) => {
           isSystem: true
         }
       ],
-      masterVolume: 0.9
+      masterVolume: 0.9,
+      repeatMode: 'off',
+      autoAdvanceTimer: null
     };
 
     rooms.set(code, newRoom);
@@ -658,9 +785,6 @@ io.on('connection', (socket) => {
   });
 
   // 5. Host / DJ Playback Scheduling Controls
-  // Pre-buffer lead time: 1200ms allows network transit & audio buffer prep
-  const BUFFER_LEAD_MS = 1200;
-
   socket.on('request_play', ({ track, position }) => {
     if (!currentRoomCode) return;
     const room = rooms.get(currentRoomCode);
@@ -704,6 +828,8 @@ io.on('connection', (socket) => {
       startPosition: startPos,
       serverTime: Date.now()
     });
+
+    scheduleServerAutoAdvance(currentRoomCode);
   });
 
   socket.on('request_pause', () => {
@@ -715,6 +841,7 @@ io.on('connection', (socket) => {
     if (!user || (user.role !== 'host' && user.role !== 'dj')) return;
 
     const currentPos = calculateCurrentTrackPosition(room);
+    clearServerAutoAdvance(room);
     room.playbackState.status = 'paused';
     room.playbackState.lastPausedPosition = currentPos;
     room.playbackState.scheduledServerTime = 0;
@@ -749,7 +876,10 @@ io.on('connection', (socket) => {
         startPosition: seekPos,
         serverTime: Date.now()
       });
+
+      scheduleServerAutoAdvance(currentRoomCode);
     } else {
+      clearServerAutoAdvance(room);
       room.playbackState.lastPausedPosition = seekPos;
       io.to(currentRoomCode).emit('playback_seeked', {
         position: seekPos,
@@ -765,6 +895,8 @@ io.on('connection', (socket) => {
 
     const user = room.users.get(socket.id);
     if (!user || (user.role !== 'host' && user.role !== 'dj')) return;
+
+    clearServerAutoAdvance(room);
 
     if (room.queue.length > 0) {
       const nextTrack = room.queue.shift();
@@ -787,6 +919,8 @@ io.on('connection', (socket) => {
         startPosition: 0,
         serverTime: Date.now()
       });
+
+      scheduleServerAutoAdvance(currentRoomCode);
     } else {
       room.playbackState.status = 'stopped';
       room.playbackState.lastPausedPosition = 0;
@@ -856,6 +990,8 @@ io.on('connection', (socket) => {
         startPosition: 0,
         serverTime: Date.now()
       });
+
+      scheduleServerAutoAdvance(currentRoomCode);
       return;
     }
 
@@ -863,6 +999,11 @@ io.on('connection', (socket) => {
     room.queue = sortQueue(room.queue);
 
     io.to(currentRoomCode).emit('queue_updated', { queue: room.queue });
+
+    // If a track was currently playing, refresh auto-advance
+    if (room.playbackState.status === 'playing') {
+      scheduleServerAutoAdvance(currentRoomCode);
+    }
 
     const chatAlert = {
       id: `msg-${Date.now()}`,
@@ -961,6 +1102,20 @@ io.on('connection', (socket) => {
     }
   });
 
+  // 6b. Room Repeat Mode Synchronization
+  socket.on('set_repeat_mode', ({ mode }) => {
+    if (!currentRoomCode) return;
+    const room = rooms.get(currentRoomCode);
+    if (!room) return;
+
+    const user = room.users.get(socket.id);
+    if (!user || (user.role !== 'host' && user.role !== 'dj')) return;
+
+    room.repeatMode = ['off', 'all', 'one'].includes(mode) ? mode : 'off';
+    io.to(currentRoomCode).emit('repeat_mode_updated', { repeatMode: room.repeatMode });
+    scheduleServerAutoAdvance(currentRoomCode);
+  });
+
   // 7. Make Host & Transfer Host Privileges (Host Only)
   socket.on('make_host', ({ targetUserId }) => {
     if (!currentRoomCode) return;
@@ -1008,8 +1163,7 @@ io.on('connection', (socket) => {
     if (!user) return;
 
     const currentHost = room.users.get(room.hostId);
-    if (!currentHost || currentHost.isDemo) {
-      if (currentHost) currentHost.role = 'listener';
+    if (!currentHost) {
       user.role = 'host';
       room.hostId = socket.id;
 
@@ -1109,47 +1263,6 @@ io.on('connection', (socket) => {
     }
   });
 
-  // 7c. Simulate Demo Guest Device (for instant host kick testing)
-  socket.on('simulate_guest_join', () => {
-    if (!currentRoomCode) return;
-    const room = rooms.get(currentRoomCode);
-    if (!room) return;
-
-    const host = room.users.get(socket.id);
-    if (!host || host.role !== 'host') return;
-
-    const demoId = `demo-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-    const demoDevices = ['iPhone 15 Pro', 'Pixel 8', 'Galaxy S24', 'iPad Air', 'MacBook Air', 'OnePlus 12'];
-    const demoName = `${demoDevices[Math.floor(Math.random() * demoDevices.length)]} (Guest)`;
-    const demoColor = AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)];
-
-    const demoUser = {
-      id: demoId,
-      name: demoName,
-      role: 'listener',
-      isAudioReady: true,
-      avatarColor: demoColor,
-      joinedAt: Date.now(),
-      isDemo: true
-    };
-
-    room.users.set(demoId, demoUser);
-
-    io.to(currentRoomCode).emit('room_users_updated', {
-      users: Array.from(room.users.values()),
-      hostId: room.hostId
-    });
-
-    const joinMsg = {
-      id: `msg-${Date.now()}`,
-      user: { name: 'System', role: 'system', avatarColor: '#00f0ff' },
-      text: `📱 ${demoName} joined the party!`,
-      timestamp: Date.now(),
-      isSystem: true
-    };
-    room.chatMessages.push(joinMsg);
-    io.to(currentRoomCode).emit('new_chat_message', joinMsg);
-  });
 
   // 8. Live Chat & Floating Reactions
   socket.on('send_chat', ({ text }) => {
@@ -1257,7 +1370,8 @@ function serializeRoom(room) {
       currentPosition: calculateCurrentTrackPosition(room)
     },
     chatMessages: room.chatMessages,
-    masterVolume: typeof room.masterVolume === 'number' ? room.masterVolume : 0.9
+    masterVolume: typeof room.masterVolume === 'number' ? room.masterVolume : 0.9,
+    repeatMode: room.repeatMode || 'off'
   };
 }
 
