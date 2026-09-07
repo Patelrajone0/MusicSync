@@ -124,7 +124,7 @@ export function App() {
     const params = new URLSearchParams(window.location.search);
     const code = params.get('room');
     if (code) {
-      setInitialRoomCode(code.toUpperCase());
+      setInitialRoomCode(code.replace(/\D/g, ''));
     }
   }, []);
 

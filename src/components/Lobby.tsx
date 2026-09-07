@@ -65,7 +65,7 @@ export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' 
     } catch (e) {}
 
     if (initialRoomCode) {
-      setRoomCodeInput(initialRoomCode.toUpperCase());
+      setRoomCodeInput(initialRoomCode.replace(/\D/g, ''));
     }
   }, [initialRoomCode]);
 
@@ -120,7 +120,7 @@ export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' 
 
   const handleJoinRoom = async (e: React.FormEvent) => {
     e.preventDefault();
-    const code = roomCodeInput.trim().toUpperCase();
+    const code = roomCodeInput.trim().replace(/\D/g, '');
     if (!code) return;
 
     setIsJoining(true);
@@ -236,11 +236,13 @@ export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' 
             <div className="flex gap-2">
               <input
                 type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 value={roomCodeInput}
-                onChange={(e) => setRoomCodeInput(e.target.value.toUpperCase())}
-                placeholder="Room Code (e.g. BEAT1)"
-                maxLength={8}
-                className="flex-1 bg-dark-950 border border-white/10 rounded-xl px-3 py-2.5 text-base sm:text-sm font-mono tracking-widest text-center text-white placeholder-slate-600 uppercase focus:outline-none focus:border-electric-cyan transition-colors"
+                onChange={(e) => setRoomCodeInput(e.target.value.replace(/\D/g, ''))}
+                placeholder="Room Code (e.g. 58392)"
+                maxLength={6}
+                className="flex-1 bg-dark-950 border border-white/10 rounded-xl px-3 py-2.5 text-base sm:text-sm font-mono tracking-widest text-center text-white placeholder-slate-600 focus:outline-none focus:border-electric-cyan transition-colors"
               />
               <button
                 type="submit"

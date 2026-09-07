@@ -82,12 +82,8 @@ function generateGuestName() {
 }
 
 function generateRoomCode() {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let code = '';
-  for (let i = 0; i < 5; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return code;
+  // 5-digit purely numeric code (10000 - 99999) - numbers only, no letters
+  return Math.floor(10000 + Math.random() * 90000).toString();
 }
 
 function calculateCurrentTrackPosition(room) {
@@ -706,7 +702,7 @@ io.on('connection', (socket) => {
 
   // 3. Room Joining
   socket.on('join_room', ({ roomCode, userName, previousRole, avatarColor: savedColor }, callback) => {
-    const code = (roomCode || '').trim().toUpperCase();
+    const code = (roomCode || '').toString().trim().toUpperCase();
     const room = rooms.get(code);
 
     if (!room) {
