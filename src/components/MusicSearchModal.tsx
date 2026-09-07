@@ -459,9 +459,9 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
               <button
                 key={opt.id}
                 onClick={() => handleLanguageChange(opt.id)}
-                className={`px-3.5 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
+                className={`px-3.5 py-1 rounded-full text-xs font-medium whitespace-nowrap shrink-0 transition-all ${
                   isSelected
-                    ? 'bg-cyan-400 text-black font-semibold shadow-sm'
+                    ? 'bg-cyan-400 text-black font-semibold shadow-sm border border-cyan-400'
                     : 'bg-dark-850 hover:bg-dark-800 text-slate-300 hover:text-white border border-white/5'
                 }`}
               >
@@ -475,7 +475,7 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
         <div className="flex border-b border-white/5 px-4 pt-2 gap-1 overflow-x-auto no-scrollbar">
           <button
             onClick={() => setActiveTab('search')}
-            className={`pb-2.5 px-3.5 text-xs font-semibold border-b-2 transition-all whitespace-nowrap flex items-center gap-1.5 ${
+            className={`pb-2.5 px-3.5 text-xs font-semibold border-b-2 transition-all whitespace-nowrap shrink-0 flex items-center gap-1.5 ${
               activeTab === 'search'
                 ? 'border-electric-cyan text-electric-cyan'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -486,7 +486,7 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
           </button>
           <button
             onClick={() => setActiveTab('history')}
-            className={`pb-2.5 px-3.5 text-xs font-semibold border-b-2 transition-all whitespace-nowrap flex items-center gap-1.5 ${
+            className={`pb-2.5 px-3.5 text-xs font-semibold border-b-2 transition-all whitespace-nowrap shrink-0 flex items-center gap-1.5 ${
               activeTab === 'history'
                 ? 'border-electric-cyan text-electric-cyan'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -502,7 +502,7 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
           </button>
           <button
             onClick={() => setActiveTab('custom')}
-            className={`pb-2.5 px-3.5 text-xs font-semibold border-b-2 transition-all whitespace-nowrap flex items-center gap-1.5 ${
+            className={`pb-2.5 px-3.5 text-xs font-semibold border-b-2 transition-all whitespace-nowrap shrink-0 flex items-center gap-1.5 ${
               activeTab === 'custom'
                 ? 'border-electric-purple text-electric-purple'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -670,7 +670,7 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
                           setQuery(artist);
                           handleSearch(undefined, artist, selectedLanguage, 0);
                         }}
-                        className={`px-3 py-1 bg-dark-850 hover:bg-dark-800 border rounded-lg text-xs whitespace-nowrap transition-all shadow-sm ${
+                        className={`px-3 py-1 bg-dark-850 hover:bg-dark-800 border rounded-lg text-xs whitespace-nowrap shrink-0 transition-all shadow-sm ${
                           query.toLowerCase() === artist.toLowerCase()
                             ? 'border-electric-cyan text-electric-cyan bg-electric-cyan/10 font-semibold'
                             : 'border-white/5 hover:border-white/20 text-slate-300 hover:text-white'
@@ -687,7 +687,7 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
                           setQuery(mood.q);
                           handleSearch(undefined, mood.q, selectedLanguage, 0);
                         }}
-                        className="px-3 py-1 bg-dark-850 hover:bg-dark-800 border border-white/5 hover:border-white/20 rounded-lg text-slate-300 hover:text-white text-xs whitespace-nowrap transition-all shadow-sm flex items-center gap-1"
+                        className="px-3 py-1 bg-dark-850 hover:bg-dark-800 border border-white/5 hover:border-white/20 rounded-lg text-slate-300 hover:text-white text-xs whitespace-nowrap shrink-0 transition-all shadow-sm flex items-center gap-1"
                       >
                         {mood.label}
                       </button>

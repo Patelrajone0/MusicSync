@@ -98,19 +98,63 @@ button,
   will-change: transform, box-shadow;
 }
 
-/* Subtle, smooth hover lift on desktop */
-@media (hover: hover) {
+/* Subtle, smooth hover lift & press compression on desktop with mouse/fine pointer */
+@media (hover: hover) and (pointer: fine) {
   button:hover:not(:disabled),
   [role="button"]:hover:not(:disabled) {
     transform: translateY(-1.5px) scale(1.02);
   }
+
+  button:active:not(:disabled),
+  [role="button"]:active:not(:disabled) {
+    transform: translateY(1px) scale(0.97);
+    transition: transform 0.08s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
 }
 
-/* Snappy, elastic spring compression on click/press */
-button:active:not(:disabled),
-[role="button"]:active:not(:disabled) {
-  transform: translateY(1px) scale(0.97) !important;
-  transition: transform 0.08s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+/* Touchscreens / smartphones: prevent sticky hover transforms while preserving smooth click feedback */
+@media (hover: none), (pointer: coarse) {
+  button:hover:not(:disabled),
+  [role="button"]:hover:not(:disabled) {
+    transform: none;
+  }
+}
+
+/* Smooth Click Spring Animation */
+@keyframes springPop {
+  0% { transform: scale(1); }
+  35% { transform: scale(0.88); }
+  75% { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+
+.animate-spring-pop {
+  animation: springPop 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.ctrl-btn {
+  transition: transform 0.16s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.14s ease, opacity 0.14s ease, background-color 0.14s ease;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ctrl-btn:hover:not(:disabled) {
+    transform: scale(1.12);
+  }
+  .ctrl-btn-play:hover:not(:disabled) {
+    transform: scale(1.06);
+  }
+}
+
+.ctrl-btn:active:not(:disabled) {
+  transform: scale(0.90) !important;
+  transition: transform 0.08s ease-out !important;
+}
+
+.ctrl-btn-play:active:not(:disabled) {
+  transform: scale(0.94) !important;
+  transition: transform 0.08s ease-out !important;
 }
 
 /* Ripple wave container */

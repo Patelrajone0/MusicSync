@@ -636,6 +636,7 @@ export function App() {
         onOpenSearch={handleOpenSearch}
         masterVolume={masterVolume}
         masterVolumeNotice={masterVolumeNotice}
+        queue={queue}
       />
 
       {/* 5. Fallback Modal if opened standalone */}

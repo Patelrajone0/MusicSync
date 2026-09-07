@@ -935,6 +935,32 @@ io.on('connection', (socket) => {
     io.to(currentRoomCode).emit('queue_updated', { queue: [] });
   });
 
+  socket.on('queue_shuffle', () => {
+    if (!currentRoomCode) return;
+    const room = rooms.get(currentRoomCode);
+    if (!room) return;
+
+    const user = room.users.get(socket.id);
+    if (!user || (user.role !== 'host' && user.role !== 'dj')) return;
+
+    if (room.queue.length > 1) {
+      for (let i = room.queue.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [room.queue[i], room.queue[j]] = [room.queue[j], room.queue[i]];
+      }
+      io.to(currentRoomCode).emit('queue_updated', { queue: room.queue });
+      const chatAlert = {
+        id: `msg-${Date.now()}`,
+        user: { name: 'System', role: 'system', avatarColor: '#1ed760' },
+        text: `🔀 ${user.name} shuffled the upcoming queue`,
+        timestamp: Date.now(),
+        isSystem: true
+      };
+      room.chatMessages.push(chatAlert);
+      io.to(currentRoomCode).emit('new_chat_message', chatAlert);
+    }
+  });
+
   // 7. Make Host & Transfer Host Privileges (Host Only)
   socket.on('make_host', ({ targetUserId }) => {
     if (!currentRoomCode) return;
