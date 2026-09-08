@@ -1117,34 +1117,13 @@ io.on('connection', (socket) => {
       downvotes: []
     };
 
-    // Always add track to room.queue so it stays in Up Next!
+    // Always add track to room.queue so it stays in Up Next (never automatically start playing)
     room.queue.push(queueItem);
     room.queue = sortQueue(room.queue);
     io.to(currentRoomCode).emit('queue_updated', { queue: room.queue });
 
-    // If nothing is playing, auto-play right away!
-    if (!room.currentTrack && room.playbackState.status !== 'playing') {
-      room.currentTrack = queueItem;
-      const scheduledTime = Date.now() + BUFFER_LEAD_MS;
-      room.playbackState = {
-        status: 'playing',
-        scheduledServerTime: scheduledTime,
-        scheduledPosition: 0,
-        lastPausedPosition: 0,
-        duration: queueItem.duration || 0
-      };
-
-      io.to(currentRoomCode).emit('playback_scheduled', {
-        track: queueItem,
-        status: 'playing',
-        scheduledServerTime: scheduledTime,
-        startPosition: 0,
-        serverTime: Date.now()
-      });
-
-      scheduleServerAutoAdvance(currentRoomCode);
-    } else if (room.playbackState.status === 'playing') {
-      // If a track was currently playing, refresh auto-advance
+    // If a track is already currently playing, refresh auto-advance
+    if (room.playbackState.status === 'playing') {
       scheduleServerAutoAdvance(currentRoomCode);
     }
 
