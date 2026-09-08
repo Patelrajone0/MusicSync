@@ -172,7 +172,7 @@ export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' 
           {/* Username Input */}
           <div>
             <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
-              Enter Username
+              Username
             </label>
             <div className="flex items-center gap-2">
               <div className="relative flex-1">
@@ -180,7 +180,7 @@ export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' 
                   type="text"
                   value={userName}
                   onChange={handleNameChange}
-                  placeholder="Enter Username"
+                  placeholder="Username"
                   maxLength={24}
                   className="w-full bg-dark-950 border border-white/10 rounded-xl px-3.5 py-2.5 text-base sm:text-sm text-white font-semibold focus:outline-none focus:border-electric-cyan transition-colors"
                 />
