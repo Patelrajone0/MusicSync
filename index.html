@@ -2,7 +2,10 @@
 <html lang="en" class="dark">
   <head>
     <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/musicsync-icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/musicsync-icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <meta name="theme-color" content="#06060a" />
     <meta name="mobile-web-app-capable" content="yes" />
@@ -13,28 +16,13 @@
     <!-- Modern typography -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   </head>
   <body class="bg-dark-950 text-slate-100 antialiased selection:bg-electric-cyan selection:text-black overflow-x-hidden min-h-screen">
     <div id="root">
       <div style="min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background-color: #06060a;">
-        <div style="width: 56px; height: 56px; border-radius: 16px; padding: 1px; background: linear-gradient(to bottom, rgba(255,255,255,0.15), rgba(255,255,255,0.02)); box-shadow: 0 4px 24px rgba(0,0,0,0.5);">
-          <div style="width: 100%; height: 100%; border-radius: 15px; background: #0c1017; display: flex; align-items: center; justify-content: center; padding: 10px;">
-            <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" style="width: 100%; height: 100%;">
-              <defs>
-                <linearGradient id="init-logo-grad" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
-                  <stop offset="0%" stop-color="#00f0ff" />
-                  <stop offset="100%" stop-color="#6366f1" />
-                </linearGradient>
-              </defs>
-              <path d="M 8 17 C 5.5 21.2 5.5 26.8 8 31" stroke="url(#init-logo-grad)" stroke-width="2.75" stroke-linecap="round" opacity="0.8" />
-              <rect x="13.5" y="17" width="3" height="14" rx="1.5" fill="url(#init-logo-grad)" />
-              <rect x="19.5" y="11" width="3" height="26" rx="1.5" fill="url(#init-logo-grad)" />
-              <rect x="25.5" y="11" width="3" height="26" rx="1.5" fill="url(#init-logo-grad)" />
-              <rect x="31.5" y="17" width="3" height="14" rx="1.5" fill="url(#init-logo-grad)" />
-              <path d="M 40 17 C 42.5 21.2 42.5 26.8 40 31" stroke="url(#init-logo-grad)" stroke-width="2.75" stroke-linecap="round" opacity="0.8" />
-            </svg>
-          </div>
+        <div style="width: 76px; height: 76px; position: relative; display: flex; align-items: center; justify-content: center;">
+          <img src="/musicsync-icon.png" alt="MusicSync" style="width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 0 24px rgba(0,240,255,0.45));" />
         </div>
       </div>
     </div>
