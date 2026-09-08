@@ -41,11 +41,11 @@ export const Logo: React.FC<LogoProps> = ({
             <img
               src="/musicsync-logo.png"
               alt="MusicSync Logo"
-              className="w-full max-w-[260px] sm:max-w-[320px] md:max-w-[360px] h-auto object-contain relative z-10 drop-shadow-[0_8px_32px_rgba(0,0,0,0.9)] group-hover:scale-[1.02] transition-transform duration-300"
+              className="w-full max-w-[270px] sm:max-w-[310px] md:max-w-[340px] h-auto object-contain relative z-10 mix-blend-screen drop-shadow-[0_8px_32px_rgba(0,0,0,0.8)] group-hover:scale-[1.02] transition-transform duration-300"
             />
 
             {showTagline && (
-              <div className="flex items-center gap-2 px-3.5 py-1 rounded-full bg-dark-900/90 border border-white/10 shadow-lg mt-1.5 relative z-10 backdrop-blur-md">
+              <div className="flex items-center gap-2 px-3.5 py-1 rounded-full bg-dark-900/90 border border-white/10 shadow-lg mt-3 relative z-10 backdrop-blur-md">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
                 <span className="text-[10px] sm:text-[11px] font-semibold tracking-wider text-slate-300 uppercase font-mono">
                   Multi-Device Speaker Mesh
