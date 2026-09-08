@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" fill="none">
+  <defs>
+    <!-- Background Chassis Gradient -->
+    <linearGradient id="bg-grad" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#111622" />
+      <stop offset="100%" stop-color="#07090d" />
+    </linearGradient>
+
+    <!-- Border Ring Gradient -->
+    <linearGradient id="border-grad" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="rgba(255, 255, 255, 0.25)" />
+      <stop offset="50%" stop-color="rgba(0, 240, 255, 0.35)" />
+      <stop offset="100%" stop-color="rgba(99, 102, 241, 0.2)" />
+    </linearGradient>
+
+    <!-- Vibrant Brand Audio Waveform Gradient -->
+    <linearGradient id="audio-grad" x1="60" y1="60" x2="452" y2="452" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#00f0ff" />
+      <stop offset="50%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#6366f1" />
+    </linearGradient>
+
+    <!-- Soft Glow Filter -->
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Squircle Base Chassis -->
+  <rect x="24" y="24" width="464" height="464" rx="124" fill="url(#bg-grad)" stroke="url(#border-grad)" stroke-width="6" />
+
+  <!-- Inner Ambient Neon Bloom -->
+  <circle cx="256" cy="256" r="160" fill="#00f0ff" opacity="0.06" filter="url(#glow)" />
+  <circle cx="256" cy="256" r="120" fill="#6366f1" opacity="0.06" filter="url(#glow)" />
+
+  <!-- Acoustic Broadcast Wave (Left) -->
+  <path
+    d="M 96 182 C 68 226 68 286 96 330"
+    stroke="url(#audio-grad)"
+    stroke-width="28"
+    stroke-linecap="round"
+    opacity="0.85"
+    filter="url(#glow)"
+  />
+
+  <!-- Central Synchronized Audio Waveform Bars -->
+  <!-- Bar 1 (Left Wing) -->
+  <rect x="154" y="182" width="32" height="148" rx="16" fill="url(#audio-grad)" filter="url(#glow)" />
+
+  <!-- Bar 2 (Peak 1) -->
+  <rect x="218" y="118" width="32" height="276" rx="16" fill="url(#audio-grad)" filter="url(#glow)" />
+
+  <!-- Bar 3 (Peak 2) -->
+  <rect x="282" y="118" width="32" height="276" rx="16" fill="url(#audio-grad)" filter="url(#glow)" />
+
+  <!-- Bar 4 (Right Wing) -->
+  <rect x="346" y="182" width="32" height="148" rx="16" fill="url(#audio-grad)" filter="url(#glow)" />
+
+  <!-- Acoustic Broadcast Wave (Right) -->
+  <path
+    d="M 416 182 C 444 226 444 286 416 330"
+    stroke="url(#audio-grad)"
+    stroke-width="28"
+    stroke-linecap="round"
+    opacity="0.85"
+    filter="url(#glow)"
+  />
+</svg>

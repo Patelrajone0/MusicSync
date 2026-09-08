@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 240" width="880" height="240" fill="none">
+  <defs>
+    <!-- Background Chassis Gradient -->
+    <linearGradient id="logo-bg-grad" x1="0" y1="0" x2="200" y2="200" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#111622" />
+      <stop offset="100%" stop-color="#07090d" />
+    </linearGradient>
+
+    <!-- Border Ring Gradient -->
+    <linearGradient id="logo-border-grad" x1="0" y1="0" x2="200" y2="200" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="rgba(255, 255, 255, 0.25)" />
+      <stop offset="50%" stop-color="rgba(0, 240, 255, 0.35)" />
+      <stop offset="100%" stop-color="rgba(99, 102, 241, 0.2)" />
+    </linearGradient>
+
+    <!-- Vibrant Brand Audio Waveform Gradient -->
+    <linearGradient id="logo-audio-grad" x1="20" y1="20" x2="180" y2="180" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#00f0ff" />
+      <stop offset="50%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#6366f1" />
+    </linearGradient>
+
+    <!-- Neon Glow Filter -->
+    <filter id="logo-glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="4" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+
+    <filter id="dot-glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="3.5" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- EMBLEM BADGE (Left) -->
+  <g transform="translate(30, 30)">
+    <!-- Squircle Base Chassis (180x180) -->
+    <rect x="0" y="0" width="180" height="180" rx="48" fill="url(#logo-bg-grad)" stroke="url(#logo-border-grad)" stroke-width="2.5" />
+
+    <!-- Acoustic Broadcast Wave (Left) -->
+    <path
+      d="M 37 64 C 27 79 27 101 37 116"
+      stroke="url(#logo-audio-grad)"
+      stroke-width="10.5"
+      stroke-linecap="round"
+      opacity="0.85"
+      filter="url(#logo-glow)"
+    />
+
+    <!-- Central Synchronized Audio Waveform Bars -->
+    <rect x="58" y="64" width="12" height="52" rx="6" fill="url(#logo-audio-grad)" filter="url(#logo-glow)" />
+    <rect x="80" y="42" width="12" height="96" rx="6" fill="url(#logo-audio-grad)" filter="url(#logo-glow)" />
+    <rect x="102" y="42" width="12" height="96" rx="6" fill="url(#logo-audio-grad)" filter="url(#logo-glow)" />
+    <rect x="124" y="64" width="12" height="52" rx="6" fill="url(#logo-audio-grad)" filter="url(#logo-glow)" />
+
+    <!-- Acoustic Broadcast Wave (Right) -->
+    <path
+      d="M 145 64 C 155 79 155 101 145 116"
+      stroke="url(#logo-audio-grad)"
+      stroke-width="10.5"
+      stroke-linecap="round"
+      opacity="0.85"
+      filter="url(#logo-glow)"
+    />
+  </g>
+
+  <!-- TYPOGRAPHY (Right) -->
+  <!-- "MusicSync" Wordmark -->
+  <text x="245" y="128" font-family="'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="78" font-weight="700" fill="#ffffff" letter-spacing="-1.5">
+    Music<tspan fill="#00f0ff">Sync</tspan>
+  </text>
+
+  <!-- Cyan Status Glow Dot -->
+  <circle cx="628" cy="88" r="6.5" fill="#00f0ff" filter="url(#dot-glow)" />
+
+  <!-- Tagline: Multi-Device Speaker Mesh -->
+  <g transform="translate(248, 168)">
+    <circle cx="5" cy="-5" r="4.5" fill="#10b981" />
+    <text x="18" y="0" font-family="'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="17" font-weight="600" fill="#94a3b8" letter-spacing="3.5">
+      MULTI-DEVICE SPEAKER MESH
+    </text>
+  </g>
+</svg>
