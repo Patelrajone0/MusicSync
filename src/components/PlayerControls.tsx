@@ -366,7 +366,7 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
   const progressPercent = Math.min(100, Math.max(0, (currentPos / trackDuration) * 100));
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-40 bg-dark-950/95 backdrop-blur-2xl border-t border-white/10 px-3 py-2 sm:px-4 sm:py-2.5 md:px-8 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))] sm:pb-[calc(0.65rem+env(safe-area-inset-bottom,0px))] select-none">
+    <div className="fixed bottom-0 left-0 right-0 z-40 bg-dark-950/95 backdrop-blur-2xl border-t border-white/10 px-2.5 py-1.5 sm:px-4 sm:py-2 md:px-8 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))] sm:pb-[calc(0.65rem+env(safe-area-inset-bottom,0px))] select-none w-full max-w-full overflow-hidden">
       {/* Audio Unlock Warning Banner if browser muted */}
       {!isAudioUnlocked && (
         <div className="max-w-7xl mx-auto mb-2 sm:mb-2.5">
@@ -392,14 +392,14 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
 
       {/* Floating Status Toast for Shuffle / Repeat */}
       {statusToast && (
-        <div className="absolute -top-10 left-1/2 -translate-x-1/2 pointer-events-none z-50 animate-spring-pop whitespace-nowrap bg-dark-900/95 border border-[#1ed760]/40 px-3 py-1 rounded-full shadow-2xl flex items-center gap-1.5 text-xs text-[#1ed760] font-medium">
-          <Sparkles className="w-3 h-3 text-[#1ed760]" />
-          <span>{statusToast}</span>
+        <div className="absolute -top-10 left-1/2 -translate-x-1/2 pointer-events-none z-50 animate-spring-pop whitespace-nowrap bg-dark-900/95 border border-[#1ed760]/40 px-3 py-1 rounded-full shadow-2xl flex items-center gap-1.5 text-xs text-[#1ed760] font-medium max-w-[90vw] truncate">
+          <Sparkles className="w-3 h-3 text-[#1ed760] shrink-0" />
+          <span className="truncate">{statusToast}</span>
         </div>
       )}
 
       {/* Main 3-Column Dock Layout */}
-      <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-1.5 md:gap-4">
+      <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-1.5 md:gap-3 w-full">
         
         {/* Mobile Mini Bar: Compact track info & quick volume (Visible on small screens) */}
         <div className="flex md:hidden items-center justify-between w-full mb-0.5">
@@ -431,14 +431,14 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
         </div>
 
         {/* Column 1: Track Info (Desktop, Left) */}
-        <div className="hidden md:flex items-center gap-3 min-w-0 w-[28%] max-w-xs">
+        <div className="hidden md:flex items-center gap-3 min-w-0 w-[26%] max-w-xs shrink-0">
           {currentTrack ? (
             <>
               <div className="relative group shrink-0">
                 <img
                   src={currentTrack.artwork || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=100'}
                   alt={currentTrack.title}
-                  className="w-12 h-12 md:w-13 md:h-13 rounded-xl object-cover border border-white/10 shadow-lg"
+                  className="w-11 h-11 md:w-12 md:h-12 rounded-xl object-cover border border-white/10 shadow-lg"
                 />
                 {isPlaying && (
                   <div className="absolute inset-0 bg-black/40 rounded-xl flex items-center justify-center">
@@ -451,8 +451,8 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
                 )}
               </div>
               <div className="min-w-0 overflow-hidden pr-1">
-                <h4 className="text-sm font-semibold text-white truncate leading-snug">{currentTrack.title}</h4>
-                <p className="text-xs text-slate-400 truncate leading-snug">{currentTrack.artist}</p>
+                <h4 className="text-xs md:text-sm font-semibold text-white truncate leading-snug">{currentTrack.title}</h4>
+                <p className="text-[11px] md:text-xs text-slate-400 truncate leading-snug">{currentTrack.artist}</p>
                 <div className="flex items-center gap-1.5 mt-0.5">
                   <span className="inline-flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded bg-cyan-950/60 border border-cyan-500/20 text-cyan-300 font-mono">
                     <Radio className="w-2.5 h-2.5 text-cyan-400 animate-pulse" />
@@ -463,11 +463,11 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
             </>
           ) : (
             <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-xl bg-dark-800 flex items-center justify-center text-slate-500 border border-white/5 shrink-0">
-                <Radio className="w-5 h-5 text-slate-400" />
+              <div className="w-10 h-10 rounded-xl bg-dark-800 flex items-center justify-center text-slate-500 border border-white/5 shrink-0">
+                <Radio className="w-4 h-4 text-slate-400" />
               </div>
               <div className="min-w-0">
-                <p className="text-sm font-medium text-slate-400 truncate">No song playing</p>
+                <p className="text-xs md:text-sm font-medium text-slate-400 truncate">No song playing</p>
                 <button
                   onClick={onOpenSearch}
                   className="text-xs text-cyan-400 hover:underline font-medium"
@@ -480,7 +480,7 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
         </div>
 
         {/* Column 2: The Control System (Bottom Center of Screen with Medium Size) */}
-        <div className="w-full md:w-[46%] max-w-xl flex flex-col items-center justify-center gap-1 sm:gap-1.5">
+        <div className="w-full md:w-[48%] max-w-xl flex flex-col items-center justify-center gap-1 sm:gap-1.5">
           
           {/* Top Row: 5 Control Buttons Centered (Shuffle, Prev, Play/Pause, Next, Repeat) */}
           <div className="flex items-center justify-center gap-4 sm:gap-6">
@@ -638,7 +638,7 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
         </div>
 
         {/* Column 3: Volume Controls & Host Hub (Desktop, Right) */}
-        <div className="hidden md:flex items-center justify-end gap-2 sm:gap-3 w-[28%] max-w-xs">
+        <div className="hidden md:flex items-center justify-end gap-2 sm:gap-3 w-[26%] max-w-xs shrink-0">
           <div className="relative flex items-center gap-1.5 sm:gap-2">
             
             {/* Master Volume Notice HUD Toast */}

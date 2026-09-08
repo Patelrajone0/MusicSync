@@ -486,12 +486,12 @@ export function App() {
       {/* 2. Main Synchronized Party Content */}
       <main className="max-w-6xl mx-auto w-full px-3 py-3 sm:px-4 sm:py-5 flex-1 flex flex-col gap-3.5 sm:gap-5">
         {/* Action Toolbar: Music Picker & Utility Options */}
-        <div className="flex items-center justify-between gap-2 bg-dark-900/40 border border-white/5 p-1.5 sm:p-2 rounded-2xl">
+        <div className="flex items-center justify-between gap-1.5 sm:gap-2 bg-dark-900/40 border border-white/5 p-1.5 sm:p-2 rounded-2xl w-full">
           {/* Quick Primary Actions */}
-          <div className="flex items-center gap-1.5 sm:gap-2">
+          <div className="flex items-center gap-1 sm:gap-2 min-w-0">
             <button
               onClick={handleOpenSearch}
-              className="flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 sm:px-3.5 rounded-xl bg-cyan-400 hover:bg-white text-black font-semibold text-xs transition-all shadow-sm active:scale-95"
+              className="flex items-center gap-1 sm:gap-2 px-2.5 py-1.5 sm:px-3.5 rounded-xl bg-cyan-400 hover:bg-white text-black font-semibold text-xs transition-all shadow-sm active:scale-95 shrink-0"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Select Music</span>
@@ -499,17 +499,17 @@ export function App() {
 
             <button
               onClick={() => setIsHistoryOpen(true)}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 rounded-xl bg-dark-800 hover:bg-dark-750 border border-white/5 text-slate-300 hover:text-white text-xs font-medium transition-colors"
+              className="flex items-center gap-1 px-2 py-1.5 sm:px-3 rounded-xl bg-dark-800 hover:bg-dark-750 border border-white/5 text-slate-300 hover:text-white text-xs font-medium transition-colors shrink-0"
             >
               <History className="w-3.5 h-3.5 text-slate-400" />
-              <span>History</span>
+              <span className="hidden xs:inline">History</span>
             </button>
           </div>
 
           {/* Toggle Chat Button */}
           <button
             onClick={() => setIsChatVisible(!isChatVisible)}
-            className={`flex items-center gap-1.5 sm:gap-2 px-2.5 py-1.5 sm:px-3 rounded-xl text-xs font-medium border transition-all ${
+            className={`flex items-center gap-1 sm:gap-2 px-2 py-1.5 sm:px-3 rounded-xl text-xs font-medium border transition-all shrink-0 ${
               isChatVisible
                 ? 'bg-cyan-500/15 border-cyan-500/30 text-cyan-300'
                 : 'bg-dark-800 hover:bg-dark-750 border-white/5 text-slate-400 hover:text-white'
@@ -517,7 +517,7 @@ export function App() {
             title={isChatVisible ? 'Hide chat to maximize music space' : 'Open live room chat'}
           >
             <MessageSquare className="w-3.5 h-3.5 text-cyan-400" />
-            <span>{isChatVisible ? 'Hide Chat' : 'Chat'}</span>
+            <span>{isChatVisible ? 'Hide' : 'Chat'}</span>
             <span className="px-1.5 py-0.2 rounded-full bg-dark-900 text-[10px] font-mono text-slate-300 border border-white/5">
               {chatMessages.length}
             </span>
@@ -527,7 +527,7 @@ export function App() {
         {/* Section 1: Clean Now Playing + Optional Compact Chat */}
         <section className={`grid grid-cols-1 ${isChatVisible ? 'lg:grid-cols-12' : ''} gap-3.5 sm:gap-5 items-start`}>
           {/* Compact Now Playing Card */}
-          <div className={`${isChatVisible ? 'lg:col-span-7' : 'w-full'} bg-dark-900/60 backdrop-blur-xl border border-white/10 rounded-2xl p-3.5 sm:p-4 md:p-5 relative flex flex-col justify-between shadow-xl`}>
+          <div className={`${isChatVisible ? 'lg:col-span-7' : 'w-full'} bg-dark-900/60 backdrop-blur-xl border border-white/10 rounded-2xl p-3.5 sm:p-4 md:p-5 relative flex flex-col justify-between shadow-xl overflow-hidden`}>
             {/* Top Bar */}
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
@@ -571,7 +571,7 @@ export function App() {
                       <span className="text-[10px] px-2 py-0.5 rounded-full bg-dark-800 border border-white/5 text-slate-400 font-mono">
                         {currentTrack.genre || 'Music'}
                       </span>
-                      <span className="text-[10px] text-slate-500 font-mono">
+                      <span className="text-[10px] text-slate-500 font-mono truncate max-w-[150px] sm:max-w-none">
                         Added by {currentTrack.addedBy || 'Host'}
                       </span>
                     </div>
