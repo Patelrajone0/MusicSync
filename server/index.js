@@ -857,34 +857,61 @@ app.get('/api/search', async (req, res) => {
     }
   }
 
+  // Calculate distinct search offset for endless suggestion query rotation
+  let searchOffset = offset;
+  let fallbackQuery = '';
+  if (!query) {
+    const qList = isMixedMode
+      ? (mixedSuggestionQueries[selectedLang] || mixedSuggestionQueries.all)
+      : (suggestionQueries[selectedLang] || suggestionQueries.all);
+    const pageNumber = Math.floor(offset / limit);
+    const queryCycle = Math.floor(pageNumber / qList.length);
+    searchOffset = queryCycle * 20;
+    fallbackQuery = qList[(seedNum + pageNumber + 1) % qList.length];
+  }
+
+  // Helper to parse SoundCloud tracks
+  const parseScItems = (items) => {
+    if (!items || !Array.isArray(items)) return;
+    for (const item of items) {
+      const durSec = Math.round((item.duration || 0) / 1000);
+      if (durSec >= 75) {
+        const prog = item.media?.transcodings?.find(t => t.format.protocol === 'progressive');
+        if (prog) {
+          const cleanTitle = cleanTrackTitle(item.title, item.user?.username || item.publisher_metadata?.artist);
+          rawTracks.push({
+            id: `sc-${item.id}`,
+            title: cleanTitle,
+            artist: item.user?.username || item.publisher_metadata?.artist || 'SoundCloud Artist',
+            album: durSec >= 600 ? 'Long Non-Stop Set' : 'Full Track',
+            duration: durSec,
+            genre: item.genre || (isMixedMode ? 'Party Mix' : 'Full Song'),
+            artwork: item.artwork_url ? item.artwork_url.replace('-large', '-t500x500') : (item.user?.avatar_url || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=500&auto=format&fit=crop&q=80'),
+            audioUrl: `/api/stream/soundcloud?progUrl=${encodeURIComponent(prog.url)}`,
+            source: isMixedMode ? (durSec >= 600 ? 'Non-Stop Set (SoundCloud)' : 'Party Mix (SoundCloud)') : 'SoundCloud (Full Song)'
+          });
+        }
+      }
+    }
+  };
+
   // 1. Query SoundCloud for Full-Length Tracks (>= 75 seconds) with pagination
   try {
     const clientId = await getCachedClientId();
-    const scUrl = `https://api-v2.soundcloud.com/search/tracks?q=${encodeURIComponent(scQuery)}&client_id=${clientId}&limit=${limit}&offset=${offset}`;
+    const scUrl = `https://api-v2.soundcloud.com/search/tracks?q=${encodeURIComponent(scQuery)}&client_id=${clientId}&limit=${limit}&offset=${searchOffset}`;
     const scRes = await fetch(scUrl);
     if (scRes.ok) {
       const data = await scRes.json();
-      if (data.collection && Array.isArray(data.collection)) {
-        for (const item of data.collection) {
-          const durSec = Math.round((item.duration || 0) / 1000);
-          if (durSec >= 75) {
-            const prog = item.media?.transcodings?.find(t => t.format.protocol === 'progressive');
-            if (prog) {
-              const cleanTitle = cleanTrackTitle(item.title, item.user?.username || item.publisher_metadata?.artist);
-              rawTracks.push({
-                id: `sc-${item.id}`,
-                title: cleanTitle,
-                artist: item.user?.username || item.publisher_metadata?.artist || 'SoundCloud Artist',
-                album: durSec >= 600 ? 'Long Non-Stop Set' : 'Full Track',
-                duration: durSec,
-                genre: item.genre || (isMixedMode ? 'Party Mix' : 'Full Song'),
-                artwork: item.artwork_url ? item.artwork_url.replace('-large', '-t500x500') : (item.user?.avatar_url || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=500&auto=format&fit=crop&q=80'),
-                audioUrl: `/api/stream/soundcloud?progUrl=${encodeURIComponent(prog.url)}`,
-                source: isMixedMode ? (durSec >= 600 ? 'Non-Stop Set (SoundCloud)' : 'Party Mix (SoundCloud)') : 'SoundCloud (Full Song)'
-              });
-            }
-          }
-        }
+      parseScItems(data.collection);
+    }
+
+    // If suggestions mode and batch is small, pull from fallback query to keep endless scroll lush
+    if (!query && rawTracks.length < 15 && fallbackQuery) {
+      const fbUrl = `https://api-v2.soundcloud.com/search/tracks?q=${encodeURIComponent(fallbackQuery)}&client_id=${clientId}&limit=15&offset=${searchOffset}`;
+      const fbRes = await fetch(fbUrl);
+      if (fbRes.ok) {
+        const fbData = await fbRes.json();
+        parseScItems(fbData.collection);
       }
     }
   } catch (err) {
@@ -1003,7 +1030,7 @@ app.get('/api/search', async (req, res) => {
   res.json({
     tracks: filteredResults,
     offset: offset + limit,
-    hasMore: rawTracks.length > 0,
+    hasMore: !query ? true : rawTracks.length >= limit,
     mode: isMixedMode ? 'mixed' : 'normal'
   });
 });

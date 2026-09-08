@@ -133,6 +133,8 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
   const searchInputContainerRef = useRef<HTMLDivElement | null>(null);
   const autocompleteRef = useRef<HTMLDivElement | null>(null);
   const resultsContainerRef = useRef<HTMLDivElement | null>(null);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const isLoadingMoreRef = useRef<boolean>(false);
 
   // Tabs: search (original songs), mixed (remixes/mashups/non-stop), history, custom
   const [activeTab, setActiveTab] = useState<'search' | 'mixed' | 'history' | 'custom'>('search');
@@ -291,41 +293,80 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
   };
 
   const handleLoadMore = async () => {
-    if (isLoadingMore || !hasMore || isLoading) return;
+    if (isLoadingMoreRef.current || isLoadingMore || !hasMore || isLoading) return;
+    isLoadingMoreRef.current = true;
     setIsLoadingMore(true);
+
     const currentMode = activeTab === 'mixed' ? 'mixed' : 'normal';
     const l = currentMode === 'mixed' ? selectedMixedLanguage : selectedLanguage;
     try {
       const tasteQuery = (currentMode === 'normal' && l === 'for_you') ? userTasteEngine.getPersonalizedQuery() : '';
-      const res = await searchTracks(query, l, currentOffset, tasteQuery, currentMode, refreshSeed);
-      if (res.tracks.length > 0) {
+      const seenIds = !query ? getRecentlySeenTrackIds() : [];
+      const res = await searchTracks(query, l, currentOffset, tasteQuery, currentMode, refreshSeed, seenIds.join(','));
+      if (res.tracks && res.tracks.length > 0) {
         setResults((prev) => {
           const existingIds = new Set(prev.map((t) => t.id));
           const newUnique = res.tracks.filter((t) => !existingIds.has(t.id));
           return [...prev, ...newUnique];
         });
         setCurrentOffset(res.offset || currentOffset + 30);
-        setHasMore(res.hasMore !== false && res.tracks.length > 0);
+        // Suggestions (!query) stream infinitely across all modes (Normal & Mixed)
+        setHasMore(!query ? true : (res.hasMore !== false && res.tracks.length > 0));
         if (!query) {
           recordRecentlySeenTrackIds(res.tracks.map((t) => t.id));
         }
       } else {
-        setHasMore(false);
+        if (!query) {
+          // If a batch returned 0, advance offset to jump to next rotation batch instead of halting
+          setCurrentOffset((prev) => prev + 30);
+          setHasMore(true);
+        } else {
+          setHasMore(false);
+        }
       }
     } catch (e) {
       console.error('Failed to load more tracks:', e);
-      setHasMore(false);
+      if (!query) {
+        setCurrentOffset((prev) => prev + 30);
+        setHasMore(true);
+      } else {
+        setHasMore(false);
+      }
     } finally {
+      isLoadingMoreRef.current = false;
       setIsLoadingMore(false);
     }
   };
 
+  // Pre-fetch next batch 400px before reaching bottom
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
-    if (scrollHeight - scrollTop - clientHeight < 150) {
+    if (scrollHeight - scrollTop - clientHeight < 400) {
       handleLoadMore();
     }
   };
+
+  // Continuous IntersectionObserver to seamlessly stream more tracks
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !isLoading && !isLoadingMoreRef.current) {
+          handleLoadMore();
+        }
+      },
+      {
+        root: resultsContainerRef.current,
+        rootMargin: '450px',
+        threshold: 0
+      }
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMore, isLoading, currentOffset, activeTab, query, results.length]);
 
   const handleTabChange = (tab: 'search' | 'mixed' | 'history' | 'custom') => {
     setActiveTab(tab);
@@ -1166,38 +1207,32 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
                     );
                   })}
 
-                  {/* Endless Scroll Bottom State & Load More Button */}
-                  <div className="pt-2 pb-4 text-center">
+                  {/* Endless Scroll Sentinel & Infinite Streaming Indicator */}
+                  <div ref={sentinelRef} className="pt-2 pb-5 text-center min-h-[48px] flex items-center justify-center">
                     {isLoadingMore ? (
-                      <div className="flex items-center justify-center gap-2 py-3 text-xs text-electric-cyan">
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        <span>Streaming next batch from limitless catalog...</span>
+                      <div className="flex items-center justify-center gap-2 py-2 text-xs text-electric-cyan font-mono">
+                        <Loader2 className="w-4 h-4 animate-spin text-electric-cyan" />
+                        <span>Streaming next suggestions from limitless catalog...</span>
                       </div>
                     ) : hasMore ? (
                       <button
                         type="button"
                         onClick={handleLoadMore}
-                        className={`w-full py-2 px-4 rounded-xl bg-dark-850 hover:bg-dark-800 border text-xs font-semibold flex items-center justify-center gap-2 transition-all group ${
-                          activeTab === 'mixed'
-                            ? 'border-amber-500/20 hover:border-amber-400/50 text-amber-200 hover:text-white'
-                            : 'border-white/10 hover:border-electric-cyan/40 text-slate-300 hover:text-white'
-                        }`}
+                        className="flex items-center justify-center gap-2 text-[11px] text-slate-500 hover:text-cyan-400 font-mono py-2 transition-colors cursor-pointer"
                       >
-                        {activeTab === 'mixed' ? (
-                          <Flame className="w-3.5 h-3.5 text-amber-400 fill-current group-hover:scale-110 transition-transform" />
-                        ) : (
-                          <Zap className="w-3.5 h-3.5 text-electric-cyan group-hover:scale-110 transition-transform" />
-                        )}
+                        <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
                         <span>
                           {activeTab === 'mixed'
-                            ? 'Load 30+ More Party Mixes & Non-Stop Sets'
-                            : 'Load 30+ More Suggestions (Limitless)'}
+                            ? 'Infinite party mixes & mashups streaming (Scroll for more)'
+                            : 'Infinite songs suggestions streaming (Scroll for more)'}
                         </span>
                       </button>
                     ) : (
-                      <div className="text-[11px] text-slate-500 py-2">
-                        ✓ All available songs for this query have been loaded.
-                      </div>
+                      query && (
+                        <div className="text-[11px] text-slate-500 py-2 font-mono">
+                          ✓ All available songs for "{query}" have been loaded.
+                        </div>
+                      )
                     )}
                   </div>
                 </>
