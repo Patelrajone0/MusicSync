@@ -11,10 +11,11 @@ export async function searchTracks(
   query: string,
   language: string = 'all',
   offset: number = 0,
-  userArtists: string = ''
+  userArtists: string = '',
+  mode: 'normal' | 'mixed' = 'normal'
 ): Promise<SearchResult> {
   const trimmed = query.trim();
-  let url = `/api/search?q=${encodeURIComponent(trimmed)}&lang=${encodeURIComponent(language)}&offset=${offset}`;
+  let url = `/api/search?q=${encodeURIComponent(trimmed)}&lang=${encodeURIComponent(language)}&offset=${offset}&mode=${mode}`;
   if (userArtists) {
     url += `&artists=${encodeURIComponent(userArtists)}`;
   }
@@ -31,14 +32,14 @@ export async function searchTracks(
     };
   } catch (err) {
     console.warn('Search query error, falling back to curated:', err);
-    const curated = await getCuratedTracks();
+    const curated = await getCuratedTracks(mode);
     return { tracks: curated, hasMore: false };
   }
 }
 
-export async function getSearchSuggestions(query: string, language: string = 'all'): Promise<string[]> {
+export async function getSearchSuggestions(query: string, language: string = 'all', mode: 'normal' | 'mixed' = 'normal'): Promise<string[]> {
   try {
-    const res = await fetch(`/api/search/suggestions?q=${encodeURIComponent(query.trim())}&lang=${encodeURIComponent(language)}`);
+    const res = await fetch(`/api/search/suggestions?q=${encodeURIComponent(query.trim())}&lang=${encodeURIComponent(language)}&mode=${mode}`);
     if (!res.ok) return [];
     const data = await res.json();
     return data.suggestions || [];
@@ -47,9 +48,9 @@ export async function getSearchSuggestions(query: string, language: string = 'al
   }
 }
 
-export async function getCuratedTracks(): Promise<Track[]> {
+export async function getCuratedTracks(mode: 'normal' | 'mixed' = 'normal'): Promise<Track[]> {
   try {
-    const res = await fetch('/api/tracks/curated');
+    const res = await fetch(`/api/tracks/curated?mode=${mode}`);
     if (!res.ok) throw new Error('Curated fetch failed');
     const data = await res.json();
     return data.tracks || [];

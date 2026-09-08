@@ -7,7 +7,7 @@ import os from 'os';
 import { fileURLToPath } from 'url';
 import { Readable } from 'stream';
 import play from 'play-dl';
-import { CURATED_TRACKS } from './curatedTracks.js';
+import { CURATED_TRACKS, CURATED_MIXED_TRACKS } from './curatedTracks.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -290,6 +290,10 @@ app.get('/api/network-info', (req, res) => {
 
 // Curated library endpoint
 app.get('/api/tracks/curated', (req, res) => {
+  const mode = (req.query.mode || 'normal').toString().toLowerCase();
+  if (mode === 'mixed') {
+    return res.json({ tracks: CURATED_MIXED_TRACKS });
+  }
   res.json({ tracks: CURATED_TRACKS });
 });
 
@@ -515,23 +519,59 @@ const SEARCH_AUTOCOMPLETE_DATABASE = {
   ]
 };
 
+// Regex pattern to classify tracks as Remix / Mashup / Party Mix / Long Non-Stop Set
+const MIXED_SONG_REGEX = /\b(remix|re-mix|mashup|mash-up|mash up|club mix|party mix|dj mix|megamix|mega-mix|non[- ]?stop|nonstop|continuous mix|extended mix|bootleg|flip|rework|dance mix|dhol mix|party mashup|bollywood mix|punjabi mix|garba mix|edm mix|festival mix|live set|dj set|mixtape|soundclash|dandiya mix|dhol blast|bass boosted|slowed|reverb)\b/i;
+
+function isMixedTrack(title = '', artist = '', genre = '', duration = 0) {
+  // Any track 10 minutes or longer (>= 600s) is considered a continuous mix / long non-stop set
+  if (duration >= 600) return true;
+  const text = `${title} ${artist} ${genre}`.toLowerCase();
+  return MIXED_SONG_REGEX.test(text);
+}
+
+const SEARCH_MIXED_AUTOCOMPLETE_DATABASE = {
+  hindi: [
+    'Bollywood Party Non Stop Remix', 'Bollywood Dance Mashup 2024',
+    'Arijit Singh Mashup Remix', '90s Bollywood Non Stop Party Mix',
+    'DJ Chetas Bollywood Mashup', 'Atif Aslam Mashup', 'Hindi Club DJ Remix'
+  ],
+  punjabi: [
+    'Punjabi Bhangra Non Stop Party Mix', 'Sidhu Moose Wala Mega Mashup',
+    'Karan Aujla Party Remix', 'Punjabi Dhol High Bass Mix',
+    'Diljit Dosanjh Non Stop Club Session', 'AP Dhillon Mashup'
+  ],
+  gujarati: [
+    'Gujarati Garba Non Stop 1 Hour', 'Dandiya Raas High Energy Non Stop',
+    'Atul Purohit Non Stop Garba', 'Kirtidan Gadhvi Tahukar Non Stop',
+    'Falguni Pathak Dandiya Mix', 'Sanedo DJ Folk Remix'
+  ],
+  english: [
+    'EDM Festival Club Mix Non Stop', 'Deep House Continuous Party Set',
+    'Synthwave 80s Club Extended Remix', 'Ultra Music Festival Live Set',
+    'Billboard Pop Dance Mashup 1 Hour', 'Chillhop Lofi 24/7 Mix'
+  ]
+};
+
 // Autocomplete suggestions endpoint
 app.get('/api/search/suggestions', (req, res) => {
   const query = (req.query.q || '').toString().trim().toLowerCase();
   const lang = (req.query.lang || 'all').toString().trim().toLowerCase();
+  const mode = (req.query.mode || 'normal').toString().trim().toLowerCase();
+
+  const db = mode === 'mixed' ? SEARCH_MIXED_AUTOCOMPLETE_DATABASE : SEARCH_AUTOCOMPLETE_DATABASE;
 
   let pool = [];
   if (lang === 'all') {
     pool = [
-      ...SEARCH_AUTOCOMPLETE_DATABASE.hindi,
-      ...SEARCH_AUTOCOMPLETE_DATABASE.punjabi,
-      ...SEARCH_AUTOCOMPLETE_DATABASE.gujarati,
-      ...SEARCH_AUTOCOMPLETE_DATABASE.english
+      ...db.hindi,
+      ...db.punjabi,
+      ...db.gujarati,
+      ...db.english
     ];
-  } else if (SEARCH_AUTOCOMPLETE_DATABASE[lang]) {
-    pool = SEARCH_AUTOCOMPLETE_DATABASE[lang];
+  } else if (db[lang]) {
+    pool = db[lang];
   } else {
-    pool = SEARCH_AUTOCOMPLETE_DATABASE.english;
+    pool = db.english;
   }
 
   if (!query) {
@@ -546,6 +586,8 @@ app.get('/api/search/suggestions', (req, res) => {
 app.get('/api/search', async (req, res) => {
   const query = (req.query.q || '').toString().trim().toLowerCase();
   const selectedLang = (req.query.lang || 'all').toString().trim().toLowerCase();
+  const mode = (req.query.mode || 'normal').toString().trim().toLowerCase(); // 'normal' or 'mixed'
+  const isMixedMode = mode === 'mixed';
   const offset = Math.max(0, parseInt(req.query.offset) || 0);
   const limit = Math.min(50, Math.max(10, parseInt(req.query.limit) || 30));
 
@@ -562,40 +604,76 @@ app.get('/api/search', async (req, res) => {
   const rawTracks = [];
   const userArtists = (req.query.artists || '').toString().trim();
 
-  // If no query is typed, generate limit-less suggestions based on selected language & offset
+  // If no query is typed, generate limit-less suggestions based on selected language, mode & offset
   let scQuery = query;
   if (!query) {
-    // Curated library starter matches (only on first page offset 0, sorted with trending first)
-    if (offset === 0) {
-      const filteredCurated = CURATED_TRACKS.filter(t => {
-        if (selectedLang === 'all' || selectedLang === 'trending' || selectedLang === 'for_you') return true;
-        return t.language?.toLowerCase() === selectedLang;
-      }).sort((a, b) => (a.trendingRank || 99) - (b.trendingRank || 99));
-      rawTracks.push(...filteredCurated);
+    if (isMixedMode) {
+      // Curated MIXED library starter matches (only on first page offset 0)
+      if (offset === 0) {
+        const filteredCurated = CURATED_MIXED_TRACKS.filter(t => {
+          if (selectedLang === 'all' || selectedLang === 'trending' || selectedLang === 'for_you') return true;
+          return t.language?.toLowerCase() === selectedLang;
+        });
+        rawTracks.push(...filteredCurated);
+      }
+
+      // Dynamic suggestion queries specifically targeting remixes, mashups, and hours-long party mixes
+      const mixedSuggestionQueries = {
+        hindi: ['bollywood party non stop remix', 'bollywood dance mashup 2024', 'arijit singh mashup remix', 'hindi club party mix non stop', 'bollywood 90s retro remix'],
+        punjabi: ['punjabi bhangra party mix non stop', 'punjabi club mashup high bass', 'sidhu moose wala karan aujla mashup', 'punjabi non stop dhol mix', 'diljit dosanjh party remix'],
+        gujarati: ['gujarati garba non stop 1 hour', 'dandiya raas non stop party mix', 'khalasi chogada remix garba', 'falguni pathak non stop dandiya', 'tahukar sanedo non stop dj mix'],
+        english: ['edm festival club mix non stop', 'deep house continuous party mix', 'synthwave 80s extended club remix', 'billboard pop dance mashup 1 hour', 'ultra festival live set party'],
+        all: ['party mashup remix non stop 2024', 'bollywood punjabi edm club mix 1 hour', 'ultimate non stop dance party mix', 'mega mashup club remix']
+      };
+
+      const qList = mixedSuggestionQueries[selectedLang] || mixedSuggestionQueries.all;
+      const qIndex = Math.floor(offset / limit) % qList.length;
+      scQuery = qList[qIndex];
+    } else {
+      // Curated library starter matches (Strictly NORMAL songs - zero remixes/mashups!)
+      if (offset === 0) {
+        const filteredCurated = CURATED_TRACKS.filter(t => {
+          if (isMixedTrack(t.title, t.artist, t.genre, t.duration)) return false;
+          if (selectedLang === 'all' || selectedLang === 'trending' || selectedLang === 'for_you') return true;
+          return t.language?.toLowerCase() === selectedLang;
+        }).sort((a, b) => (a.trendingRank || 99) - (b.trendingRank || 99));
+        rawTracks.push(...filteredCurated);
+      }
+
+      // Dynamic limitless suggestion search queries per language
+      const suggestionQueries = {
+        hindi: ['bollywood trending hits 2024', 'sari duniya jala denge', 'kesariya arijit singh', 'bollywood lofi chill', 't-series latest hits'],
+        punjabi: ['tauba tauba karan aujla', 'latest punjabi hits', 'diljit dosanjh lover', 'sidhu moose wala 295', 'punjabi bhangra dhol'],
+        gujarati: ['khalasi aditya gadhvi', 'gujarati garba songs traditional', 'chogada tara mor bani', 'kinjal dave geeta rabari', 'dandiya raas traditional'],
+        english: ['the weeknd starboy blinding lights', 'top billboard pop hits', 'coldplay dua lipa', 'trending synthwave pop', 'chill lofi english beats'],
+        all: ['tauba tauba khalasi starboy', 'trending hit songs 2024', 'punjabi hindi english hits', 'top bollywood and pop'],
+        trending: ['trending chartbusters 2024', 'tauba tauba khalasi starboy', 'viral hits hindi punjabi english', 'top billboard bollywood'],
+        for_you: userArtists ? [userArtists, `${userArtists} hits`, `${userArtists} live`] : ['trending songs 2024', 'top bollywood and pop']
+      };
+
+      const qList = suggestionQueries[selectedLang] || suggestionQueries.all;
+      const qIndex = Math.floor(offset / limit) % qList.length;
+      scQuery = qList[qIndex];
+    }
+  } else {
+    // If searching in Mixed mode, append remix/mashup keywords if not already present
+    if (isMixedMode && !MIXED_SONG_REGEX.test(query)) {
+      scQuery = `${query} remix mashup mix`;
     }
 
-    // Dynamic limitless suggestion search queries per language
-    const suggestionQueries = {
-      hindi: ['bollywood trending hits 2024', 'sari duniya jala denge', 'kesariya arijit singh', 'bollywood lofi chill', 't-series latest party'],
-      punjabi: ['tauba tauba karan aujla', 'latest punjabi hits', 'diljit dosanjh lover', 'sidhu moose wala 295', 'punjabi bhangra dhol'],
-      gujarati: ['khalasi aditya gadhvi', 'gujarati garba songs non stop', 'chogada tara mor bani', 'kinjal dave geeta rabari', 'dandiya raas high bass'],
-      english: ['the weeknd starboy blinding lights', 'top billboard pop hits', 'coldplay dua lipa', 'trending synthwave edm club', 'chill lofi english beats'],
-      all: ['tauba tauba khalasi starboy', 'trending party songs 2024', 'punjabi hindi english hits', 'top bollywood and pop', 'best dance tracks dhol edm'],
-      trending: ['trending chartbusters 2024', 'tauba tauba khalasi starboy', 'viral hits hindi punjabi english', 'top billboard bollywood'],
-      for_you: userArtists ? [userArtists, `${userArtists} hits`, `${userArtists} live`] : ['trending party songs 2024', 'top bollywood and pop']
-    };
-
-    const qList = suggestionQueries[selectedLang] || suggestionQueries.all;
-    const qIndex = Math.floor(offset / limit) % qList.length;
-    scQuery = qList[qIndex];
-  } else {
     // Curated library matches matching query on first page
     if (offset === 0) {
-      const curatedMatches = CURATED_TRACKS.filter(t =>
-        t.title.toLowerCase().includes(query) ||
-        t.artist.toLowerCase().includes(query) ||
-        t.genre.toLowerCase().includes(query)
-      ).sort((a, b) => (a.trendingRank || 99) - (b.trendingRank || 99));
+      const sourcePool = isMixedMode ? CURATED_MIXED_TRACKS : CURATED_TRACKS;
+      const curatedMatches = sourcePool.filter(t => {
+        const isMixed = isMixedTrack(t.title, t.artist, t.genre, t.duration);
+        if (isMixedMode && !isMixed) return false;
+        if (!isMixedMode && isMixed) return false;
+        return (
+          t.title.toLowerCase().includes(query) ||
+          t.artist.toLowerCase().includes(query) ||
+          t.genre.toLowerCase().includes(query)
+        );
+      }).sort((a, b) => (a.trendingRank || 99) - (b.trendingRank || 99));
       rawTracks.push(...curatedMatches);
     }
   }
@@ -617,12 +695,12 @@ app.get('/api/search', async (req, res) => {
                 id: `sc-${item.id}`,
                 title: item.title,
                 artist: item.user?.username || item.publisher_metadata?.artist || 'SoundCloud Artist',
-                album: 'Full Track',
+                album: durSec >= 600 ? 'Long Non-Stop Set' : 'Full Track',
                 duration: durSec,
-                genre: item.genre || 'Full Song',
+                genre: item.genre || (isMixedMode ? 'Party Mix' : 'Full Song'),
                 artwork: item.artwork_url ? item.artwork_url.replace('-large', '-t500x500') : (item.user?.avatar_url || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=500&auto=format&fit=crop&q=80'),
                 audioUrl: `/api/stream/soundcloud?progUrl=${encodeURIComponent(prog.url)}`,
-                source: 'SoundCloud (Full Song)'
+                source: isMixedMode ? (durSec >= 600 ? 'Non-Stop Set (SoundCloud)' : 'Party Mix (SoundCloud)') : 'SoundCloud (Full Song)'
               });
             }
           }
@@ -637,7 +715,7 @@ app.get('/api/search', async (req, res) => {
   if (query) {
     try {
       const audiusDiscoveryUrl = 'https://discoveryprovider.audius.co/v1/tracks/search';
-      const audiusRes = await fetch(`${audiusDiscoveryUrl}?query=${encodeURIComponent(query)}&app_name=musicsync&limit=10&offset=${offset}`, {
+      const audiusRes = await fetch(`${audiusDiscoveryUrl}?query=${encodeURIComponent(scQuery)}&app_name=musicsync&limit=10&offset=${offset}`, {
         headers: { 'Accept': 'application/json' }
       });
       if (audiusRes.ok) {
@@ -650,12 +728,12 @@ app.get('/api/search', async (req, res) => {
                 id: `audius-${track.id}`,
                 title: track.title,
                 artist: track.user ? track.user.name : 'Unknown Artist',
-                album: 'Audius Release',
+                album: durSec >= 600 ? 'Long Non-Stop Set' : 'Audius Release',
                 duration: durSec,
                 genre: track.genre || 'Electronic',
                 artwork: track.artwork ? track.artwork['480x480'] || track.artwork['150x150'] : 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=500&auto=format&fit=crop&q=80',
                 audioUrl: `https://discoveryprovider.audius.co/v1/tracks/${track.id}/stream?app_name=musicsync`,
-                source: 'Audius (Full Song)'
+                source: isMixedMode ? 'Party Mix (Audius)' : 'Audius (Full Song)'
               });
             }
           }
@@ -667,6 +745,7 @@ app.get('/api/search', async (req, res) => {
   }
 
   // Deduplicate and filter exclusively allowed languages: English, Hindi, Punjabi, Gujarati
+  // STRICT SEPARATION: In Normal Songs, exclude all remixes/mashups. In Mixed Songs, include ONLY remixes/mashups/non-stop sets!
   const seenIds = new Set();
   const filteredResults = [];
 
@@ -682,11 +761,42 @@ app.get('/api/search', async (req, res) => {
       continue;
     }
 
-    filteredResults.push({
-      ...t,
-      language: langInfo.name,
-      languageBadge: langInfo.badge
-    });
+    const isMixed = isMixedTrack(t.title, t.artist, t.genre, t.duration);
+
+    if (isMixedMode) {
+      // In Mixed Songs mode: ONLY include remixes, mashups, and non-stop long mixes!
+      if (!isMixed) continue;
+
+      const isLong = t.duration >= 600;
+      let mixBadge = '🎛️ Remix / Mix';
+      if (t.duration >= 3600) {
+        const hours = (t.duration / 3600).toFixed(1);
+        mixBadge = `⏳ ${hours}h Non-Stop Set`;
+      } else if (t.duration >= 600) {
+        mixBadge = `⏳ ${Math.floor(t.duration / 60)}m Non-Stop Set`;
+      } else if (/mashup/i.test(t.title)) {
+        mixBadge = '🎛️ Mashup';
+      }
+
+      filteredResults.push({
+        ...t,
+        language: langInfo.name,
+        languageBadge: langInfo.badge,
+        isMixed: true,
+        isLongMix: isLong,
+        mixBadge
+      });
+    } else {
+      // In Normal Songs mode: NEVER show remixes, mashups, or non-stop long mixes!
+      if (isMixed) continue;
+
+      filteredResults.push({
+        ...t,
+        language: langInfo.name,
+        languageBadge: langInfo.badge,
+        isMixed: false
+      });
+    }
   }
 
   // Ensure trending chartbusters appear FIRST in suggestions
@@ -701,8 +811,10 @@ app.get('/api/search', async (req, res) => {
   res.json({
     tracks: filteredResults,
     offset: offset + limit,
-    hasMore: rawTracks.length > 0
+    hasMore: rawTracks.length > 0,
+    mode: isMixedMode ? 'mixed' : 'normal'
   });
+});
 });
 
 // Serve frontend in production

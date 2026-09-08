@@ -29,6 +29,9 @@ export interface Track {
   isTrending?: boolean;
   trendingRank?: number;
   isRecommended?: boolean;
+  isMixed?: boolean;
+  isLongMix?: boolean;
+  mixBadge?: string;
 }
 
 export interface PlaybackState {

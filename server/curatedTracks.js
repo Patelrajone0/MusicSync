@@ -138,11 +138,11 @@ export const CURATED_TRACKS = [
   },
   {
     id: 'curated-gu-03',
-    title: 'Sanedo & Char Char Bangdi (High Energy Garba)',
-    artist: 'DJ Jiggy Folk Remix',
-    album: 'Gujarat Dandiya Raas',
+    title: 'Sanedo Sanedo (Traditional Gujarati Garba)',
+    artist: 'Maniraj Barot',
+    album: 'Gujarat Traditional Dandiya',
     duration: 301,
-    genre: 'Gujarati / Garba Beat',
+    genre: 'Gujarati / Traditional Garba',
     language: 'Gujarati',
     languageBadge: '🪘 Gujarati',
     isTrending: true,
@@ -172,11 +172,11 @@ export const CURATED_TRACKS = [
   },
   {
     id: 'curated-en-02',
-    title: 'Blinding Lights (Club Extended)',
+    title: 'Blinding Lights (Original Studio Master)',
     artist: 'The Weeknd',
     album: 'After Hours Synced',
-    duration: 240,
-    genre: 'Deep House / Synthpop',
+    duration: 200,
+    genre: 'Synthpop / Pop',
     language: 'English',
     languageBadge: '🇬🇧 English',
     isTrending: true,
@@ -199,5 +199,145 @@ export const CURATED_TRACKS = [
     artwork: 'https://images.unsplash.com/photo-1518609878373-06d740f60d8b?w=500&auto=format&fit=crop&q=80',
     audioUrl: '/api/stream/soundcloud?progUrl=' + encodeURIComponent('https://api-v2.soundcloud.com/media/soundcloud:tracks:417474360/3d2ae4fe-74c6-4fbb-a8e6-e59c1825bad8/stream/progressive'),
     source: 'Curated (Trending #3)'
+  }
+];
+
+/**
+ * Curated Library of MIXED SONGS:
+ * Exclusively remixes, mashups, non-stop party sets, and continuous multi-minute / multi-hour long songs.
+ * Separated strictly so normal songs never mix with remixes!
+ */
+export const CURATED_MIXED_TRACKS = [
+  // 1. Hindi Party Mixes & Mashups
+  {
+    id: 'mixed-hi-01',
+    title: 'Bollywood Club & Party Mashup (Non-Stop Dance Hits)',
+    artist: 'DJ Chetas & DJ NYK Style',
+    album: 'Bollywood Night Fever',
+    duration: 1845,
+    genre: 'Hindi / Club Mashup',
+    language: 'Hindi',
+    languageBadge: '🇮🇳 Hindi',
+    isMixed: true,
+    isLongMix: true,
+    mixBadge: '⏳ 31m Non-Stop Party Set',
+    artwork: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=500&auto=format&fit=crop&q=80',
+    audioUrl: '/api/stream/soundcloud?progUrl=' + encodeURIComponent('https://api-v2.soundcloud.com/media/soundcloud:tracks:1674959538/ea8d7615-4ec8-4627-970f-0b358b6d2492/stream/progressive'),
+    source: 'Mixed Songs (Hindi)'
+  },
+  {
+    id: 'mixed-hi-02',
+    title: 'Arijit Singh & Atif Aslam Romantic Mashup (Lofi & Bass)',
+    artist: 'DJ Shadow Dubai Remix',
+    album: 'Desi Mashup Anthems',
+    duration: 540,
+    genre: 'Hindi / Party Remix',
+    language: 'Hindi',
+    languageBadge: '🇮🇳 Hindi',
+    isMixed: true,
+    mixBadge: '🎛️ Mashup Remix',
+    artwork: 'https://images.unsplash.com/photo-1518609878373-06d740f60d8b?w=500&auto=format&fit=crop&q=80',
+    audioUrl: '/api/stream/soundcloud?progUrl=' + encodeURIComponent('https://api-v2.soundcloud.com/media/soundcloud:tracks:853582540/33d9ead8-77da-4ab6-89ac-f72c65291c3d/stream/progressive'),
+    source: 'Mixed Songs (Hindi)'
+  },
+
+  // 2. Punjabi Bhangra & Bass Mixes
+  {
+    id: 'mixed-pa-01',
+    title: 'Punjabi Dhol Bhangra & Bass Non-Stop Party Mix',
+    artist: 'DJ Hans & Soundclash',
+    album: 'Punjab Club Blast',
+    duration: 2420,
+    genre: 'Punjabi / Bhangra Mix',
+    language: 'Punjabi',
+    languageBadge: '🎶 Punjabi',
+    isMixed: true,
+    isLongMix: true,
+    mixBadge: '⏳ 40m Non-Stop Bhangra',
+    artwork: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=500&auto=format&fit=crop&q=80',
+    audioUrl: '/api/stream/soundcloud?progUrl=' + encodeURIComponent('https://api-v2.soundcloud.com/media/soundcloud:tracks:1862712117/cc675a2c-bc71-4a34-8ea4-1fbc2770d2ad/stream/progressive'),
+    source: 'Mixed Songs (Punjabi)'
+  },
+  {
+    id: 'mixed-pa-02',
+    title: 'Sidhu Moose Wala x Karan Aujla Mega Mashup',
+    artist: 'DJ Frenzy Mashup',
+    album: 'Moosetape x Bad Newz Mash',
+    duration: 610,
+    genre: 'Punjabi / Trap Mashup',
+    language: 'Punjabi',
+    languageBadge: '🎶 Punjabi',
+    isMixed: true,
+    isLongMix: true,
+    mixBadge: '🎛️ Mega Mashup',
+    artwork: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=500&auto=format&fit=crop&q=80',
+    audioUrl: '/api/stream/soundcloud?progUrl=' + encodeURIComponent('https://api-v2.soundcloud.com/media/soundcloud:tracks:1087535872/2a79f870-ad06-4c8a-973f-4341972f08ca/stream/progressive'),
+    source: 'Mixed Songs (Punjabi)'
+  },
+
+  // 3. Gujarati Non-Stop Garba & Dandiya Mixes
+  {
+    id: 'mixed-gu-01',
+    title: 'Navratri Non-Stop High Energy Garba (1 Hour Continuous Raas)',
+    artist: 'Atul Purohit & Kirtidan Gadhvi Non-Stop',
+    album: 'United Way Dandiya Raas',
+    duration: 3600,
+    genre: 'Gujarati / Non-Stop Garba',
+    language: 'Gujarati',
+    languageBadge: '🪘 Gujarati',
+    isMixed: true,
+    isLongMix: true,
+    mixBadge: '⏳ 1-Hour Non-Stop Garba',
+    artwork: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=500&auto=format&fit=crop&q=80',
+    audioUrl: '/api/stream/soundcloud?progUrl=' + encodeURIComponent('https://api-v2.soundcloud.com/media/soundcloud:tracks:1921208342/b0b60418-8f24-47b6-bcce-2ae33d0013e2/stream/progressive'),
+    source: 'Mixed Songs (Gujarati)'
+  },
+  {
+    id: 'mixed-gu-02',
+    title: 'Sanedo & Char Char Bangdi (DJ Jiggy Folk Remix)',
+    artist: 'DJ Jiggy Folk Remix',
+    album: 'Gujarat Dandiya Raas',
+    duration: 301,
+    genre: 'Gujarati / Garba Beat',
+    language: 'Gujarati',
+    languageBadge: '🪘 Gujarati',
+    isMixed: true,
+    mixBadge: '🎛️ Folk Remix',
+    artwork: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=500&auto=format&fit=crop&q=80',
+    audioUrl: '/api/stream/soundcloud?progUrl=' + encodeURIComponent('https://api-v2.soundcloud.com/media/soundcloud:tracks:1921208342/b0b60418-8f24-47b6-bcce-2ae33d0013e2/stream/progressive'),
+    source: 'Mixed Songs (Gujarati)'
+  },
+
+  // 4. English EDM & Club Non-Stop Sets
+  {
+    id: 'mixed-en-01',
+    title: 'EDM Festival Anthems & Club Hits (Non-Stop Party Set)',
+    artist: 'Ultra Music Festival Live Mix',
+    album: 'Festival Anthems 2024',
+    duration: 3720,
+    genre: 'EDM / Festival Mix',
+    language: 'English',
+    languageBadge: '🇬🇧 English',
+    isMixed: true,
+    isLongMix: true,
+    mixBadge: '⏳ 1-Hour Festival Set',
+    artwork: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=500&auto=format&fit=crop&q=80',
+    audioUrl: '/api/stream/soundcloud?progUrl=' + encodeURIComponent('https://api-v2.soundcloud.com/media/soundcloud:tracks:1316258221/e5be5b0b-9612-4e73-97ba-f1726b9af5c2/stream/progressive'),
+    source: 'Mixed Songs (English)'
+  },
+  {
+    id: 'mixed-en-02',
+    title: 'Deep House & Synthwave Extended Club Rework',
+    artist: 'The Weeknd x Daft Punk Club Edit',
+    album: 'After Hours Extended',
+    duration: 480,
+    genre: 'Deep House / Synthpop',
+    language: 'English',
+    languageBadge: '🇬🇧 English',
+    isMixed: true,
+    mixBadge: '🎛️ Extended Club Mix',
+    artwork: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=500&auto=format&fit=crop&q=80',
+    audioUrl: '/api/stream/soundcloud?progUrl=' + encodeURIComponent('https://api-v2.soundcloud.com/media/soundcloud:tracks:1689238161/fc4f38d3-251d-4d9e-94de-2a73fc9cf1fb/stream/progressive'),
+    source: 'Mixed Songs (English)'
   }
 ];
