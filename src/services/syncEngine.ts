@@ -2,26 +2,12 @@ import { socket } from './socket';
 import { SyncStats, Track } from '../types';
 import { mediaSessionService } from './mediaSession';
 
-interface AudioDeck {
-  id: 'A' | 'B';
-  element: HTMLAudioElement;
-  sourceNode: MediaElementAudioSourceNode | null;
-  gainNode: GainNode | null;
-  track: Track | null;
-}
-
 class SyncEngine {
+  private audio: HTMLAudioElement | null = null;
+  private preloadAudio: HTMLAudioElement | null = null;
   private audioContext: AudioContext | null = null;
-  private masterGainNode: GainNode | null = null;
-  private analyserNode: AnalyserNode | null = null;
-
-  // Dual-Deck Audio Architecture for Gapless Crossfade
-  private deckA: AudioDeck | null = null;
-  private deckB: AudioDeck | null = null;
-  private activeDeckId: 'A' | 'B' = 'A';
-  private crossfadeDuration: number = 2.5; // seconds
   private masterVolume: number = 0.9;
-  private crossfadeTimer: any = null;
+  private crossfadeDuration: number = 2.5; // seconds
 
   // NTP Clock Sync State
   private clockOffset: number = 0; // serverTime - localClientTime
@@ -63,54 +49,39 @@ class SyncEngine {
     }
   }
 
-  // 1. Dual-Deck Audio Initialization
+  // 1. Audio Initialization (Single Deterministic HTMLAudioElement)
   public initAudio() {
     if (typeof window === 'undefined') return;
 
-    const setupDeckElement = (id: 'A' | 'B'): HTMLAudioElement => {
+    if (!this.audio) {
       const audio = new Audio();
       audio.preload = 'auto';
       audio.volume = this.masterVolume;
 
       audio.addEventListener('error', () => {
-        console.error(`[Deck ${id}] Audio error:`, audio.error?.message || 'Media stream error', 'code:', audio.error?.code, 'src:', audio.src);
+        console.error('[AudioEngine] Media error:', audio.error?.message || 'Media stream error', 'code:', audio.error?.code, 'src:', audio.src);
       });
 
       audio.addEventListener('ended', () => {
-        if (this.activeDeckId === id && this.onTrackEndedCallback) {
+        if (this.onTrackEndedCallback) {
           this.onTrackEndedCallback();
         }
       });
 
       audio.addEventListener('timeupdate', () => {
-        if (this.activeDeckId === id) {
-          const current = audio.currentTime;
-          const total = audio.duration || this.currentTrack?.duration || 0;
-          this.notifyPositionUpdate(current, total);
-        }
+        const current = audio.currentTime;
+        const total = audio.duration || this.currentTrack?.duration || 0;
+        this.notifyPositionUpdate(current, total);
       });
 
-      return audio;
-    };
-
-    if (!this.deckA) {
-      this.deckA = {
-        id: 'A',
-        element: setupDeckElement('A'),
-        sourceNode: null,
-        gainNode: null,
-        track: null
-      };
+      this.audio = audio;
     }
 
-    if (!this.deckB) {
-      this.deckB = {
-        id: 'B',
-        element: setupDeckElement('B'),
-        sourceNode: null,
-        gainNode: null,
-        track: null
-      };
+    if (!this.preloadAudio) {
+      const preload = new Audio();
+      preload.preload = 'auto';
+      preload.volume = 0;
+      this.preloadAudio = preload;
     }
   }
 
@@ -118,47 +89,32 @@ class SyncEngine {
   public async unlockAudio(): Promise<boolean> {
     try {
       this.initAudio();
-      if (this.audioContext) {
-        if (this.audioContext.state === 'suspended') {
-          await this.audioContext.resume();
-        }
-        // Play an imperceptible silent 1-sample buffer to unlock hardware audio pipeline
-        const buffer = this.audioContext.createBuffer(1, 1, 22050);
-        const source = this.audioContext.createBufferSource();
-        source.buffer = buffer;
-        source.connect(this.audioContext.destination);
-        source.start(0);
-      }
 
-      if (this.masterGainNode) {
-        this.masterGainNode.gain.value = this.masterVolume;
-      }
+      if (this.audio) {
+        this.audio.volume = this.masterVolume;
 
-      // Prime and unlock both HTMLAudioElements in this synchronous user gesture
-      const primeElement = async (deck: AudioDeck | null) => {
-        if (!deck?.element) return;
-        try {
-          if (!deck.element.src) {
-            deck.element.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
+        // If a track is already loaded, start or un-pause it
+        if (this.currentTrack && this.audio.src) {
+          if (this.isPlaying) {
+            await this.audio.play().catch(() => {});
           }
-          const p = deck.element.play();
-          if (p !== undefined) {
-            await p;
-            if (!this.isPlaying) {
-              deck.element.pause();
+        } else {
+          // Prime audio element with brief silent buffer so browser marks element as user-activated
+          if (!this.audio.src) {
+            this.audio.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
+            const p = this.audio.play();
+            if (p !== undefined) {
+              await p.catch(() => {});
+              this.audio.pause();
             }
           }
-        } catch (e) {
-          // Priming error non-fatal
         }
-      };
-
-      await Promise.all([primeElement(this.deckA), primeElement(this.deckB)]);
+      }
 
       socket.emit('set_audio_ready', { isReady: true });
       return true;
     } catch (err) {
-      console.warn('Audio unlock warning (safe to proceed):', err);
+      console.warn('[AudioEngine] Audio unlock warning:', err);
       return false;
     }
   }
@@ -166,11 +122,9 @@ class SyncEngine {
   public setVolume(val: number) {
     const clamped = Math.max(0, Math.min(1, val));
     this.masterVolume = clamped;
-    if (this.masterGainNode) {
-      this.masterGainNode.gain.value = clamped;
+    if (this.audio) {
+      this.audio.volume = clamped;
     }
-    if (this.deckA) this.deckA.element.volume = clamped;
-    if (this.deckB) this.deckB.element.volume = clamped;
   }
 
   public getVolume(): number {
@@ -188,33 +142,18 @@ class SyncEngine {
     return this.crossfadeDuration;
   }
 
-  // Active Deck Getter Helper
-  private getActiveDeck(): AudioDeck {
-    this.initAudio();
-    return this.activeDeckId === 'A' ? this.deckA! : this.deckB!;
-  }
-
-  // Standby Deck Getter Helper
-  private getStandbyDeck(): AudioDeck {
-    this.initAudio();
-    return this.activeDeckId === 'A' ? this.deckB! : this.deckA!;
-  }
-
-  // 3. Preload Upcoming Song in Standby Deck for Gapless Instant Playback
+  // 3. Preload Upcoming Song in background for Instant Playback
   public preloadNextTrack(track: Track | null) {
     if (!track || !track.audioUrl) return;
     this.initAudio();
-    const standby = this.getStandbyDeck();
-
-    if (standby.track?.id !== track.id || standby.element.src !== track.audioUrl) {
-      standby.track = track;
-      standby.element.src = track.audioUrl;
-      standby.element.preload = 'auto';
-      standby.element.load();
+    if (this.preloadAudio && this.preloadAudio.src !== track.audioUrl) {
+      this.preloadAudio.src = track.audioUrl;
+      this.preloadAudio.preload = 'auto';
+      this.preloadAudio.load();
     }
   }
 
-  // 4. High Precision NTP Clock Synchronization
+  // 4. NTP Clock Synchronization
   public startNtpSync() {
     if (this.ntpIntervalId) clearInterval(this.ntpIntervalId);
 
@@ -284,12 +223,11 @@ class SyncEngine {
       localStorage.setItem('musicsync_hardware_delay', ms.toString());
     } catch (e) {}
 
-    const active = this.getActiveDeck();
-    if (this.isPlaying && active.element) {
+    if (this.isPlaying && this.audio) {
       const serverNow = this.getServerTime();
       const elapsedSec = (serverNow - this.scheduledServerTime - this.hardwareDelayOffset) / 1000;
       const expectedPos = Math.max(0, this.startPosition + elapsedSec);
-      active.element.currentTime = expectedPos;
+      this.audio.currentTime = expectedPos;
     }
     this.notifyStats();
   }
@@ -330,131 +268,73 @@ class SyncEngine {
     return Date.now() + this.clockOffset;
   }
 
-  // 5. Playback Scheduling with Seamless Dual-Deck Crossfade
+  // 5. Playback Scheduling with Exact NTP Millisecond Synchronization
   public schedulePlayback(track: Track, scheduledServerTime: number, startPosition: number = 0) {
     this.clearScheduledTimers();
     this.scheduledServerTime = scheduledServerTime;
     this.startPosition = startPosition;
     this.isPlaying = true;
+    this.currentTrack = track;
     mediaSessionService.updateMetadata(track);
     mediaSessionService.setPlaybackState('playing');
 
     this.initAudio();
+    if (!this.audio) return;
 
-    const isSameTrack = this.currentTrack?.id === track.id;
-    const activeDeck = this.getActiveDeck();
-    const standbyDeck = this.getStandbyDeck();
+    // Load track into audio element if changed
+    if (this.audio.src !== track.audioUrl) {
+      this.audio.src = track.audioUrl;
+      this.audio.load();
+    }
 
     const currentServerTime = this.getServerTime();
     const delayMs = scheduledServerTime - currentServerTime - this.hardwareDelayOffset;
 
-    if (isSameTrack) {
-      // In-track seek or scheduled resumption on current deck
-      if (delayMs > 0) {
-        activeDeck.element.currentTime = startPosition;
-        this.scheduledTimerId = setTimeout(() => {
-          this.executePlay(activeDeck, startPosition);
-        }, delayMs);
-      } else {
-        const catchUpSec = Math.abs(delayMs) / 1000;
-        this.executePlay(activeDeck, startPosition + catchUpSec);
-      }
+    if (delayMs > 0) {
+      try {
+        this.audio.currentTime = startPosition;
+      } catch (e) {}
+      this.scheduledTimerId = setTimeout(() => {
+        this.executePlay(startPosition);
+      }, delayMs);
     } else {
-      // Track Transition: Perform Gapless Dual-Deck Crossfade
-      this.currentTrack = track;
-      const targetDeck = standbyDeck;
-      const outgoingDeck = activeDeck;
-
-      if (targetDeck.element.src !== track.audioUrl) {
-        targetDeck.element.src = track.audioUrl;
-        targetDeck.element.load();
-      }
-      targetDeck.track = track;
-
-      // Determine crossfade: only crossfade if outgoing deck is actively playing and transition starts near beginning
-      const canCrossfade = outgoingDeck.element && !outgoingDeck.element.paused && startPosition < 2 && this.crossfadeDuration > 0;
-
-      if (delayMs > 0) {
-        targetDeck.element.currentTime = startPosition;
-        this.scheduledTimerId = setTimeout(() => {
-          this.performDeckTransition(outgoingDeck, targetDeck, startPosition, canCrossfade ? this.crossfadeDuration : 0);
-        }, delayMs);
-      } else {
-        const catchUpSec = Math.abs(delayMs) / 1000;
-        this.performDeckTransition(outgoingDeck, targetDeck, startPosition + catchUpSec, canCrossfade ? this.crossfadeDuration : 0);
-      }
+      const catchUpSec = Math.max(0, Math.abs(delayMs) / 1000);
+      this.executePlay(startPosition + catchUpSec);
     }
 
     this.startDriftCorrectionLoop();
   }
 
-  private performDeckTransition(outgoing: AudioDeck, incoming: AudioDeck, startSec: number, _fadeDuration: number) {
-    if (this.crossfadeTimer) {
-      clearTimeout(this.crossfadeTimer);
-      this.crossfadeTimer = null;
-    }
+  private executePlay(startSec: number) {
+    if (!this.audio) return;
 
-    if (Math.abs(incoming.element.currentTime - startSec) > 0.05) {
+    if (Math.abs(this.audio.currentTime - startSec) > 0.05) {
       try {
-        incoming.element.currentTime = startSec;
+        this.audio.currentTime = Math.max(0, startSec);
       } catch (e) {}
     }
 
-    incoming.element.volume = this.masterVolume;
+    this.audio.volume = this.masterVolume;
 
-    // Start incoming deck audio
-    const playPromise = incoming.element.play();
+    const playPromise = this.audio.play();
     if (playPromise !== undefined) {
       playPromise.catch((err) => {
-        console.warn(`[Deck ${incoming.id}] Playback promise:`, err);
-      });
-    }
-
-    // Stop outgoing deck and activate incoming
-    outgoing.element.pause();
-    this.activeDeckId = incoming.id;
-  }
-
-  private executePlay(deck: AudioDeck, startSec: number) {
-    if (!deck.element) return;
-
-    if (Math.abs(deck.element.currentTime - startSec) > 0.05) {
-      try {
-        deck.element.currentTime = startSec;
-      } catch (e) {}
-    }
-
-    deck.element.volume = this.masterVolume;
-
-    const playPromise = deck.element.play();
-    if (playPromise !== undefined) {
-      playPromise.catch((err) => {
-        console.warn(`[Deck ${deck.id}] Playback blocked:`, err);
+        console.warn('[AudioEngine] Playback promise error:', err);
       });
     }
   }
 
   public pausePlayback(atPosition?: number) {
     this.clearScheduledTimers();
-    if (this.crossfadeTimer) {
-      clearTimeout(this.crossfadeTimer);
-      this.crossfadeTimer = null;
-    }
     this.isPlaying = false;
     mediaSessionService.setPlaybackState('paused');
 
-    const active = this.getActiveDeck();
-    if (active.element) {
-      active.element.pause();
+    if (this.audio) {
+      this.audio.pause();
       if (typeof atPosition === 'number') {
-        active.element.currentTime = atPosition;
+        this.audio.currentTime = atPosition;
       }
-      active.element.playbackRate = 1.0;
-    }
-
-    const standby = this.getStandbyDeck();
-    if (standby.element) {
-      standby.element.pause();
+      this.audio.playbackRate = 1.0;
     }
 
     this.lastDriftMs = 0;
@@ -462,41 +342,39 @@ class SyncEngine {
   }
 
   public seekPlayback(position: number) {
-    const active = this.getActiveDeck();
-    if (active.element) {
-      active.element.currentTime = position;
+    if (this.audio) {
+      this.audio.currentTime = Math.max(0, position);
     }
   }
 
-  // 6. Continuous Drift Correction Loop (Zero-Latency Beatsync Parity)
+  // 6. Continuous Drift Correction Loop
   private startDriftCorrectionLoop() {
     if (this.driftCheckIntervalId) clearInterval(this.driftCheckIntervalId);
 
     this.driftCheckIntervalId = setInterval(() => {
-      const active = this.getActiveDeck();
-      if (!this.isPlaying || !active.element || active.element.paused) return;
+      if (!this.isPlaying || !this.audio || this.audio.paused) return;
 
       const serverNow = this.getServerTime();
       const elapsedSec = (serverNow - this.scheduledServerTime - this.hardwareDelayOffset) / 1000;
       const expectedPos = this.startPosition + elapsedSec;
-      const actualPos = active.element.currentTime;
+      const actualPos = this.audio.currentTime;
 
-      // Drift in milliseconds: positive means ahead, negative means behind
+      // Drift in ms: positive = ahead, negative = behind
       const driftMs = (actualPos - expectedPos) * 1000;
       this.lastDriftMs = Math.round(driftMs);
 
-      // Micro-Rate Adjustment
+      // Micro-Rate Adjustment to keep all devices tightly locked within <25ms
       if (Math.abs(driftMs) < 25) {
-        if (active.element.playbackRate !== 1.0) {
-          active.element.playbackRate = 1.0;
+        if (this.audio.playbackRate !== 1.0) {
+          this.audio.playbackRate = 1.0;
         }
       } else if (driftMs > 25 && driftMs < 250) {
-        active.element.playbackRate = 0.98;
+        this.audio.playbackRate = 0.98;
       } else if (driftMs < -25 && driftMs > -250) {
-        active.element.playbackRate = 1.02;
+        this.audio.playbackRate = 1.02;
       } else if (Math.abs(driftMs) >= 250) {
-        active.element.currentTime = Math.max(0, expectedPos);
-        active.element.playbackRate = 1.0;
+        this.audio.currentTime = Math.max(0, expectedPos);
+        this.audio.playbackRate = 1.0;
       }
 
       this.notifyStats();
@@ -514,16 +392,14 @@ class SyncEngine {
     }
   }
 
-  // 7. Visualizer Analyser Node Access
   public getAnalyser(): AnalyserNode | null {
-    return this.analyserNode;
+    return null;
   }
 
   public getAudioContext(): AudioContext | null {
     return this.audioContext;
   }
 
-  // 8. Event Subscriptions
   public onStatsChange(cb: (stats: SyncStats) => void) {
     this.onStatsChangeCallbacks.add(cb);
     return () => {
@@ -566,14 +442,12 @@ class SyncEngine {
   }
 
   private notifyPositionUpdate(pos: number, dur: number) {
-    const active = this.getActiveDeck();
-    mediaSessionService.setPositionState(pos, dur, active.element?.playbackRate || 1.0);
+    mediaSessionService.setPositionState(pos, dur, this.audio?.playbackRate || 1.0);
     this.onPositionUpdateCallbacks.forEach((cb) => cb(pos, dur));
   }
 
   public getCurrentPosition(): number {
-    const active = this.getActiveDeck();
-    return active.element ? active.element.currentTime : 0;
+    return this.audio ? this.audio.currentTime : 0;
   }
 
   public getCurrentTrack(): Track | null {
@@ -581,27 +455,34 @@ class SyncEngine {
   }
 
   public resumeLocalAudio() {
-    const active = this.getActiveDeck();
-    if (active.element) {
-      this.executePlay(active, active.element.currentTime);
-      mediaSessionService.setPlaybackState('playing');
+    this.initAudio();
+    if (!this.audio) return;
+
+    if (this.currentTrack && (!this.audio.src || this.audio.src === '' || this.audio.src.endsWith('/'))) {
+      this.audio.src = this.currentTrack.audioUrl;
+      this.audio.load();
     }
+
+    let pos = this.audio.currentTime;
+    if (this.audio.duration && pos >= this.audio.duration - 0.5) {
+      pos = 0;
+    }
+
+    this.isPlaying = true;
+    this.executePlay(pos);
+    mediaSessionService.setPlaybackState('playing');
   }
 
   public cleanup() {
     this.clearScheduledTimers();
-    if (this.crossfadeTimer) clearTimeout(this.crossfadeTimer);
     if (this.ntpIntervalId) clearInterval(this.ntpIntervalId);
-    if (this.deckA?.element) {
-      this.deckA.element.pause();
-      this.deckA.element.src = '';
+    if (this.audio) {
+      this.audio.pause();
+      this.audio.src = '';
     }
-    if (this.deckB?.element) {
-      this.deckB.element.pause();
-      this.deckB.element.src = '';
-    }
-    if (this.audioContext && this.audioContext.state !== 'closed') {
-      this.audioContext.close().catch(() => {});
+    if (this.preloadAudio) {
+      this.preloadAudio.pause();
+      this.preloadAudio.src = '';
     }
   }
 }

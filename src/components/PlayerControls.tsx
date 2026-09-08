@@ -154,15 +154,48 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
     }, 280);
   };
 
-  // 1. Play / Pause Toggle with Zero-Lag Optimistic feedback
+  // 1. Play / Pause Toggle with Zero-Lag Optimistic feedback & listener speaker toggle
   const handleTogglePlay = () => {
     triggerBtnAnimation('play');
 
     if (!isAudioUnlocked) {
       onUnlockAudio();
     }
-    if (!canControl) return;
 
+    // If no song loaded yet: play queue[0] or open search
+    if (!currentTrack) {
+      if (queue && queue.length > 0 && queue[0]) {
+        if (canControl) {
+          socket.emit('request_play', { track: queue[0], position: 0 });
+        } else {
+          socket.emit('request_play', { track: queue[0], position: 0 });
+        }
+        return;
+      } else {
+        onOpenSearch();
+        return;
+      }
+    }
+
+    // Listener toggle: control local audio speaker
+    if (!canControl) {
+      if (isPlaying) {
+        syncEngine.pausePlayback();
+        setOptimisticPlaying(false);
+      } else {
+        if (playbackState.status === 'playing' && playbackState.scheduledServerTime > 0) {
+          const serverNow = syncEngine.getServerTime();
+          const elapsed = (serverNow - playbackState.scheduledServerTime) / 1000;
+          const pos = Math.max(0, playbackState.scheduledPosition + elapsed);
+          syncEngine.seekPlayback(pos);
+        }
+        syncEngine.resumeLocalAudio();
+        setOptimisticPlaying(true);
+      }
+      return;
+    }
+
+    // Host / DJ toggle: control room playback
     const nextPlayState = !isPlaying;
     setOptimisticPlaying(nextPlayState);
 
@@ -179,8 +212,6 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
   const handlePrevious = () => {
     triggerBtnAnimation('prev');
 
-    if (!canControl && !isAudioUnlocked) return;
-
     // Instant local audio seek to 0 (zero delay!)
     syncEngine.seekPlayback(0);
     setCurrentPosition(0);
@@ -196,6 +227,12 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
   // 3. Next Track / Skip
   const handleSkip = () => {
     triggerBtnAnimation('next');
+    if (!currentTrack && queue && queue.length > 0 && queue[0]) {
+      if (canControl) {
+        socket.emit('request_play', { track: queue[0], position: 0 });
+      }
+      return;
+    }
     if (!canControl) return;
     socket.emit('request_skip');
   };
@@ -473,7 +510,7 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
             <button
               type="button"
               onClick={handlePrevious}
-              disabled={!currentTrack || (!canControl && !isAudioUnlocked)}
+              disabled={!currentTrack}
               className={`ctrl-btn p-2 rounded-full text-slate-300 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center ${
                 animatingBtn === 'prev' ? 'animate-spring-pop' : ''
               }`}
@@ -486,8 +523,7 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
             <button
               type="button"
               onClick={handleTogglePlay}
-              disabled={!currentTrack && !canControl}
-              className={`ctrl-btn ctrl-btn-play w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-white text-black flex items-center justify-center shadow-lg shadow-white/10 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ${
+              className={`ctrl-btn ctrl-btn-play w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-white text-black flex items-center justify-center shadow-lg shadow-white/10 cursor-pointer active:scale-95 transition-transform ${
                 animatingBtn === 'play' ? 'animate-spring-pop' : ''
               }`}
               title={isPlaying ? 'Pause' : 'Play'}
@@ -503,7 +539,7 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
             <button
               type="button"
               onClick={handleSkip}
-              disabled={!currentTrack || !canControl}
+              disabled={!currentTrack && (!queue || queue.length === 0)}
               className={`ctrl-btn p-2 rounded-full text-slate-300 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center ${
                 animatingBtn === 'next' ? 'animate-spring-pop' : ''
               }`}
