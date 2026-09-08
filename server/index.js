@@ -155,6 +155,43 @@ function scheduleServerAutoAdvance(roomCode) {
   }, delayMs);
 }
 
+// Helper to determine next track without removing anything from Up Next queue
+function getNextTrack(room) {
+  if (!room.queue || room.queue.length === 0) return null;
+  const currentId = room.currentTrack?.queueId || room.currentTrack?.id;
+  const currentIdx = room.queue.findIndex(q => (currentId && q.queueId === currentId) || q.id === currentId);
+  if (currentIdx === -1) {
+    return room.queue[0];
+  }
+  const nextIdx = currentIdx + 1;
+  if (nextIdx < room.queue.length) {
+    return room.queue[nextIdx];
+  }
+  // At end of playlist: loop back if repeat mode is 'all'
+  if (room.repeatMode === 'all') {
+    return room.queue[0];
+  }
+  return null;
+}
+
+// Helper to determine previous track without removing anything from Up Next queue
+function getPreviousTrack(room) {
+  if (!room.queue || room.queue.length === 0) return null;
+  const currentId = room.currentTrack?.queueId || room.currentTrack?.id;
+  const currentIdx = room.queue.findIndex(q => (currentId && q.queueId === currentId) || q.id === currentId);
+  if (currentIdx === -1) {
+    return room.queue[0];
+  }
+  const prevIdx = currentIdx - 1;
+  if (prevIdx >= 0) {
+    return room.queue[prevIdx];
+  }
+  if (room.repeatMode === 'all') {
+    return room.queue[room.queue.length - 1];
+  }
+  return room.queue[0];
+}
+
 function executeAutoAdvance(roomCode) {
   const room = rooms.get(roomCode);
   if (!room || room.playbackState.status !== 'playing' || !room.currentTrack) return;
@@ -182,9 +219,9 @@ function executeAutoAdvance(roomCode) {
     return;
   }
 
-  // 2. Advance to next queued track
-  if (room.queue.length > 0) {
-    const nextTrack = room.queue.shift();
+  // 2. Advance to next track in queue (WITHOUT removing previous songs)
+  const nextTrack = getNextTrack(room);
+  if (nextTrack) {
     room.currentTrack = nextTrack;
     const scheduledTime = Date.now() + BUFFER_LEAD_MS;
 
@@ -196,32 +233,8 @@ function executeAutoAdvance(roomCode) {
       duration: nextTrack.duration || 0
     };
 
-    io.to(roomCode).emit('queue_updated', { queue: room.queue });
     io.to(roomCode).emit('playback_scheduled', {
       track: nextTrack,
-      status: 'playing',
-      scheduledServerTime: scheduledTime,
-      startPosition: 0,
-      serverTime: Date.now()
-    });
-
-    scheduleServerAutoAdvance(roomCode);
-    return;
-  }
-
-  // 3. Queue empty: Repeat All Mode
-  if (room.repeatMode === 'all') {
-    const scheduledTime = Date.now() + BUFFER_LEAD_MS;
-    room.playbackState = {
-      status: 'playing',
-      scheduledServerTime: scheduledTime,
-      scheduledPosition: 0,
-      lastPausedPosition: 0,
-      duration: room.currentTrack.duration || 0
-    };
-
-    io.to(roomCode).emit('playback_scheduled', {
-      track: room.currentTrack,
       status: 'playing',
       scheduledServerTime: scheduledTime,
       startPosition: 0,
@@ -882,20 +895,38 @@ io.on('connection', (socket) => {
 
     const scheduledTime = Date.now() + BUFFER_LEAD_MS;
 
-    room.currentTrack = targetTrack;
+    // Keep track in room.queue - NEVER remove it from Up Next!
+    const existingIndex = room.queue.findIndex(q =>
+      (targetTrack.queueId && q.queueId === targetTrack.queueId) ||
+      (q.id && q.id === targetTrack.id)
+    );
+
+    let currentItem = targetTrack;
+    if (existingIndex === -1) {
+      // If a song was played directly (e.g. from search) and wasn't in Up Next yet, add it so it is kept in Up Next!
+      const queueItem = {
+        ...targetTrack,
+        queueId: targetTrack.queueId || `q-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+        addedBy: user ? user.name : 'Host',
+        addedAt: Date.now(),
+        upvotes: user ? [user.id] : [],
+        downvotes: []
+      };
+      room.queue.push(queueItem);
+      currentItem = queueItem;
+      io.to(currentRoomCode).emit('queue_updated', { queue: room.queue });
+    } else {
+      currentItem = room.queue[existingIndex];
+    }
+
+    room.currentTrack = currentItem;
     room.playbackState = {
       status: 'playing',
       scheduledServerTime: scheduledTime,
       scheduledPosition: startPos,
       lastPausedPosition: startPos,
-      duration: targetTrack.duration || 0
+      duration: currentItem.duration || 0
     };
-
-    // If track was from queue, remove it from queue
-    if (room.queue.length > 0 && room.queue[0].id === targetTrack.id) {
-      room.queue.shift();
-      io.to(currentRoomCode).emit('queue_updated', { queue: room.queue });
-    }
 
     io.to(currentRoomCode).emit('playback_scheduled', {
       track: room.currentTrack,
@@ -975,7 +1006,11 @@ io.on('connection', (socket) => {
     clearServerAutoAdvance(room);
 
     if (room.queue.length > 0) {
-      const nextTrack = room.queue.shift();
+      let nextTrack = getNextTrack(room);
+      // When skipping manually past the end, loop back to the first track in Up Next
+      if (!nextTrack) {
+        nextTrack = room.queue[0];
+      }
       room.currentTrack = nextTrack;
       const scheduledTime = Date.now() + BUFFER_LEAD_MS;
 
@@ -987,7 +1022,6 @@ io.on('connection', (socket) => {
         duration: nextTrack.duration || 0
       };
 
-      io.to(currentRoomCode).emit('queue_updated', { queue: room.queue });
       io.to(currentRoomCode).emit('playback_scheduled', {
         track: nextTrack,
         status: 'playing',
@@ -1005,6 +1039,42 @@ io.on('connection', (socket) => {
         position: 0,
         serverTime: Date.now()
       });
+    }
+  });
+
+  // 5. Request Previous Track (Host or DJ only)
+  socket.on('request_previous', () => {
+    if (!currentRoomCode) return;
+    const room = rooms.get(currentRoomCode);
+    if (!room) return;
+
+    const user = room.users.get(socket.id);
+    if (!user || (user.role !== 'host' && user.role !== 'dj')) return;
+
+    clearServerAutoAdvance(room);
+
+    if (room.queue.length > 0) {
+      const prevTrack = getPreviousTrack(room) || room.queue[0];
+      room.currentTrack = prevTrack;
+      const scheduledTime = Date.now() + BUFFER_LEAD_MS;
+
+      room.playbackState = {
+        status: 'playing',
+        scheduledServerTime: scheduledTime,
+        scheduledPosition: 0,
+        lastPausedPosition: 0,
+        duration: prevTrack.duration || 0
+      };
+
+      io.to(currentRoomCode).emit('playback_scheduled', {
+        track: prevTrack,
+        status: 'playing',
+        scheduledServerTime: scheduledTime,
+        startPosition: 0,
+        serverTime: Date.now()
+      });
+
+      scheduleServerAutoAdvance(currentRoomCode);
     }
   });
 
@@ -1047,8 +1117,13 @@ io.on('connection', (socket) => {
       downvotes: []
     };
 
-    // If nothing is playing and queue is empty, auto-play right away!
-    if (!room.currentTrack && room.playbackState.status !== 'playing' && room.queue.length === 0) {
+    // Always add track to room.queue so it stays in Up Next!
+    room.queue.push(queueItem);
+    room.queue = sortQueue(room.queue);
+    io.to(currentRoomCode).emit('queue_updated', { queue: room.queue });
+
+    // If nothing is playing, auto-play right away!
+    if (!room.currentTrack && room.playbackState.status !== 'playing') {
       room.currentTrack = queueItem;
       const scheduledTime = Date.now() + BUFFER_LEAD_MS;
       room.playbackState = {
@@ -1068,16 +1143,8 @@ io.on('connection', (socket) => {
       });
 
       scheduleServerAutoAdvance(currentRoomCode);
-      return;
-    }
-
-    room.queue.push(queueItem);
-    room.queue = sortQueue(room.queue);
-
-    io.to(currentRoomCode).emit('queue_updated', { queue: room.queue });
-
-    // If a track was currently playing, refresh auto-advance
-    if (room.playbackState.status === 'playing') {
+    } else if (room.playbackState.status === 'playing') {
+      // If a track was currently playing, refresh auto-advance
       scheduleServerAutoAdvance(currentRoomCode);
     }
 

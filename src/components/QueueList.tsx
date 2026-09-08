@@ -3,7 +3,8 @@ import {
   Trash2,
   Play,
   Music2,
-  Plus
+  Plus,
+  Radio
 } from 'lucide-react';
 import { Track, UserRole } from '../types';
 import { socket } from '../services/socket';
@@ -93,29 +94,66 @@ export const QueueList: React.FC<QueueListProps> = ({
       ) : (
         <div className="space-y-1.5 sm:space-y-2 overflow-y-auto max-h-[440px] pr-1">
           {queue.map((track, idx) => {
+            const isCurrent = Boolean(
+              currentTrack &&
+                ((track.queueId && currentTrack.queueId && track.queueId === currentTrack.queueId) ||
+                  track.id === currentTrack.id)
+            );
+
             return (
               <div
-                key={track.queueId || track.id}
-                className="flex items-center justify-between p-2.5 sm:p-3 rounded-xl bg-dark-950/70 border border-white/5 hover:border-white/10 transition-all group"
+                key={track.queueId || `${track.id}-${idx}`}
+                className={`flex items-center justify-between p-2.5 sm:p-3 rounded-xl border transition-all group ${
+                  isCurrent
+                    ? 'bg-cyan-500/10 border-cyan-400/40 shadow-[0_0_20px_rgba(0,240,255,0.08)]'
+                    : 'bg-dark-950/70 border-white/5 hover:border-white/10'
+                }`}
               >
                 {/* Track Details */}
                 <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
-                  <span className="text-xs font-mono font-bold text-slate-500 w-4 text-right shrink-0">
-                    #{idx + 1}
-                  </span>
+                  {isCurrent ? (
+                    <div className="w-5 flex items-center justify-center shrink-0 relative" title="Currently Playing">
+                      <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping absolute opacity-75" />
+                      <span className="relative w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_#00f0ff]" />
+                    </div>
+                  ) : (
+                    <span className="text-xs font-mono font-bold text-slate-500 w-5 text-right shrink-0">
+                      #{idx + 1}
+                    </span>
+                  )}
 
-                  <img
-                    src={track.artwork || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=100'}
-                    alt={track.title}
-                    className="w-10 h-10 sm:w-11 sm:h-11 rounded-lg object-cover bg-dark-800 shrink-0 border border-white/5"
-                  />
+                  <div className="relative shrink-0">
+                    <img
+                      src={track.artwork || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=100'}
+                      alt={track.title}
+                      className={`w-10 h-10 sm:w-11 sm:h-11 rounded-lg object-cover bg-dark-800 shrink-0 border ${
+                        isCurrent ? 'border-cyan-400/50 shadow-sm' : 'border-white/5'
+                      }`}
+                    />
+                    {isCurrent && (
+                      <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-3 w-3 bg-cyan-500 border border-dark-950"></span>
+                      </span>
+                    )}
+                  </div>
 
                   <div className="min-w-0 flex-1">
-                    <h4 className="text-xs sm:text-sm font-semibold text-white truncate group-hover:text-cyan-400 transition-colors">
+                    <h4
+                      className={`text-xs sm:text-sm font-semibold truncate transition-colors ${
+                        isCurrent ? 'text-cyan-300 font-bold' : 'text-white group-hover:text-cyan-400'
+                      }`}
+                    >
                       {track.title}
                     </h4>
                     <p className="text-[11px] sm:text-xs text-slate-400 truncate">{track.artist}</p>
                     <div className="flex items-center gap-1.5 sm:gap-2 mt-0.5 text-[10px] text-slate-500">
+                      {isCurrent && (
+                        <span className="inline-flex items-center gap-0.5 text-[9px] font-mono font-bold text-cyan-300 bg-cyan-950/80 px-1.5 py-0.2 rounded border border-cyan-400/30">
+                          <Radio className="w-2.5 h-2.5 text-cyan-400 animate-pulse" />
+                          <span>PLAYING</span>
+                        </span>
+                      )}
                       <span className="truncate max-w-[90px] sm:max-w-none">{track.addedBy || 'Guest'}</span>
                       <span>•</span>
                       <span className="shrink-0">
@@ -132,8 +170,12 @@ export const QueueList: React.FC<QueueListProps> = ({
                     <div className="flex items-center gap-0.5 sm:gap-1">
                       <button
                         onClick={() => handleForcePlay(track)}
-                        className="p-2 rounded-lg text-slate-400 hover:text-cyan-400 hover:bg-dark-800 transition-colors active:scale-90"
-                        title="Play Now across room"
+                        className={`p-2 rounded-lg transition-colors active:scale-90 ${
+                          isCurrent
+                            ? 'text-cyan-400 bg-cyan-950/60 border border-cyan-500/30 hover:bg-cyan-900/50'
+                            : 'text-slate-400 hover:text-cyan-400 hover:bg-dark-800'
+                        }`}
+                        title={isCurrent ? 'Restart track across room' : 'Play Now across room'}
                       >
                         <Play className="w-3.5 h-3.5 fill-current" />
                       </button>
@@ -145,6 +187,10 @@ export const QueueList: React.FC<QueueListProps> = ({
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
+                  ) : isCurrent ? (
+                    <span className="text-[10px] font-mono font-bold text-cyan-400 px-2 py-0.5 rounded bg-cyan-950/80 border border-cyan-400/30">
+                      Playing
+                    </span>
                   ) : (
                     <span className="text-[10px] font-mono text-slate-500 px-2 py-0.5 rounded bg-dark-900 border border-white/5">
                       Queued

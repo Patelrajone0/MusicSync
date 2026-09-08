@@ -253,16 +253,21 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
   const handlePrevious = () => {
     triggerBtnAnimation('prev');
 
-    // Instant local audio seek to 0 (zero delay!)
-    syncEngine.seekPlayback(0);
-    setCurrentPosition(0);
+    if (!canControl) return;
 
-    if (canControl) {
+    // If more than 3 seconds into the track, rewind to start
+    if (currentPosition > 3) {
+      syncEngine.seekPlayback(0);
+      setCurrentPosition(0);
       socket.emit('request_seek', { position: 0 });
-      if (!isPlaying) {
+      if (!isPlaying && currentTrack) {
         socket.emit('request_play', { track: currentTrack, position: 0 });
       }
+      return;
     }
+
+    // Otherwise, jump to the previous track in the Up Next queue!
+    socket.emit('request_previous');
   };
 
   // 3. Next Track / Skip
