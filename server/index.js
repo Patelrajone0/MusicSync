@@ -5,6 +5,7 @@ import cors from 'cors';
 import path from 'path';
 import os from 'os';
 import { fileURLToPath } from 'url';
+import { Readable } from 'stream';
 import play from 'play-dl';
 import { CURATED_TRACKS } from './curatedTracks.js';
 
@@ -25,17 +26,35 @@ const io = new Server(server, {
 app.use(cors());
 app.use(express.json());
 
-// Initialize SoundCloud Full-Track Streaming Client
+// Initialize SoundCloud Full-Track Streaming Client with Caching & Resilience
 let soundcloudReady = false;
-async function initSoundCloud() {
+let cachedClientId = null;
+let lastClientIdFetch = 0;
+
+async function getCachedClientId() {
+  const now = Date.now();
+  // Reuse clientId for up to 3 hours to avoid hitting SoundCloud rate limits
+  if (cachedClientId && (now - lastClientIdFetch < 3 * 60 * 60 * 1000)) {
+    return cachedClientId;
+  }
   try {
     const clientId = await play.getFreeClientID();
-    await play.setToken({ soundcloud: { client_id: clientId } });
-    soundcloudReady = true;
-    console.log('> SoundCloud Full-Track Engine Initialized');
+    if (clientId) {
+      cachedClientId = clientId;
+      lastClientIdFetch = now;
+      await play.setToken({ soundcloud: { client_id: clientId } }).catch(() => {});
+      soundcloudReady = true;
+      console.log('> SoundCloud Full-Track Engine Initialized (client_id cached)');
+      return clientId;
+    }
   } catch (e) {
     console.warn('SoundCloud init notice:', e.message);
   }
+  return cachedClientId || 'Pb72ranhoyt6gw7hM7TkzUItXlMWSNSo';
+}
+
+async function initSoundCloud() {
+  await getCachedClientId();
 }
 initSoundCloud();
 
@@ -261,24 +280,85 @@ app.get('/api/tracks/curated', (req, res) => {
   res.json({ tracks: CURATED_TRACKS });
 });
 
-// Full Track Audio Stream Proxy Endpoint (SoundCloud Progressive MP3)
+// Full Track Audio Stream Proxy Endpoint (SoundCloud Progressive MP3) with direct Byte-Range pipe
 app.get('/api/stream/soundcloud', async (req, res) => {
   const progUrl = req.query.progUrl;
   if (!progUrl) return res.status(400).send('Missing progUrl');
 
   try {
-    const clientId = await play.getFreeClientID();
-    const mediaRes = await fetch(`${progUrl}?client_id=${clientId}`);
-    if (!mediaRes.ok) throw new Error('SoundCloud media fetch error');
+    const clientId = await getCachedClientId();
+    const mediaRes = await fetch(`${progUrl}?client_id=${clientId}`, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+      }
+    });
+    if (!mediaRes.ok) throw new Error(`SoundCloud media fetch error: ${mediaRes.status}`);
     const data = await mediaRes.json();
-    if (data.url) {
-      // Direct redirect to Cloudflare high-speed audio CDN with CORS *
-      return res.redirect(302, data.url);
+    if (!data.url) return res.status(404).send('Stream URL not found');
+
+    const rangeHeader = req.headers.range;
+    const fetchHeaders = {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+    };
+    if (rangeHeader) {
+      fetchHeaders['Range'] = rangeHeader;
     }
-    res.status(404).send('Stream URL not found');
+
+    const audioRes = await fetch(data.url, { headers: fetchHeaders });
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Headers', '*');
+    res.setHeader('Access-Control-Expose-Headers', 'Content-Range, Content-Length, Accept-Ranges');
+    res.setHeader('Accept-Ranges', 'bytes');
+    res.setHeader('Content-Type', audioRes.headers.get('content-type') || 'audio/mpeg');
+
+    if (audioRes.headers.has('content-length')) {
+      res.setHeader('Content-Length', audioRes.headers.get('content-length'));
+    }
+    if (audioRes.headers.has('content-range')) {
+      res.setHeader('Content-Range', audioRes.headers.get('content-range'));
+    }
+
+    res.status(audioRes.status);
+    Readable.fromWeb(audioRes.body).pipe(res);
   } catch (err) {
     console.error('SoundCloud stream error:', err.message);
     if (!res.headersSent) res.status(500).send('Streaming error');
+  }
+});
+
+// Universal Audio Stream Proxy (for Curated or External Tracks with CORS & Range Support)
+app.get('/api/stream/proxy', async (req, res) => {
+  const targetUrl = req.query.url;
+  if (!targetUrl) return res.status(400).send('Missing url parameter');
+
+  try {
+    const rangeHeader = req.headers.range;
+    const fetchHeaders = {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+    };
+    if (rangeHeader) {
+      fetchHeaders['Range'] = rangeHeader;
+    }
+
+    const audioRes = await fetch(targetUrl, { headers: fetchHeaders });
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Headers', '*');
+    res.setHeader('Access-Control-Expose-Headers', 'Content-Range, Content-Length, Accept-Ranges');
+    res.setHeader('Accept-Ranges', 'bytes');
+    res.setHeader('Content-Type', audioRes.headers.get('content-type') || 'audio/mpeg');
+
+    if (audioRes.headers.has('content-length')) {
+      res.setHeader('Content-Length', audioRes.headers.get('content-length'));
+    }
+    if (audioRes.headers.has('content-range')) {
+      res.setHeader('Content-Range', audioRes.headers.get('content-range'));
+    }
+
+    res.status(audioRes.status);
+    Readable.fromWeb(audioRes.body).pipe(res);
+  } catch (err) {
+    console.error('Proxy stream error:', err.message);
+    if (!res.headersSent) res.status(500).send('Audio proxy streaming error');
   }
 });
 
@@ -509,7 +589,7 @@ app.get('/api/search', async (req, res) => {
 
   // 1. Query SoundCloud for Full-Length Tracks (>= 75 seconds) with pagination
   try {
-    const clientId = await play.getFreeClientID();
+    const clientId = await getCachedClientId();
     const scUrl = `https://api-v2.soundcloud.com/search/tracks?q=${encodeURIComponent(scQuery)}&client_id=${clientId}&limit=${limit}&offset=${offset}`;
     const scRes = await fetch(scUrl);
     if (scRes.ok) {

@@ -26,6 +26,7 @@ import { Track } from '../types';
 import { searchTracks, getSearchSuggestions, createCustomTrack } from '../services/musicApi';
 import { userTasteEngine, TasteSummary, HistoryItem } from '../services/userTaste';
 import { socket } from '../services/socket';
+import { syncEngine } from '../services/syncEngine';
 
 function formatTimeAgo(timestamp: number): string {
   const diff = Date.now() - timestamp;
@@ -238,6 +239,7 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
   };
 
   const handleAddTrack = (track: Track) => {
+    syncEngine.unlockAudio().catch(() => {});
     socket.emit('queue_add', { track });
     // Save to user taste profile!
     userTasteEngine.recordInteraction(track, 'queued');
@@ -256,6 +258,7 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
   const handleAddCustomTrack = (e: React.FormEvent) => {
     e.preventDefault();
     if (!customUrl.trim()) return;
+    syncEngine.unlockAudio().catch(() => {});
     const track = createCustomTrack(customUrl, customTitle, customArtist);
     socket.emit('queue_add', { track });
     userTasteEngine.recordInteraction(track, 'queued');

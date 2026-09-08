@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { Track, UserRole } from '../types';
 import { socket } from '../services/socket';
+import { syncEngine } from '../services/syncEngine';
 
 interface QueueListProps {
   queue: Track[];
@@ -32,6 +33,7 @@ export const QueueList: React.FC<QueueListProps> = ({
 
   const handleForcePlay = (track: Track) => {
     if (!canControl) return;
+    syncEngine.unlockAudio().catch(() => {});
     socket.emit('request_play', { track, position: 0 });
   };
 

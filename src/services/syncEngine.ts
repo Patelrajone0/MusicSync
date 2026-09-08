@@ -69,8 +69,12 @@ class SyncEngine {
 
     const setupDeckElement = (id: 'A' | 'B'): HTMLAudioElement => {
       const audio = new Audio();
-      audio.crossOrigin = 'anonymous';
       audio.preload = 'auto';
+      audio.volume = this.masterVolume;
+
+      audio.addEventListener('error', () => {
+        console.error(`[Deck ${id}] Audio error:`, audio.error?.message || 'Media stream error', 'code:', audio.error?.code, 'src:', audio.src);
+      });
 
       audio.addEventListener('ended', () => {
         if (this.activeDeckId === id && this.onTrackEndedCallback) {
@@ -108,39 +112,6 @@ class SyncEngine {
         track: null
       };
     }
-
-    if (!this.audioContext) {
-      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-      if (AudioCtx) {
-        this.audioContext = new AudioCtx();
-        this.masterGainNode = this.audioContext.createGain();
-        this.masterGainNode.gain.value = this.masterVolume;
-
-        this.analyserNode = this.audioContext.createAnalyser();
-        this.analyserNode.fftSize = 256;
-        this.analyserNode.smoothingTimeConstant = 0.85;
-
-        // Route: Deck Gains -> AnalyserNode -> MasterGainNode -> Output
-        this.analyserNode.connect(this.masterGainNode);
-        this.masterGainNode.connect(this.audioContext.destination);
-
-        const connectDeck = (deck: AudioDeck, initialGain: number) => {
-          if (!this.audioContext || !this.analyserNode) return;
-          try {
-            deck.gainNode = this.audioContext.createGain();
-            deck.gainNode.gain.value = initialGain;
-            deck.sourceNode = this.audioContext.createMediaElementSource(deck.element);
-            deck.sourceNode.connect(deck.gainNode);
-            deck.gainNode.connect(this.analyserNode);
-          } catch (e) {
-            console.warn(`Deck ${deck.id} WebAudio connection note:`, e);
-          }
-        };
-
-        connectDeck(this.deckA, this.activeDeckId === 'A' ? 1.0 : 0.0);
-        connectDeck(this.deckB, this.activeDeckId === 'B' ? 1.0 : 0.0);
-      }
-    }
   }
 
   // 2. Unlock Audio on User Gesture
@@ -158,6 +129,32 @@ class SyncEngine {
         source.connect(this.audioContext.destination);
         source.start(0);
       }
+
+      if (this.masterGainNode) {
+        this.masterGainNode.gain.value = this.masterVolume;
+      }
+
+      // Prime and unlock both HTMLAudioElements in this synchronous user gesture
+      const primeElement = async (deck: AudioDeck | null) => {
+        if (!deck?.element) return;
+        try {
+          if (!deck.element.src) {
+            deck.element.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
+          }
+          const p = deck.element.play();
+          if (p !== undefined) {
+            await p;
+            if (!this.isPlaying) {
+              deck.element.pause();
+            }
+          }
+        } catch (e) {
+          // Priming error non-fatal
+        }
+      };
+
+      await Promise.all([primeElement(this.deckA), primeElement(this.deckB)]);
+
       socket.emit('set_audio_ready', { isReady: true });
       return true;
     } catch (err) {
@@ -391,83 +388,48 @@ class SyncEngine {
     this.startDriftCorrectionLoop();
   }
 
-  private performDeckTransition(outgoing: AudioDeck, incoming: AudioDeck, startSec: number, fadeDuration: number) {
+  private performDeckTransition(outgoing: AudioDeck, incoming: AudioDeck, startSec: number, _fadeDuration: number) {
     if (this.crossfadeTimer) {
       clearTimeout(this.crossfadeTimer);
       this.crossfadeTimer = null;
     }
 
     if (Math.abs(incoming.element.currentTime - startSec) > 0.05) {
-      incoming.element.currentTime = startSec;
+      try {
+        incoming.element.currentTime = startSec;
+      } catch (e) {}
     }
 
-    if (this.audioContext && this.audioContext.state === 'suspended') {
-      this.audioContext.resume().catch(() => {});
+    incoming.element.volume = this.masterVolume;
+
+    // Start incoming deck audio
+    const playPromise = incoming.element.play();
+    if (playPromise !== undefined) {
+      playPromise.catch((err) => {
+        console.warn(`[Deck ${incoming.id}] Playback promise:`, err);
+      });
     }
 
-    const now = this.audioContext ? this.audioContext.currentTime : 0;
-
-    if (fadeDuration > 0 && this.audioContext && incoming.gainNode && outgoing.gainNode) {
-      // 1. Ramp incoming deck from 0 up to 1.0 (Web Audio smooth linear curve)
-      incoming.gainNode.gain.cancelScheduledValues(now);
-      incoming.gainNode.gain.setValueAtTime(0.001, now);
-      incoming.gainNode.gain.linearRampToValueAtTime(1.0, now + fadeDuration);
-
-      // 2. Ramp outgoing deck from current down to 0.0
-      outgoing.gainNode.gain.cancelScheduledValues(now);
-      outgoing.gainNode.gain.setValueAtTime(outgoing.gainNode.gain.value || 1.0, now);
-      outgoing.gainNode.gain.linearRampToValueAtTime(0.001, now + fadeDuration);
-
-      // Start incoming deck audio
-      incoming.element.play().catch(() => {});
-
-      // Swap active deck reference
-      this.activeDeckId = incoming.id;
-
-      // After crossfade finishes, pause outgoing deck
-      this.crossfadeTimer = setTimeout(() => {
-        outgoing.element.pause();
-        if (outgoing.gainNode && this.audioContext) {
-          outgoing.gainNode.gain.cancelScheduledValues(this.audioContext.currentTime);
-          outgoing.gainNode.gain.setValueAtTime(0.0, this.audioContext.currentTime);
-        }
-      }, fadeDuration * 1000);
-    } else {
-      // Immediate Cut (Direct seek or 0s crossfade)
-      if (incoming.gainNode && this.audioContext) {
-        incoming.gainNode.gain.cancelScheduledValues(now);
-        incoming.gainNode.gain.setValueAtTime(1.0, now);
-      }
-      if (outgoing.gainNode && this.audioContext) {
-        outgoing.gainNode.gain.cancelScheduledValues(now);
-        outgoing.gainNode.gain.setValueAtTime(0.0, now);
-      }
-      outgoing.element.pause();
-      incoming.element.play().catch(() => {});
-      this.activeDeckId = incoming.id;
-    }
+    // Stop outgoing deck and activate incoming
+    outgoing.element.pause();
+    this.activeDeckId = incoming.id;
   }
 
   private executePlay(deck: AudioDeck, startSec: number) {
     if (!deck.element) return;
 
     if (Math.abs(deck.element.currentTime - startSec) > 0.05) {
-      deck.element.currentTime = startSec;
+      try {
+        deck.element.currentTime = startSec;
+      } catch (e) {}
     }
 
-    if (this.audioContext && this.audioContext.state === 'suspended') {
-      this.audioContext.resume().catch(() => {});
-    }
-
-    if (deck.gainNode && this.audioContext) {
-      deck.gainNode.gain.cancelScheduledValues(this.audioContext.currentTime);
-      deck.gainNode.gain.setValueAtTime(1.0, this.audioContext.currentTime);
-    }
+    deck.element.volume = this.masterVolume;
 
     const playPromise = deck.element.play();
     if (playPromise !== undefined) {
       playPromise.catch((err) => {
-        console.warn('Playback blocked by browser policy. Click anywhere to activate speaker.', err);
+        console.warn(`[Deck ${deck.id}] Playback blocked:`, err);
       });
     }
   }
