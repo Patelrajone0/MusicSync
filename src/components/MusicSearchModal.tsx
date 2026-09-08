@@ -548,8 +548,69 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
         )}
       </div>
 
-        {/* Tab Toggle */}
-        <div className="flex border-b border-white/5 px-4 pt-2.5 gap-1.5 overflow-x-auto no-scrollbar bg-dark-950/40">
+      {/* Mixed Songs ON / OFF Option Bar directly under Universal Music Library */}
+      <div className="px-4 py-2.5 bg-gradient-to-r from-dark-950 via-dark-900 to-dark-950 border-b border-white/10 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className={`p-1.5 rounded-lg transition-all shrink-0 ${
+            activeTab === 'mixed'
+              ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+              : 'bg-white/5 text-slate-400 border border-white/5'
+          }`}>
+            <Flame className={`w-4 h-4 ${activeTab === 'mixed' ? 'fill-current animate-pulse text-amber-400' : ''}`} />
+          </div>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs font-bold text-white">Mixed Songs</span>
+              <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono font-bold uppercase transition-all ${
+                activeTab === 'mixed'
+                  ? 'bg-gradient-to-r from-amber-500/20 to-rose-500/20 text-amber-300 border border-amber-500/40'
+                  : 'bg-dark-800 text-slate-400 border border-white/10'
+              }`}>
+                {activeTab === 'mixed' ? '🔥 ON (Remix / Mashup / Non-Stop)' : 'OFF (Originals Only)'}
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-400 truncate mt-0.5">
+              {activeTab === 'mixed'
+                ? 'Active: Continuous multi-hour party sets, club remixes & mashups enabled'
+                : 'Turn ON to load continuous party remixes, mashups & multi-hour non-stop sets'}
+            </p>
+          </div>
+        </div>
+
+        {/* Toggle Switch ON / OFF */}
+        <div className="flex items-center gap-2 shrink-0">
+          <span className={`text-[11px] font-mono font-bold uppercase tracking-wider ${
+            activeTab === 'mixed' ? 'text-amber-400' : 'text-slate-500'
+          }`}>
+            {activeTab === 'mixed' ? 'ON' : 'OFF'}
+          </span>
+          <button
+            type="button"
+            onClick={() => handleTabChange(activeTab === 'mixed' ? 'search' : 'mixed')}
+            className={`relative inline-flex h-6 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none shadow-inner ${
+              activeTab === 'mixed'
+                ? 'bg-gradient-to-r from-amber-500 to-rose-500 shadow-amber-500/20'
+                : 'bg-dark-800 border border-white/15 hover:border-white/30'
+            }`}
+            role="switch"
+            aria-checked={activeTab === 'mixed'}
+            title={
+              activeTab === 'mixed'
+                ? 'Turn OFF Mixed Songs (Filter out all remixes & mashups)'
+                : 'Turn ON Mixed Songs (Load party remixes, mashups & non-stop sets)'
+            }
+          >
+            <span
+              className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                activeTab === 'mixed' ? 'translate-x-6' : 'translate-x-0'
+              }`}
+            />
+          </button>
+        </div>
+      </div>
+
+      {/* Tab Toggle */}
+      <div className="flex border-b border-white/5 px-4 pt-2.5 gap-1.5 overflow-x-auto no-scrollbar bg-dark-950/40">
           <button
             onClick={() => handleTabChange('search')}
             className={`pb-2 px-3 text-xs font-semibold border-b-2 transition-all whitespace-nowrap shrink-0 flex items-center gap-1.5 ${
@@ -663,11 +724,11 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
                   <div className="p-2 rounded-xl bg-amber-500/20 text-amber-300 shrink-0">
                     <Flame className="w-5 h-5 fill-current animate-pulse" />
                   </div>
-                  <div>
-                    <h4 className="font-bold text-white text-xs sm:text-sm flex items-center gap-2">
+                  <div className="min-w-0">
+                    <h4 className="font-bold text-white text-xs sm:text-sm flex items-center gap-2 flex-wrap">
                       <span>Mixed Songs & Non-Stop Sets</span>
                       <span className="text-[10px] px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 font-mono font-bold border border-rose-500/30">
-                        Party Mode
+                        Party Mode Active
                       </span>
                     </h4>
                     <p className="text-[11px] text-slate-300 mt-0.5">
@@ -675,6 +736,14 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
                     </p>
                   </div>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => handleTabChange('search')}
+                  className="px-2.5 py-1.5 rounded-lg bg-dark-900/90 hover:bg-dark-800 border border-white/10 hover:border-white/25 text-[11px] text-slate-200 hover:text-white font-semibold shrink-0 transition-all shadow-sm"
+                  title="Turn OFF Mixed Songs (Switch to Original Songs)"
+                >
+                  Turn OFF
+                </button>
               </div>
             )}
 
@@ -690,9 +759,11 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
                 <button
                   type="button"
                   onClick={() => handleTabChange('mixed')}
-                  className="text-[10px] sm:text-xs font-semibold text-amber-400 hover:text-amber-300 shrink-0 flex items-center gap-1 hover:underline"
+                  className="px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-[11px] font-semibold text-amber-300 hover:text-amber-200 shrink-0 flex items-center gap-1 transition-all shadow-sm"
+                  title="Turn ON Mixed Songs"
                 >
-                  <span>Switch to Mixed Songs</span>
+                  <Flame className="w-3 h-3 text-amber-400 fill-current" />
+                  <span>Turn ON Mixed Songs</span>
                   <span>→</span>
                 </button>
               </div>
