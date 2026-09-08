@@ -162,19 +162,12 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
       onUnlockAudio();
     }
 
-    // If no song loaded yet: play queue[0] or open search
+    // If no song loaded yet: play queue[0] if available. Never trigger search bar on play/pause!
     if (!currentTrack) {
-      if (queue && queue.length > 0 && queue[0]) {
-        if (canControl) {
-          socket.emit('request_play', { track: queue[0], position: 0 });
-        } else {
-          socket.emit('request_play', { track: queue[0], position: 0 });
-        }
-        return;
-      } else {
-        onOpenSearch();
-        return;
+      if (queue && queue.length > 0 && queue[0] && canControl) {
+        socket.emit('request_play', { track: queue[0], position: 0 });
       }
+      return;
     }
 
     // Listener toggle: control local audio speaker
