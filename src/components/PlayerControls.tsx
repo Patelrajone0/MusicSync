@@ -208,6 +208,54 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
     }
   };
 
+  const handleTogglePlayRef = useRef(handleTogglePlay);
+  useEffect(() => {
+    handleTogglePlayRef.current = handleTogglePlay;
+  });
+
+  // Global Keyboard Shortcut: Spacebar for Instant Play / Pause on Windows & Mac
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore key repeat when holding down the key
+      if (e.repeat) return;
+
+      // Detect Spacebar across all Windows and Mac browsers
+      if (e.code === 'Space' || e.key === ' ' || e.key === 'Spacebar') {
+        const target = e.target as HTMLElement | null;
+
+        // If currently focused on any text input, textarea, select, or editable container, allow normal space typing
+        if (
+          target &&
+          (target.tagName === 'INPUT' ||
+            target.tagName === 'TEXTAREA' ||
+            target.tagName === 'SELECT' ||
+            target.isContentEditable ||
+            target.getAttribute('contenteditable') === 'true' ||
+            Boolean(target.closest('input, textarea, select, [contenteditable="true"]')))
+        ) {
+          return;
+        }
+
+        // Prevent page scroll down and prevent accidental trigger of whatever button had focus
+        e.preventDefault();
+        e.stopPropagation();
+
+        // Blur any active button, link, or interactive element so spacebar doesn't trigger its click event
+        if (target && typeof target.blur === 'function') {
+          target.blur();
+        }
+
+        // Efficiently execute play/pause toggle with zero delay
+        handleTogglePlayRef.current();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown, { capture: true });
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown, { capture: true });
+    };
+  }, []);
+
   // 2. Previous Track / Rewind
   const handlePrevious = () => {
     triggerBtnAnimation('prev');
