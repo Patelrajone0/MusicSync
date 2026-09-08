@@ -1155,7 +1155,7 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
                           ) : (
                             <>
                               <Plus className="w-3.5 h-3.5" />
-                              <span>Queue</span>
+                              <span>Add</span>
                             </>
                           )}
                         </button>
