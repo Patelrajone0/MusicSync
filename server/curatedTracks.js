@@ -2,7 +2,7 @@
  * Curated high-energy library of instantly streamable full audio tracks.
  * Pre-verified progressive stream links supporting sample-accurate Web Audio decoding.
  * Exclusively featuring English, Hindi, Punjabi, and Gujarati tracks!
- * Prioritizes the most viral and trending songs FIRST in suggestions.
+ * Clean original titles for fast recognition and searchability.
  */
 export const CURATED_TRACKS = [
   // ----------------------------------------------------
@@ -10,9 +10,9 @@ export const CURATED_TRACKS = [
   // ----------------------------------------------------
   {
     id: 'curated-pa-01',
-    title: 'Tauba Tauba (Karan Aujla Viral Beat)',
-    artist: 'Karan Aujla & Soundclash',
-    album: 'Bad Newz Anthems',
+    title: 'Tauba Tauba',
+    artist: 'Karan Aujla',
+    album: 'Bad Newz',
     duration: 222,
     genre: 'Punjabi / Desi Hip-Hop',
     language: 'Punjabi',
@@ -25,9 +25,9 @@ export const CURATED_TRACKS = [
   },
   {
     id: 'curated-pa-02',
-    title: 'Lover & Brown Munde (Dhol & 808 Bass)',
+    title: 'Lover',
     artist: 'Diljit Dosanjh',
-    album: 'Punjab Synced System',
+    album: 'MoonChild Era',
     duration: 188,
     genre: 'Punjabi / Desi Hip-Hop',
     language: 'Punjabi',
@@ -40,9 +40,9 @@ export const CURATED_TRACKS = [
   },
   {
     id: 'curated-pa-03',
-    title: 'Sidhu Moosewala Tribute (Moosetape 295 Anthem)',
+    title: '295',
     artist: 'Sidhu Moosewala',
-    album: 'Moosetape Original',
+    album: 'Moosetape',
     duration: 273,
     genre: 'Punjabi / Trap',
     language: 'Punjabi',
@@ -55,7 +55,7 @@ export const CURATED_TRACKS = [
   },
   {
     id: 'curated-pa-04',
-    title: 'Winning Speech (Karan Aujla Bass Edition)',
+    title: 'Winning Speech',
     artist: 'Karan Aujla',
     album: 'Street Dreams',
     duration: 214,
@@ -70,9 +70,9 @@ export const CURATED_TRACKS = [
   },
   {
     id: 'curated-pa-05',
-    title: 'Born to Shine & G.O.A.T (Urban Punjabi)',
+    title: 'Born to Shine',
     artist: 'Diljit Dosanjh',
-    album: 'G.O.A.T Master',
+    album: 'G.O.A.T',
     duration: 218,
     genre: 'Punjabi / Pop',
     language: 'Punjabi',
@@ -85,7 +85,7 @@ export const CURATED_TRACKS = [
   },
   {
     id: 'curated-pa-06',
-    title: 'Cheques & Baller (No Love Anthem)',
+    title: 'Cheques',
     artist: 'Shubh',
     album: 'Still Rollin',
     duration: 183,
@@ -104,9 +104,9 @@ export const CURATED_TRACKS = [
   // ----------------------------------------------------
   {
     id: 'curated-hi-01',
-    title: 'Sari Duniya Jala Denge (Animal Rock Bass)',
+    title: 'Sari Duniya Jala Denge',
     artist: 'B Praak & Jaani',
-    album: 'Animal Soundtrack',
+    album: 'Animal',
     duration: 182,
     genre: 'Hindi / Bollywood Rock',
     language: 'Hindi',
@@ -119,9 +119,9 @@ export const CURATED_TRACKS = [
   },
   {
     id: 'curated-hi-02',
-    title: 'Kesariya & Raataan (Bollywood Lofi Session)',
+    title: 'Kesariya',
     artist: 'Arijit Singh',
-    album: 'Brahmastra Midnight Vibes',
+    album: 'Brahmastra',
     duration: 191,
     genre: 'Hindi / Bollywood Lofi',
     language: 'Hindi',
@@ -134,9 +134,9 @@ export const CURATED_TRACKS = [
   },
   {
     id: 'curated-hi-03',
-    title: 'Tum Hi Ho (Club Symphony & Bass)',
+    title: 'Tum Hi Ho',
     artist: 'Arijit Singh',
-    album: 'Aashiqui 2 Synced',
+    album: 'Aashiqui 2',
     duration: 310,
     genre: 'Hindi / Bollywood Bass',
     language: 'Hindi',
@@ -149,9 +149,9 @@ export const CURATED_TRACKS = [
   },
   {
     id: 'curated-hi-04',
-    title: 'Apna Bana Le & O Bedardeya (Soulful Session)',
+    title: 'Apna Bana Le',
     artist: 'Arijit Singh & Sachin-Jigar',
-    album: 'Bhediya Anthems',
+    album: 'Bhediya',
     duration: 261,
     genre: 'Hindi / Bollywood Romantic',
     language: 'Hindi',
@@ -164,9 +164,9 @@ export const CURATED_TRACKS = [
   },
   {
     id: 'curated-hi-05',
-    title: 'Husn & Baarishein (Acoustic Poetry)',
+    title: 'Husn',
     artist: 'Anuv Jain',
-    album: 'Indie Acoustic Studio',
+    album: 'Husn',
     duration: 218,
     genre: 'Hindi / Indie Acoustic',
     language: 'Hindi',
@@ -179,7 +179,7 @@ export const CURATED_TRACKS = [
   },
   {
     id: 'curated-hi-06',
-    title: 'Channa Mereya & Ilahi (Classic Melodies)',
+    title: 'Channa Mereya',
     artist: 'Pritam & Arijit Singh',
     album: 'Ae Dil Hai Mushkil',
     duration: 289,
@@ -198,9 +198,9 @@ export const CURATED_TRACKS = [
   // ----------------------------------------------------
   {
     id: 'curated-gu-01',
-    title: 'Khalasi (Coke Studio Folk Fusion)',
+    title: 'Khalasi',
     artist: 'Achint & Aditya Gadhvi',
-    album: 'Gujarat Urban Folk',
+    album: 'Coke Studio Bharat',
     duration: 219,
     genre: 'Gujarati / Folk Fusion',
     language: 'Gujarati',
@@ -213,9 +213,9 @@ export const CURATED_TRACKS = [
   },
   {
     id: 'curated-gu-02',
-    title: 'Chogada Tara & Mor Bani Thanghat (Garba High Bass)',
+    title: 'Chogada',
     artist: 'Darshan Raval',
-    album: 'Loveratri Garba',
+    album: 'Loveyatri',
     duration: 176,
     genre: 'Gujarati / Garba Beat',
     language: 'Gujarati',
@@ -228,7 +228,7 @@ export const CURATED_TRACKS = [
   },
   {
     id: 'curated-gu-03',
-    title: 'Sanedo Sanedo (Traditional Gujarati Garba)',
+    title: 'Sanedo Sanedo',
     artist: 'Maniraj Barot',
     album: 'Gujarat Traditional Dandiya',
     duration: 301,
@@ -243,7 +243,7 @@ export const CURATED_TRACKS = [
   },
   {
     id: 'curated-gu-04',
-    title: 'Tara Vina Shyam (Traditional United Garba)',
+    title: 'Tara Vina Shyam',
     artist: 'Atul Purohit',
     album: 'Navratri Mahotsav',
     duration: 245,
@@ -258,7 +258,7 @@ export const CURATED_TRACKS = [
   },
   {
     id: 'curated-gu-05',
-    title: 'Rona Ser Ma & Char Bangdi (Desi Dhol Beats)',
+    title: 'Rona Ser Ma',
     artist: 'Geeta Rabari & Kinjal Dave',
     album: 'Gujarat Folk Hits',
     duration: 212,
@@ -273,7 +273,7 @@ export const CURATED_TRACKS = [
   },
   {
     id: 'curated-gu-06',
-    title: 'Laadki & Nagar Nand Ji Na Lal (Spiritual Folk)',
+    title: 'Laadki',
     artist: 'Kirtidan Gadhvi',
     album: 'Dayro & Lokgeet Live',
     duration: 280,
@@ -292,9 +292,9 @@ export const CURATED_TRACKS = [
   // ----------------------------------------------------
   {
     id: 'curated-en-01',
-    title: 'Starboy (Synthwave Bass)',
+    title: 'Starboy',
     artist: 'The Weeknd feat. Daft Punk',
-    album: 'Starboy Release',
+    album: 'Starboy',
     duration: 207,
     genre: 'Synthwave / Pop',
     language: 'English',
@@ -307,9 +307,9 @@ export const CURATED_TRACKS = [
   },
   {
     id: 'curated-en-02',
-    title: 'Blinding Lights (Original Studio Master)',
+    title: 'Blinding Lights',
     artist: 'The Weeknd',
-    album: 'After Hours Synced',
+    album: 'After Hours',
     duration: 200,
     genre: 'Synthpop / Pop',
     language: 'English',
@@ -322,7 +322,7 @@ export const CURATED_TRACKS = [
   },
   {
     id: 'curated-en-03',
-    title: 'Tokyo Raindrops & Study Beats',
+    title: 'Tokyo Raindrops',
     artist: 'Chillbot Lofi Study',
     album: 'Lofi Midnight Beats',
     duration: 300,
@@ -337,9 +337,9 @@ export const CURATED_TRACKS = [
   },
   {
     id: 'curated-en-04',
-    title: 'Save Your Tears & Die For You (Synth Rework)',
+    title: 'Save Your Tears',
     artist: 'The Weeknd',
-    album: 'After Hours Original',
+    album: 'After Hours',
     duration: 215,
     genre: 'Synthpop / Pop',
     language: 'English',
@@ -352,9 +352,9 @@ export const CURATED_TRACKS = [
   },
   {
     id: 'curated-en-05',
-    title: 'Yellow & Viva La Vida (Stadium Anthems)',
+    title: 'Yellow',
     artist: 'Coldplay',
-    album: 'Coldplay Synced Live',
+    album: 'Parachutes',
     duration: 269,
     genre: 'Alternative / Rock',
     language: 'English',
@@ -367,7 +367,7 @@ export const CURATED_TRACKS = [
   },
   {
     id: 'curated-en-06',
-    title: 'Levitating & Don\'t Start Now (Disco Pop)',
+    title: 'Levitating',
     artist: 'Dua Lipa',
     album: 'Future Nostalgia',
     duration: 203,
@@ -391,7 +391,7 @@ export const CURATED_MIXED_TRACKS = [
   // 1. Hindi Party Mixes & Mashups
   {
     id: 'mixed-hi-01',
-    title: 'Bollywood Club & Party Mashup (Non-Stop Dance Hits)',
+    title: 'Bollywood Club & Party Mashup',
     artist: 'DJ Chetas & DJ NYK Style',
     album: 'Bollywood Night Fever',
     duration: 1845,
@@ -407,7 +407,7 @@ export const CURATED_MIXED_TRACKS = [
   },
   {
     id: 'mixed-hi-02',
-    title: 'Arijit Singh & Atif Aslam Romantic Mashup (Lofi & Bass)',
+    title: 'Arijit Singh & Atif Aslam Romantic Mashup',
     artist: 'DJ Shadow Dubai Remix',
     album: 'Desi Mashup Anthems',
     duration: 540,
@@ -424,7 +424,7 @@ export const CURATED_MIXED_TRACKS = [
   // 2. Punjabi Bhangra & Bass Mixes
   {
     id: 'mixed-pa-01',
-    title: 'Punjabi Dhol Bhangra & Bass Non-Stop Party Mix',
+    title: 'Punjabi Dhol Bhangra Party Mix',
     artist: 'DJ Hans & Soundclash',
     album: 'Punjab Club Blast',
     duration: 2420,
@@ -458,7 +458,7 @@ export const CURATED_MIXED_TRACKS = [
   // 3. Gujarati Non-Stop Garba & Dandiya Mixes
   {
     id: 'mixed-gu-01',
-    title: 'Navratri Non-Stop High Energy Garba (1 Hour Continuous Raas)',
+    title: 'Navratri Non-Stop High Energy Garba',
     artist: 'Atul Purohit & Kirtidan Gadhvi Non-Stop',
     album: 'United Way Dandiya Raas',
     duration: 3600,
@@ -474,7 +474,7 @@ export const CURATED_MIXED_TRACKS = [
   },
   {
     id: 'mixed-gu-02',
-    title: 'Sanedo & Char Char Bangdi (DJ Jiggy Folk Remix)',
+    title: 'Sanedo & Char Char Bangdi Folk Remix',
     artist: 'DJ Jiggy Folk Remix',
     album: 'Gujarat Dandiya Raas',
     duration: 301,
@@ -491,7 +491,7 @@ export const CURATED_MIXED_TRACKS = [
   // 4. English EDM & Club Non-Stop Sets
   {
     id: 'mixed-en-01',
-    title: 'EDM Festival Anthems & Club Hits (Non-Stop Party Set)',
+    title: 'EDM Festival Anthems & Club Hits',
     artist: 'Ultra Music Festival Live Mix',
     album: 'Festival Anthems 2024',
     duration: 3720,

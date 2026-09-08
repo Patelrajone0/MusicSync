@@ -1,4 +1,5 @@
 import { Track } from '../types';
+import { cleanTrackTitle } from './musicApi';
 
 export interface HistoryItem {
   id: string;
@@ -45,8 +46,14 @@ function loadStore(): UserTasteStore {
         artistScores: parsed.artistScores || {},
         languageScores: parsed.languageScores || {},
         genreScores: parsed.genreScores || {},
-        recentTracks: parsed.recentTracks || [],
-        history: parsed.history || []
+        recentTracks: (parsed.recentTracks || []).map((t: Track) => ({
+          ...t,
+          title: cleanTrackTitle(t.title, t.artist)
+        })),
+        history: (parsed.history || []).map((h: HistoryItem) => ({
+          ...h,
+          track: h.track ? { ...h.track, title: cleanTrackTitle(h.track.title, h.track.artist) } : h.track
+        }))
       };
     }
   } catch (err) {
@@ -111,8 +118,13 @@ class UserTasteEngine {
   /**
    * Record when user queues, upvotes, or listens to a track
    */
-  public recordInteraction(track: Track, action: 'queued' | 'listened' | 'upvoted') {
-    if (!track || !track.id) return;
+  public recordInteraction(rawTrack: Track, action: 'queued' | 'listened' | 'upvoted') {
+    if (!rawTrack || !rawTrack.id) return;
+
+    const track: Track = {
+      ...rawTrack,
+      title: cleanTrackTitle(rawTrack.title, rawTrack.artist)
+    };
 
     const weights = {
       upvoted: 3,

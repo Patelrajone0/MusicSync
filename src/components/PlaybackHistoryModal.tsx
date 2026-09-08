@@ -17,6 +17,7 @@ import {
 import { Track } from '../types';
 import { userTasteEngine, HistoryItem } from '../services/userTaste';
 import { socket } from '../services/socket';
+import { cleanTrackTitle } from '../services/musicApi';
 
 interface PlaybackHistoryModalProps {
   isOpen: boolean;
@@ -268,7 +269,7 @@ export const PlaybackHistoryModal: React.FC<PlaybackHistoryModalProps> = ({ isOp
 
                     {/* Title, Artist, and Played Time */}
                     <div className="min-w-0">
-                      <h4 className="text-sm font-semibold text-white truncate">{track.title}</h4>
+                      <h4 className="text-sm font-semibold text-white truncate">{cleanTrackTitle(track.title, track.artist)}</h4>
                       <p className="text-xs text-slate-400 truncate">{track.artist}</p>
                       <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                         {/* Played Time badge */}

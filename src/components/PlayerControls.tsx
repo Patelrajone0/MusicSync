@@ -16,6 +16,7 @@ import {
 import { Track, PlaybackState, UserRole, SyncStats } from '../types';
 import { syncEngine } from '../services/syncEngine';
 import { socket } from '../services/socket';
+import { cleanTrackTitle } from '../services/musicApi';
 
 interface PlayerControlsProps {
   currentTrack: Track | null;
@@ -458,7 +459,7 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
                   className="w-8 h-8 rounded-lg object-cover border border-white/10 shrink-0"
                 />
                 <div className="min-w-0 overflow-hidden">
-                  <h4 className="text-xs font-semibold text-white truncate leading-tight">{currentTrack.title}</h4>
+                  <h4 className="text-xs font-semibold text-white truncate leading-tight">{cleanTrackTitle(currentTrack.title, currentTrack.artist)}</h4>
                   <p className="text-[10px] text-slate-400 truncate leading-tight">{currentTrack.artist}</p>
                 </div>
               </>
@@ -497,7 +498,7 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
                 )}
               </div>
               <div className="min-w-0 overflow-hidden pr-1">
-                <h4 className="text-xs md:text-sm font-semibold text-white truncate leading-snug">{currentTrack.title}</h4>
+                <h4 className="text-xs md:text-sm font-semibold text-white truncate leading-snug">{cleanTrackTitle(currentTrack.title, currentTrack.artist)}</h4>
                 <p className="text-[11px] md:text-xs text-slate-400 truncate leading-snug">{currentTrack.artist}</p>
                 <div className="flex items-center gap-1.5 mt-0.5">
                   <span className="inline-flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded bg-cyan-950/60 border border-cyan-500/20 text-cyan-300 font-mono">

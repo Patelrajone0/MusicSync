@@ -23,7 +23,7 @@ import {
   Trash2
 } from 'lucide-react';
 import { Track } from '../types';
-import { searchTracks, getSearchSuggestions, createCustomTrack } from '../services/musicApi';
+import { searchTracks, getSearchSuggestions, createCustomTrack, cleanTrackTitle } from '../services/musicApi';
 import { userTasteEngine, TasteSummary, HistoryItem } from '../services/userTaste';
 import { socket } from '../services/socket';
 import { syncEngine } from '../services/syncEngine';
@@ -1078,7 +1078,7 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
                           {/* Title & Artist */}
                           <div className="min-w-0 flex-1">
                             <h4 className="text-xs sm:text-sm font-semibold text-white truncate flex items-center gap-1.5">
-                              {track.title}
+                              {cleanTrackTitle(track.title, track.artist)}
                             </h4>
                             <p className="text-[11px] sm:text-xs text-slate-400 truncate">{track.artist}</p>
                             <div className="flex items-center gap-1 sm:gap-1.5 mt-1 flex-wrap">
@@ -1314,7 +1314,7 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
 
                           {/* Title, Artist, badges */}
                           <div className="min-w-0">
-                            <h4 className="text-sm font-semibold text-white truncate">{track.title}</h4>
+                            <h4 className="text-sm font-semibold text-white truncate">{cleanTrackTitle(track.title, track.artist)}</h4>
                             <p className="text-xs text-slate-400 truncate">{track.artist}</p>
                             <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                               <span className="text-[10px] px-2 py-0.5 rounded-full font-mono bg-dark-800 text-slate-300 border border-white/5 flex items-center gap-1">

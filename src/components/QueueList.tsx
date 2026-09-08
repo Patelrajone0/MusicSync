@@ -9,6 +9,7 @@ import {
 import { Track, UserRole } from '../types';
 import { socket } from '../services/socket';
 import { syncEngine } from '../services/syncEngine';
+import { cleanTrackTitle } from '../services/musicApi';
 
 interface QueueListProps {
   queue: Track[];
@@ -144,7 +145,7 @@ export const QueueList: React.FC<QueueListProps> = ({
                         isCurrent ? 'text-cyan-300 font-bold' : 'text-white group-hover:text-cyan-400'
                       }`}
                     >
-                      {track.title}
+                      {cleanTrackTitle(track.title, track.artist)}
                     </h4>
                     <p className="text-[11px] sm:text-xs text-slate-400 truncate">{track.artist}</p>
                     <div className="flex items-center gap-1.5 sm:gap-2 mt-0.5 text-[10px] text-slate-500">

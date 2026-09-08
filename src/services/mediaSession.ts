@@ -1,4 +1,5 @@
 import { Track } from '../types';
+import { cleanTrackTitle } from './musicApi';
 
 export interface MediaSessionHandlers {
   onPlay?: () => void;
@@ -60,7 +61,7 @@ class MediaSessionService {
       const artwork = this.generateArtworkList(track.artwork);
 
       navigator.mediaSession.metadata = new MediaMetadata({
-        title: track.title,
+        title: cleanTrackTitle(track.title, track.artist),
         artist: track.artist || 'MusicSync Room',
         album: track.album || albumTitle,
         artwork,

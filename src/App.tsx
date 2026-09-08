@@ -22,6 +22,7 @@ import { Logo } from './components/Logo';
 import { Volume2, Radio, Disc, Sparkles, Layers, Plus, History, MessageSquare, Music2 } from 'lucide-react';
 
 import { userTasteEngine } from './services/userTaste';
+import { cleanTrackTitle } from './services/musicApi';
 
 const SESSION_STORAGE_KEY = 'musicsync_user_session';
 const USER_NAME_STORAGE_KEY = 'musicsync_user_name';
@@ -564,7 +565,7 @@ export function App() {
                       Now Playing
                     </span>
                     <h2 className="text-sm sm:text-base md:text-lg font-bold text-white truncate tracking-tight">
-                      {currentTrack.title}
+                      {cleanTrackTitle(currentTrack.title, currentTrack.artist)}
                     </h2>
                     <p className="text-xs md:text-sm text-slate-300 truncate mt-0.5">{currentTrack.artist}</p>
                     <div className="flex items-center gap-1.5 sm:gap-2 mt-1.5 sm:mt-2 flex-wrap">
