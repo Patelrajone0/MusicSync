@@ -582,6 +582,37 @@ app.get('/api/search/suggestions', (req, res) => {
   res.json({ suggestions: matches });
 });
 
+// Helper to generate a deterministic integer hash from a string seed
+function stringToHash(str = '') {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash) + str.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash);
+}
+
+// Pseudo-random number generator seeded with a specific number
+function seededRandom(seed) {
+  let s = (seed % 2147483647) || 1;
+  if (s <= 0) s += 2147483646;
+  return function() {
+    s = (s * 16807) % 2147483647;
+    return (s - 1) / 2147483646;
+  };
+}
+
+// Seeded Fisher-Yates array shuffle for consistent rotation per refresh seed
+function seededShuffle(array, seedNum) {
+  const arr = [...array];
+  const rand = seededRandom(seedNum);
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
 // Universal Search & Limitless Suggestions Endpoint (Exclusively English, Hindi, Gujarati, Punjabi)
 app.get('/api/search', async (req, res) => {
   const query = (req.query.q || '').toString().trim().toLowerCase();
@@ -590,6 +621,10 @@ app.get('/api/search', async (req, res) => {
   const isMixedMode = mode === 'mixed';
   const offset = Math.max(0, parseInt(req.query.offset) || 0);
   const limit = Math.min(50, Math.max(10, parseInt(req.query.limit) || 30));
+  const seed = (req.query.seed || '').toString().trim();
+  const excludeParam = (req.query.exclude || '').toString().trim();
+  const excludeIds = new Set(excludeParam ? excludeParam.split(',').map(s => s.trim()).filter(Boolean) : []);
+  const seedNum = seed ? stringToHash(seed) : Math.floor(Math.random() * 1000000);
 
   // If query itself targets a disallowed foreign language (e.g. 'despacito', 'bts', 'spanish songs')
   if (query && isDisallowedForeignText(query)) {
@@ -604,55 +639,119 @@ app.get('/api/search', async (req, res) => {
   const rawTracks = [];
   const userArtists = (req.query.artists || '').toString().trim();
 
-  // If no query is typed, generate limit-less suggestions based on selected language, mode & offset
+  // If no query is typed, generate limit-less suggestions based on selected language, mode, seed & offset
   let scQuery = query;
   if (!query) {
     if (isMixedMode) {
-      // Curated MIXED library starter matches (only on first page offset 0)
+      // Curated MIXED library starter matches (rotated on first page offset 0)
       if (offset === 0) {
-        const filteredCurated = CURATED_MIXED_TRACKS.filter(t => {
+        const candidates = CURATED_MIXED_TRACKS.filter(t => {
           if (selectedLang === 'all' || selectedLang === 'trending' || selectedLang === 'for_you') return true;
           return t.language?.toLowerCase() === selectedLang;
         });
-        rawTracks.push(...filteredCurated);
+
+        // Rotate unseen songs first so each refresh yields different party sets
+        const unseen = candidates.filter(t => !excludeIds.has(t.id));
+        const seen = candidates.filter(t => excludeIds.has(t.id));
+        const shuffledUnseen = seededShuffle(unseen, seedNum);
+        const shuffledSeen = seededShuffle(seen, seedNum + 13);
+        const rotatedCurated = [...shuffledUnseen, ...shuffledSeen];
+
+        rawTracks.push(...rotatedCurated.slice(0, 4));
       }
 
       // Dynamic suggestion queries specifically targeting remixes, mashups, and hours-long party mixes
       const mixedSuggestionQueries = {
-        hindi: ['bollywood party non stop remix', 'bollywood dance mashup 2024', 'arijit singh mashup remix', 'hindi club party mix non stop', 'bollywood 90s retro remix'],
-        punjabi: ['punjabi bhangra party mix non stop', 'punjabi club mashup high bass', 'sidhu moose wala karan aujla mashup', 'punjabi non stop dhol mix', 'diljit dosanjh party remix'],
-        gujarati: ['gujarati garba non stop 1 hour', 'dandiya raas non stop party mix', 'khalasi chogada remix garba', 'falguni pathak non stop dandiya', 'tahukar sanedo non stop dj mix'],
-        english: ['edm festival club mix non stop', 'deep house continuous party mix', 'synthwave 80s extended club remix', 'billboard pop dance mashup 1 hour', 'ultra festival live set party'],
-        all: ['party mashup remix non stop 2024', 'bollywood punjabi edm club mix 1 hour', 'ultimate non stop dance party mix', 'mega mashup club remix']
+        hindi: [
+          'bollywood party non stop remix', 'bollywood dance mashup 2024', 'arijit singh mashup remix',
+          'hindi club party mix non stop', 'bollywood 90s retro remix non stop', 'dj chetas bollywood mega mashup',
+          'atif aslam soulful party remix', 'bollywood bass boosted club mix'
+        ],
+        punjabi: [
+          'punjabi bhangra party mix non stop', 'punjabi club mashup high bass', 'sidhu moose wala karan aujla mashup',
+          'punjabi non stop dhol mix 1 hour', 'diljit dosanjh party club remix', 'ap dhillon shubh bass mashup',
+          'bhangra explosion dhol beats mix', 'desi hip hop non stop party set'
+        ],
+        gujarati: [
+          'gujarati garba non stop 1 hour', 'dandiya raas non stop party mix', 'khalasi chogada remix garba',
+          'falguni pathak non stop dandiya', 'tahukar sanedo non stop dj mix', 'kirtidan gadhvi garba non stop 2024',
+          'navratri live dhol mix 1 hour', 'gujarati dj titoda high bass mix'
+        ],
+        english: [
+          'edm festival club mix non stop', 'deep house continuous party mix', 'synthwave 80s extended club remix',
+          'billboard pop dance mashup 1 hour', 'ultra festival live set party', 'tomorrowland electro house non stop',
+          'summer club dance party mix 2024', 'chillhop lofi beats continuous mix'
+        ],
+        all: [
+          'party mashup remix non stop 2024', 'bollywood punjabi edm club mix 1 hour', 'ultimate non stop dance party mix',
+          'mega mashup club remix 2024', 'global festival club mix non stop', 'desi global fusion party mashup'
+        ]
       };
 
       const qList = mixedSuggestionQueries[selectedLang] || mixedSuggestionQueries.all;
-      const qIndex = Math.floor(offset / limit) % qList.length;
+      const pageNumber = Math.floor(offset / limit);
+      const qIndex = (seedNum + pageNumber) % qList.length;
       scQuery = qList[qIndex];
     } else {
       // Curated library starter matches (Strictly NORMAL songs - zero remixes/mashups!)
       if (offset === 0) {
-        const filteredCurated = CURATED_TRACKS.filter(t => {
+        const candidates = CURATED_TRACKS.filter(t => {
           if (isMixedTrack(t.title, t.artist, t.genre, t.duration)) return false;
           if (selectedLang === 'all' || selectedLang === 'trending' || selectedLang === 'for_you') return true;
           return t.language?.toLowerCase() === selectedLang;
-        }).sort((a, b) => (a.trendingRank || 99) - (b.trendingRank || 99));
-        rawTracks.push(...filteredCurated);
+        });
+
+        // Rotate unseen tracks first so each refresh presents brand new trending hits
+        const unseen = candidates.filter(t => !excludeIds.has(t.id));
+        const seen = candidates.filter(t => excludeIds.has(t.id));
+        const shuffledUnseen = seededShuffle(unseen, seedNum);
+        const shuffledSeen = seededShuffle(seen, seedNum + 17);
+        const rotatedCurated = [...shuffledUnseen, ...shuffledSeen];
+
+        // Pick top 6 fresh curated tracks to headline the recommendations
+        rawTracks.push(...rotatedCurated.slice(0, 6));
       }
 
-      // Dynamic limitless suggestion search queries per language
+      // Dynamic limitless suggestion search queries per language (varied across refreshes via seedNum)
       const suggestionQueries = {
-        hindi: ['bollywood trending hits 2024', 'sari duniya jala denge', 'kesariya arijit singh', 'bollywood lofi chill', 't-series latest hits'],
-        punjabi: ['tauba tauba karan aujla', 'latest punjabi hits', 'diljit dosanjh lover', 'sidhu moose wala 295', 'punjabi bhangra dhol'],
-        gujarati: ['khalasi aditya gadhvi', 'gujarati garba songs traditional', 'chogada tara mor bani', 'kinjal dave geeta rabari', 'dandiya raas traditional'],
-        english: ['the weeknd starboy blinding lights', 'top billboard pop hits', 'coldplay dua lipa', 'trending synthwave pop', 'chill lofi english beats'],
-        all: ['tauba tauba khalasi starboy', 'trending hit songs 2024', 'punjabi hindi english hits', 'top bollywood and pop'],
-        trending: ['trending chartbusters 2024', 'tauba tauba khalasi starboy', 'viral hits hindi punjabi english', 'top billboard bollywood'],
-        for_you: userArtists ? [userArtists, `${userArtists} hits`, `${userArtists} live`] : ['trending songs 2024', 'top bollywood and pop']
+        hindi: [
+          'bollywood trending hits 2024', 'arijit singh romantic hits', 'sari duniya jala denge animal',
+          'kesariya brahmastra arijit', 'bollywood acoustic lofi', 't-series latest chartbusters',
+          'bad newz vicky kaushal hits', 'stree 2 songs trending', 'armaan malik shreya ghoshal', 'pritam hits latest'
+        ],
+        punjabi: [
+          'tauba tauba karan aujla', 'diljit dosanjh lover born to shine', 'sidhu moose wala moosetape 295',
+          'shubh cheques still rollin', 'ap dhillon with you brown munde', 'karan aujla street dreams four me',
+          'hustinder latest punjabi tracks', 'amrinder gill virasat songs', 'punjabi viral reels trending'
+        ],
+        gujarati: [
+          'khalasi aditya gadhvi coke studio', 'chogada tara loveratri garba', 'kinjal dave char char bangdi',
+          'kirtidan gadhvi tahukar dayro', 'geeta rabari rona serma', 'mor bani thanghat kare',
+          'osman mir folk gujarati', 'atul purohit tara vina shyam', 'sanedo sanedo lal lal sanedo'
+        ],
+        english: [
+          'the weeknd starboy blinding lights', 'top billboard hot 100 pop', 'dua lipa levitating houdini',
+          'coldplay viva la vida yellow', 'ed sheeran bad habits shape of you', 'taylor swift cruel summer anti hero',
+          'post malone circles sunflower', 'billie eilish birds of a feather', 'synthwave 80s retro wave chill',
+          'deep house summer vibes'
+        ],
+        all: [
+          'trending hit songs viral chartbusters', 'tauba tauba khalasi starboy lover', 'punjabi hindi english viral playlist',
+          'top global hits and bollywood', 'hot 50 viral tracks worldwide', 'fresh trending hits radio',
+          'diljit karan weeknd arijit', 'dance pop and desi beats'
+        ],
+        trending: [
+          'viral trending chartbusters 2024', 'top trending hits spotify global', 'tauba tauba o maahi khalasi',
+          'trending reels viral audio', 'top 50 trending chartbusters', 'latest viral songs radio'
+        ],
+        for_you: userArtists
+          ? [userArtists, `${userArtists} hits`, `${userArtists} live`, `${userArtists} trending`]
+          : ['trending songs 2024', 'top bollywood and pop', 'viral desi and global chartbusters']
       };
 
       const qList = suggestionQueries[selectedLang] || suggestionQueries.all;
-      const qIndex = Math.floor(offset / limit) % qList.length;
+      const pageNumber = Math.floor(offset / limit);
+      const qIndex = (seedNum + pageNumber) % qList.length;
       scQuery = qList[qIndex];
     }
   } else {
@@ -799,12 +898,20 @@ app.get('/api/search', async (req, res) => {
     }
   }
 
-  // Ensure trending chartbusters appear FIRST in suggestions
+  // Ensure trending chartbusters appear FIRST in suggestions, prioritizing unseen tracks across refreshes
   if (offset === 0 && !query) {
     filteredResults.sort((a, b) => {
-      const rankA = a.isTrending ? (a.trendingRank || 1) : 999;
-      const rankB = b.isTrending ? (b.trendingRank || 1) : 999;
-      return rankA - rankB;
+      // 1. Prioritize unseen tracks over previously seen tracks
+      const aExcluded = excludeIds.has(a.id) ? 1 : 0;
+      const bExcluded = excludeIds.has(b.id) ? 1 : 0;
+      if (aExcluded !== bExcluded) return aExcluded - bExcluded;
+
+      // 2. Curated headline tracks come first
+      const aCurated = a.id.startsWith('curated-') ? 0 : 1;
+      const bCurated = b.id.startsWith('curated-') ? 0 : 1;
+      if (aCurated !== bCurated) return aCurated - bCurated;
+
+      return 0;
     });
   }
 
@@ -814,7 +921,6 @@ app.get('/api/search', async (req, res) => {
     hasMore: rawTracks.length > 0,
     mode: isMixedMode ? 'mixed' : 'normal'
   });
-});
 });
 
 // Serve frontend in production

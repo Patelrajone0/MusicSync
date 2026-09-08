@@ -12,12 +12,20 @@ export async function searchTracks(
   language: string = 'all',
   offset: number = 0,
   userArtists: string = '',
-  mode: 'normal' | 'mixed' = 'normal'
+  mode: 'normal' | 'mixed' = 'normal',
+  seed: string = '',
+  exclude: string = ''
 ): Promise<SearchResult> {
   const trimmed = query.trim();
   let url = `/api/search?q=${encodeURIComponent(trimmed)}&lang=${encodeURIComponent(language)}&offset=${offset}&mode=${mode}`;
   if (userArtists) {
     url += `&artists=${encodeURIComponent(userArtists)}`;
+  }
+  if (seed) {
+    url += `&seed=${encodeURIComponent(seed)}`;
+  }
+  if (exclude) {
+    url += `&exclude=${encodeURIComponent(exclude)}`;
   }
 
   try {

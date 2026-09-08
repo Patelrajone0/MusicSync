@@ -54,6 +54,34 @@ function formatTrackDuration(sec: number): string {
   return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 }
 
+// SessionStorage key for tracking recently seen track IDs across refreshes
+const SEEN_TRACKS_KEY = 'musicsync_recent_seen_ids';
+
+function getRecentlySeenTrackIds(): string[] {
+  try {
+    const raw = sessionStorage.getItem(SEEN_TRACKS_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed.slice(-50);
+    }
+  } catch (e) {}
+  return [];
+}
+
+function recordRecentlySeenTrackIds(ids: string[]) {
+  try {
+    const current = getRecentlySeenTrackIds();
+    const combined = [...current];
+    for (const id of ids) {
+      if (id && !combined.includes(id)) {
+        combined.push(id);
+      }
+    }
+    const trimmed = combined.slice(-50);
+    sessionStorage.setItem(SEEN_TRACKS_KEY, JSON.stringify(trimmed));
+  } catch (e) {}
+}
+
 interface MusicSearchModalProps {
   isOpen?: boolean;
   onClose?: () => void;
@@ -72,6 +100,12 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
   const [currentOffset, setCurrentOffset] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [addedTrackIds, setAddedTrackIds] = useState<Set<string>>(new Set());
+
+  // Dynamic seed generated on every page refresh / modal mount to ensure varied suggestions
+  const [refreshSeed, setRefreshSeed] = useState<string>(() =>
+    Date.now().toString(36) + Math.random().toString(36).substring(2, 6)
+  );
+  const [isRotating, setIsRotating] = useState(false);
 
   // Local track preview audio element (inaudible to room)
   const [previewTrackId, setPreviewTrackId] = useState<string | null>(null);
@@ -180,26 +214,45 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
 
   const loadDefaultResults = async (
     lang?: string,
-    modeOverride?: 'normal' | 'mixed'
+    modeOverride?: 'normal' | 'mixed',
+    seedOverride?: string
   ) => {
     const currentMode = modeOverride || (activeTab === 'mixed' ? 'mixed' : 'normal');
     const currentLang = lang || (currentMode === 'mixed' ? selectedMixedLanguage : selectedLanguage);
+    const activeSeed = seedOverride || refreshSeed;
+    const seenIds = getRecentlySeenTrackIds();
 
     setIsLoading(true);
     setCurrentOffset(0);
     setHasMore(true);
     try {
       const tasteQuery = (currentMode === 'normal' && currentLang === 'for_you') ? userTasteEngine.getPersonalizedQuery() : '';
-      const res = await searchTracks('', currentLang, 0, tasteQuery, currentMode);
+      const res = await searchTracks('', currentLang, 0, tasteQuery, currentMode, activeSeed, seenIds.join(','));
       setResults(res.tracks);
       setServerMessage(res.message || null);
       setCurrentOffset(res.offset || 30);
       setHasMore(res.hasMore !== false);
+
+      if (res.tracks.length > 0) {
+        recordRecentlySeenTrackIds(res.tracks.map((t) => t.id));
+      }
     } catch (e) {
       console.error(e);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleRotateSuggestions = () => {
+    setIsRotating(true);
+    const newSeed = Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
+    setRefreshSeed(newSeed);
+    if (activeTab === 'mixed') {
+      loadDefaultResults(selectedMixedLanguage, 'mixed', newSeed);
+    } else {
+      loadDefaultResults(selectedLanguage, 'normal', newSeed);
+    }
+    setTimeout(() => setIsRotating(false), 500);
   };
 
   const handleSearch = async (
@@ -221,11 +274,15 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
 
     try {
       const tasteQuery = (currentMode === 'normal' && l === 'for_you') ? userTasteEngine.getPersonalizedQuery() : '';
-      const res = await searchTracks(q, l, newOffset, tasteQuery, currentMode);
+      const seenIds = !q ? getRecentlySeenTrackIds() : [];
+      const res = await searchTracks(q, l, newOffset, tasteQuery, currentMode, refreshSeed, seenIds.join(','));
       setResults(res.tracks);
       setServerMessage(res.message || null);
       setCurrentOffset(res.offset || 30);
       setHasMore(res.hasMore !== false);
+      if (!q && res.tracks.length > 0) {
+        recordRecentlySeenTrackIds(res.tracks.map((t) => t.id));
+      }
     } catch (e) {
       console.error(e);
     } finally {
@@ -240,7 +297,7 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
     const l = currentMode === 'mixed' ? selectedMixedLanguage : selectedLanguage;
     try {
       const tasteQuery = (currentMode === 'normal' && l === 'for_you') ? userTasteEngine.getPersonalizedQuery() : '';
-      const res = await searchTracks(query, l, currentOffset, tasteQuery, currentMode);
+      const res = await searchTracks(query, l, currentOffset, tasteQuery, currentMode, refreshSeed);
       if (res.tracks.length > 0) {
         setResults((prev) => {
           const existingIds = new Set(prev.map((t) => t.id));
@@ -249,6 +306,9 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
         });
         setCurrentOffset(res.offset || currentOffset + 30);
         setHasMore(res.hasMore !== false && res.tracks.length > 0);
+        if (!query) {
+          recordRecentlySeenTrackIds(res.tracks.map((t) => t.id));
+        }
       } else {
         setHasMore(false);
       }
@@ -278,14 +338,22 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
     lang: 'for_you' | 'trending' | 'all' | 'english' | 'hindi' | 'gujarati' | 'punjabi'
   ) => {
     setSelectedLanguage(lang);
-    handleSearch(undefined, query, lang, 0, 'normal');
+    if (!query) {
+      loadDefaultResults(lang, 'normal');
+    } else {
+      handleSearch(undefined, query, lang, 0, 'normal');
+    }
   };
 
   const handleMixedLanguageChange = (
     lang: 'all' | 'hindi' | 'punjabi' | 'gujarati' | 'english'
   ) => {
     setSelectedMixedLanguage(lang);
-    handleSearch(undefined, query, lang, 0, 'mixed');
+    if (!query) {
+      loadDefaultResults(lang, 'mixed');
+    } else {
+      handleSearch(undefined, query, lang, 0, 'mixed');
+    }
   };
 
   const handleAddTrack = (track: Track) => {
@@ -667,50 +735,78 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
 
         {/* Filter Pills Bar for Normal Original Songs */}
         {activeTab === 'search' && (
-          <div className="bg-dark-950 px-4 py-2 border-b border-white/5 flex items-center gap-2 overflow-x-auto no-scrollbar">
-            <span className="text-[11px] font-mono text-slate-400 uppercase tracking-wider shrink-0 mr-1">Explore:</span>
-            {languageOptions.map((opt) => {
-              const isSelected = selectedLanguage === opt.id;
-              return (
-                <button
-                  key={opt.id}
-                  onClick={() => handleLanguageChange(opt.id)}
-                  className={`px-3.5 py-1 rounded-full text-xs font-medium whitespace-nowrap shrink-0 transition-all ${
-                    isSelected
-                      ? 'bg-cyan-400 text-black font-semibold shadow-sm border border-cyan-400'
-                      : 'bg-dark-850 hover:bg-dark-800 text-slate-300 hover:text-white border border-white/5'
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              );
-            })}
+          <div className="bg-dark-950 px-4 py-2 border-b border-white/5 flex items-center justify-between gap-2 overflow-x-auto no-scrollbar">
+            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
+              <span className="text-[11px] font-mono text-slate-400 uppercase tracking-wider shrink-0 mr-1">Explore:</span>
+              {languageOptions.map((opt) => {
+                const isSelected = selectedLanguage === opt.id;
+                return (
+                  <button
+                    key={opt.id}
+                    onClick={() => handleLanguageChange(opt.id)}
+                    className={`px-3.5 py-1 rounded-full text-xs font-medium whitespace-nowrap shrink-0 transition-all ${
+                      isSelected
+                        ? 'bg-cyan-400 text-black font-semibold shadow-sm border border-cyan-400'
+                        : 'bg-dark-850 hover:bg-dark-800 text-slate-300 hover:text-white border border-white/5'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            <button
+              type="button"
+              onClick={handleRotateSuggestions}
+              disabled={isLoading}
+              title="Rotate & suggest different trending songs"
+              className="px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap shrink-0 transition-all bg-white/5 hover:bg-white/10 text-cyan-300 border border-cyan-400/20 hover:border-cyan-400/50 flex items-center gap-1.5 shadow-sm active:scale-95 disabled:opacity-50"
+            >
+              <RotateCcw className={`w-3 h-3 text-cyan-400 ${isRotating || isLoading ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline">Fresh Songs</span>
+              <span className="sm:hidden">Fresh</span>
+            </button>
           </div>
         )}
 
         {/* Filter Pills Bar for Mixed Songs */}
         {activeTab === 'mixed' && (
-          <div className="bg-dark-950 px-4 py-2 border-b border-white/5 flex items-center gap-2 overflow-x-auto no-scrollbar">
-            <span className="text-[11px] font-mono text-amber-400 uppercase tracking-wider shrink-0 mr-1 flex items-center gap-1">
-              <Flame className="w-3 h-3 fill-current" />
-              Party Lang:
-            </span>
-            {mixedLanguageOptions.map((opt) => {
-              const isSelected = selectedMixedLanguage === opt.id;
-              return (
-                <button
-                  key={opt.id}
-                  onClick={() => handleMixedLanguageChange(opt.id as any)}
-                  className={`px-3.5 py-1 rounded-full text-xs font-medium whitespace-nowrap shrink-0 transition-all ${
-                    isSelected
-                      ? 'bg-gradient-to-r from-amber-400 to-rose-400 text-black font-bold shadow-md border border-amber-400'
-                      : 'bg-dark-850 hover:bg-dark-800 text-slate-300 hover:text-white border border-white/5'
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              );
-            })}
+          <div className="bg-dark-950 px-4 py-2 border-b border-white/5 flex items-center justify-between gap-2 overflow-x-auto no-scrollbar">
+            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
+              <span className="text-[11px] font-mono text-amber-400 uppercase tracking-wider shrink-0 mr-1 flex items-center gap-1">
+                <Flame className="w-3 h-3 fill-current" />
+                Party Lang:
+              </span>
+              {mixedLanguageOptions.map((opt) => {
+                const isSelected = selectedMixedLanguage === opt.id;
+                return (
+                  <button
+                    key={opt.id}
+                    onClick={() => handleMixedLanguageChange(opt.id as any)}
+                    className={`px-3.5 py-1 rounded-full text-xs font-medium whitespace-nowrap shrink-0 transition-all ${
+                      isSelected
+                        ? 'bg-gradient-to-r from-amber-400 to-rose-400 text-black font-bold shadow-md border border-amber-400'
+                        : 'bg-dark-850 hover:bg-dark-800 text-slate-300 hover:text-white border border-white/5'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            <button
+              type="button"
+              onClick={handleRotateSuggestions}
+              disabled={isLoading}
+              title="Rotate & suggest different party mixes and remixes"
+              className="px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap shrink-0 transition-all bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 hover:border-amber-500/60 flex items-center gap-1.5 shadow-sm active:scale-95 disabled:opacity-50"
+            >
+              <RotateCcw className={`w-3 h-3 text-amber-400 ${isRotating || isLoading ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline">New Mix</span>
+              <span className="sm:hidden">New</span>
+            </button>
           </div>
         )}
 

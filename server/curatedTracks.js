@@ -53,6 +53,51 @@ export const CURATED_TRACKS = [
     audioUrl: '/api/stream/soundcloud?progUrl=' + encodeURIComponent('https://api-v2.soundcloud.com/media/soundcloud:tracks:1087535872/2a79f870-ad06-4c8a-973f-4341972f08ca/stream/progressive'),
     source: 'Curated (Trending #3)'
   },
+  {
+    id: 'curated-pa-04',
+    title: 'Winning Speech (Karan Aujla Bass Edition)',
+    artist: 'Karan Aujla',
+    album: 'Street Dreams',
+    duration: 214,
+    genre: 'Punjabi / Desi Hip-Hop',
+    language: 'Punjabi',
+    languageBadge: '🎶 Punjabi',
+    isTrending: true,
+    trendingRank: 4,
+    artwork: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=500&auto=format&fit=crop&q=80',
+    audioUrl: '/api/stream/soundcloud?progUrl=' + encodeURIComponent('https://api-v2.soundcloud.com/media/soundcloud:tracks:1862712117/cc675a2c-bc71-4a34-8ea4-1fbc2770d2ad/stream/progressive'),
+    source: 'Curated (Trending #4)'
+  },
+  {
+    id: 'curated-pa-05',
+    title: 'Born to Shine & G.O.A.T (Urban Punjabi)',
+    artist: 'Diljit Dosanjh',
+    album: 'G.O.A.T Master',
+    duration: 218,
+    genre: 'Punjabi / Pop',
+    language: 'Punjabi',
+    languageBadge: '🎶 Punjabi',
+    isTrending: true,
+    trendingRank: 5,
+    artwork: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=500&auto=format&fit=crop&q=80',
+    audioUrl: '/api/stream/soundcloud?progUrl=' + encodeURIComponent('https://api-v2.soundcloud.com/media/soundcloud:tracks:1110090247/3eab4d9d-fbd6-4f6f-a44e-d63489a5aa33/stream/progressive'),
+    source: 'Curated (Trending #5)'
+  },
+  {
+    id: 'curated-pa-06',
+    title: 'Cheques & Baller (No Love Anthem)',
+    artist: 'Shubh',
+    album: 'Still Rollin',
+    duration: 183,
+    genre: 'Punjabi / Trap',
+    language: 'Punjabi',
+    languageBadge: '🎶 Punjabi',
+    isTrending: true,
+    trendingRank: 6,
+    artwork: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=500&auto=format&fit=crop&q=80',
+    audioUrl: '/api/stream/soundcloud?progUrl=' + encodeURIComponent('https://api-v2.soundcloud.com/media/soundcloud:tracks:1087535872/2a79f870-ad06-4c8a-973f-4341972f08ca/stream/progressive'),
+    source: 'Curated (Trending #6)'
+  },
 
   // ----------------------------------------------------
   // 2. Trending Hindi Hits (Bollywood Viral Chartbusters)
@@ -101,6 +146,51 @@ export const CURATED_TRACKS = [
     artwork: 'https://images.unsplash.com/photo-1518609878373-06d740f60d8b?w=500&auto=format&fit=crop&q=80',
     audioUrl: '/api/stream/soundcloud?progUrl=' + encodeURIComponent('https://api-v2.soundcloud.com/media/soundcloud:tracks:853582540/33d9ead8-77da-4ab6-89ac-f72c65291c3d/stream/progressive'),
     source: 'Curated (Trending #3)'
+  },
+  {
+    id: 'curated-hi-04',
+    title: 'Apna Bana Le & O Bedardeya (Soulful Session)',
+    artist: 'Arijit Singh & Sachin-Jigar',
+    album: 'Bhediya Anthems',
+    duration: 261,
+    genre: 'Hindi / Bollywood Romantic',
+    language: 'Hindi',
+    languageBadge: '🇮🇳 Hindi',
+    isTrending: true,
+    trendingRank: 4,
+    artwork: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=500&auto=format&fit=crop&q=80',
+    audioUrl: '/api/stream/soundcloud?progUrl=' + encodeURIComponent('https://api-v2.soundcloud.com/media/soundcloud:tracks:1321515496/13f27a2f-4831-4a35-8420-4e2bbcbe10d4/stream/progressive'),
+    source: 'Curated (Trending #4)'
+  },
+  {
+    id: 'curated-hi-05',
+    title: 'Husn & Baarishein (Acoustic Poetry)',
+    artist: 'Anuv Jain',
+    album: 'Indie Acoustic Studio',
+    duration: 218,
+    genre: 'Hindi / Indie Acoustic',
+    language: 'Hindi',
+    languageBadge: '🇮🇳 Hindi',
+    isTrending: true,
+    trendingRank: 5,
+    artwork: 'https://images.unsplash.com/photo-1518609878373-06d740f60d8b?w=500&auto=format&fit=crop&q=80',
+    audioUrl: '/api/stream/soundcloud?progUrl=' + encodeURIComponent('https://api-v2.soundcloud.com/media/soundcloud:tracks:853582540/33d9ead8-77da-4ab6-89ac-f72c65291c3d/stream/progressive'),
+    source: 'Curated (Trending #5)'
+  },
+  {
+    id: 'curated-hi-06',
+    title: 'Channa Mereya & Ilahi (Classic Melodies)',
+    artist: 'Pritam & Arijit Singh',
+    album: 'Ae Dil Hai Mushkil',
+    duration: 289,
+    genre: 'Hindi / Bollywood Classic',
+    language: 'Hindi',
+    languageBadge: '🇮🇳 Hindi',
+    isTrending: true,
+    trendingRank: 6,
+    artwork: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=500&auto=format&fit=crop&q=80',
+    audioUrl: '/api/stream/soundcloud?progUrl=' + encodeURIComponent('https://api-v2.soundcloud.com/media/soundcloud:tracks:1674959538/ea8d7615-4ec8-4627-970f-0b358b6d2492/stream/progressive'),
+    source: 'Curated (Trending #6)'
   },
 
   // ----------------------------------------------------
@@ -151,6 +241,51 @@ export const CURATED_TRACKS = [
     audioUrl: '/api/stream/soundcloud?progUrl=' + encodeURIComponent('https://api-v2.soundcloud.com/media/soundcloud:tracks:1921208342/b0b60418-8f24-47b6-bcce-2ae33d0013e2/stream/progressive'),
     source: 'Curated (Trending #3)'
   },
+  {
+    id: 'curated-gu-04',
+    title: 'Tara Vina Shyam (Traditional United Garba)',
+    artist: 'Atul Purohit',
+    album: 'Navratri Mahotsav',
+    duration: 245,
+    genre: 'Gujarati / Traditional Garba',
+    language: 'Gujarati',
+    languageBadge: '🪘 Gujarati',
+    isTrending: true,
+    trendingRank: 4,
+    artwork: 'https://images.unsplash.com/photo-1465847899084-d164df4dedc6?w=500&auto=format&fit=crop&q=80',
+    audioUrl: '/api/stream/soundcloud?progUrl=' + encodeURIComponent('https://api-v2.soundcloud.com/media/soundcloud:tracks:1677703095/b4311880-81fb-4afd-abc9-6c34b3a6bd2f/stream/progressive'),
+    source: 'Curated (Trending #4)'
+  },
+  {
+    id: 'curated-gu-05',
+    title: 'Rona Ser Ma & Char Bangdi (Desi Dhol Beats)',
+    artist: 'Geeta Rabari & Kinjal Dave',
+    album: 'Gujarat Folk Hits',
+    duration: 212,
+    genre: 'Gujarati / Folk Beat',
+    language: 'Gujarati',
+    languageBadge: '🪘 Gujarati',
+    isTrending: true,
+    trendingRank: 5,
+    artwork: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=500&auto=format&fit=crop&q=80',
+    audioUrl: '/api/stream/soundcloud?progUrl=' + encodeURIComponent('https://api-v2.soundcloud.com/media/soundcloud:tracks:507182118/b78eb2a4-a2e0-4f3e-82d2-a502e86ab2ba/stream/progressive'),
+    source: 'Curated (Trending #5)'
+  },
+  {
+    id: 'curated-gu-06',
+    title: 'Laadki & Nagar Nand Ji Na Lal (Spiritual Folk)',
+    artist: 'Kirtidan Gadhvi',
+    album: 'Dayro & Lokgeet Live',
+    duration: 280,
+    genre: 'Gujarati / Lok Dayro',
+    language: 'Gujarati',
+    languageBadge: '🪘 Gujarati',
+    isTrending: true,
+    trendingRank: 6,
+    artwork: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=500&auto=format&fit=crop&q=80',
+    audioUrl: '/api/stream/soundcloud?progUrl=' + encodeURIComponent('https://api-v2.soundcloud.com/media/soundcloud:tracks:1921208342/b0b60418-8f24-47b6-bcce-2ae33d0013e2/stream/progressive'),
+    source: 'Curated (Trending #6)'
+  },
 
   // ----------------------------------------------------
   // 4. Trending English Hits (Global Chartbusters)
@@ -199,6 +334,51 @@ export const CURATED_TRACKS = [
     artwork: 'https://images.unsplash.com/photo-1518609878373-06d740f60d8b?w=500&auto=format&fit=crop&q=80',
     audioUrl: '/api/stream/soundcloud?progUrl=' + encodeURIComponent('https://api-v2.soundcloud.com/media/soundcloud:tracks:417474360/3d2ae4fe-74c6-4fbb-a8e6-e59c1825bad8/stream/progressive'),
     source: 'Curated (Trending #3)'
+  },
+  {
+    id: 'curated-en-04',
+    title: 'Save Your Tears & Die For You (Synth Rework)',
+    artist: 'The Weeknd',
+    album: 'After Hours Original',
+    duration: 215,
+    genre: 'Synthpop / Pop',
+    language: 'English',
+    languageBadge: '🇬🇧 English',
+    isTrending: true,
+    trendingRank: 4,
+    artwork: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=500&auto=format&fit=crop&q=80',
+    audioUrl: '/api/stream/soundcloud?progUrl=' + encodeURIComponent('https://api-v2.soundcloud.com/media/soundcloud:tracks:1689238161/fc4f38d3-251d-4d9e-94de-2a73fc9cf1fb/stream/progressive'),
+    source: 'Curated (Trending #4)'
+  },
+  {
+    id: 'curated-en-05',
+    title: 'Yellow & Viva La Vida (Stadium Anthems)',
+    artist: 'Coldplay',
+    album: 'Coldplay Synced Live',
+    duration: 269,
+    genre: 'Alternative / Rock',
+    language: 'English',
+    languageBadge: '🇬🇧 English',
+    isTrending: true,
+    trendingRank: 5,
+    artwork: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=500&auto=format&fit=crop&q=80',
+    audioUrl: '/api/stream/soundcloud?progUrl=' + encodeURIComponent('https://api-v2.soundcloud.com/media/soundcloud:tracks:1316258221/e5be5b0b-9612-4e73-97ba-f1726b9af5c2/stream/progressive'),
+    source: 'Curated (Trending #5)'
+  },
+  {
+    id: 'curated-en-06',
+    title: 'Levitating & Don\'t Start Now (Disco Pop)',
+    artist: 'Dua Lipa',
+    album: 'Future Nostalgia',
+    duration: 203,
+    genre: 'Disco / Pop',
+    language: 'English',
+    languageBadge: '🇬🇧 English',
+    isTrending: true,
+    trendingRank: 6,
+    artwork: 'https://images.unsplash.com/photo-1518609878373-06d740f60d8b?w=500&auto=format&fit=crop&q=80',
+    audioUrl: '/api/stream/soundcloud?progUrl=' + encodeURIComponent('https://api-v2.soundcloud.com/media/soundcloud:tracks:417474360/3d2ae4fe-74c6-4fbb-a8e6-e59c1825bad8/stream/progressive'),
+    source: 'Curated (Trending #6)'
   }
 ];
 
