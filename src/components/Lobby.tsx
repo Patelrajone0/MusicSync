@@ -1,15 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import {
   Sparkles,
-  Radio,
-  Users,
   ArrowRight,
-  Shuffle,
-  Music,
-  Volume2,
-  Zap,
-  ShieldCheck,
-  Headphones
+  Shuffle
 } from 'lucide-react';
 import { RoomState, User } from '../types';
 import { socket } from '../services/socket';
@@ -149,7 +142,7 @@ export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' 
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-center items-center px-3 sm:px-4 py-6 sm:py-12 relative overflow-hidden">
+    <div className="min-h-screen flex flex-col justify-center items-center px-3 sm:px-4 py-4 sm:py-6 relative overflow-hidden">
       {/* Background ambient lighting */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-electric-cyan/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-1/4 left-1/2 -translate-x-1/2 translate-y-1/2 w-96 h-96 bg-electric-purple/10 rounded-full blur-3xl pointer-events-none" />
@@ -157,7 +150,7 @@ export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' 
       {/* Main Container */}
       <div className="max-w-md w-full z-10">
         {/* Logo & Headline */}
-        <div className="text-center mb-6 sm:mb-8">
+        <div className="text-center mb-3 sm:mb-4">
           <a
             href="/"
             onClick={(e) => {
@@ -165,11 +158,11 @@ export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' 
               handleRefresh();
             }}
             title="Refresh MusicSync"
-            className="inline-flex flex-col items-center group cursor-pointer focus:outline-none transition-transform active:scale-95 mb-2"
+            className="inline-flex flex-col items-center group cursor-pointer focus:outline-none transition-transform active:scale-95 mb-1"
           >
             <Logo size="lg" layout="vertical" showTagline={true} />
           </a>
-          <p className="text-xs sm:text-sm text-slate-400 mt-2 max-w-sm mx-auto px-2">
+          <p className="text-xs sm:text-sm text-slate-400 mt-1 max-w-sm mx-auto px-2">
             Zero-latency synchronized music streaming. Turn any group of phones and laptops into an acoustic speaker system.
           </p>
         </div>
@@ -267,25 +260,6 @@ export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' 
               {errorMessage}
             </div>
           )}
-        </div>
-
-        {/* Feature Highlights Footer */}
-        <div className="grid grid-cols-3 gap-2 sm:gap-3 mt-5 sm:mt-6 text-center text-[11px] text-slate-400">
-          <div className="p-2.5 sm:p-3 rounded-xl sm:rounded-2xl bg-dark-900/40 border border-white/5">
-            <Zap className="w-3.5 sm:w-4 h-3.5 sm:h-4 text-electric-cyan mx-auto mb-1" />
-            <span className="font-semibold text-slate-200 block text-[10px] sm:text-[11px]">NTP Sync</span>
-            <p className="text-[9px] sm:text-[10px] text-slate-500 mt-0.5">Sub-50ms sync</p>
-          </div>
-          <div className="p-2.5 sm:p-3 rounded-xl sm:rounded-2xl bg-dark-900/40 border border-white/5">
-            <Music className="w-3.5 sm:w-4 h-3.5 sm:h-4 text-electric-purple mx-auto mb-1" />
-            <span className="font-semibold text-slate-200 block text-[10px] sm:text-[11px]">Universal</span>
-            <p className="text-[9px] sm:text-[10px] text-slate-500 mt-0.5">Audius + iTunes</p>
-          </div>
-          <div className="p-2.5 sm:p-3 rounded-xl sm:rounded-2xl bg-dark-900/40 border border-white/5">
-            <Users className="w-3.5 sm:w-4 h-3.5 sm:h-4 text-emerald-400 mx-auto mb-1" />
-            <span className="font-semibold text-slate-200 block text-[10px] sm:text-[11px]">Shared Queue</span>
-            <p className="text-[9px] sm:text-[10px] text-slate-500 mt-0.5">Synced playlist</p>
-          </div>
         </div>
       </div>
     </div>
