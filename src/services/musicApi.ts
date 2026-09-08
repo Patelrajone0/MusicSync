@@ -67,8 +67,8 @@ export function cleanTrackTitle(rawTitle: string = '', rawArtist: string = ''): 
   // 5. If title still starts with "Artist - " or ends with " - Artist"
   if (artist) {
     const escapedArtist = artist.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    title = title.replace(new RegExp(`^${escapedArtist}\\s*[-:–—]\\s*`, 'i'), '');
-    title = title.replace(new RegExp(`\\s*[-:–—]\\s*${escapedArtist}$`, 'i'), '');
+    title = title.replace(new RegExp(`^${escapedArtist}\\s*[-–—:]\\s*`, 'i'), '');
+    title = title.replace(new RegExp(`\\s*[-–—:]\\s*${escapedArtist}$`, 'i'), '');
   }
 
   // 6. Clean up trailing/leading dashes, colons, brackets, or excess whitespace
