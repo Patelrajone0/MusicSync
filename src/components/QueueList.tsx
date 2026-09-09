@@ -64,6 +64,9 @@ export const QueueList: React.FC<QueueListProps> = ({
     }, 1800);
   };
 
+  // If queue is empty and user has favorites, ALWAYS display Favorite songs there instead of empty space!
+  const isShowingFavorites = activeView === 'favorites' || (queue.length === 0 && favorites.length > 0);
+
   return (
     <div className="bg-dark-900/60 backdrop-blur-xl border border-white/10 rounded-2xl p-3.5 sm:p-5 flex flex-col h-full">
       {/* Header */}
@@ -91,6 +94,12 @@ export const QueueList: React.FC<QueueListProps> = ({
               <span className="px-2 py-0.5 rounded-full bg-dark-800 text-[11px] sm:text-xs font-mono font-semibold text-cyan-400 border border-white/5">
                 {queue.length}
               </span>
+              {queue.length === 0 && favorites.length > 0 && (
+                <span className="text-[11px] font-semibold text-amber-300 bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded-full hidden sm:inline-flex items-center gap-1">
+                  <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                  <span>Showing Favorites ({favoriteCount})</span>
+                </span>
+              )}
             </>
           )}
         </div>
@@ -119,7 +128,7 @@ export const QueueList: React.FC<QueueListProps> = ({
           <button
             onClick={() => setActiveView(activeView === 'favorites' ? 'queue' : 'favorites')}
             className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-semibold transition-all active:scale-95 ${
-              activeView === 'favorites'
+              isShowingFavorites
                 ? 'bg-amber-400 text-black shadow-[0_0_15px_rgba(251,191,36,0.35)]'
                 : 'bg-amber-400/15 hover:bg-amber-400/25 text-amber-300 border border-amber-400/30'
             }`}
@@ -127,14 +136,14 @@ export const QueueList: React.FC<QueueListProps> = ({
           >
             <Star
               className={`w-3.5 h-3.5 transition-transform ${
-                activeView === 'favorites' ? 'fill-black text-black scale-110' : 'fill-amber-400 text-amber-400'
+                isShowingFavorites ? 'fill-black text-black scale-110' : 'fill-amber-400 text-amber-400'
               }`}
             />
             <span>Favorites</span>
             {favoriteCount > 0 && (
               <span
                 className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold ${
-                  activeView === 'favorites'
+                  isShowingFavorites
                     ? 'bg-black/20 text-black'
                     : 'bg-amber-400/20 text-amber-300 border border-amber-400/30'
                 }`}
@@ -146,8 +155,8 @@ export const QueueList: React.FC<QueueListProps> = ({
         </div>
       </div>
 
-      {/* VIEW 1: FAVORITES LIST */}
-      {activeView === 'favorites' ? (
+      {/* DISPLAY FAVORITES SONGS (Whenever in Favorites view OR whenever queue is empty and favorites exist) */}
+      {isShowingFavorites ? (
         favorites.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center py-8 sm:py-10 text-center text-slate-500 border border-dashed border-amber-500/20 bg-amber-500/[0.02] rounded-xl p-4 sm:p-6">
             <div className="w-12 h-12 rounded-2xl bg-amber-400/10 border border-amber-400/20 flex items-center justify-center text-amber-400 mb-3 shadow-[0_0_20px_rgba(251,191,36,0.15)]">
@@ -166,99 +175,118 @@ export const QueueList: React.FC<QueueListProps> = ({
             </button>
           </div>
         ) : (
-          <div className="space-y-1.5 sm:space-y-2 overflow-y-auto max-h-[440px] pr-1">
-            {favorites.map((track, idx) => {
-              const isAdded = addedTrackIds.has(track.id);
-              return (
-                <div
-                  key={track.id || `fav-${idx}`}
-                  className="flex items-center justify-between p-2.5 sm:p-3 rounded-xl border border-white/5 bg-dark-950/70 hover:border-amber-400/30 transition-all group"
+          <div className="flex-1 flex flex-col min-h-0">
+            {/* Banner when auto-displaying favorites because queue is empty */}
+            {queue.length === 0 && (
+              <div className="flex items-center justify-between px-2.5 py-1.5 mb-2.5 rounded-xl bg-amber-400/10 border border-amber-400/20 text-xs text-amber-300">
+                <div className="flex items-center gap-1.5">
+                  <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400 shrink-0" />
+                  <span className="font-semibold">Queue is empty — play or queue your favorite songs:</span>
+                </div>
+                <button
+                  onClick={onOpenSearch}
+                  className="text-[11px] text-cyan-400 hover:text-cyan-300 font-semibold flex items-center gap-0.5 hover:underline shrink-0"
                 >
-                  {/* Track Details */}
-                  <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
-                    <span className="text-xs font-mono font-bold text-amber-400/60 w-5 text-right shrink-0">
-                      #{idx + 1}
-                    </span>
+                  <Plus className="w-3 h-3" />
+                  <span>Browse More</span>
+                </button>
+              </div>
+            )}
 
-                    <div className="relative shrink-0">
-                      <img
-                        src={track.artwork || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=100'}
-                        alt={track.title}
-                        className="w-10 h-10 sm:w-11 sm:h-11 rounded-lg object-cover bg-dark-800 shrink-0 border border-white/10 group-hover:border-amber-400/40 transition-colors"
-                      />
-                    </div>
+            <div className="space-y-1.5 sm:space-y-2 overflow-y-auto max-h-[440px] pr-1">
+              {favorites.map((track, idx) => {
+                const isAdded = addedTrackIds.has(track.id);
+                return (
+                  <div
+                    key={track.id || `fav-${idx}`}
+                    className="flex items-center justify-between p-2.5 sm:p-3 rounded-xl border border-white/5 bg-dark-950/70 hover:border-amber-400/30 transition-all group"
+                  >
+                    {/* Track Details */}
+                    <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
+                      <span className="text-xs font-mono font-bold text-amber-400/60 w-5 text-right shrink-0">
+                        #{idx + 1}
+                      </span>
 
-                    <div className="min-w-0 flex-1">
-                      <h4 className="text-xs sm:text-sm font-semibold truncate text-white group-hover:text-amber-300 transition-colors">
-                        {cleanTrackTitle(track.title, track.artist)}
-                      </h4>
-                      <p className="text-[11px] sm:text-xs text-slate-400 truncate">{track.artist}</p>
-                      <div className="flex items-center gap-1.5 sm:gap-2 mt-0.5 text-[10px] text-slate-500">
-                        {track.languageBadge && (
-                          <span className="px-1.5 py-0.2 rounded bg-dark-800 text-slate-300 border border-white/5 font-mono">
-                            {track.languageBadge}
+                      <div className="relative shrink-0">
+                        <img
+                          src={track.artwork || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=100'}
+                          alt={track.title}
+                          className="w-10 h-10 sm:w-11 sm:h-11 rounded-lg object-cover bg-dark-800 shrink-0 border border-white/10 group-hover:border-amber-400/40 transition-colors"
+                        />
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <h4 className="text-xs sm:text-sm font-semibold truncate text-white group-hover:text-amber-300 transition-colors">
+                          {cleanTrackTitle(track.title, track.artist)}
+                        </h4>
+                        <p className="text-[11px] sm:text-xs text-slate-400 truncate">{track.artist}</p>
+                        <div className="flex items-center gap-1.5 sm:gap-2 mt-0.5 text-[10px] text-slate-500">
+                          {track.languageBadge && (
+                            <span className="px-1.5 py-0.2 rounded bg-dark-800 text-slate-300 border border-white/5 font-mono">
+                              {track.languageBadge}
+                            </span>
+                          )}
+                          <span className="shrink-0">
+                            {Math.floor(track.duration / 60)}:
+                            {(track.duration % 60).toString().padStart(2, '0')}
                           </span>
-                        )}
-                        <span className="shrink-0">
-                          {Math.floor(track.duration / 60)}:
-                          {(track.duration % 60).toString().padStart(2, '0')}
-                        </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Actions */}
-                  <div className="flex items-center gap-1.5 shrink-0 ml-2">
-                    {/* Add to Queue Button */}
-                    <button
-                      onClick={() => handleAddFavoriteToQueue(track)}
-                      className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-all active:scale-95 ${
-                        isAdded
-                          ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
-                          : 'bg-cyan-400/15 hover:bg-cyan-400/25 text-cyan-400 border border-cyan-400/30'
-                      }`}
-                      title="Add this favorite song to live queue"
-                    >
-                      {isAdded ? (
-                        <>
-                          <Check className="w-3.5 h-3.5" />
-                          <span>Added!</span>
-                        </>
-                      ) : (
-                        <>
-                          <Plus className="w-3.5 h-3.5" />
-                          <span>Add</span>
-                        </>
-                      )}
-                    </button>
-
-                    {/* Play Now (if host or DJ) */}
-                    {canControl && (
+                    {/* Actions */}
+                    <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                      {/* Add to Queue Button */}
                       <button
-                        onClick={() => handleForcePlay(track)}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-cyan-400 hover:bg-dark-800 transition-colors active:scale-90"
-                        title="Play Now across room"
+                        onClick={() => handleAddFavoriteToQueue(track)}
+                        className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-all active:scale-95 ${
+                          isAdded
+                            ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
+                            : 'bg-cyan-400/15 hover:bg-cyan-400/25 text-cyan-400 border border-cyan-400/30'
+                        }`}
+                        title="Add this favorite song to live queue"
                       >
-                        <Play className="w-3.5 h-3.5 fill-current" />
+                        {isAdded ? (
+                          <>
+                            <Check className="w-3.5 h-3.5" />
+                            <span>Added!</span>
+                          </>
+                        ) : (
+                          <>
+                            <Plus className="w-3.5 h-3.5" />
+                            <span>Add</span>
+                          </>
+                        )}
                       </button>
-                    )}
 
-                    {/* Star Icon Button (Always active/filled in Favorites view, click to unstar) */}
-                    <button
-                      onClick={() => toggleFavorite(track)}
-                      className="p-1.5 rounded-lg text-amber-400 bg-amber-400/15 hover:bg-rose-500/20 hover:text-rose-400 border border-amber-400/30 transition-all active:scale-90"
-                      title="Remove from Favorites"
-                    >
-                      <Star className="w-3.5 h-3.5 fill-current" />
-                    </button>
+                      {/* Play Now (if host or DJ) */}
+                      {canControl && (
+                        <button
+                          onClick={() => handleForcePlay(track)}
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-cyan-400 hover:bg-dark-800 transition-colors active:scale-90"
+                          title="Play Now across room"
+                        >
+                          <Play className="w-3.5 h-3.5 fill-current" />
+                        </button>
+                      )}
+
+                      {/* Star Icon Button (Always active/filled in Favorites view, click to unstar) */}
+                      <button
+                        onClick={() => toggleFavorite(track)}
+                        className="p-1.5 rounded-lg text-amber-400 bg-amber-400/15 hover:bg-rose-500/20 hover:text-rose-400 border border-amber-400/30 transition-all active:scale-90"
+                        title="Remove from Favorites"
+                      >
+                        <Star className="w-3.5 h-3.5 fill-current" />
+                      </button>
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
         )
       ) : (
-        /* VIEW 2: UP NEXT QUEUE */
+        /* DISPLAY QUEUE (When queue has tracks and activeView is 'queue') */
         queue.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center py-8 sm:py-10 text-center text-slate-500 border border-dashed border-white/5 rounded-xl p-4 sm:p-6">
             <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-dark-850 flex items-center justify-center text-slate-400 mb-2.5 sm:mb-3 border border-white/5">
@@ -275,15 +303,6 @@ export const QueueList: React.FC<QueueListProps> = ({
               >
                 Browse & Add Songs
               </button>
-              {favoriteCount > 0 && (
-                <button
-                  onClick={() => setActiveView('favorites')}
-                  className="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-amber-400/20 text-amber-300 border border-amber-400/30 font-semibold text-xs hover:bg-amber-400/30 transition-all active:scale-95 flex items-center gap-1.5"
-                >
-                  <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                  <span>Pick from Favorites ({favoriteCount})</span>
-                </button>
-              )}
             </div>
           </div>
         ) : (
