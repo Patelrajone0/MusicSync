@@ -10,7 +10,7 @@ export interface SearchResult {
 // Clean track title to extract the original song name, removing Uploader noise, SEO tags, video labels, etc.
 export function cleanTrackTitle(rawTitle: string = '', rawArtist: string = ''): string {
   if (!rawTitle || typeof rawTitle !== 'string') return '';
-  let title = rawTitle.trim();
+  let title = rawTitle.replace(/_+/g, ' ').trim();
   const artist = (rawArtist || '').trim();
 
   // 1. If title contains pipe '|' or double slash '//' or bullet '•',
@@ -22,8 +22,15 @@ export function cleanTrackTitle(rawTitle: string = '', rawArtist: string = ''): 
     }
   }
 
+  // Strip ripper bitrate tags e.g. (256k), [320kbps], 128k
+  title = title.replace(/[\(\[]?\b\d{2,3}k(bps)?\b[\)\]]?/gi, '').trim();
+
+  // Strip standalone promo phrases
+  title = title.replace(/\b(official\s+)?(music\s+)?(video|audio|visualizer|lyric(s)?)\b/gi, '');
+  title = title.replace(/\b(latest\s+punjabi\s+songs?(\s+\d{4})?|vintage\s+records|black\s+virus)\b/gi, '');
+
   // 2. Strip noise inside parentheses and brackets:
-  const noiseRegex = /\b(official\s+)?(music\s+)?(video|audio|visualizer|lyric(s)?|hd|4k|1080p|720p|hq|uhd|320kbps|128kbps|lossless|high\s+quality)(\s+(song|video|track))?\b/i;
+  const noiseRegex = /\b(official\s+)?(music\s+)?(video|audio|visualizer|lyric(s)?|hd|4k|1080p|720p|hq|uhd|320kbps|128kbps|256k|256kbps|lossless|high\s+quality)(\s+(song|video|track))?\b/i;
   const extraPromoRegex = /\b(full\s+(song|video|track|audio)|live\s+session|live\s+video|studio\s+version|studio\s+master|original\s+mix|teaser|trailer|promo|exclusive|extended\s+cut|coke\s+studio|slowed\s*\+?\s*reverb|slowed\s+and\s+reverb|bass\s+boosted|high\s+bass|8d\s+audio|out\s+now|remastered|lyrical|lyrics|audio\s+song|video\s+song|from\s+["'].*?["']|from\s+the\s+album\s+["'].*?["'])\b/i;
   const curatedThemeRegex = /\b(viral\s+beat|animal\s+rock\s+bass|stadium\s+anthems?|disco\s+pop|acoustic\s+poetry|classic\s+melodies|soulful\s+session|spiritual\s+folk|synthwave\s+bass|synth\s+rework|garba\s+high\s+bass|traditional\s+gujarati\s+garba|traditional\s+united\s+garba|desi\s+dhol\s+beats|folk\s+fusion|no\s+love\s+anthem|urban\s+punjabi|dhol\s*&\s*808\s+bass|bad\s+newz\s+anthems?|moosetape\s+295\s+anthem|karan\s+aujla\s+bass\s+edition)\b/i;
 
@@ -59,7 +66,9 @@ export function cleanTrackTitle(rawTitle: string = '', rawArtist: string = ''): 
       } else if (lowerArtist && (lowerRight === lowerArtist || lowerArtist.includes(lowerRight) || lowerRight.includes(lowerArtist))) {
         title = left;
       } else if (left.length >= 2 && right.length >= 2) {
-        title = left;
+        // Standard music naming convention: [Artist] - [Song Title]
+        // Left is the Artist, Right is the actual Song Title!
+        title = right;
       }
     }
   }

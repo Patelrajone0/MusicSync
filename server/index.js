@@ -678,7 +678,7 @@ function seededShuffle(array, seedNum) {
 // Clean track title to extract the original song name, removing Uploader noise, SEO tags, video labels, etc.
 function cleanTrackTitle(rawTitle = '', rawArtist = '') {
   if (!rawTitle || typeof rawTitle !== 'string') return '';
-  let title = rawTitle.trim();
+  let title = rawTitle.replace(/_+/g, ' ').trim();
   const artist = (rawArtist || '').trim();
 
   // 1. If title contains pipe '|' or double slash '//' or bullet '•',
@@ -690,8 +690,15 @@ function cleanTrackTitle(rawTitle = '', rawArtist = '') {
     }
   }
 
+  // Strip ripper bitrate tags e.g. (256k), [320kbps], 128k
+  title = title.replace(/[\(\[]?\b\d{2,3}k(bps)?\b[\)\]]?/gi, '').trim();
+
+  // Strip standalone promo phrases
+  title = title.replace(/\b(official\s+)?(music\s+)?(video|audio|visualizer|lyric(s)?)\b/gi, '');
+  title = title.replace(/\b(latest\s+punjabi\s+songs?(\s+\d{4})?|vintage\s+records|black\s+virus)\b/gi, '');
+
   // 2. Strip noise inside parentheses and brackets:
-  const noiseRegex = /\b(official\s+)?(music\s+)?(video|audio|visualizer|lyric(s)?|hd|4k|1080p|720p|hq|uhd|320kbps|128kbps|lossless|high\s+quality)(\s+(song|video|track))?\b/i;
+  const noiseRegex = /\b(official\s+)?(music\s+)?(video|audio|visualizer|lyric(s)?|hd|4k|1080p|720p|hq|uhd|320kbps|128kbps|256k|256kbps|lossless|high\s+quality)(\s+(song|video|track))?\b/i;
   const extraPromoRegex = /\b(full\s+(song|video|track|audio)|live\s+session|live\s+video|studio\s+version|studio\s+master|original\s+mix|teaser|trailer|promo|exclusive|extended\s+cut|coke\s+studio|slowed\s*\+?\s*reverb|slowed\s+and\s+reverb|bass\s+boosted|high\s+bass|8d\s+audio|out\s+now|remastered|lyrical|lyrics|audio\s+song|video\s+song|from\s+["'].*?["']|from\s+the\s+album\s+["'].*?["'])\b/i;
   const curatedThemeRegex = /\b(viral\s+beat|animal\s+rock\s+bass|stadium\s+anthems?|disco\s+pop|acoustic\s+poetry|classic\s+melodies|soulful\s+session|spiritual\s+folk|synthwave\s+bass|synth\s+rework|garba\s+high\s+bass|traditional\s+gujarati\s+garba|traditional\s+united\s+garba|desi\s+dhol\s+beats|folk\s+fusion|no\s+love\s+anthem|urban\s+punjabi|dhol\s*&\s*808\s+bass|bad\s+newz\s+anthems?|moosetape\s+295\s+anthem|karan\s+aujla\s+bass\s+edition)\b/i;
 
@@ -727,7 +734,9 @@ function cleanTrackTitle(rawTitle = '', rawArtist = '') {
       } else if (lowerArtist && (lowerRight === lowerArtist || lowerArtist.includes(lowerRight) || lowerRight.includes(lowerArtist))) {
         title = left;
       } else if (left.length >= 2 && right.length >= 2) {
-        title = left;
+        // Standard music naming convention: [Artist] - [Song Title]
+        // Left is the Artist, Right is the actual Song Title!
+        title = right;
       }
     }
   }
@@ -936,11 +945,27 @@ app.get('/api/search', async (req, res) => {
         if (durSec >= 75) {
           const prog = item.media?.transcodings?.find(t => t.format.protocol === 'progressive');
           if (prog) {
-            const cleanTitle = cleanTrackTitle(item.title, item.user?.username || item.publisher_metadata?.artist);
+            let rawTitle = item.title || '';
+            let detectedArtist = item.publisher_metadata?.artist || item.user?.username || 'SoundCloud Artist';
+
+            // If title is "Artist - Song Title" (common on SoundCloud) and uploader is a channel:
+            if (/^([^-–—:]+)[\s]*[-–—:][\s]*([^-–—:]+)$/.test(rawTitle)) {
+              const m = rawTitle.match(/^([^-–—:]+)[\s]*[-–—:][\s]*([^-–—:]+)$/);
+              if (m && m[1].trim().length >= 2 && m[2].trim().length >= 2) {
+                // If uploader username is a promotional channel or generic label, extract real artist from title!
+                const isPromoUploader = /latest|punjabi|hindi|songs?|music|records|official|channel|apna|t-series|speed|desi|viral|audio|video|rj_@|hits/i.test(detectedArtist);
+                if (isPromoUploader || detectedArtist === 'SoundCloud Artist') {
+                  detectedArtist = m[1].trim();
+                  rawTitle = m[2].trim();
+                }
+              }
+            }
+
+            const cleanTitle = cleanTrackTitle(rawTitle, detectedArtist);
             rawTracks.push({
               id: `sc-${item.id}`,
               title: cleanTitle,
-              artist: item.user?.username || item.publisher_metadata?.artist || 'SoundCloud Artist',
+              artist: detectedArtist,
               album: durSec >= 600 ? 'Long Non-Stop Set' : 'Full Track',
               duration: durSec,
               genre: item.genre || (isMixedMode ? 'Party Mix' : 'Full Song'),
@@ -1028,16 +1053,54 @@ app.get('/api/search', async (req, res) => {
       }
     }
 
+function getCoreSongSignature(title = '', artist = '') {
+  let clean = title.toLowerCase()
+    .replace(/\{.*?\}/g, '')
+    .replace(/\(.*?\)/g, '')
+    .replace(/\[.*?\]/g, '')
+    .replace(/[^a-z0-9]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  clean = clean.replace(/\b(ft|feat|featuring|remix|mix|mashup|edit|prod|new song|official|video|audio|punjabi|hindi|gujarati|english|songs?|latest|viral|chartbuster|reels?|full song|audio song|riskyjatt|com)\b/gi, ' ');
+
+  if (artist) {
+    const normArtist = artist.toLowerCase().replace(/[^a-z0-9]/g, ' ').trim();
+    if (normArtist.length >= 3) {
+      clean = clean.replace(new RegExp(`\\b${normArtist}\\b`, 'gi'), ' ');
+    }
+  }
+
+  const words = clean.split(' ').filter(w => w.length >= 2);
+  return words.slice(0, 2).join('');
+}
+
     // Deduplicate and filter exclusively allowed languages: English, Hindi, Punjabi, Gujarati
-    // STRICT SEPARATION: In Normal Songs, exclude all remixes/mashups. In Mixed Songs, include ONLY remixes/mashups/non-stop sets!
+    // STRICT DEDUPLICATION: Ensure no song is EVER repeated multiple times in the list!
     const seenIds = new Set();
+    const seenKeys = new Set();
+    const seenSignatures = new Set();
     const filteredResults = [];
 
     for (const t of rawTracks) {
       if (seenIds.has(t.id)) continue;
-      seenIds.add(t.id);
 
-      const langInfo = t.language ? { name: t.language, badge: t.languageBadge } : classifyTrackLanguage(t.title, t.artist, t.genre);
+      const finalCleanTitle = cleanTrackTitle(t.title, t.artist);
+      if (!finalCleanTitle) continue;
+
+      // Build normalized key for deduplication
+      const normTitle = finalCleanTitle.toLowerCase().replace(/[^a-z0-9]/g, '');
+      const normArtist = (t.artist || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+      const songKey = `${normTitle}|${normArtist}`;
+
+      // Skip if exact title and artist already encountered
+      if (normTitle.length >= 3 && seenKeys.has(songKey)) continue;
+
+      // Compute core signature (first 2 significant words of song title)
+      const sig = getCoreSongSignature(finalCleanTitle, t.artist);
+      if (sig.length >= 3 && seenSignatures.has(sig)) continue;
+
+      const langInfo = t.language ? { name: t.language, badge: t.languageBadge } : classifyTrackLanguage(finalCleanTitle, t.artist, t.genre);
       if (!langInfo) continue; // Disallowed foreign language
 
       // If specific language is requested, filter strictly
@@ -1046,7 +1109,6 @@ app.get('/api/search', async (req, res) => {
       }
 
       const isMixed = isMixedTrack(t.title, t.artist, t.genre, t.duration);
-      const finalCleanTitle = cleanTrackTitle(t.title, t.artist);
 
       if (isMixedMode) {
         // In Mixed Songs mode: ONLY include remixes, mashups, and non-stop long mixes!
@@ -1063,6 +1125,12 @@ app.get('/api/search', async (req, res) => {
           mixBadge = '🎛️ Mashup';
         }
 
+        seenIds.add(t.id);
+        if (normTitle.length >= 3) {
+          seenKeys.add(songKey);
+          if (sig.length >= 3) seenSignatures.add(sig);
+        }
+
         filteredResults.push({
           ...t,
           title: finalCleanTitle,
@@ -1075,6 +1143,12 @@ app.get('/api/search', async (req, res) => {
       } else {
         // In Normal Songs mode: NEVER show remixes, mashups, or non-stop long mixes!
         if (isMixed) continue;
+
+        seenIds.add(t.id);
+        if (normTitle.length >= 3) {
+          seenKeys.add(songKey);
+          if (sig.length >= 3) seenSignatures.add(sig);
+        }
 
         filteredResults.push({
           ...t,

@@ -218,6 +218,68 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Strict Deduplication Helper: Guarantees no track or duplicate song is ever repeated
+  const deduplicateTrackList = (tracks: Track[]): Track[] => {
+    const seenIds = new Set<string>();
+    const seenKeys = new Set<string>();
+    const seenSignatures = new Set<string>();
+    const unique: Track[] = [];
+
+    const getCoreSig = (title: string, artist: string = ''): string => {
+      let clean = title.toLowerCase()
+        .replace(/\{.*?\}/g, '')
+        .replace(/\(.*?\)/g, '')
+        .replace(/\[.*?\]/g, '')
+        .replace(/[^a-z0-9]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+      clean = clean.replace(/\b(ft|feat|featuring|remix|mix|mashup|edit|prod|new song|official|video|audio|punjabi|hindi|gujarati|english|songs?|latest|viral|chartbuster|reels?|full song|audio song|riskyjatt|com)\b/gi, ' ');
+
+      if (artist) {
+        const normArtist = artist.toLowerCase().replace(/[^a-z0-9]/g, ' ').trim();
+        if (normArtist.length >= 3) {
+          clean = clean.replace(new RegExp(`\\b${normArtist}\\b`, 'gi'), ' ');
+        }
+      }
+
+      const words = clean.split(' ').filter((w) => w.length >= 2);
+      return words.slice(0, 2).join('');
+    };
+
+    for (const t of tracks) {
+      if (!t || !t.id) continue;
+      if (seenIds.has(t.id)) continue;
+
+      const cleanTitle = cleanTrackTitle(t.title, t.artist).trim();
+      const normTitle = cleanTitle.toLowerCase().replace(/[^a-z0-9]/g, '');
+      const normArtist = (t.artist || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+      const key = `${normTitle}|${normArtist}`;
+
+      // Never repeat a song with the same normalized title and artist
+      if (normTitle.length >= 3 && seenKeys.has(key)) continue;
+
+      // Never repeat duplicate songs or variations in the same list
+      const sig = getCoreSig(cleanTitle, t.artist);
+      if (sig.length >= 3 && seenSignatures.has(sig)) continue;
+
+      seenIds.add(t.id);
+      if (normTitle.length >= 3) {
+        seenKeys.add(key);
+      }
+      if (sig.length >= 3) {
+        seenSignatures.add(sig);
+      }
+
+      unique.push({
+        ...t,
+        title: cleanTitle
+      });
+    }
+
+    return unique;
+  };
+
   const loadDefaultResults = async (
     lang?: string,
     modeOverride?: 'normal' | 'mixed',
@@ -234,7 +296,7 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
     try {
       const tasteQuery = (currentMode === 'normal' && currentLang === 'for_you') ? userTasteEngine.getPersonalizedQuery() : '';
       const res = await searchTracks('', currentLang, 0, tasteQuery, currentMode, activeSeed, seenIds.join(','));
-      setResults(res.tracks);
+      setResults(deduplicateTrackList(res.tracks || []));
       setServerMessage(res.message || null);
       setCurrentOffset(res.offset || 30);
       setHasMore(res.hasMore !== false);
@@ -282,7 +344,7 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
       const tasteQuery = (currentMode === 'normal' && l === 'for_you') ? userTasteEngine.getPersonalizedQuery() : '';
       const seenIds = !q ? getRecentlySeenTrackIds() : [];
       const res = await searchTracks(q, l, newOffset, tasteQuery, currentMode, refreshSeed, seenIds.join(','));
-      setResults(res.tracks);
+      setResults(deduplicateTrackList(res.tracks || []));
       setServerMessage(res.message || null);
       setCurrentOffset(res.offset || 30);
       setHasMore(res.hasMore !== false);
@@ -308,11 +370,7 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
       const seenIds = !query ? getRecentlySeenTrackIds() : [];
       const res = await searchTracks(query, l, currentOffset, tasteQuery, currentMode, refreshSeed, seenIds.join(','));
       if (res.tracks && res.tracks.length > 0) {
-        setResults((prev) => {
-          const existingIds = new Set(prev.map((t) => t.id));
-          const newUnique = res.tracks.filter((t) => !existingIds.has(t.id));
-          return [...prev, ...newUnique];
-        });
+        setResults((prev) => deduplicateTrackList([...prev, ...res.tracks]));
         setCurrentOffset(res.offset || currentOffset + 30);
         // Suggestions (!query) stream infinitely across all modes (Normal & Mixed)
         setHasMore(!query ? true : (res.hasMore !== false && res.tracks.length > 0));
