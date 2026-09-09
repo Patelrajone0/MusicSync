@@ -1,8 +1,78 @@
 {
   "users": {
     "user_mttx3qb9_xvn4kpk": {
-      "updatedAt": 1788948708378,
+      "updatedAt": 1788949713048,
       "tracks": [
+        {
+          "id": "curated-hi-01",
+          "title": "Sari Duniya Jala Denge",
+          "artist": "B Praak & Jaani",
+          "album": "Animal",
+          "duration": 182,
+          "genre": "Hindi / Bollywood Rock",
+          "language": "Hindi",
+          "languageBadge": "🇮🇳 Hindi",
+          "artwork": "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=500&auto=format&fit=crop&q=80",
+          "audioUrl": "/api/stream/soundcloud?progUrl=https%3A%2F%2Fapi-v2.soundcloud.com%2Fmedia%2Fsoundcloud%3Atracks%3A1674959538%2Fea8d7615-4ec8-4627-970f-0b358b6d2492%2Fstream%2Fprogressive",
+          "source": "Curated (Trending #1)",
+          "favoritedAt": 1788949713048
+        },
+        {
+          "id": "curated-hi-04",
+          "title": "Apna Bana Le",
+          "artist": "Arijit Singh & Sachin-Jigar",
+          "album": "Bhediya",
+          "duration": 261,
+          "genre": "Hindi / Bollywood Romantic",
+          "language": "Hindi",
+          "languageBadge": "🇮🇳 Hindi",
+          "artwork": "https://images.unsplash.com/photo-1534447677768-be436bb09401?w=500&auto=format&fit=crop&q=80",
+          "audioUrl": "/api/stream/soundcloud?progUrl=https%3A%2F%2Fapi-v2.soundcloud.com%2Fmedia%2Fsoundcloud%3Atracks%3A1321515496%2F13f27a2f-4831-4a35-8420-4e2bbcbe10d4%2Fstream%2Fprogressive",
+          "source": "Curated (Trending #4)",
+          "favoritedAt": 1788949711475
+        },
+        {
+          "id": "curated-hi-05",
+          "title": "Husn",
+          "artist": "Anuv Jain",
+          "album": "Husn",
+          "duration": 218,
+          "genre": "Hindi / Indie Acoustic",
+          "language": "Hindi",
+          "languageBadge": "🇮🇳 Hindi",
+          "artwork": "https://images.unsplash.com/photo-1518609878373-06d740f60d8b?w=500&auto=format&fit=crop&q=80",
+          "audioUrl": "/api/stream/soundcloud?progUrl=https%3A%2F%2Fapi-v2.soundcloud.com%2Fmedia%2Fsoundcloud%3Atracks%3A853582540%2F33d9ead8-77da-4ab6-89ac-f72c65291c3d%2Fstream%2Fprogressive",
+          "source": "Curated (Trending #5)",
+          "favoritedAt": 1788949709714
+        },
+        {
+          "id": "curated-hi-03",
+          "title": "Tum Hi Ho",
+          "artist": "Arijit Singh",
+          "album": "Aashiqui 2",
+          "duration": 310,
+          "genre": "Hindi / Bollywood Bass",
+          "language": "Hindi",
+          "languageBadge": "🇮🇳 Hindi",
+          "artwork": "https://images.unsplash.com/photo-1518609878373-06d740f60d8b?w=500&auto=format&fit=crop&q=80",
+          "audioUrl": "/api/stream/soundcloud?progUrl=https%3A%2F%2Fapi-v2.soundcloud.com%2Fmedia%2Fsoundcloud%3Atracks%3A853582540%2F33d9ead8-77da-4ab6-89ac-f72c65291c3d%2Fstream%2Fprogressive",
+          "source": "Curated (Trending #3)",
+          "favoritedAt": 1788949687983
+        },
+        {
+          "id": "curated-hi-02",
+          "title": "Kesariya",
+          "artist": "Arijit Singh",
+          "album": "Brahmastra",
+          "duration": 191,
+          "genre": "Hindi / Bollywood Lofi",
+          "language": "Hindi",
+          "languageBadge": "🇮🇳 Hindi",
+          "artwork": "https://images.unsplash.com/photo-1534447677768-be436bb09401?w=500&auto=format&fit=crop&q=80",
+          "audioUrl": "/api/stream/soundcloud?progUrl=https%3A%2F%2Fapi-v2.soundcloud.com%2Fmedia%2Fsoundcloud%3Atracks%3A1321515496%2F13f27a2f-4831-4a35-8420-4e2bbcbe10d4%2Fstream%2Fprogressive",
+          "source": "Curated (Trending #2)",
+          "favoritedAt": 1788949643018
+        },
         {
           "id": "curated-pa-04",
           "title": "Winning Speech",
