@@ -24,7 +24,7 @@ import {
   Star
 } from 'lucide-react';
 import { Track } from '../types';
-import { searchTracks, getSearchSuggestions, createCustomTrack, cleanTrackTitle } from '../services/musicApi';
+import { searchTracks, getSearchSuggestions, createCustomTrack, cleanTrackTitle, isJunkOrSpamTrack } from '../services/musicApi';
 import { userTasteEngine, TasteSummary, HistoryItem } from '../services/userTaste';
 import { socket } from '../services/socket';
 import { syncEngine } from '../services/syncEngine';
@@ -251,7 +251,12 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
       if (!t || !t.id) continue;
       if (seenIds.has(t.id)) continue;
 
+      // Strictly filter out low-quality rips, profane/abusive tracks, or spam uploads
+      if (isJunkOrSpamTrack(t.title, t.artist)) continue;
+
       const cleanTitle = cleanTrackTitle(t.title, t.artist).trim();
+      if (!cleanTitle || isJunkOrSpamTrack(cleanTitle, t.artist)) continue;
+
       const normTitle = cleanTitle.toLowerCase().replace(/[^a-z0-9]/g, '');
       const normArtist = (t.artist || '').toLowerCase().replace(/[^a-z0-9]/g, '');
       const key = `${normTitle}|${normArtist}`;

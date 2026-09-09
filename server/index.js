@@ -675,16 +675,103 @@ function seededShuffle(array, seedNum) {
   return arr;
 }
 
+// List of famous artists to detect and block title clickbait (e.g. track titled purely "Karan Aujla" without a song name)
+const FAMOUS_ARTISTS = [
+  'karan aujla', 'diljit dosanjh', 'sidhu moose wala', 'sidhu moosewala', 'ap dhillon',
+  'shubh', 'amrinder gill', 'ammy virk', 'b praak', 'guru randhawa', 'jass manak',
+  'parmish verma', 'hustinder', 'jordan sandhu', 'honey singh', 'yo yo honey singh',
+  'badshah', 'arijit singh', 'shreya ghoshal', 'neha kakkar', 'jubin nautiyal',
+  'sonu nigam', 'kumar sanu', 'udit narayan', 'alka yagnik', 'ar rahman',
+  'pritam', 'anirudh', 'atif aslam', 'aditya gadhvi', 'kinjal dave',
+  'kirtidan gadhvi', 'geeta rabari', 'falguni pathak', 'the weeknd',
+  'taylor swift', 'ed sheeran', 'billie eilish', 'dua lipa', 'coldplay',
+  'drake', 'post malone', 'bruno mars', 'eminem', 'justin bieber', 'ariana grande',
+  'darshan raval', 'anuv jain', 'prateek kuhad', 'amit trivedi', 'sachin jigar',
+  'sunidhi chauhan', 'mohit chauhan', 'shaan'
+];
+
+const PROFANITY_REGEX = /\b(gandu|gand|gaand|dalle|dalla|chutiya|chutya|bhosad|bhosd|bhosadi|bhosadika|lodu|loda|lauda|lund|madarchod|mc|bc|behenchod|bhenchod|harami|randi|kutti|kutta|kamina|chinal|fuck|fucker|fucking|bitch|slut|porn|xxx|nude|sex)\b/i;
+const FILE_EXT_REGEX = /\.(mp3|wav|m4a|aac|flac|ogg|opus)\b/i;
+const RIP_SPAM_REGEX = /\b(kalam|naat|nohay|marsiya|majlis|bayan|status\s+video|whatsapp\s+status|tiktok\s+viral|viral\s+reels?|reels?\s+audio|viral\s+kalam|punjabisong\s+viral)\b/i;
+
+// Filter out low-quality audio rips, profane/abusive titles, religious amateur recordings, and SEO junk
+function isJunkOrSpamTrack(title = '', artist = '') {
+  if (!title || typeof title !== 'string') return true;
+  const raw = `${title} ${artist || ''}`.toLowerCase();
+
+  // 1. Explicit profanity / vulgarity / abusive language
+  if (PROFANITY_REGEX.test(raw)) return true;
+
+  // 2. Religious kalam/naat/bayan amateur audio clips (not music tracks)
+  if (/\b(kalam|naat\s+sharif|nohay|marsiya|majlis|bayan)\b/i.test(title)) return true;
+
+  // 3. Audio rip files with spam keywords (.mp3, tiktok viral, reels audio, etc.)
+  if (FILE_EXT_REGEX.test(title) && (RIP_SPAM_REGEX.test(title) || /song|viral|trending/i.test(title))) return true;
+
+  // 4. Strip noise and check remaining substantive content
+  const stripped = title.toLowerCase()
+    .replace(/\.(mp3|wav|m4a|aac|flac|ogg|opus)\b/gi, ' ')
+    .replace(/[\(\[].*?[\)\]]/g, ' ')
+    .replace(/[^a-z0-9]/g, ' ')
+    .replace(/\b(latest|new|punjabi|punjabisong|hindi|gujarati|english|bollywood|songs?|viral|trending|reels?|tiktok|audio|video|status|whatsapp|best|top|hit|hits|kalam|studio|singer|singers?|records?|remix|mix|official|hd|4k|hq|mp3|mp4|\d{4})\b/gi, ' ')
+    .trim();
+
+  // If after stripping generic filler words, virtually nothing remains, it's pure SEO spam!
+  if (stripped.replace(/\s+/g, '').length < 3) return true;
+
+  // 5. Title is purely an artist's name or combination of artists (e.g. "Sidhu Moose Wala Ft. Diljit Dosanjh" with no actual song name)
+  const normTitle = title.toLowerCase().replace(/[^a-z0-9]/g, ' ').replace(/\s+/g, ' ').trim();
+  const normArtist = (artist || '').toLowerCase().replace(/[^a-z0-9]/g, ' ').replace(/\s+/g, ' ').trim();
+
+  if (normArtist && normTitle === normArtist && normTitle.split(' ').length <= 4) return true;
+  if (FAMOUS_ARTISTS.some(a => normTitle === a || normTitle === a.replace(/[^a-z0-9]/g, ' '))) return true;
+
+  // Check if title consists only of artist names and connector words (ft, feat, vs, x, &) without a song title
+  let strippedArtists = normTitle.replace(/\b(ft|feat|featuring|vs|x|and|with)\b/gi, ' ').trim();
+  for (const a of FAMOUS_ARTISTS) {
+    const na = a.replace(/[^a-z0-9]/g, ' ').replace(/\s+/g, ' ').trim();
+    strippedArtists = strippedArtists.replace(new RegExp(`\\b${na}\\b`, 'gi'), ' ').trim();
+  }
+  if (normArtist) {
+    strippedArtists = strippedArtists.replace(new RegExp(`\\b${normArtist}\\b`, 'gi'), ' ').trim();
+  }
+  if (strippedArtists.replace(/\s+/g, '').length < 3) return true;
+
+  // 6. Generic placeholder titles
+  if (/^(track\s*\d+|audio\s*\d+|untitled|recording|new recording|voice memo|whatsapp audio|soundcloud track)$/i.test(normTitle)) {
+    return true;
+  }
+
+  // 7. Overly long rambling keyword dump (> 65 chars with > 9 words)
+  if (title.length > 65 && normTitle.split(/\s+/).length > 9) {
+    return true;
+  }
+
+  return false;
+}
+
+// Convert text to clean Title Case
+function toTitleCase(str = '') {
+  if (!str) return '';
+  return str.replace(/\w\S*/g, (txt) => {
+    if (/^(feat\.?|ft\.?|vs\.?)$/i.test(txt)) return txt.toLowerCase();
+    return txt.charAt(0).toUpperCase() + txt.slice(1).toLowerCase();
+  });
+}
+
 // Clean track title to extract the original song name, removing Uploader noise, SEO tags, video labels, etc.
 function cleanTrackTitle(rawTitle = '', rawArtist = '') {
   if (!rawTitle || typeof rawTitle !== 'string') return '';
   let title = rawTitle.replace(/_+/g, ' ').trim();
   const artist = (rawArtist || '').trim();
 
-  // 1. If title contains pipe '|' or double slash '//' or bullet '•',
+  // Strip ripper file extensions: .mp3, .wav, .m4a, .aac, .flac, etc.
+  title = title.replace(/\.(mp3|wav|m4a|aac|flac|ogg|opus)\b/gi, '').trim();
+
+  // 1. If title contains pipe '|' or double slash '//' or bullet '•' or tilde '~',
   // in YouTube / SoundCloud metadata everything after is almost exclusively promotional clutter
-  if (/[|/•]/.test(title)) {
-    const parts = title.split(/[|/•]/).map(p => p.trim()).filter(Boolean);
+  if (/[|/•~]/.test(title)) {
+    const parts = title.split(/[|/•~]/).map(p => p.trim()).filter(Boolean);
     if (parts.length > 0 && parts[0].length >= 2) {
       title = parts[0];
     }
@@ -695,7 +782,14 @@ function cleanTrackTitle(rawTitle = '', rawArtist = '') {
 
   // Strip standalone promo phrases
   title = title.replace(/\b(official\s+)?(music\s+)?(video|audio|visualizer|lyric(s)?)\b/gi, '');
-  title = title.replace(/\b(latest\s+punjabi\s+songs?(\s+\d{4})?|vintage\s+records|black\s+virus)\b/gi, '');
+  title = title.replace(/\b(latest|new)\s+(punjabi|hindi|gujarati|english|bollywood)?\s*songs?(\s+\d{4})?\b/gi, '');
+  title = title.replace(/\b(full\s+song|audio\s+song|video\s+song|full\s+audio|full\s+video)\b/gi, '');
+  title = title.replace(/\b(tiktok\s+viral|viral\s+trending|viral\s+reels?|reels?\s+trending|trending\s+audio|trending\s+song|reels?\s+audio)\b/gi, '');
+  title = title.replace(/\b(whatsapp\s+status(\s+video)?|status\s+video)\b/gi, '');
+  title = title.replace(/\b(slowed\s*\+?\s*reverb|slowed\s+and\s+reverb|bass\s+boosted|8d\s+audio|lofi\s+remix|lofi\s+flip)\b/gi, '');
+  title = title.replace(/\b(vintage\s+records|black\s+virus|gdm\s+studio|speed\s+records|white\s+hill)\b/gi, '');
+  title = title.replace(/\b(presented\s+by|produced\s+by|prod\.?\s+by|music\s+by|lyrics\s+by|directed\s+by)\s+.*$/gi, '');
+  title = title.replace(/\b(singer\s*[:\-]?\s*.*$|starring\s*[:\-]?\s*.*$)/gi, '');
 
   // 2. Strip noise inside parentheses and brackets:
   const noiseRegex = /\b(official\s+)?(music\s+)?(video|audio|visualizer|lyric(s)?|hd|4k|1080p|720p|hq|uhd|320kbps|128kbps|256k|256kbps|lossless|high\s+quality)(\s+(song|video|track))?\b/i;
@@ -757,8 +851,9 @@ function cleanTrackTitle(rawTitle = '', rawArtist = '') {
     .replace(/\s{2,}/g, ' ')
     .trim();
 
-  if (title === title.toUpperCase() && title.length > 3) {
-    title = title.charAt(0).toUpperCase() + title.slice(1).toLowerCase();
+  // If ALL CAPS or all lowercase, convert cleanly to Title Case
+  if (title.length > 2 && (title === title.toUpperCase() || title === title.toLowerCase())) {
+    title = toTitleCase(title);
   }
 
   return title || rawTitle;
@@ -793,16 +888,19 @@ const MIXED_SUGGESTION_QUERIES = {
 };
 
 // Dynamic limitless suggestion search queries per language (varied across refreshes via seedNum)
+// Only high-quality, authentic tracks and top-tier artists (NO generic SEO spam keywords!)
 const NORMAL_SUGGESTION_QUERIES = {
   hindi: [
-    'bollywood trending hits 2024', 'arijit singh romantic hits', 'sari duniya jala denge animal',
-    'kesariya brahmastra arijit', 'bollywood acoustic lofi', 't-series latest chartbusters',
-    'bad newz vicky kaushal hits', 'stree 2 songs trending', 'armaan malik shreya ghoshal', 'pritam hits latest'
+    'arijit singh romantic hits', 'sari duniya jala denge animal',
+    'kesariya brahmastra arijit', 'bollywood acoustic lofi', 'pritam bollywood chartbusters',
+    'bad newz vicky kaushal hits', 'stree 2 songs trending', 'armaan malik shreya ghoshal',
+    'ranbir kapoor animal satranga', 'anuv jain husn baarishein'
   ],
   punjabi: [
     'tauba tauba karan aujla', 'diljit dosanjh lover born to shine', 'sidhu moose wala moosetape 295',
     'shubh cheques still rollin', 'ap dhillon with you brown munde', 'karan aujla street dreams four me',
-    'hustinder latest punjabi tracks', 'amrinder gill virasat songs', 'punjabi viral reels trending'
+    'ammy virk qismat hath chumme', 'b praak mann bharrya filhall', 'amrinder gill virasat songs',
+    'guru randhawa high rated gabru'
   ],
   gujarati: [
     'khalasi aditya gadhvi coke studio', 'chogada tara loveratri garba', 'kinjal dave char char bangdi',
@@ -816,13 +914,13 @@ const NORMAL_SUGGESTION_QUERIES = {
     'deep house summer vibes'
   ],
   all: [
-    'trending hit songs viral chartbusters', 'tauba tauba khalasi starboy lover', 'punjabi hindi english viral playlist',
+    'trending hit songs viral chartbusters', 'tauba tauba khalasi starboy lover', 'top billboard hot 100 pop',
     'top global hits and bollywood', 'hot 50 viral tracks worldwide', 'fresh trending hits radio',
     'diljit karan weeknd arijit', 'dance pop and desi beats'
   ],
   trending: [
     'viral trending chartbusters 2024', 'top trending hits spotify global', 'tauba tauba o maahi khalasi',
-    'trending reels viral audio', 'top 50 trending chartbusters', 'latest viral songs radio'
+    'top billboard hot hits', 'top 50 trending chartbusters', 'latest viral songs radio'
   ],
   for_you: [
     'trending songs 2024', 'top bollywood and pop', 'viral desi and global chartbusters'
@@ -948,20 +1046,37 @@ app.get('/api/search', async (req, res) => {
             let rawTitle = item.title || '';
             let detectedArtist = item.publisher_metadata?.artist || item.user?.username || 'SoundCloud Artist';
 
-            // If title is "Artist - Song Title" (common on SoundCloud) and uploader is a channel:
+            // If title is "Artist - Song Title" or "Song Title - Artist" (common on SoundCloud):
             if (/^([^-–—:]+)[\s]*[-–—:][\s]*([^-–—:]+)$/.test(rawTitle)) {
               const m = rawTitle.match(/^([^-–—:]+)[\s]*[-–—:][\s]*([^-–—:]+)$/);
               if (m && m[1].trim().length >= 2 && m[2].trim().length >= 2) {
-                // If uploader username is a promotional channel or generic label, extract real artist from title!
-                const isPromoUploader = /latest|punjabi|hindi|songs?|music|records|official|channel|apna|t-series|speed|desi|viral|audio|video|rj_@|hits/i.test(detectedArtist);
-                if (isPromoUploader || detectedArtist === 'SoundCloud Artist') {
-                  detectedArtist = m[1].trim();
-                  rawTitle = m[2].trim();
+                const left = m[1].trim();
+                const right = m[2].trim();
+                const isKnown = (name) => {
+                  const norm = name.toLowerCase().replace(/[^a-z0-9]/g, ' ').replace(/\s+/g, ' ').trim();
+                  return FAMOUS_ARTISTS.some(a => norm === a || norm === a.replace(/[^a-z0-9]/g, ' '));
+                };
+                const isPromoUploader = /latest|punjabi|hindi|songs?|music|records|official|channel|apna|t-series|speed|desi|viral|audio|video|rj_@|hits|born\s+to\s+shine|moosetape/i.test(detectedArtist);
+
+                if (isKnown(left)) {
+                  detectedArtist = left;
+                  rawTitle = right;
+                } else if (isKnown(right)) {
+                  detectedArtist = right;
+                  rawTitle = left;
+                } else if (isPromoUploader || detectedArtist === 'SoundCloud Artist') {
+                  detectedArtist = left;
+                  rawTitle = right;
                 }
               }
             }
 
+            // If raw title is obvious junk/spam, discard immediately!
+            if (isJunkOrSpamTrack(rawTitle, detectedArtist)) continue;
+
             const cleanTitle = cleanTrackTitle(rawTitle, detectedArtist);
+            if (isJunkOrSpamTrack(cleanTitle, detectedArtist)) continue;
+
             rawTracks.push({
               id: `sc-${item.id}`,
               title: cleanTitle,
@@ -1014,11 +1129,15 @@ app.get('/api/search', async (req, res) => {
             for (const track of audiusData.data) {
               const durSec = track.duration || 0;
               if (track.is_streamable !== false && durSec >= 75) {
-                const cleanTitle = cleanTrackTitle(track.title, track.user ? track.user.name : '');
+                const artistName = track.user ? track.user.name : 'Unknown Artist';
+                if (isJunkOrSpamTrack(track.title, artistName)) continue;
+                const cleanTitle = cleanTrackTitle(track.title, artistName);
+                if (isJunkOrSpamTrack(cleanTitle, artistName)) continue;
+
                 rawTracks.push({
                   id: `audius-${track.id}`,
                   title: cleanTitle,
-                  artist: track.user ? track.user.name : 'Unknown Artist',
+                  artist: artistName,
                   album: durSec >= 600 ? 'Long Non-Stop Set' : 'Audius Release',
                   duration: durSec,
                   genre: track.genre || 'Electronic',
@@ -1085,8 +1204,12 @@ function getCoreSongSignature(title = '', artist = '') {
     for (const t of rawTracks) {
       if (seenIds.has(t.id)) continue;
 
+      // Discard junk, abusive, or spam tracks completely
+      if (isJunkOrSpamTrack(t.title, t.artist)) continue;
+
       const finalCleanTitle = cleanTrackTitle(t.title, t.artist);
       if (!finalCleanTitle) continue;
+      if (isJunkOrSpamTrack(finalCleanTitle, t.artist)) continue;
 
       // Build normalized key for deduplication
       const normTitle = finalCleanTitle.toLowerCase().replace(/[^a-z0-9]/g, '');

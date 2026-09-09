@@ -1,3 +1,23 @@
 {
-  "users": {}
+  "users": {
+    "user_mttx3qb9_xvn4kpk": {
+      "updatedAt": 1788948708378,
+      "tracks": [
+        {
+          "id": "curated-pa-04",
+          "title": "Winning Speech",
+          "artist": "Karan Aujla",
+          "album": "Street Dreams",
+          "duration": 214,
+          "genre": "Punjabi / Desi Hip-Hop",
+          "language": "Punjabi",
+          "languageBadge": "🎶 Punjabi",
+          "artwork": "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=500&auto=format&fit=crop&q=80",
+          "audioUrl": "/api/stream/soundcloud?progUrl=https%3A%2F%2Fapi-v2.soundcloud.com%2Fmedia%2Fsoundcloud%3Atracks%3A1862712117%2Fcc675a2c-bc71-4a34-8ea4-1fbc2770d2ad%2Fstream%2Fprogressive",
+          "source": "Curated (Trending #4)",
+          "favoritedAt": 1788948708378
+        }
+      ]
+    }
+  }
 }
