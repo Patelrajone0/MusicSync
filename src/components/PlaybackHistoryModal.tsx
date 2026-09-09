@@ -12,12 +12,14 @@ import {
   Sparkles,
   Clock,
   RotateCcw,
-  Flame
+  Flame,
+  Star
 } from 'lucide-react';
 import { Track } from '../types';
 import { userTasteEngine, HistoryItem } from '../services/userTaste';
 import { socket } from '../services/socket';
 import { cleanTrackTitle } from '../services/musicApi';
+import { useFavorites } from '../services/favoritesService';
 
 interface PlaybackHistoryModalProps {
   isOpen: boolean;
@@ -43,6 +45,7 @@ export const PlaybackHistoryModal: React.FC<PlaybackHistoryModalProps> = ({ isOp
   const [historyItems, setHistoryItems] = useState<HistoryItem[]>(() => userTasteEngine.getHistory());
   const [searchFilter, setSearchFilter] = useState('');
   const [addedIds, setAddedIds] = useState<Set<string>>(new Set());
+  const { isFavorite, toggleFavorite } = useFavorites();
 
   // Local audio preview
   const [previewTrackId, setPreviewTrackId] = useState<string | null>(null);
@@ -304,6 +307,23 @@ export const PlaybackHistoryModal: React.FC<PlaybackHistoryModalProps> = ({ isOp
 
                   {/* Actions: Re-queue & Remove */}
                   <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                    {/* Star Button */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleFavorite(track);
+                      }}
+                      className={`p-1.5 rounded-lg border transition-all active:scale-90 ${
+                        isFavorite(track.id)
+                          ? 'bg-amber-400/20 text-amber-400 border-amber-400/40 shadow-[0_0_10px_rgba(251,191,36,0.25)]'
+                          : 'text-slate-400 border-transparent hover:text-amber-300 hover:bg-white/5'
+                      }`}
+                      title={isFavorite(track.id) ? 'Remove from Favorites' : 'Add to Favorites'}
+                    >
+                      <Star className={`w-3.5 h-3.5 ${isFavorite(track.id) ? 'fill-amber-400 text-amber-400' : ''}`} />
+                    </button>
+
                     <button
                       onClick={() => handleQueueAgain(track)}
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all active:scale-95 ${

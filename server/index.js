@@ -8,6 +8,15 @@ import { fileURLToPath } from 'url';
 import { Readable } from 'stream';
 import play from 'play-dl';
 import { CURATED_TRACKS, CURATED_MIXED_TRACKS } from './curatedTracks.js';
+import {
+  initFavoritesDb,
+  getUserFavorites,
+  addFavorite,
+  removeFavorite,
+  isFavorite
+} from './favoritesDb.js';
+
+initFavoritesDb().catch((err) => console.error('Favorites DB init error:', err));
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -295,6 +304,59 @@ app.get('/api/tracks/curated', (req, res) => {
     return res.json({ tracks: CURATED_MIXED_TRACKS });
   }
   res.json({ tracks: CURATED_TRACKS });
+});
+
+// ----------------------------------------------------
+// PERSISTENT FAVORITES DATABASE ENDPOINTS
+// ----------------------------------------------------
+app.get('/api/favorites', async (req, res) => {
+  try {
+    const userId = req.query.userId || req.headers['x-user-id'];
+    if (!userId) {
+      return res.status(400).json({ error: 'Missing userId parameter or x-user-id header' });
+    }
+    const tracks = await getUserFavorites(userId);
+    res.json({ success: true, tracks });
+  } catch (err) {
+    console.error('Failed to get favorites:', err);
+    res.status(500).json({ error: 'Internal server error fetching favorites' });
+  }
+});
+
+app.post('/api/favorites', async (req, res) => {
+  try {
+    const userId = req.body.userId || req.headers['x-user-id'];
+    const track = req.body.track;
+    if (!userId) {
+      return res.status(400).json({ error: 'Missing userId' });
+    }
+    if (!track || !track.id) {
+      return res.status(400).json({ error: 'Missing track or track.id' });
+    }
+    const updatedTracks = await addFavorite(userId, track);
+    res.json({ success: true, tracks: updatedTracks });
+  } catch (err) {
+    console.error('Failed to add favorite:', err);
+    res.status(500).json({ error: 'Internal server error saving favorite' });
+  }
+});
+
+app.delete('/api/favorites/:trackId', async (req, res) => {
+  try {
+    const trackId = req.params.trackId;
+    const userId = req.query.userId || req.body?.userId || req.headers['x-user-id'];
+    if (!userId) {
+      return res.status(400).json({ error: 'Missing userId' });
+    }
+    if (!trackId) {
+      return res.status(400).json({ error: 'Missing trackId' });
+    }
+    const updatedTracks = await removeFavorite(userId, trackId);
+    res.json({ success: true, tracks: updatedTracks });
+  } catch (err) {
+    console.error('Failed to remove favorite:', err);
+    res.status(500).json({ error: 'Internal server error removing favorite' });
+  }
 });
 
 // Full Track Audio Stream Proxy Endpoint (SoundCloud Progressive MP3) with direct Byte-Range pipe
@@ -1791,6 +1853,34 @@ io.on('connection', (socket) => {
 
     io.to(currentRoomCode).emit('new_reaction', reactionPayload);
     io.to(currentRoomCode).emit('reaction_received', reactionPayload);
+  });
+
+  // 8.5. Persistent Favorites Events
+  socket.on('favorites_get', async ({ userId }, callback) => {
+    try {
+      const tracks = await getUserFavorites(userId);
+      if (typeof callback === 'function') callback({ success: true, tracks });
+    } catch (err) {
+      if (typeof callback === 'function') callback({ success: false, error: err.message });
+    }
+  });
+
+  socket.on('favorites_add', async ({ userId, track }, callback) => {
+    try {
+      const tracks = await addFavorite(userId, track);
+      if (typeof callback === 'function') callback({ success: true, tracks });
+    } catch (err) {
+      if (typeof callback === 'function') callback({ success: false, error: err.message });
+    }
+  });
+
+  socket.on('favorites_remove', async ({ userId, trackId }, callback) => {
+    try {
+      const tracks = await removeFavorite(userId, trackId);
+      if (typeof callback === 'function') callback({ success: true, tracks });
+    } catch (err) {
+      if (typeof callback === 'function') callback({ success: false, error: err.message });
+    }
   });
 
   // 9. Disconnect Handling
