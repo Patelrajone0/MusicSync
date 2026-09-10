@@ -54,11 +54,9 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
   const [isScrubberHovered, setIsScrubberHovered] = useState<boolean>(false);
 
   // Volume state
-  const [volumeMode, setVolumeMode] = useState<'master' | 'local'>('master');
   const [volume, setVolume] = useState<number>(masterVolume ?? 0.9);
   const [isMuted, setIsMuted] = useState<boolean>(false);
   const [prevVolume, setPrevVolume] = useState<number>(masterVolume ?? 0.9);
-  const lastVolumeEmitRef = useRef<number>(0);
 
   // Instant optimistic play state for 0ms perceived latency
   const [optimisticPlaying, setOptimisticPlaying] = useState<boolean | null>(null);
@@ -360,30 +358,11 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
     }
   }, [masterVolume]);
 
-  const emitMasterVolume = (val: number) => {
-    if (!isHost || volumeMode !== 'master') return;
-    lastVolumeEmitRef.current = Date.now();
-    socket.emit('set_master_volume', { volume: val });
-  };
-
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = parseFloat(e.target.value);
     setVolume(val);
     setIsMuted(val === 0);
     syncEngine.setVolume(val);
-
-    if (isHost && volumeMode === 'master') {
-      const now = Date.now();
-      if (now - lastVolumeEmitRef.current > 50) {
-        emitMasterVolume(val);
-      }
-    }
-  };
-
-  const handleVolumeCommit = () => {
-    if (isHost && volumeMode === 'master') {
-      emitMasterVolume(isMuted ? 0 : volume);
-    }
   };
 
   const toggleMute = () => {
@@ -392,17 +371,11 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
       setIsMuted(false);
       setVolume(target);
       syncEngine.setVolume(target);
-      if (isHost && volumeMode === 'master') {
-        emitMasterVolume(target);
-      }
     } else {
       setPrevVolume(volume);
       setIsMuted(true);
       setVolume(0);
       syncEngine.setVolume(0);
-      if (isHost && volumeMode === 'master') {
-        emitMasterVolume(0);
-      }
     }
   };
 
@@ -711,35 +684,6 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
           <div className="relative flex items-center gap-1.5 sm:gap-2">
 
 
-            {/* Host Master / Local Switcher Pill */}
-            {isHost && (
-              <button
-                type="button"
-                onClick={() => setVolumeMode((prev) => (prev === 'master' ? 'local' : 'master'))}
-                className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold border transition-all active:scale-95 ${
-                  volumeMode === 'master'
-                    ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 hover:bg-amber-500/30 shadow-sm shadow-amber-500/10'
-                    : 'bg-dark-850 text-slate-400 border-white/10 hover:text-white'
-                }`}
-                title={
-                  volumeMode === 'master'
-                    ? '👑 Controlling all connected devices. Click to switch to Local Only.'
-                    : '📱 Controlling only this device. Click to switch to Master (All Speakers).'
-                }
-              >
-                {volumeMode === 'master' ? (
-                  <>
-                    <Crown className="w-3 h-3 text-amber-400 fill-amber-400 shrink-0" />
-                    <span>All Speakers</span>
-                  </>
-                ) : (
-                  <>
-                    <span className="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0" />
-                    <span>Local Only</span>
-                  </>
-                )}
-              </button>
-            )}
 
             {/* Gapless Crossfade Mode Badge */}
             <button
@@ -768,22 +712,12 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
               className={`p-1.5 rounded-lg text-slate-400 hover:text-white transition-colors active:scale-95 ${
                 isMuted || volume === 0 ? 'text-red-400' : ''
               }`}
-              title={
-                isMuted
-                  ? 'Unmute'
-                  : isHost && volumeMode === 'master'
-                  ? 'Mute All Connected Devices'
-                  : 'Mute Audio'
-              }
+              title={isMuted ? 'Unmute' : 'Mute Audio'}
             >
               {isMuted || volume === 0 ? (
                 <VolumeX className="w-5 h-5 text-red-400" />
               ) : (
-                <Volume2
-                  className={`w-5 h-5 ${
-                    isHost && volumeMode === 'master' ? 'text-amber-400' : 'text-slate-300'
-                  }`}
-                />
+                <Volume2 className="w-5 h-5 text-slate-300 hover:text-white" />
               )}
             </button>
 
@@ -795,15 +729,7 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
               step="0.01"
               value={isMuted ? 0 : volume}
               onChange={handleVolumeChange}
-              onPointerUp={handleVolumeCommit}
-              onTouchEnd={handleVolumeCommit}
-              onMouseUp={handleVolumeCommit}
-              onKeyUp={handleVolumeCommit}
-              className={`w-18 lg:w-24 h-1.5 rounded-lg appearance-none cursor-pointer ${
-                isHost && volumeMode === 'master'
-                  ? 'bg-dark-800 accent-amber-400'
-                  : 'bg-dark-800 accent-[#1ed760]'
-              }`}
+              className="w-18 lg:w-24 h-1.5 rounded-lg appearance-none cursor-pointer bg-dark-800 accent-[#1ed760]"
               title={`Volume: ${Math.round((isMuted ? 0 : volume) * 100)}%`}
             />
 
