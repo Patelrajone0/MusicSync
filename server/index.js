@@ -2038,15 +2038,13 @@ io.on('connection', (socket) => {
       room.users.delete(targetUserId);
 
       // Notify the target socket that they were removed
-      io.to(targetUserId).emit('kicked_from_room', {
-        reason: 'You were removed from the room by the host.'
-      });
-
-      // Leave socket.io room channel
+      const kickReason = 'The host has removed you from the Synced Room.';
       const targetSocket = io.sockets.sockets.get(targetUserId);
       if (targetSocket) {
+        targetSocket.emit('kicked_from_room', { reason: kickReason });
         targetSocket.leave(currentRoomCode);
       }
+      io.to(targetUserId).emit('kicked_from_room', { reason: kickReason });
 
       // Broadcast updated users list
       io.to(currentRoomCode).emit('room_users_updated', {

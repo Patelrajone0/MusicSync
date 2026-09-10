@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { socket } from './services/socket';
 import { syncEngine } from './services/syncEngine';
 import { mediaSessionService } from './services/mediaSession';
@@ -19,7 +20,7 @@ import { LiveChatAndReactions } from './components/LiveChatAndReactions';
 import { MusicSearchModal } from './components/MusicSearchModal';
 import { PlaybackHistoryModal } from './components/PlaybackHistoryModal';
 import { Logo } from './components/Logo';
-import { Volume2, Radio, Disc, Sparkles, Layers, Plus, MessageSquare, Music2 } from 'lucide-react';
+import { Volume2, Radio, Disc, Sparkles, Layers, Plus, MessageSquare, Music2, UserX } from 'lucide-react';
 
 import { userTasteEngine } from './services/userTaste';
 import { cleanTrackTitle } from './services/musicApi';
@@ -111,6 +112,7 @@ export function App() {
   const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState<boolean>(false);
   const [isChatVisible, setIsChatVisible] = useState<boolean>(false);
+  const [kickedNotice, setKickedNotice] = useState<string | null>(null);
 
   // Auto-reconnect state on page refresh
   const [isReconnecting, setIsReconnecting] = useState<boolean>(() => {
@@ -314,7 +316,7 @@ export function App() {
     };
 
     const handleKickedFromRoom = (data: { reason?: string }) => {
-      alert(data?.reason || 'You were removed from the room by the host.');
+      setKickedNotice(data?.reason || 'The host has removed you from the Synced Room.');
       handleLeaveRoom();
     };
 
@@ -449,6 +451,18 @@ export function App() {
     };
   }, []);
 
+  // Dismiss kicked notice modal on Escape key press
+  useEffect(() => {
+    if (!kickedNotice) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setKickedNotice(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [kickedNotice]);
+
   // Prevent browser from automatically scrolling down on entering room or reloading
   useEffect(() => {
     if ('scrollRestoration' in window.history) {
@@ -491,9 +505,61 @@ export function App() {
     );
   }
 
+  // Kicked From Room Notice Popup Modal
+  const kickedPopupModal = kickedNotice && typeof document !== 'undefined' ? createPortal(
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="kicked-modal-title"
+      onClick={() => setKickedNotice(null)}
+      className="fixed inset-0 z-[10000] bg-black/85 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="relative bg-dark-900/95 border border-rose-500/40 rounded-3xl p-6 sm:p-7 max-w-sm sm:max-w-md w-full shadow-[0_0_50px_rgba(244,63,94,0.28)] animate-popover-spring text-center select-none"
+      >
+        {/* Glow ambient aura behind modal */}
+        <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-40 h-40 bg-rose-500/20 rounded-full blur-2xl pointer-events-none" />
+
+        {/* Halo Badged Icon */}
+        <div className="relative mx-auto w-16 h-16 rounded-2xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center text-rose-400 shadow-[0_0_24px_rgba(244,63,94,0.35)] mb-4">
+          <UserX className="w-8 h-8" />
+        </div>
+
+        {/* Title */}
+        <h3 id="kicked-modal-title" className="text-lg sm:text-xl font-black tracking-tight text-white mb-2">
+          Removed from Room
+        </h3>
+
+        {/* Short message informing the user */}
+        <p className="text-sm font-medium text-slate-200 leading-relaxed mb-1">
+          {kickedNotice}
+        </p>
+        <p className="text-xs text-slate-400 mb-6">
+          You can create your own room or join another room at any time.
+        </p>
+
+        {/* Dismiss Button */}
+        <button
+          type="button"
+          onClick={() => setKickedNotice(null)}
+          className="w-full py-3 px-5 rounded-xl bg-gradient-to-r from-rose-500 via-pink-600 to-rose-600 hover:from-rose-400 hover:to-pink-500 text-white font-bold text-sm tracking-wide shadow-[0_0_20px_rgba(244,63,94,0.35)] hover:shadow-[0_0_25px_rgba(244,63,94,0.55)] transition-all duration-200 active:scale-95 cursor-pointer"
+        >
+          Understood
+        </button>
+      </div>
+    </div>,
+    document.body
+  ) : null;
+
   // If user has not joined a room yet, display the sleek Lobby
   if (!roomCode) {
-    return <Lobby onRoomReady={handleRoomReady} initialRoomCode={initialRoomCode} />;
+    return (
+      <>
+        <Lobby onRoomReady={handleRoomReady} initialRoomCode={initialRoomCode} />
+        {kickedPopupModal}
+      </>
+    );
   }
 
   const isPlaying = playbackState.status === 'playing';
@@ -743,6 +809,9 @@ export function App() {
         isOpen={isHistoryOpen}
         onClose={() => setIsHistoryOpen(false)}
       />
+
+      {/* 7. Kicked From Room Notice Popup Modal */}
+      {kickedPopupModal}
     </div>
   );
 }
