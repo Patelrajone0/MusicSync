@@ -341,7 +341,7 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-1.5">
                     <Crown className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-                    <span className="text-xs font-bold text-white">Party Master Volume</span>
+                    <span className="text-xs font-bold text-white">Master Volume Control</span>
                   </div>
                   <span className="text-xs font-mono font-bold text-amber-300">
                     {Math.round((masterVolume ?? 0.9) * 100)}%
