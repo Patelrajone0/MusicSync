@@ -1,8 +1,50 @@
 {
   "users": {
     "user_mttx3qb9_xvn4kpk": {
-      "updatedAt": 1788949713048,
+      "updatedAt": 1789037097394,
       "tracks": [
+        {
+          "id": "sc-590622648",
+          "title": "No Lie (feat. Dua Lipa)",
+          "artist": "Roberto Cerri",
+          "album": "Full Track",
+          "duration": 182,
+          "genre": "Disco",
+          "language": "English",
+          "languageBadge": "🇬🇧 English",
+          "artwork": "https://i1.sndcdn.com/artworks-000504569979-n7tmt6-t500x500.jpg",
+          "audioUrl": "/api/stream/soundcloud?progUrl=https%3A%2F%2Fapi-v2.soundcloud.com%2Fmedia%2Fsoundcloud%3Atracks%3A590622648%2Fc1401f58-1c67-4bd7-b15c-e59532e17481%2Fstream%2Fprogressive",
+          "source": "SoundCloud (Full Song)",
+          "favoritedAt": 1789037097394
+        },
+        {
+          "id": "sc-1316258221",
+          "title": "Blinding Lights full",
+          "artist": "Minh Prime",
+          "album": "Full Track",
+          "duration": 763,
+          "genre": "Full Song",
+          "language": "English",
+          "languageBadge": "🇬🇧 English",
+          "artwork": "https://i1.sndcdn.com/artworks-12n314eZNB8i9ydb-S3uaYg-t500x500.jpg",
+          "audioUrl": "/api/stream/soundcloud?progUrl=https%3A%2F%2Fapi-v2.soundcloud.com%2Fmedia%2Fsoundcloud%3Atracks%3A1316258221%2Fe5be5b0b-9612-4e73-97ba-f1726b9af5c2%2Fstream%2Fprogressive",
+          "source": "SoundCloud (Full Song)",
+          "favoritedAt": 1789037095838
+        },
+        {
+          "id": "sc-2334332645",
+          "title": "Low Fade Karan Aujla",
+          "artist": "Gur Dhaliwal",
+          "album": "Full Track",
+          "duration": 176,
+          "genre": "Hip-hop & Rap",
+          "language": "Punjabi",
+          "languageBadge": "🎶 Punjabi",
+          "artwork": "https://i1.sndcdn.com/artworks-wz3QbL9kE5iadwCK-dlKGTA-t500x500.jpg",
+          "audioUrl": "/api/stream/soundcloud?progUrl=https%3A%2F%2Fapi-v2.soundcloud.com%2Fmedia%2Fsoundcloud%3Atracks%3A2334332645%2Fd8400002-9402-4ef8-a9f1-9edb3d0a71a3%2Fstream%2Fprogressive",
+          "source": "SoundCloud (Full Song)",
+          "favoritedAt": 1789037094471
+        },
         {
           "id": "curated-hi-01",
           "title": "Sari Duniya Jala Denge",

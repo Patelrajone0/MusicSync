@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import {
-  Share2,
   Copy,
   Check,
-  QrCode,
   Users,
   UserX,
   Smartphone,
@@ -15,22 +13,18 @@ import {
   VolumeX,
   ShieldCheck,
   X,
-  History,
   LogOut,
   Loader2
 } from 'lucide-react';
-import QRCode from 'qrcode';
 import { User, UserRole } from '../types';
 import { socket } from '../services/socket';
-import { userTasteEngine } from '../services/userTaste';
-import { Logo } from './Logo';
 
 interface RoomHeaderProps {
   roomCode: string;
   users: User[];
   currentUser: User | null;
   hostId: string;
-  onOpenHistory: () => void;
+  onOpenHistory?: () => void;
   onLeaveRoom?: () => void;
   masterVolume?: number;
 }
@@ -40,48 +34,19 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
   users,
   currentUser,
   hostId,
-  onOpenHistory,
   onLeaveRoom,
   masterVolume,
 }) => {
-  const [copiedLink, setCopiedLink] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
-  const [showQrModal, setShowQrModal] = useState(false);
-  const [qrSvg, setQrSvg] = useState<string>('');
-  const [qrDataUrl, setQrDataUrl] = useState<string>('');
-  const [isGeneratingQr, setIsGeneratingQr] = useState(false);
-  const [networkIp, setNetworkIp] = useState<string>('');
-  const [qrMode, setQrMode] = useState<'network' | 'direct'>('network');
   const [showUsersModal, setShowUsersModal] = useState(false);
   const [showExitModal, setShowExitModal] = useState(false);
   const [userToKick, setUserToKick] = useState<User | null>(null);
   const [userToMakeHost, setUserToMakeHost] = useState<User | null>(null);
-  const [historyCount, setHistoryCount] = useState<number>(() => userTasteEngine.getHistory().length);
-
-  React.useEffect(() => {
-    const unsub = userTasteEngine.subscribe(() => {
-      setHistoryCount(userTasteEngine.getHistory().length);
-    });
-    return unsub;
-  }, []);
-
-  // Fetch local Wi-Fi IP so mobile devices on the same network can join via QR code
-  useEffect(() => {
-    fetch('/api/network-info')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.localIp && data.localIp !== 'localhost') {
-          setNetworkIp(data.localIp);
-        }
-      })
-      .catch(() => {});
-  }, []);
 
   // Listen to Escape key to close modals
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        setShowQrModal(false);
         setShowUsersModal(false);
         setShowExitModal(false);
         setUserToKick(null);
@@ -100,83 +65,14 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
     )
   );
 
-  const currentPort = window.location.port ? `:${window.location.port}` : '';
-  const mobileRoomUrl = networkIp
-    ? `${window.location.protocol}//${networkIp}${currentPort}?room=${roomCode}`
-    : `${window.location.origin}?room=${roomCode}`;
-  const directRoomUrl = `${window.location.origin}?room=${roomCode}`;
-  const activeQrUrl = (qrMode === 'network' && networkIp) ? mobileRoomUrl : directRoomUrl;
-
-  // Eagerly generate crisp, high-contrast SVG and DataURL QR code as soon as URL is known
-  useEffect(() => {
-    let isCurrent = true;
-    setIsGeneratingQr(true);
-
-    // Vector SVG generation for razor-sharp pixel display without anti-aliasing blur
-    QRCode.toString(activeQrUrl, {
-      type: 'svg',
-      margin: 2,
-      errorCorrectionLevel: 'M',
-      color: {
-        dark: '#000000',
-        light: '#ffffff',
-      },
-    })
-      .then((svg) => {
-        if (isCurrent) {
-          setQrSvg(svg);
-          setIsGeneratingQr(false);
-        }
-      })
-      .catch((err) => {
-        console.error('Failed to generate QR SVG', err);
-        if (isCurrent) setIsGeneratingQr(false);
-      });
-
-    // Fallback DataURL generation
-    QRCode.toDataURL(activeQrUrl, {
-      width: 420,
-      margin: 2,
-      errorCorrectionLevel: 'M',
-      color: {
-        dark: '#000000',
-        light: '#ffffff',
-      },
-    })
-      .then((url) => {
-        if (isCurrent) {
-          setQrDataUrl(url);
-        }
-      })
-      .catch((err) => {
-        console.error('Failed to generate QR DataURL', err);
-      });
-
-    return () => {
-      isCurrent = false;
-    };
-  }, [activeQrUrl]);
-
-  const handleCopyLink = () => {
-    navigator.clipboard.writeText(activeQrUrl);
-    setCopiedLink(true);
-    setTimeout(() => setCopiedLink(false), 2000);
-  };
-
   const handleCopyCode = () => {
     navigator.clipboard.writeText(roomCode);
     setCopiedCode(true);
     setTimeout(() => setCopiedCode(false), 2000);
   };
 
-  const handleOpenQr = () => {
-    setShowQrModal((prev) => !prev);
-    setShowUsersModal(false);
-  };
-
   const handleOpenUsers = () => {
     setShowUsersModal((prev) => !prev);
-    setShowQrModal(false);
   };
 
   const handleMakeHost = (targetUser: User) => {
@@ -196,8 +92,9 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
   return (
     <header className="sticky top-0 z-40 bg-dark-950/90 backdrop-blur-xl border-b border-white/10 px-2 py-1.5 sm:px-4 sm:py-2.5 md:px-8 w-full select-none">
       <div className="max-w-6xl mx-auto flex items-center justify-between gap-1 sm:gap-3 w-full">
-        {/* Logo & Room Code */}
-        <div className="flex items-center gap-1.5 sm:gap-2.5 md:gap-4 min-w-0 shrink-0">
+        {/* Dynamic Island Unified Cyber Capsule (Variation 1A) */}
+        <div className="inline-flex items-center bg-dark-900/90 hover:bg-dark-850 border border-white/10 hover:border-cyan-400/40 rounded-full p-1 pl-1.5 pr-1 shadow-lg transition-all duration-200 gap-2 sm:gap-2.5 shrink-0 select-none">
+          {/* Circular Brand Mark with Neon Halo Ring */}
           <a
             href="/"
             onClick={(e) => {
@@ -205,104 +102,112 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
               handleRefresh();
             }}
             title="Refresh MusicSync"
-            className="flex items-center group cursor-pointer focus:outline-none transition-transform active:scale-95 shrink-0"
+            className="flex items-center gap-1.5 sm:gap-2 group cursor-pointer focus:outline-none transition-transform active:scale-95"
           >
-            <Logo size="sm" showText={false} className="sm:hidden" />
-            <Logo size="sm" showText={true} className="hidden sm:flex" />
+            <div className="relative w-[26px] h-[26px] sm:w-[28px] sm:h-[28px] rounded-full p-[1.5px] bg-gradient-to-tr from-cyan-400 via-sky-400 to-fuchsia-500 shadow-[0_0_10px_rgba(0,240,255,0.45)] group-hover:shadow-[0_0_14px_rgba(0,240,255,0.7)] transition-shadow shrink-0 flex items-center justify-center">
+              <img
+                src="/musicsync-icon.png"
+                alt="MusicSync Logo"
+                className="w-full h-full rounded-full object-cover bg-dark-950 block"
+              />
+            </div>
+            <span className="text-xs sm:text-sm font-black tracking-tight text-white">
+              Music<span className="text-cyan-400">Sync</span>
+            </span>
           </a>
 
-          <div className="h-4 sm:h-5 w-[1px] bg-white/10 shrink-0"></div>
-
-          {/* Room Code Badge */}
-          <div className="flex items-center gap-1 sm:gap-1.5 bg-dark-900 border border-white/10 px-1.5 sm:px-2.5 py-1 rounded-xl shadow-inner shrink-0">
-            <span className="text-[9px] sm:text-[10px] uppercase font-mono tracking-wider text-slate-400 hidden md:inline">Room:</span>
-            <span className="font-mono font-bold text-electric-cyan text-xs sm:text-sm tracking-wider">{roomCode}</span>
-            <button
-              onClick={handleCopyCode}
-              title="Copy Room Code"
-              className="p-0.5 hover:text-electric-cyan text-slate-400 transition-colors ml-0.5 active:scale-90"
-            >
-              {copiedCode ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-            </button>
+          {/* Mini Live Equalizer Wave Bars */}
+          <div className="flex items-center gap-0.5 h-3 px-0.5 sm:px-1 select-none" title="Live audio mesh synchronized">
+            <span className="w-0.5 bg-cyan-400 rounded-full animate-wave-1 h-3.5"></span>
+            <span className="w-0.5 bg-cyan-400 rounded-full animate-wave-2 h-2"></span>
+            <span className="w-0.5 bg-cyan-400 rounded-full animate-wave-3 h-3"></span>
           </div>
+
+          {/* Integrated Click-to-Copy Room Tag */}
+          <button
+            onClick={handleCopyCode}
+            title="Click to copy Room Code"
+            className={`group/btn flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full border transition-all active:scale-95 cursor-pointer shrink-0 ${
+              copiedCode
+                ? 'bg-emerald-500/20 border-emerald-400/60 text-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.3)]'
+                : 'bg-white/5 hover:bg-cyan-400 hover:text-black border-white/10 hover:border-cyan-400 text-slate-300'
+            }`}
+          >
+            <span
+              className={`w-1.5 h-1.5 rounded-full transition-colors ${
+                copiedCode
+                  ? 'bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.9)]'
+                  : 'bg-emerald-400 animate-pulse group-hover/btn:bg-black'
+              }`}
+            />
+            <span className="font-mono text-[11px] font-bold tracking-wider">
+              {copiedCode ? 'COPIED!' : `#${roomCode}`}
+            </span>
+            {copiedCode ? (
+              <Check className="w-3 h-3 text-emerald-400 shrink-0" />
+            ) : (
+              <Copy className="w-3 h-3 text-slate-400 group-hover/btn:text-black transition-colors shrink-0" />
+            )}
+          </button>
         </div>
 
         {/* Action Controls & Connected Members */}
-        <div className="flex items-center gap-1 sm:gap-1.5 md:gap-2 shrink-0">
-          {/* Quick Share Link Button */}
-          <button
-            onClick={handleCopyLink}
-            className="flex items-center gap-1 sm:gap-1.5 bg-dark-850 hover:bg-dark-800 border border-white/10 hover:border-electric-cyan/40 text-slate-200 p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl text-xs font-medium transition-all shadow-sm active:scale-95 shrink-0"
-            title="Copy shareable room link"
-          >
-            {copiedLink ? (
-              <>
-                <Check className="w-3.5 h-3.5 text-emerald-400" />
-                <span className="text-emerald-400 hidden lg:inline">Copied!</span>
-              </>
-            ) : (
-              <>
-                <Share2 className="w-3.5 h-3.5 text-electric-cyan" />
-                <span className="hidden lg:inline">Share</span>
-              </>
-            )}
-          </button>
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
 
-          {/* Playback History Button (Hidden on small screens) */}
-          <button
-            onClick={onOpenHistory}
-            className="hidden md:flex items-center gap-1.5 bg-dark-850 hover:bg-dark-800 border border-white/10 hover:border-electric-cyan/40 text-slate-200 px-2.5 py-1.5 rounded-xl text-xs font-medium transition-all shadow-sm active:scale-95 shrink-0"
-            title="View Music Playback History"
-          >
-            <History className="w-3.5 h-3.5 text-electric-cyan" />
-            <span>History</span>
-            {historyCount > 0 && (
-              <span className="px-1.5 py-0.2 rounded-full bg-electric-cyan/20 text-electric-cyan text-[10px] font-mono font-bold">
-                {historyCount}
-              </span>
-            )}
-          </button>
-
-          {/* Mobile QR Code Button */}
-          <button
-            onClick={handleOpenQr}
-            className={`p-1.5 sm:p-2 rounded-xl border transition-all active:scale-95 shrink-0 ${
-              showQrModal
-                ? 'bg-electric-purple/20 border-electric-purple text-electric-purple shadow-lg shadow-electric-purple/20'
-                : 'bg-dark-850 hover:bg-dark-800 border-white/10 text-slate-300 hover:text-white'
-            }`}
-            title="Show QR Code for phones"
-          >
-            <QrCode className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-electric-purple" />
-          </button>
-
-          {/* Connected Devices Button */}
+          {/* Connected Devices Button - Dynamic Cyber Capsule with Neon Halo Avatars */}
           <button
             onClick={handleOpenUsers}
-            className={`flex items-center gap-1 sm:gap-1.5 border px-1.5 sm:px-2.5 py-1.5 rounded-xl text-xs transition-all active:scale-95 shrink-0 ${
+            className={`group/devices flex items-center gap-1.5 sm:gap-2 p-1 pl-1.5 pr-2.5 sm:pr-3 rounded-full border text-xs font-semibold transition-all duration-200 active:scale-95 shrink-0 shadow-lg cursor-pointer select-none ${
               showUsersModal
-                ? 'bg-electric-cyan/20 border-electric-cyan text-white shadow-lg shadow-electric-cyan/20'
-                : 'bg-dark-850 hover:bg-dark-800 border-white/10'
+                ? 'bg-cyan-500/15 border-cyan-400 text-white shadow-[0_0_14px_rgba(0,240,255,0.35)]'
+                : 'bg-dark-900/90 hover:bg-dark-850 border-white/10 hover:border-cyan-400/40 text-slate-200 hover:text-white'
             }`}
             title="Connected Devices"
           >
-            <Smartphone className="w-3.5 h-3.5 text-electric-cyan sm:hidden" />
-            <div className="hidden sm:flex -space-x-1.5 overflow-hidden">
-              {users.slice(0, 2).map((u) => (
-                <div
-                  key={u.id}
-                  style={{ backgroundColor: u.avatarColor || '#00f0ff' }}
-                  className="w-4 h-4 sm:w-5 sm:h-5 rounded-full border border-dark-900 flex items-center justify-center text-[9px] font-bold text-black"
-                >
-                  {u.name.charAt(0)}
+            {/* Circular Avatar(s) with Neon Halo Ring matching Brand theme */}
+            <div className="flex -space-x-1.5 sm:-space-x-2 items-center overflow-visible">
+              {users.length > 0 ? (
+                users.slice(0, 2).map((u, idx) => (
+                  <div
+                    key={u.id}
+                    className="relative w-[22px] h-[22px] sm:w-[24px] sm:h-[24px] rounded-full p-[1.5px] bg-gradient-to-tr from-cyan-400 via-sky-400 to-fuchsia-500 shadow-[0_0_8px_rgba(0,240,255,0.4)] group-hover/devices:shadow-[0_0_12px_rgba(0,240,255,0.65)] transition-shadow duration-200 shrink-0 flex items-center justify-center ring-1 ring-dark-950"
+                    style={{ zIndex: 10 - idx }}
+                  >
+                    <div
+                      style={{ backgroundColor: u.avatarColor || '#00f0ff' }}
+                      className="w-full h-full rounded-full flex items-center justify-center text-[10px] sm:text-[11px] font-black text-black select-none uppercase tracking-tighter"
+                    >
+                      {u.name.charAt(0)}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="relative w-[22px] h-[22px] sm:w-[24px] sm:h-[24px] rounded-full p-[1.5px] bg-gradient-to-tr from-cyan-400 via-sky-400 to-fuchsia-500 shadow-[0_0_8px_rgba(0,240,255,0.4)] shrink-0 flex items-center justify-center">
+                  <div className="w-full h-full rounded-full bg-dark-950 flex items-center justify-center text-cyan-400">
+                    <Smartphone className="w-3 h-3" />
+                  </div>
                 </div>
-              ))}
+              )}
             </div>
-            <span className="font-semibold text-white text-xs">{users.length}</span>
-            <span className="text-slate-400 hidden xl:inline">Devices</span>
+
+            {/* Device Count & Label */}
+            <div className="flex items-center gap-1 leading-none">
+              <span className="font-mono font-bold text-white text-xs tracking-tight">
+                {users.length}
+              </span>
+              <span className="text-slate-400 group-hover/devices:text-slate-200 text-xs hidden sm:inline transition-colors">
+                {users.length === 1 ? 'Device' : 'Devices'}
+              </span>
+            </div>
+
+            {/* Live Synchronized Mesh Indicator Dot */}
+            <span
+              className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_6px_rgba(52,211,153,0.9)] ml-0.5 shrink-0 hidden xs:inline-block"
+              title="Mesh synchronized"
+            />
           </button>
 
-          {/* Exit Room Button */}
+          {/* Exit Room Button - Matching Cyber Capsule with Neon Accent */}
           {onLeaveRoom && (
             <button
               type="button"
@@ -311,137 +216,19 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
                 e.stopPropagation();
                 setShowExitModal(true);
               }}
-              className="flex items-center gap-1 p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-dark-850 hover:bg-red-500/15 border border-white/10 hover:border-red-500/30 text-slate-300 hover:text-red-400 text-xs font-semibold transition-all active:scale-95 shrink-0 cursor-pointer"
+              className="group/exit flex items-center gap-1.5 p-1 sm:px-2.5 sm:py-1 rounded-full bg-dark-900/90 hover:bg-red-500/15 border border-white/10 hover:border-red-500/40 text-slate-300 hover:text-red-400 text-xs font-semibold shadow-lg transition-all duration-200 active:scale-95 shrink-0 cursor-pointer select-none"
               title="Exit Room"
             >
-              <LogOut className="w-3.5 h-3.5 text-rose-400 shrink-0" />
-              <span className="hidden sm:inline">Exit</span>
+              <div className="w-[22px] h-[22px] sm:w-[24px] sm:h-[24px] rounded-full p-[1.5px] bg-gradient-to-tr from-rose-500/80 via-red-500/80 to-amber-500/80 shadow-[0_0_8px_rgba(244,63,94,0.35)] group-hover/exit:shadow-[0_0_12px_rgba(244,63,94,0.65)] shrink-0 flex items-center justify-center transition-all duration-200">
+                <div className="w-full h-full rounded-full bg-dark-950 flex items-center justify-center text-rose-400 group-hover/exit:text-rose-300">
+                  <LogOut className="w-3 h-3 shrink-0" />
+                </div>
+              </div>
+              <span className="hidden sm:inline pr-1">Exit</span>
             </button>
           )}
         </div>
       </div>
-
-      {/* QR Code Modal (Rendered via Portal for 100% true viewport centering and no screen overflow) */}
-      {showQrModal && typeof document !== 'undefined' && createPortal(
-        <div
-          onClick={() => setShowQrModal(false)}
-          className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 animate-fade-in"
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="bg-dark-900 border border-white/15 rounded-2xl p-4 sm:p-5 max-w-xs sm:max-w-sm w-full shadow-2xl animate-popover-spring overflow-hidden my-auto flex flex-col items-center text-center space-y-3"
-          >
-            {/* Header */}
-            <div className="w-full flex items-center justify-between pb-2.5 border-b border-white/10">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded-lg bg-electric-purple/20 text-electric-purple border border-electric-purple/30">
-                  <QrCode className="w-4 h-4" />
-                </div>
-                <div className="text-left">
-                  <h4 className="text-sm font-bold text-white leading-tight">Connect Device</h4>
-                  <p className="text-[10px] text-slate-400 leading-tight">Scan with phone camera</p>
-                </div>
-              </div>
-              <button
-                onClick={() => setShowQrModal(false)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
-                title="Close"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Network / Direct Mode Switcher */}
-            {networkIp && (
-              <div className="flex bg-dark-950 p-1 rounded-xl border border-white/5 w-full text-[11px]">
-                <button
-                  type="button"
-                  onClick={() => setQrMode('network')}
-                  className={`flex-1 py-1 rounded-lg font-medium transition-all ${
-                    qrMode === 'network'
-                      ? 'bg-electric-cyan text-black font-bold shadow-sm'
-                      : 'text-slate-400 hover:text-white'
-                  }`}
-                >
-                  📱 Wi-Fi
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setQrMode('direct')}
-                  className={`flex-1 py-1 rounded-lg font-medium transition-all ${
-                    qrMode === 'direct'
-                      ? 'bg-dark-800 text-white font-bold border border-white/10 shadow-sm'
-                      : 'text-slate-400 hover:text-white'
-                  }`}
-                >
-                  💻 Local
-                </button>
-              </div>
-            )}
-
-            {/* High-Contrast Pure White QR Canvas */}
-            <div className="bg-white p-2.5 rounded-2xl shadow-xl border-2 border-white inline-flex items-center justify-center my-1 max-w-[200px] max-h-[200px] sm:max-w-[220px] sm:max-h-[220px]">
-              {qrSvg ? (
-                <div
-                  className="w-40 h-40 sm:w-48 sm:h-48 flex items-center justify-center [&>svg]:w-full [&>svg]:h-full [&>svg]:block select-none"
-                  dangerouslySetInnerHTML={{ __html: qrSvg }}
-                />
-              ) : qrDataUrl ? (
-                <img
-                  src={qrDataUrl}
-                  alt={`Room ${roomCode} QR Code`}
-                  className="w-40 h-40 sm:w-48 sm:h-48 block object-contain select-none"
-                />
-              ) : (
-                <div className="w-40 h-40 flex flex-col items-center justify-center gap-2 text-slate-700">
-                  <Loader2 className="w-6 h-6 text-black animate-spin" />
-                  <span className="text-[10px] font-mono">Generating QR...</span>
-                </div>
-              )}
-            </div>
-
-            {/* Room Code Badge */}
-            <div className="flex items-center justify-center gap-1.5">
-              <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider">Room:</span>
-              <span className="text-xs sm:text-sm font-mono font-black text-electric-cyan tracking-widest bg-dark-950 px-3 py-0.5 rounded-lg border border-white/10">
-                {roomCode}
-              </span>
-            </div>
-
-            {/* URL String */}
-            <div className="text-[10px] font-mono text-slate-300 bg-dark-950 py-1.5 px-2.5 rounded-lg border border-white/5 w-full truncate select-all">
-              {activeQrUrl}
-            </div>
-
-            {/* Popover Footer */}
-            <div className="w-full flex flex-col gap-1.5 pt-1 border-t border-white/10">
-              <button
-                onClick={handleCopyLink}
-                className="w-full py-2.5 rounded-xl bg-electric-cyan text-black font-bold text-xs hover:bg-white transition-colors flex items-center justify-center gap-1.5 shadow-md active:scale-95 cursor-pointer"
-              >
-                {copiedLink ? (
-                  <>
-                    <Check className="w-3.5 h-3.5 text-black" />
-                    <span>Link Copied!</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-3.5 h-3.5" />
-                    <span>Copy Shareable Link</span>
-                  </>
-                )}
-              </button>
-              <button
-                onClick={() => setShowQrModal(false)}
-                className="w-full py-2 rounded-xl bg-dark-850 hover:bg-dark-800 border border-white/10 text-slate-300 hover:text-white font-medium text-xs transition-colors active:scale-95 cursor-pointer"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>,
-        document.body
-      )}
 
       {/* Connected Devices Modal (Rendered via Portal for 100% viewport centering and no screen overflow) */}
       {showUsersModal && typeof document !== 'undefined' && createPortal(
@@ -455,9 +242,11 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
           >
             {/* Modal Header */}
             <div className="p-3 sm:p-3.5 border-b border-white/10 flex items-center justify-between bg-dark-950/70 shrink-0">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded-lg bg-electric-cyan/10 text-electric-cyan">
-                  <Smartphone className="w-4 h-4" />
+              <div className="flex items-center gap-2.5">
+                <div className="relative w-8 h-8 rounded-full p-[1.5px] bg-gradient-to-tr from-cyan-400 via-sky-400 to-fuchsia-500 shadow-[0_0_8px_rgba(0,240,255,0.4)] shrink-0 flex items-center justify-center">
+                  <div className="w-full h-full rounded-full bg-dark-950 flex items-center justify-center text-cyan-400">
+                    <Smartphone className="w-4 h-4" />
+                  </div>
                 </div>
                 <div>
                   <div className="flex items-center gap-1.5">
@@ -589,11 +378,14 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
                     }`}
                   >
                     <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                      <div
-                        style={{ backgroundColor: u.avatarColor || '#00f0ff' }}
-                        className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-black shadow-sm shrink-0"
-                      >
-                        {u.name.charAt(0)}
+                      {/* Avatar with Circular Neon Halo Ring */}
+                      <div className="relative w-8 h-8 rounded-full p-[1.5px] bg-gradient-to-tr from-cyan-400 via-sky-400 to-fuchsia-500 shadow-[0_0_8px_rgba(0,240,255,0.4)] shrink-0 flex items-center justify-center">
+                        <div
+                          style={{ backgroundColor: u.avatarColor || '#00f0ff' }}
+                          className="w-full h-full rounded-full flex items-center justify-center text-[12px] font-black text-black select-none uppercase tracking-tight"
+                        >
+                          {u.name.charAt(0)}
+                        </div>
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5 flex-wrap">
@@ -669,20 +461,8 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
                     <span>1 Device Connected (Host)</span>
                   </div>
                   <p className="text-[11px] text-slate-400 leading-relaxed px-1">
-                    You cannot kick your own device. When other phones or laptops join using Room Code <span className="font-mono text-electric-cyan font-bold">{roomCode}</span> or QR code, they will appear here in real time.
+                    You cannot kick your own device. When other phones or laptops join using Room Code <span className="font-mono text-electric-cyan font-bold">{roomCode}</span>, they will appear here in real time.
                   </p>
-                  <div className="flex items-center justify-center pt-1">
-                    <button
-                      onClick={() => {
-                        setShowUsersModal(false);
-                        setShowQrModal(true);
-                      }}
-                      className="text-[11px] px-3 py-1.5 rounded-lg bg-electric-cyan/15 hover:bg-electric-cyan/25 text-electric-cyan border border-electric-cyan/30 transition-all flex items-center gap-1.5 font-semibold active:scale-95"
-                    >
-                      <QrCode className="w-3.5 h-3.5" />
-                      <span>Scan QR to Connect Device</span>
-                    </button>
-                  </div>
                 </div>
               )}
             </div>

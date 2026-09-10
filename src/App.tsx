@@ -19,7 +19,7 @@ import { LiveChatAndReactions } from './components/LiveChatAndReactions';
 import { MusicSearchModal } from './components/MusicSearchModal';
 import { PlaybackHistoryModal } from './components/PlaybackHistoryModal';
 import { Logo } from './components/Logo';
-import { Volume2, Radio, Disc, Sparkles, Layers, Plus, History, MessageSquare, Music2 } from 'lucide-react';
+import { Volume2, Radio, Disc, Sparkles, Layers, Plus, MessageSquare, Music2 } from 'lucide-react';
 
 import { userTasteEngine } from './services/userTaste';
 import { cleanTrackTitle } from './services/musicApi';
@@ -479,7 +479,6 @@ export function App() {
         users={users}
         currentUser={currentUser}
         hostId={hostId}
-        onOpenHistory={() => setIsHistoryOpen(true)}
         onLeaveRoom={handleLeaveRoom}
         masterVolume={masterVolume}
       />
@@ -496,14 +495,6 @@ export function App() {
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Select Music</span>
-            </button>
-
-            <button
-              onClick={() => setIsHistoryOpen(true)}
-              className="flex items-center gap-1 px-2 py-1.5 sm:px-3 rounded-xl bg-dark-800 hover:bg-dark-750 border border-white/5 text-slate-300 hover:text-white text-xs font-medium transition-colors shrink-0"
-            >
-              <History className="w-3.5 h-3.5 text-slate-400" />
-              <span className="hidden xs:inline">History</span>
             </button>
           </div>
 

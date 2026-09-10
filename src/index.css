@@ -294,3 +294,21 @@ button,
 .group:hover .logo-bracket-right {
   transform: translateX(1px);
 }
+
+/* Dynamic Island Live Equalizer Wave Animation */
+@keyframes wavePulse {
+  0% { height: 4px; }
+  50% { height: 14px; }
+  100% { height: 6px; }
+}
+
+.animate-wave-1 {
+  animation: wavePulse 1.1s ease-in-out infinite alternate;
+}
+.animate-wave-2 {
+  animation: wavePulse 1.3s ease-in-out infinite alternate 0.25s;
+}
+.animate-wave-3 {
+  animation: wavePulse 0.95s ease-in-out infinite alternate 0.45s;
+}
+
