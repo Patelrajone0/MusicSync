@@ -486,31 +486,41 @@ export function App() {
       {/* 2. Main Synchronized Party Content */}
       <main className="max-w-6xl mx-auto w-full px-3 py-3 sm:px-4 sm:py-5 flex-1 flex flex-col gap-3.5 sm:gap-5">
         {/* Action Toolbar: Music Picker & Utility Options */}
-        <div className="flex items-center justify-between gap-1.5 sm:gap-2 bg-dark-900/40 border border-white/5 p-1.5 sm:p-2 rounded-2xl w-full">
+        <div className="flex items-center justify-between gap-2 bg-dark-900/60 backdrop-blur-md border border-white/10 p-1.5 sm:p-2 rounded-full w-full shadow-lg">
           {/* Quick Primary Actions */}
           <div className="flex items-center gap-1 sm:gap-2 min-w-0">
             <button
               onClick={handleOpenSearch}
-              className="flex items-center gap-1 sm:gap-2 px-2.5 py-1.5 sm:px-3.5 rounded-xl bg-cyan-400 hover:bg-white text-black font-semibold text-xs transition-all shadow-sm active:scale-95 shrink-0"
+              className="group flex items-center gap-2 p-1 pl-1.5 pr-3.5 sm:pr-4 rounded-full bg-dark-900 hover:bg-dark-850 border border-cyan-400/40 hover:border-cyan-400 text-white text-xs font-bold transition-all duration-200 shadow-[0_0_12px_rgba(0,240,255,0.25)] hover:shadow-[0_0_18px_rgba(0,240,255,0.5)] active:scale-95 shrink-0 cursor-pointer select-none"
             >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Select Music</span>
+              <div className="relative w-[24px] h-[24px] sm:w-[26px] sm:h-[26px] rounded-full p-[1.5px] bg-gradient-to-tr from-cyan-400 via-sky-400 to-fuchsia-500 shadow-[0_0_8px_rgba(0,240,255,0.5)] group-hover:shadow-[0_0_12px_rgba(0,240,255,0.8)] shrink-0 flex items-center justify-center transition-shadow">
+                <div className="w-full h-full rounded-full bg-cyan-400 flex items-center justify-center text-black font-black">
+                  <Plus className="w-3.5 h-3.5 stroke-[3]" />
+                </div>
+              </div>
+              <span className="tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white via-cyan-100 to-cyan-300 group-hover:from-white group-hover:to-cyan-200">
+                Select Music
+              </span>
             </button>
           </div>
 
           {/* Toggle Chat Button */}
           <button
             onClick={() => setIsChatVisible(!isChatVisible)}
-            className={`flex items-center gap-1 sm:gap-2 px-2 py-1.5 sm:px-3 rounded-xl text-xs font-medium border transition-all shrink-0 ${
+            className={`group flex items-center gap-2 p-1 pl-1.5 pr-2.5 sm:pr-3 rounded-full border text-xs font-semibold transition-all duration-200 active:scale-95 shrink-0 shadow-lg cursor-pointer select-none ${
               isChatVisible
-                ? 'bg-cyan-500/15 border-cyan-500/30 text-cyan-300'
-                : 'bg-dark-800 hover:bg-dark-750 border-white/5 text-slate-400 hover:text-white'
+                ? 'bg-cyan-500/15 border-cyan-400 text-white shadow-[0_0_14px_rgba(0,240,255,0.35)]'
+                : 'bg-dark-900/90 hover:bg-dark-850 border-white/10 hover:border-cyan-400/40 text-slate-300 hover:text-white'
             }`}
             title={isChatVisible ? 'Hide chat to maximize music space' : 'Open live room chat'}
           >
-            <MessageSquare className="w-3.5 h-3.5 text-cyan-400" />
-            <span>{isChatVisible ? 'Hide' : 'Chat'}</span>
-            <span className="px-1.5 py-0.2 rounded-full bg-dark-900 text-[10px] font-mono text-slate-300 border border-white/5">
+            <div className="relative w-[22px] h-[22px] sm:w-[24px] sm:h-[24px] rounded-full p-[1.5px] bg-gradient-to-tr from-cyan-400 via-sky-400 to-fuchsia-500 shadow-[0_0_8px_rgba(0,240,255,0.4)] group-hover:shadow-[0_0_12px_rgba(0,240,255,0.65)] shrink-0 flex items-center justify-center transition-shadow">
+              <div className="w-full h-full rounded-full bg-dark-950 flex items-center justify-center text-cyan-400">
+                <MessageSquare className="w-3 h-3" />
+              </div>
+            </div>
+            <span>{isChatVisible ? 'Hide Chat' : 'Chat'}</span>
+            <span className="px-1.5 py-0.2 rounded-full bg-dark-950 text-[10px] font-mono text-cyan-300 border border-white/10 font-bold">
               {chatMessages.length}
             </span>
           </button>
@@ -519,38 +529,43 @@ export function App() {
         {/* Section 1: Clean Now Playing + Optional Compact Chat */}
         <section className={`grid grid-cols-1 ${isChatVisible ? 'lg:grid-cols-12' : ''} gap-3.5 sm:gap-5 items-start`}>
           {/* Compact Now Playing Card */}
-          <div className={`${isChatVisible ? 'lg:col-span-7' : 'w-full'} bg-dark-900/60 backdrop-blur-xl border border-white/10 rounded-2xl p-3.5 sm:p-4 md:p-5 relative flex flex-col justify-between shadow-xl overflow-hidden`}>
+          <div className={`${isChatVisible ? 'lg:col-span-7' : 'w-full'} bg-dark-900/70 backdrop-blur-xl border border-white/10 hover:border-cyan-400/30 rounded-2xl p-4 sm:p-5 relative flex flex-col justify-between shadow-xl overflow-hidden transition-all duration-300`}>
             {/* Top Bar */}
             <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 px-2.5 py-1 rounded-full bg-dark-950/80 border border-white/10 shadow-sm">
                 <span
                   className={`w-2 h-2 rounded-full ${
-                    isPlaying ? 'bg-cyan-400' : 'bg-slate-500'
+                    isPlaying
+                      ? 'bg-cyan-400 shadow-[0_0_8px_rgba(0,240,255,0.9)] animate-pulse'
+                      : 'bg-amber-400/80 shadow-[0_0_6px_rgba(251,191,36,0.6)]'
                   }`}
                 />
-                <span className="text-[10px] sm:text-[11px] font-mono uppercase tracking-wider text-slate-400">
+                <span className="text-[10px] sm:text-[11px] font-mono uppercase tracking-wider text-slate-300 font-medium">
                   {isPlaying ? 'Synced Broadcast' : 'Playback Paused'}
                 </span>
               </div>
 
               <button
                 onClick={handleOpenSearch}
-                className="text-xs text-cyan-400 hover:text-white font-medium transition-colors flex items-center gap-1"
+                className="group text-xs text-cyan-400 hover:text-white font-medium flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-cyan-400/10 hover:bg-cyan-400/20 border border-cyan-400/25 hover:border-cyan-400/50 transition-all duration-200 active:scale-95 cursor-pointer"
               >
                 <span>Browse Songs</span>
-                <span>→</span>
+                <span className="group-hover:translate-x-0.5 transition-transform duration-200">→</span>
               </button>
             </div>
 
             {/* Track Metadata */}
             {currentTrack ? (
               <div className="flex items-center justify-between gap-3 sm:gap-4">
-                <div className="flex items-center gap-3 sm:gap-3.5 min-w-0 flex-1">
-                  <img
-                    src={currentTrack.artwork || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=160'}
-                    alt={currentTrack.title}
-                    className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-xl object-cover border border-white/10 shadow-md shrink-0"
-                  />
+                <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+                  {/* Circular Artwork with Neon Halo Ring */}
+                  <div className="relative w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full p-[2px] bg-gradient-to-tr from-cyan-400 via-sky-400 to-fuchsia-500 shadow-[0_0_14px_rgba(0,240,255,0.45)] group-hover:shadow-[0_0_20px_rgba(0,240,255,0.7)] shrink-0 flex items-center justify-center transition-shadow duration-300">
+                    <img
+                      src={currentTrack.artwork || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=160'}
+                      alt={currentTrack.title}
+                      className="w-full h-full rounded-full object-cover bg-dark-950 border border-dark-950"
+                    />
+                  </div>
                   <div className="min-w-0 flex-1">
                     <span className="text-[10px] font-mono uppercase tracking-wider text-cyan-400 font-semibold">
                       Now Playing
@@ -571,21 +586,31 @@ export function App() {
                 </div>
               </div>
             ) : (
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-3.5 sm:p-4 rounded-xl bg-dark-950/50 border border-dashed border-white/10 text-center sm:text-left">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-dark-800 flex items-center justify-center text-slate-400 border border-white/5 shrink-0">
-                    <Music2 className="w-5 h-5 text-slate-400" />
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 p-4 sm:p-5 rounded-2xl bg-dark-950/60 border border-dashed border-cyan-400/30 text-center sm:text-left transition-all duration-200 group/empty">
+                <div className="flex items-center gap-3.5 sm:gap-4">
+                  {/* Circular Music Icon with Neon Halo Ring */}
+                  <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-full p-[2px] bg-gradient-to-tr from-cyan-400 via-sky-400 to-fuchsia-500 shadow-[0_0_14px_rgba(0,240,255,0.45)] group-hover/empty:shadow-[0_0_22px_rgba(0,240,255,0.7)] shrink-0 flex items-center justify-center transition-all duration-300">
+                    <div className="w-full h-full rounded-full bg-dark-950 flex items-center justify-center text-cyan-400 shadow-inner">
+                      <Music2 className="w-5 h-5 sm:w-6 sm:h-6" />
+                    </div>
                   </div>
                   <div>
-                    <p className="text-xs md:text-sm font-semibold text-white">No track currently playing</p>
-                    <p className="text-[11px] text-slate-400">Pick a song to play across all synced speakers</p>
+                    <p className="text-sm sm:text-base font-bold text-white tracking-tight">No track currently playing</p>
+                    <p className="text-xs text-slate-400 mt-0.5">Pick a song to play across all synced speakers</p>
                   </div>
                 </div>
                 <button
                   onClick={handleOpenSearch}
-                  className="px-3 py-1.5 rounded-xl bg-cyan-400 hover:bg-white text-black text-xs font-semibold transition-all shadow-sm shrink-0 active:scale-95"
+                  className="group flex items-center gap-2 p-1 pl-1.5 pr-3.5 sm:pr-4 rounded-full bg-dark-900 hover:bg-dark-850 border border-cyan-400/40 hover:border-cyan-400 text-white text-xs font-bold transition-all duration-200 shadow-[0_0_12px_rgba(0,240,255,0.25)] hover:shadow-[0_0_18px_rgba(0,240,255,0.5)] active:scale-95 shrink-0 cursor-pointer select-none"
                 >
-                  Pick a Track
+                  <div className="relative w-[22px] h-[22px] sm:w-[24px] sm:h-[24px] rounded-full p-[1.5px] bg-gradient-to-tr from-cyan-400 via-sky-400 to-fuchsia-500 shadow-[0_0_8px_rgba(0,240,255,0.5)] group-hover:shadow-[0_0_12px_rgba(0,240,255,0.8)] shrink-0 flex items-center justify-center transition-shadow">
+                    <div className="w-full h-full rounded-full bg-cyan-400 flex items-center justify-center text-black font-black">
+                      <Plus className="w-3 h-3 stroke-[2.5]" />
+                    </div>
+                  </div>
+                  <span className="text-white group-hover:text-cyan-300 transition-colors tracking-tight">
+                    Pick a Track
+                  </span>
                 </button>
               </div>
             )}
