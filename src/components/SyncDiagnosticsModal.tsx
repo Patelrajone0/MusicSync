@@ -189,29 +189,78 @@ export const SyncDiagnosticsModal: React.FC<SyncDiagnosticsModalProps> = ({
           </div>
         </div>
 
-        {/* Bluetooth Speaker Latency Calibration */}
+        {/* Speaker / Device Latency Calibration */}
         <div className="bg-dark-950 p-3.5 rounded-xl border border-white/5 mb-4">
-          <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center justify-between mb-1.5">
             <div className="flex items-center gap-1.5">
               <Sliders className="w-3.5 h-3.5 text-cyan-400" />
-              <span className="text-xs font-semibold text-slate-200">Bluetooth / Soundbar Nudge</span>
+              <span className="text-xs font-semibold text-slate-200">Device & Speaker Calibration</span>
             </div>
             <span className="text-xs font-mono font-bold text-cyan-400">
               {hardwareDelayOffset > 0 ? `+${hardwareDelayOffset}` : hardwareDelayOffset} ms
             </span>
           </div>
-          <p className="text-[11px] text-slate-400 mb-2">
-            Compensates for external wireless speaker latency in real-time. Adjust to match nearby devices.
+          <p className="text-[11px] text-slate-400 mb-2.5">
+            Compensates for iPhone hardware buffering or Bluetooth lag. Slide forward (+) to pull this phone into sync.
           </p>
+
           <input
             type="range"
-            min="-150"
-            max="150"
+            min="-200"
+            max="500"
             step="5"
             value={hardwareDelayOffset}
             onChange={(e) => handleSliderChange(parseInt(e.target.value))}
-            className="w-full h-1.5 bg-dark-800 rounded-lg appearance-none cursor-pointer accent-cyan-400"
+            className="w-full h-1.5 bg-dark-800 rounded-lg appearance-none cursor-pointer accent-cyan-400 mb-3"
           />
+
+          {/* Quick Presets for Instant Calibration */}
+          <div className="grid grid-cols-4 gap-1.5 text-[10px] font-medium">
+            <button
+              type="button"
+              onClick={() => handleSliderChange(0)}
+              className={`py-1.5 px-1 rounded-lg border transition-all active:scale-95 ${
+                hardwareDelayOffset === 0
+                  ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40 font-bold'
+                  : 'bg-dark-900 text-slate-400 border-white/5 hover:text-white'
+              }`}
+            >
+              Default (0)
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSliderChange(90)}
+              className={`py-1.5 px-1 rounded-lg border transition-all active:scale-95 ${
+                hardwareDelayOffset === 90
+                  ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40 font-bold'
+                  : 'bg-dark-900 text-slate-400 border-white/5 hover:text-white'
+              }`}
+            >
+              iPhone (+90)
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSliderChange(180)}
+              className={`py-1.5 px-1 rounded-lg border transition-all active:scale-95 ${
+                hardwareDelayOffset === 180
+                  ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40 font-bold'
+                  : 'bg-dark-900 text-slate-400 border-white/5 hover:text-white'
+              }`}
+            >
+              AirPods (+180)
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSliderChange(280)}
+              className={`py-1.5 px-1 rounded-lg border transition-all active:scale-95 ${
+                hardwareDelayOffset === 280
+                  ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40 font-bold'
+                  : 'bg-dark-900 text-slate-400 border-white/5 hover:text-white'
+              }`}
+            >
+              BT Speaker (+280)
+            </button>
+          </div>
         </div>
 
         <button

@@ -25,6 +25,7 @@ class SyncEngine {
   private scheduledTimerId: any = null;
   private driftCheckIntervalId: any = null;
   private lastDriftMs: number = 0;
+  private lastSeekTime: number = 0;
   private isAutoplayBlocked: boolean = false;
 
   // Callbacks
@@ -125,7 +126,7 @@ class SyncEngine {
 
           if (this.isPlaying) {
             const serverNow = this.getServerTime();
-            const elapsedSec = (serverNow - this.scheduledServerTime - this.hardwareDelayOffset) / 1000;
+            const elapsedSec = (serverNow - this.scheduledServerTime + this.hardwareDelayOffset) / 1000;
             const currentPos = Math.max(0, this.startPosition + elapsedSec);
             this.setTimeSafe(currentPos);
             await this.audio.play();
@@ -260,7 +261,7 @@ class SyncEngine {
 
     if (this.isPlaying && this.audio) {
       const serverNow = this.getServerTime();
-      const elapsedSec = (serverNow - this.scheduledServerTime - this.hardwareDelayOffset) / 1000;
+      const elapsedSec = (serverNow - this.scheduledServerTime + this.hardwareDelayOffset) / 1000;
       const expectedPos = Math.max(0, this.startPosition + elapsedSec);
       this.audio.currentTime = expectedPos;
     }
@@ -356,6 +357,23 @@ class SyncEngine {
             this.isAutoplayBlocked = false;
             this.notifyAutoplayBlocked(false);
           }
+
+          // Crucial for iOS / Safari: Once playback actually starts after buffering,
+          // instantly snap to the room's authoritative timeline if buffering created a startup lag
+          if (this.isPlaying && this.scheduledServerTime > 0 && this.audio) {
+            const serverNow = this.getServerTime();
+            const elapsedSec = (serverNow - this.scheduledServerTime + this.hardwareDelayOffset) / 1000;
+            const expectedPos = Math.max(0, this.startPosition + elapsedSec);
+            const actualPos = this.audio.currentTime;
+            const startupLag = actualPos - expectedPos;
+
+            if (startupLag < -0.06 && !this.audio.seeking) {
+              this.lastSeekTime = Date.now();
+              try {
+                this.audio.currentTime = expectedPos;
+              } catch (e) {}
+            }
+          }
         })
         .catch((err: any) => {
           if (err?.name === 'NotAllowedError' || err?.name === 'AbortError') {
@@ -400,7 +418,7 @@ class SyncEngine {
       if (!this.isPlaying || !this.audio || this.audio.paused) return;
 
       const serverNow = this.getServerTime();
-      const elapsedSec = (serverNow - this.scheduledServerTime - this.hardwareDelayOffset) / 1000;
+      const elapsedSec = (serverNow - this.scheduledServerTime + this.hardwareDelayOffset) / 1000;
       const expectedPos = this.startPosition + elapsedSec;
       const actualPos = this.audio.currentTime;
 
@@ -408,18 +426,27 @@ class SyncEngine {
       const driftMs = (actualPos - expectedPos) * 1000;
       this.lastDriftMs = Math.round(driftMs);
 
-      // Micro-Rate Adjustment to keep all devices tightly locked within <15ms
+      // Micro-Rate Adjustment to keep all devices tightly locked within milliseconds
       if (Math.abs(driftMs) < 15) {
         if (this.audio.playbackRate !== 1.0) {
           this.audio.playbackRate = 1.0;
         }
-      } else if (driftMs >= 15 && driftMs < 200) {
-        this.audio.playbackRate = 0.98;
-      } else if (driftMs <= -15 && driftMs > -200) {
-        this.audio.playbackRate = 1.02;
-      } else if (Math.abs(driftMs) >= 200) {
-        this.setTimeSafe(expectedPos);
-        this.audio.playbackRate = 1.0;
+      } else if (driftMs >= 15 && driftMs < 60) {
+        this.audio.playbackRate = 0.97;
+      } else if (driftMs <= -15 && driftMs > -60) {
+        this.audio.playbackRate = 1.03;
+      } else if (driftMs >= 60 && driftMs < 220) {
+        this.audio.playbackRate = 0.92;
+      } else if (driftMs <= -60 && driftMs > -220) {
+        this.audio.playbackRate = 1.08;
+      } else if (Math.abs(driftMs) >= 220) {
+        // Hard sync for larger drift, throttled to prevent seek storms on iOS WebKit
+        const now = Date.now();
+        if (!this.audio.seeking && now - this.lastSeekTime > 800) {
+          this.lastSeekTime = now;
+          this.setTimeSafe(expectedPos);
+          this.audio.playbackRate = 1.0;
+        }
       }
 
       this.notifyStats();

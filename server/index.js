@@ -131,7 +131,7 @@ function sortQueue(queue) {
 // ----------------------------------------------------
 // SERVER-SIDE AUTHORITATIVE AUTO-ADVANCE & REPEAT CORE
 // ----------------------------------------------------
-const BUFFER_LEAD_MS = 200; // Ultra-low 200ms lead time for instantaneous, zero-delay synchronized playback across all devices
+const BUFFER_LEAD_MS = 500; // 500ms lead time gives mobile devices (especially iPhone/Safari) sufficient window to buffer audio before playback starts synchronously
 
 function clearServerAutoAdvance(room) {
   if (room && room.autoAdvanceTimer) {
@@ -359,21 +359,46 @@ app.delete('/api/favorites/:trackId', async (req, res) => {
   }
 });
 
+// Cache resolved SoundCloud media URLs to eliminate round-trip latency on Range requests (crucial for iOS Safari)
+const soundcloudMediaUrlCache = new Map();
+const SOUNDCLOUD_CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
+
+async function resolveSoundCloudStreamUrl(progUrl) {
+  const cached = soundcloudMediaUrlCache.get(progUrl);
+  if (cached && Date.now() < cached.expiresAt) {
+    return cached.url;
+  }
+
+  const clientId = await getCachedClientId();
+  const mediaRes = await fetch(`${progUrl}?client_id=${clientId}`, {
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+    }
+  });
+  if (!mediaRes.ok) throw new Error(`SoundCloud media fetch error: ${mediaRes.status}`);
+  const data = await mediaRes.json();
+  if (!data.url) throw new Error('Stream URL not found');
+
+  soundcloudMediaUrlCache.set(progUrl, {
+    url: data.url,
+    expiresAt: Date.now() + SOUNDCLOUD_CACHE_TTL_MS
+  });
+
+  if (soundcloudMediaUrlCache.size > 200) {
+    const firstKey = soundcloudMediaUrlCache.keys().next().value;
+    soundcloudMediaUrlCache.delete(firstKey);
+  }
+
+  return data.url;
+}
+
 // Full Track Audio Stream Proxy Endpoint (SoundCloud Progressive MP3) with direct Byte-Range pipe
 app.get('/api/stream/soundcloud', async (req, res) => {
   const progUrl = req.query.progUrl;
   if (!progUrl) return res.status(400).send('Missing progUrl');
 
   try {
-    const clientId = await getCachedClientId();
-    const mediaRes = await fetch(`${progUrl}?client_id=${clientId}`, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-      }
-    });
-    if (!mediaRes.ok) throw new Error(`SoundCloud media fetch error: ${mediaRes.status}`);
-    const data = await mediaRes.json();
-    if (!data.url) return res.status(404).send('Stream URL not found');
+    const streamUrl = await resolveSoundCloudStreamUrl(progUrl);
 
     const rangeHeader = req.headers.range;
     const fetchHeaders = {
@@ -383,7 +408,7 @@ app.get('/api/stream/soundcloud', async (req, res) => {
       fetchHeaders['Range'] = rangeHeader;
     }
 
-    const audioRes = await fetch(data.url, { headers: fetchHeaders });
+    const audioRes = await fetch(streamUrl, { headers: fetchHeaders });
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Headers', '*');
     res.setHeader('Access-Control-Expose-Headers', 'Content-Range, Content-Length, Accept-Ranges');
