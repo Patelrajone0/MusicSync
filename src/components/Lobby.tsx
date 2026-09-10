@@ -61,28 +61,58 @@ export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' 
     // Attempt to unlock Web Audio in background without blocking room creation
     syncEngine.unlockAudio().catch(() => {});
 
-    if (!socket.connected) {
-      socket.connect();
-    }
-
-    const timeoutId = setTimeout(() => {
-      setIsCreating(false);
-      setErrorMessage('Connection taking longer than expected. Retrying...');
-    }, 6000);
-
-    socket.emit('create_room', { userName }, (res: any) => {
-      clearTimeout(timeoutId);
-      if (res && res.success && res.room && res.user) {
-        setIsEntering(true);
-        setTimeout(() => {
-          setIsCreating(false);
-          onRoomReady(res.room, res.user);
-        }, 520);
-      } else {
+    const doCreate = () => {
+      const timeoutId = setTimeout(() => {
         setIsCreating(false);
-        setErrorMessage(res?.error || 'Failed to create room. Please try again.');
-      }
-    });
+        setErrorMessage('Connection taking longer than expected. Please check your internet or retry.');
+      }, 12000);
+
+      socket.emit('create_room', { userName }, (res: any) => {
+        clearTimeout(timeoutId);
+        if (res && res.success && res.room && res.user) {
+          setIsEntering(true);
+          setTimeout(() => {
+            setIsCreating(false);
+            onRoomReady(res.room, res.user);
+          }, 520);
+        } else {
+          setIsCreating(false);
+          setErrorMessage(res?.error || 'Failed to create room. Please try again.');
+        }
+      });
+    };
+
+    if (socket.connected) {
+      doCreate();
+    } else {
+      socket.connect();
+      const waitingTimer = setTimeout(() => {
+        setErrorMessage('Connecting to live server...');
+      }, 1500);
+
+      const connectTimeout = setTimeout(() => {
+        socket.off('connect', onConnect);
+        socket.off('connect_error', onErr);
+        clearTimeout(waitingTimer);
+        setIsCreating(false);
+        setErrorMessage('Could not connect to the server. Please verify your connection or check if backend is running.');
+      }, 12000);
+
+      const onConnect = () => {
+        clearTimeout(waitingTimer);
+        clearTimeout(connectTimeout);
+        socket.off('connect_error', onErr);
+        setErrorMessage('');
+        doCreate();
+      };
+
+      const onErr = (err: any) => {
+        console.warn('Socket connect error:', err);
+      };
+
+      socket.once('connect', onConnect);
+      socket.once('connect_error', onErr);
+    }
   };
 
   const handleJoinRoom = async (e: React.FormEvent) => {
@@ -95,28 +125,58 @@ export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' 
 
     syncEngine.unlockAudio().catch(() => {});
 
-    if (!socket.connected) {
-      socket.connect();
-    }
-
-    const timeoutId = setTimeout(() => {
-      setIsJoining(false);
-      setErrorMessage('Connection timed out. Check the code and try again.');
-    }, 6000);
-
-    socket.emit('join_room', { roomCode: code, userName }, (res: any) => {
-      clearTimeout(timeoutId);
-      if (res && res.success && res.room && res.user) {
-        setIsEntering(true);
-        setTimeout(() => {
-          setIsJoining(false);
-          onRoomReady(res.room, res.user);
-        }, 520);
-      } else {
+    const doJoin = () => {
+      const timeoutId = setTimeout(() => {
         setIsJoining(false);
-        setErrorMessage(res?.error || 'Room not found. Check code and try again.');
-      }
-    });
+        setErrorMessage('Connection timed out. Check the code and try again.');
+      }, 12000);
+
+      socket.emit('join_room', { roomCode: code, userName }, (res: any) => {
+        clearTimeout(timeoutId);
+        if (res && res.success && res.room && res.user) {
+          setIsEntering(true);
+          setTimeout(() => {
+            setIsJoining(false);
+            onRoomReady(res.room, res.user);
+          }, 520);
+        } else {
+          setIsJoining(false);
+          setErrorMessage(res?.error || 'Room not found. Check code and try again.');
+        }
+      });
+    };
+
+    if (socket.connected) {
+      doJoin();
+    } else {
+      socket.connect();
+      const waitingTimer = setTimeout(() => {
+        setErrorMessage('Connecting to live server...');
+      }, 1500);
+
+      const connectTimeout = setTimeout(() => {
+        socket.off('connect', onConnect);
+        socket.off('connect_error', onErr);
+        clearTimeout(waitingTimer);
+        setIsJoining(false);
+        setErrorMessage('Could not connect to the server. Please verify your connection or check if backend is running.');
+      }, 12000);
+
+      const onConnect = () => {
+        clearTimeout(waitingTimer);
+        clearTimeout(connectTimeout);
+        socket.off('connect_error', onErr);
+        setErrorMessage('');
+        doJoin();
+      };
+
+      const onErr = (err: any) => {
+        console.warn('Socket join connect error:', err);
+      };
+
+      socket.once('connect', onConnect);
+      socket.once('connect_error', onErr);
+    }
   };
 
   return (
