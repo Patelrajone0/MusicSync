@@ -474,32 +474,63 @@ export function App() {
   const isPlaying = playbackState.status === 'playing';
   const myRole: UserRole = currentUser?.role || 'listener';
 
-  const handleOpenSearch = () => {
+  const handleOpenSearch = (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
     const el = document.getElementById('universal-music-library');
     if (el) {
-      // Calculate top position taking sticky header into account
+      // 1. Native smooth scrollIntoView (respects CSS scroll-mt-20 / scroll-mt-24)
+      try {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } catch (err) {
+        el.scrollIntoView();
+      }
+
+      // 2. Multi-tier direct window & document scroll fallback to guarantee scrolling on all devices
       const header = document.querySelector('header');
       const headerHeight = header ? header.getBoundingClientRect().height + 16 : 80;
-      const targetTop = el.getBoundingClientRect().top + window.scrollY - headerHeight;
+      const currentScroll =
+        window.pageYOffset ||
+        window.scrollY ||
+        document.documentElement.scrollTop ||
+        document.body.scrollTop ||
+        0;
+      const targetTop = Math.max(0, el.getBoundingClientRect().top + currentScroll - headerHeight);
 
       window.scrollTo({
-        top: Math.max(0, targetTop),
+        top: targetTop,
         behavior: 'smooth',
       });
 
-      // Subtle neon arrival pulse animation to guide user's attention
-      el.classList.add('ring-2', 'ring-cyan-400', 'shadow-[0_0_30px_rgba(0,240,255,0.35)]');
-      setTimeout(() => {
-        el.classList.remove('ring-2', 'ring-cyan-400', 'shadow-[0_0_30px_rgba(0,240,255,0.35)]');
-      }, 1400);
+      if (document.documentElement && typeof document.documentElement.scrollTo === 'function') {
+        document.documentElement.scrollTo({
+          top: targetTop,
+          behavior: 'smooth',
+        });
+      }
+      if (document.body && typeof document.body.scrollTo === 'function') {
+        document.body.scrollTo({
+          top: targetTop,
+          behavior: 'smooth',
+        });
+      }
 
-      // Gently focus the search input after scroll begins without jumping or breaking the smooth animation
+      // 3. Subtle neon arrival pulse animation to guide user's attention
+      el.classList.add('ring-2', 'ring-cyan-400', 'shadow-[0_0_30px_rgba(0,240,255,0.4)]');
       setTimeout(() => {
-        const input = el.querySelector('input');
+        el.classList.remove('ring-2', 'ring-cyan-400', 'shadow-[0_0_30px_rgba(0,240,255,0.4)]');
+      }, 1600);
+
+      // 4. Gently focus the search input after scroll begins without jumping or breaking the smooth animation
+      setTimeout(() => {
+        const input = el.querySelector<HTMLInputElement>('input[type="text"]');
         if (input) {
           input.focus({ preventScroll: true });
         }
-      }, 600);
+      }, 500);
     } else {
       setIsSearchOpen(true);
     }
@@ -510,7 +541,7 @@ export function App() {
       onClick={() => {
         if (!isAudioUnlocked) handleUnlockAudio();
       }}
-      className="min-h-screen bg-dark-950 text-slate-100 flex flex-col relative pb-36 sm:pb-32 w-full max-w-full overflow-x-hidden"
+      className="min-h-screen bg-dark-950 text-slate-100 flex flex-col relative pb-36 sm:pb-32 w-full max-w-full overflow-x-clip"
     >
       {/* 1. Sticky Room Navigation Header */}
       <RoomHeader
@@ -529,6 +560,7 @@ export function App() {
           {/* Quick Primary Actions */}
           <div className="flex items-center gap-1 sm:gap-2 min-w-0">
             <button
+              type="button"
               onClick={handleOpenSearch}
               className="group flex items-center gap-2 p-1 pl-1.5 pr-3.5 sm:pr-4 rounded-full bg-dark-900 hover:bg-dark-850 border border-cyan-400/40 hover:border-cyan-400 text-white text-xs font-bold transition-all duration-200 shadow-[0_0_12px_rgba(0,240,255,0.25)] hover:shadow-[0_0_18px_rgba(0,240,255,0.5)] active:scale-95 shrink-0 cursor-pointer select-none"
             >
@@ -585,6 +617,7 @@ export function App() {
               </div>
 
               <button
+                type="button"
                 onClick={handleOpenSearch}
                 className="group text-xs text-cyan-400 hover:text-white font-medium flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-cyan-400/10 hover:bg-cyan-400/20 border border-cyan-400/25 hover:border-cyan-400/50 transition-all duration-200 active:scale-95 cursor-pointer"
               >
@@ -639,6 +672,7 @@ export function App() {
                   </div>
                 </div>
                 <button
+                  type="button"
                   onClick={handleOpenSearch}
                   className="group flex items-center gap-2 p-1 pl-1.5 pr-3.5 sm:pr-4 rounded-full bg-dark-900 hover:bg-dark-850 border border-cyan-400/40 hover:border-cyan-400 text-white text-xs font-bold transition-all duration-200 shadow-[0_0_12px_rgba(0,240,255,0.25)] hover:shadow-[0_0_18px_rgba(0,240,255,0.5)] active:scale-95 shrink-0 cursor-pointer select-none"
                 >
