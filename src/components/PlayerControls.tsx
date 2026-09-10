@@ -453,11 +453,13 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
           <div className="flex items-center gap-2 min-w-0 flex-1">
             {currentTrack ? (
               <>
-                <img
-                  src={currentTrack.artwork || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=100'}
-                  alt={currentTrack.title}
-                  className="w-8 h-8 rounded-lg object-cover border border-white/10 shrink-0"
-                />
+                <div className="relative w-8 h-8 rounded-full p-[1px] bg-gradient-to-tr from-cyan-400 via-sky-400 to-fuchsia-500 shadow-[0_0_6px_rgba(0,240,255,0.4)] shrink-0 flex items-center justify-center">
+                  <img
+                    src={currentTrack.artwork || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=100'}
+                    alt={currentTrack.title}
+                    className="w-full h-full rounded-full object-cover bg-dark-950 border border-dark-950"
+                  />
+                </div>
                 <div className="min-w-0 overflow-hidden">
                   <h4 className="text-xs font-semibold text-white truncate leading-tight">{cleanTrackTitle(currentTrack.title, currentTrack.artist)}</h4>
                   <p className="text-[10px] text-slate-400 truncate leading-tight">{currentTrack.artist}</p>
@@ -482,13 +484,15 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
           {currentTrack ? (
             <>
               <div className="relative group shrink-0">
-                <img
-                  src={currentTrack.artwork || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=100'}
-                  alt={currentTrack.title}
-                  className="w-11 h-11 md:w-12 md:h-12 rounded-xl object-cover border border-white/10 shadow-lg"
-                />
+                <div className="relative w-11 h-11 md:w-12 md:h-12 rounded-full p-[1.5px] bg-gradient-to-tr from-cyan-400 via-sky-400 to-fuchsia-500 shadow-[0_0_10px_rgba(0,240,255,0.4)] shrink-0 flex items-center justify-center">
+                  <img
+                    src={currentTrack.artwork || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=100'}
+                    alt={currentTrack.title}
+                    className="w-full h-full rounded-full object-cover bg-dark-950 border border-dark-950"
+                  />
+                </div>
                 {isPlaying && (
-                  <div className="absolute inset-0 bg-black/40 rounded-xl flex items-center justify-center">
+                  <div className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center">
                     <div className="flex items-end gap-0.5 h-3.5">
                       <div className="w-0.5 bg-electric-cyan animate-pulse h-full"></div>
                       <div className="w-0.5 bg-electric-cyan animate-pulse delay-75 h-2/3"></div>
@@ -510,14 +514,16 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
             </>
           ) : (
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-dark-800 flex items-center justify-center text-slate-500 border border-white/5 shrink-0">
-                <Radio className="w-4 h-4 text-slate-400" />
+              <div className="relative w-10 h-10 rounded-full p-[1.5px] bg-gradient-to-tr from-cyan-400 via-sky-400 to-fuchsia-500 shadow-[0_0_8px_rgba(0,240,255,0.4)] shrink-0 flex items-center justify-center">
+                <div className="w-full h-full rounded-full bg-dark-950 flex items-center justify-center text-cyan-400">
+                  <Radio className="w-4 h-4 text-cyan-400" />
+                </div>
               </div>
               <div className="min-w-0">
-                <p className="text-xs md:text-sm font-medium text-slate-400 truncate">No song playing</p>
+                <p className="text-xs md:text-sm font-medium text-slate-300 truncate">No song playing</p>
                 <button
                   onClick={onOpenSearch}
-                  className="text-xs text-cyan-400 hover:underline font-medium"
+                  className="text-xs text-cyan-400 hover:text-cyan-300 hover:underline font-bold cursor-pointer"
                 >
                   + Add song
                 </button>

@@ -689,9 +689,11 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
     >
       {/* Header */}
       <div className="p-4 md:p-5 border-b border-white/10 flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <div className="p-2 rounded-xl bg-electric-cyan/10 text-electric-cyan">
-            <Music className="w-5 h-5" />
+        <div className="flex items-center gap-3">
+          <div className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-full p-[1.5px] bg-gradient-to-tr from-cyan-400 via-sky-400 to-fuchsia-500 shadow-[0_0_12px_rgba(0,240,255,0.45)] shrink-0 flex items-center justify-center">
+            <div className="w-full h-full rounded-full bg-dark-950 flex items-center justify-center text-cyan-400">
+              <Music className="w-4 h-4 sm:w-5 sm:h-5" />
+            </div>
           </div>
           <div>
             <div className="flex items-center gap-2 flex-wrap">
@@ -899,7 +901,7 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
             {/* Search Input with Live Autocomplete */}
             <div ref={searchInputContainerRef} className="relative mb-3">
               <form onSubmit={handleSearch} className="relative">
-                <Search className="absolute left-3 sm:left-3.5 top-3 w-4 h-4 text-slate-400" />
+                <Search className="absolute left-3.5 sm:left-4 top-3 w-4 h-4 text-slate-400" />
                 <input
                   type="text"
                   value={query}
@@ -931,7 +933,7 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
                       ? 'Search Punjabi original songs...'
                       : 'Search original English, Hindi, Gujarati & Punjabi songs...'
                   }
-                  className="w-full bg-dark-950 border border-white/10 rounded-xl pl-9 sm:pl-10 pr-20 sm:pr-24 py-2.5 text-base sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-electric-cyan transition-colors"
+                  className="w-full bg-dark-950/80 border border-white/10 rounded-full pl-10 sm:pl-11 pr-24 sm:pr-28 py-2.5 text-base sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 focus:shadow-[0_0_12px_rgba(0,240,255,0.25)] transition-all"
                   autoFocus={!inline}
                 />
                 {query && (
@@ -941,17 +943,17 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
                       setQuery('');
                       loadDefaultResults();
                     }}
-                    className="absolute right-16 sm:right-20 top-2.5 text-slate-400 hover:text-white p-1"
+                    className="absolute right-20 sm:right-24 top-2.5 text-slate-400 hover:text-white p-1 rounded-full hover:bg-white/10"
                   >
                     <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   </button>
                 )}
                 <button
                   type="submit"
-                  className={`absolute right-1.5 sm:right-2 top-1.5 px-2.5 sm:px-3 py-1.5 font-semibold text-xs rounded-lg transition-colors ${
+                  className={`absolute right-1.5 sm:right-2 top-1.5 px-3.5 sm:px-4 py-1.5 font-bold text-xs rounded-full transition-all active:scale-95 cursor-pointer shadow-md ${
                     activeTab === 'mixed'
-                      ? 'bg-gradient-to-r from-amber-400 to-rose-400 text-black hover:brightness-110'
-                      : 'bg-electric-cyan text-black hover:bg-white'
+                      ? 'bg-gradient-to-r from-amber-400 to-rose-400 text-black hover:brightness-110 shadow-[0_0_10px_rgba(251,191,36,0.3)]'
+                      : 'bg-cyan-400 text-black hover:bg-white shadow-[0_0_10px_rgba(0,240,255,0.35)]'
                   }`}
                 >
                   Search
@@ -1177,24 +1179,24 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
                         }`}
                       >
                         <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
-                          {/* Artwork with Preview Play Button */}
-                          <div className="relative w-11 h-11 sm:w-12 sm:h-12 rounded-lg overflow-hidden bg-dark-800 shrink-0">
+                          {/* Circular Artwork with Neon Halo Ring & Preview Play Button */}
+                          <div className="relative w-11 h-11 sm:w-12 sm:h-12 rounded-full p-[1.5px] bg-gradient-to-tr from-cyan-400 via-sky-400 to-fuchsia-500 shadow-[0_0_8px_rgba(0,240,255,0.35)] group-hover:shadow-[0_0_14px_rgba(0,240,255,0.65)] shrink-0 flex items-center justify-center transition-all duration-200">
                             <img
                               src={track.artwork || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=100'}
                               alt={track.title}
-                              className="w-full h-full object-cover"
+                              className="w-full h-full rounded-full object-cover bg-dark-950 border border-dark-950"
                             />
                             <button
                               onClick={() => togglePreview(track)}
                               title={isPreviewing ? 'Stop Preview' : 'Audition Preview'}
-                              className={`absolute inset-0 flex items-center justify-center bg-black/50 transition-opacity ${
+                              className={`absolute inset-0 rounded-full flex items-center justify-center bg-black/60 backdrop-blur-[1px] transition-opacity ${
                                 isPreviewing ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
                               }`}
                             >
                               {isPreviewing ? (
-                                <Pause className="w-5 h-5 text-electric-cyan fill-current" />
+                                <Pause className="w-4 h-4 text-cyan-400 fill-current" />
                               ) : (
-                                <Play className="w-5 h-5 text-white fill-current ml-0.5" />
+                                <Play className="w-4 h-4 text-white fill-current ml-0.5" />
                               )}
                             </button>
                           </div>
@@ -1270,10 +1272,10 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
                             e.stopPropagation();
                             toggleFavorite(track);
                           }}
-                          className={`p-2 rounded-xl border transition-all active:scale-90 shrink-0 ml-1.5 ${
+                          className={`w-8 h-8 rounded-full flex items-center justify-center border transition-all active:scale-90 shrink-0 ml-1.5 ${
                             isFavorite(track.id)
-                              ? 'bg-amber-400/20 text-amber-400 border-amber-400/50 shadow-[0_0_12px_rgba(251,191,36,0.3)]'
-                              : 'bg-dark-800/80 text-slate-400 border-white/5 hover:text-amber-300 hover:border-amber-400/30 hover:bg-amber-400/10'
+                              ? 'bg-amber-400/20 text-amber-400 border-amber-400/50 shadow-[0_0_10px_rgba(251,191,36,0.35)]'
+                              : 'bg-dark-900/80 text-slate-400 border-white/10 hover:text-amber-300 hover:border-amber-400/40 hover:bg-amber-400/10'
                           }`}
                           title={isFavorite(track.id) ? 'Remove from Favorites' : 'Add to Favorites'}
                         >
@@ -1283,12 +1285,12 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
                         {/* Add Button */}
                         <button
                           onClick={() => handleAddTrack(track)}
-                          className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-2 rounded-xl text-xs font-semibold transition-all active:scale-95 shrink-0 ml-1.5 ${
+                          className={`flex items-center gap-1 sm:gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all active:scale-95 shrink-0 ml-1.5 shadow-sm ${
                             isAdded
-                              ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
+                              ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 shadow-[0_0_8px_rgba(52,211,153,0.3)]'
                               : activeTab === 'mixed'
-                              ? 'bg-gradient-to-r from-amber-400 to-rose-400 text-black hover:brightness-110 shadow-md font-bold'
-                              : 'bg-electric-cyan text-black hover:bg-white shadow-md'
+                              ? 'bg-gradient-to-r from-amber-400 to-rose-400 text-black hover:brightness-110 shadow-[0_0_10px_rgba(251,191,36,0.3)]'
+                              : 'bg-dark-900 hover:bg-dark-850 text-cyan-300 border border-cyan-400/40 hover:border-cyan-400 shadow-[0_0_8px_rgba(0,240,255,0.25)]'
                           }`}
                         >
                           {isAdded ? (
@@ -1298,7 +1300,7 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
                             </>
                           ) : (
                             <>
-                              <Plus className="w-3.5 h-3.5" />
+                              <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
                               <span>Add</span>
                             </>
                           )}
