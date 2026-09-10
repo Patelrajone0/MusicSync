@@ -432,14 +432,32 @@ export function App() {
   // Reconnecting splash screen during page refresh
   if (isReconnecting) {
     return (
-      <div className="min-h-screen bg-dark-950 flex flex-col items-center justify-center p-4 select-none">
-        <div className="flex flex-col items-center gap-5 text-center max-w-sm">
-          <Logo size="lg" layout="vertical" showText={false} />
-          <div className="space-y-1">
-            <h3 className="text-base font-semibold text-white tracking-tight">Reloading Please wait...</h3>
-            <p className="text-xs text-slate-400">Restoring your synchronized room session</p>
+      <div className="min-h-screen bg-dark-950 flex flex-col items-center justify-center p-4 select-none relative overflow-hidden">
+        {/* Ambient background glow */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-gradient-to-tr from-cyan-500/15 via-purple-500/10 to-pink-500/15 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="flex flex-col items-center gap-6 text-center max-w-md w-full relative z-10 px-4">
+          {/* Prominent Large Logo with Neon Aura */}
+          <div className="relative group flex items-center justify-center w-full">
+            <div className="absolute -inset-4 bg-gradient-to-r from-cyan-500/25 via-purple-500/20 to-pink-500/25 rounded-3xl blur-2xl opacity-75 animate-pulse pointer-events-none" />
+            <img
+              src="/musicsync-logo.png"
+              alt="MusicSync Logo"
+              className="w-full max-w-[340px] sm:max-w-[420px] md:max-w-[460px] h-auto object-contain relative z-10 drop-shadow-[0_8px_32px_rgba(0,0,0,0.8)]"
+            />
           </div>
-          <div className="w-5 h-5 border-2 border-cyan-400/20 border-t-cyan-400 rounded-full animate-spin mt-1"></div>
+
+          <div className="space-y-1">
+            <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">Reloading, please wait...</h3>
+            <p className="text-xs sm:text-sm text-slate-400">Restoring your synchronized room session</p>
+          </div>
+
+          <div className="flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-dark-900/90 border border-cyan-400/35 shadow-[0_0_18px_rgba(0,240,255,0.25)] backdrop-blur-md">
+            <div className="w-4 h-4 border-2 border-cyan-400/20 border-t-cyan-400 rounded-full animate-spin shrink-0"></div>
+            <span className="text-[11px] font-mono text-cyan-400 font-bold tracking-wider uppercase">
+              Reconnecting Session
+            </span>
+          </div>
         </div>
       </div>
     );

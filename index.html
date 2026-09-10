@@ -20,12 +20,26 @@
   </head>
   <body class="bg-dark-950 text-slate-100 antialiased selection:bg-electric-cyan selection:text-black overflow-x-hidden min-h-screen">
     <div id="root">
-      <div style="min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background-color: #06060a;">
-        <div style="width: 76px; height: 76px; position: relative; display: flex; align-items: center; justify-content: center;">
-          <img src="/musicsync-icon.png" alt="MusicSync" style="width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 0 24px rgba(0,240,255,0.45));" />
+      <div style="min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background-color: #06060a; padding: 1.5rem; position: relative; overflow: hidden;">
+        <!-- Ambient neon glow behind logo -->
+        <div style="position: absolute; width: 400px; height: 400px; background: radial-gradient(circle, rgba(0,240,255,0.22) 0%, rgba(192,132,252,0.14) 45%, transparent 70%); filter: blur(50px); pointer-events: none; border-radius: 9999px;"></div>
+        
+        <div style="position: relative; display: flex; flex-direction: column; align-items: center; gap: 1.5rem; max-width: 460px; width: 90vw;">
+          <img src="/musicsync-logo.png" alt="MusicSync" style="width: 100%; max-width: 460px; height: auto; object-fit: contain; filter: drop-shadow(0 0 35px rgba(0,240,255,0.4));" />
+          
+          <div style="display: flex; align-items: center; gap: 10px; padding: 8px 20px; border-radius: 9999px; background: rgba(14, 16, 26, 0.95); border: 1px solid rgba(0, 240, 255, 0.35); box-shadow: 0 0 20px rgba(0, 240, 255, 0.25);">
+            <div style="width: 14px; height: 14px; border: 2px solid rgba(0,240,255,0.2); border-top-color: #00f0ff; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700; color: #00f0ff; letter-spacing: 0.12em; text-transform: uppercase;">Initializing Mesh</span>
+          </div>
         </div>
       </div>
     </div>
+    <style>
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    </style>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

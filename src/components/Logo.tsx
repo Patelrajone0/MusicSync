@@ -41,7 +41,7 @@ export const Logo: React.FC<LogoProps> = ({
             <img
               src="/musicsync-logo.png"
               alt="MusicSync Logo"
-              className="w-full max-w-[270px] sm:max-w-[310px] md:max-w-[340px] h-auto object-contain relative z-10 mix-blend-screen drop-shadow-[0_8px_32px_rgba(0,0,0,0.8)] group-hover:scale-[1.02] transition-transform duration-300"
+              className="w-full max-w-[300px] sm:max-w-[360px] md:max-w-[420px] h-auto object-contain relative z-10 mix-blend-screen drop-shadow-[0_8px_32px_rgba(0,0,0,0.8)] group-hover:scale-[1.02] transition-transform duration-300"
             />
 
             {showTagline && (
