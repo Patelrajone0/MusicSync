@@ -412,7 +412,8 @@ export function App() {
     saveStoredUserName(user.name);
 
     // Update browser URL query without reload
-    const newUrl = `${window.location.pathname}?room=${room.code}`;
+    const currentMode = room.networkMode || 'local';
+    const newUrl = `${window.location.pathname}?room=${room.code}&mode=${currentMode}`;
     window.history.replaceState({ path: newUrl }, '', newUrl);
 
     // If a track was already playing when joined, sync immediately!
@@ -687,11 +688,6 @@ export function App() {
         onLeaveRoom={handleLeaveRoom}
         masterVolume={masterVolume}
         currentNetworkMode={networkMode}
-        onSetNetworkMode={(mode) => {
-          setNetworkMode(mode);
-          syncEngine.setNetworkMode(mode);
-          socket.emit('set_room_network_mode', { mode });
-        }}
       />
 
       {/* 2. Main Synchronized Party Content */}

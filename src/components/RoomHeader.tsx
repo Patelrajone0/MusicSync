@@ -16,7 +16,8 @@ import {
   LogOut,
   Loader2,
   Wifi,
-  Globe
+  Globe,
+  QrCode
 } from 'lucide-react';
 import { User, UserRole } from '../types';
 import { socket } from '../services/socket';
@@ -31,7 +32,6 @@ interface RoomHeaderProps {
   onLeaveRoom?: () => void;
   masterVolume?: number;
   currentNetworkMode?: NetworkMode;
-  onSetNetworkMode?: (mode: NetworkMode) => void;
 }
 
 export const RoomHeader: React.FC<RoomHeaderProps> = ({
@@ -42,7 +42,6 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
   onLeaveRoom,
   masterVolume,
   currentNetworkMode,
-  onSetNetworkMode,
 }) => {
   const isHost = Boolean(
     currentUser && (
@@ -86,19 +85,6 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
       socket.off('room_network_mode_updated', handleModeUpdate);
     };
   }, []);
-
-  const handleSelectNetworkMode = (mode: NetworkMode) => {
-    setNetworkMode(mode);
-    try {
-      localStorage.setItem('musicsync_network_mode', mode);
-    } catch {}
-
-    if (onSetNetworkMode) {
-      onSetNetworkMode(mode);
-    } else if (isHost) {
-      socket.emit('set_room_network_mode', { mode });
-    }
-  };
 
   // Listen to Escape key to close modals
   useEffect(() => {
@@ -278,6 +264,7 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
                 <span className="hidden sm:inline font-bold">Local Wi-Fi Room</span>
                 <span className="sm:hidden font-mono font-bold">Local Room</span>
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.9)] animate-pulse" />
+                <QrCode className="w-3 h-3 text-emerald-400/70 group-hover/network:text-emerald-300 transition-colors shrink-0 ml-0.5" />
               </>
             ) : (
               <>
@@ -285,6 +272,7 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
                 <span className="hidden sm:inline font-bold">Online Cloud Room</span>
                 <span className="sm:hidden font-mono font-bold">Cloud Room</span>
                 <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_6px_rgba(0,240,255,0.9)]" />
+                <QrCode className="w-3 h-3 text-cyan-400/70 group-hover/network:text-cyan-300 transition-colors shrink-0 ml-0.5" />
               </>
             )}
           </button>
@@ -706,13 +694,12 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
         </div>,
         document.body
       )}
-      {/* Network Mode Switcher Modal (Local Wi-Fi vs Online Cloud) */}
+      {/* Room Type & QR Code Information Modal */}
       <NetworkModeModal
         isOpen={showNetworkModal}
         onClose={() => setShowNetworkModal(false)}
         roomCode={roomCode}
         currentMode={networkMode}
-        onSelectMode={handleSelectNetworkMode}
       />
     </header>
   );

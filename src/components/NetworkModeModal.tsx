@@ -10,7 +10,6 @@ interface NetworkModeModalProps {
   onClose: () => void;
   roomCode: string | null;
   currentMode: NetworkMode;
-  onSelectMode?: (mode: NetworkMode) => void;
 }
 
 export const NetworkModeModal: React.FC<NetworkModeModalProps> = ({
@@ -222,7 +221,7 @@ export const NetworkModeModal: React.FC<NetworkModeModalProps> = ({
                 }`}
               >
                 {copiedLink ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                <span>{copiedLink ? 'Copied Link!' : isLocalMode ? 'Copy Local Link' : 'Copy Online Link'}</span>
+                <span>{copiedLink ? 'Copied Room Link!' : isLocalMode ? 'Copy Local Room Link' : 'Copy Online Room Link'}</span>
               </button>
             </div>
           </div>
