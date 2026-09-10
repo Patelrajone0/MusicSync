@@ -2,6 +2,7 @@ export type UserRole = 'host' | 'dj' | 'listener' | 'system';
 
 export interface User {
   id: string;
+  deviceId?: string;
   name: string;
   role: UserRole;
   isAudioReady: boolean;

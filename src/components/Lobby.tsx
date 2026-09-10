@@ -7,6 +7,7 @@ import { RoomState, User } from '../types';
 import { socket } from '../services/socket';
 import { syncEngine } from '../services/syncEngine';
 import { Logo } from './Logo';
+import { getDeviceId } from '../utils/deviceId';
 
 interface LobbyProps {
   onRoomReady: (room: RoomState, user: User) => void;
@@ -67,7 +68,7 @@ export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' 
         setErrorMessage('Connection taking longer than expected. Please check your internet or retry.');
       }, 12000);
 
-      socket.emit('create_room', { userName }, (res: any) => {
+      socket.emit('create_room', { userName, deviceId: getDeviceId() }, (res: any) => {
         clearTimeout(timeoutId);
         if (res && res.success && res.room && res.user) {
           setIsEntering(true);
@@ -131,7 +132,7 @@ export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' 
         setErrorMessage('Connection timed out. Check the code and try again.');
       }, 12000);
 
-      socket.emit('join_room', { roomCode: code, userName }, (res: any) => {
+      socket.emit('join_room', { roomCode: code, userName, deviceId: getDeviceId() }, (res: any) => {
         clearTimeout(timeoutId);
         if (res && res.success && res.room && res.user) {
           setIsEntering(true);

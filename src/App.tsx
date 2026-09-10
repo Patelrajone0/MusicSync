@@ -23,6 +23,7 @@ import { Volume2, Radio, Disc, Sparkles, Layers, Plus, MessageSquare, Music2 } f
 
 import { userTasteEngine } from './services/userTaste';
 import { cleanTrackTitle } from './services/musicApi';
+import { getDeviceId } from './utils/deviceId';
 
 const SESSION_STORAGE_KEY = 'musicsync_user_session';
 const USER_NAME_STORAGE_KEY = 'musicsync_user_name';
@@ -214,6 +215,7 @@ export function App() {
     setChatMessages([]);
     syncEngine.pausePlayback();
     mediaSessionService.updateMetadata(null);
+    socket.emit('leave_room', { deviceId: getDeviceId() });
     socket.disconnect();
     socket.connect();
 
@@ -226,11 +228,25 @@ export function App() {
     if (!roomCode) return;
 
     const handleRoomUsersUpdated = (data: { users: User[]; hostId?: string }) => {
-      setUsers(data.users);
+      // Deduplicate devices by deviceId or id so 1 device never appears multiple times
+      const uniqueUsers: User[] = [];
+      const seen = new Set<string>();
+      for (const u of data.users) {
+        const key = u.deviceId || u.id;
+        if (!seen.has(key)) {
+          seen.add(key);
+          uniqueUsers.push(u);
+        }
+      }
+
+      setUsers(uniqueUsers);
       if (data.hostId) setHostId(data.hostId);
 
       // Update current user's role if modified
-      const updatedSelf = data.users.find((u) => u.id === socket.id || (currentUser && u.id === currentUser.id));
+      const myDeviceId = getDeviceId();
+      const updatedSelf = data.users.find(
+        (u) => (u.deviceId && u.deviceId === myDeviceId) || u.id === socket.id || (currentUser && u.id === currentUser.id)
+      );
       if (updatedSelf) setCurrentUser(updatedSelf);
     };
 
@@ -394,6 +410,7 @@ export function App() {
           userName: targetUserName,
           previousRole: targetRole,
           avatarColor: targetColor,
+          deviceId: getDeviceId(),
         },
         (response: { success: boolean; room?: RoomState; user?: User; error?: string }) => {
           if (!isMounted) return;

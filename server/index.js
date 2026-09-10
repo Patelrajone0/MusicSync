@@ -1363,9 +1363,11 @@ io.on('connection', (socket) => {
 
     const userName = data?.userName?.trim() || generateGuestName();
     const avatarColor = AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)];
+    const deviceId = data?.deviceId || `dev_${socket.id}`;
 
     const user = {
       id: socket.id,
+      deviceId,
       name: userName,
       role: 'host',
       isAudioReady: false,
@@ -1413,8 +1415,8 @@ io.on('connection', (socket) => {
     }
   });
 
-  // 3. Room Joining
-  socket.on('join_room', ({ roomCode, userName, previousRole, avatarColor: savedColor }, callback) => {
+  // 3. Room Joining with Single-Device Deduplication (Prevents duplicate entries on page refresh)
+  socket.on('join_room', ({ roomCode, userName, previousRole, avatarColor: savedColor, deviceId }, callback) => {
     const code = (roomCode || '').toString().trim().toUpperCase();
     const room = rooms.get(code);
 
@@ -1427,26 +1429,78 @@ io.on('connection', (socket) => {
 
     const finalName = (userName && userName.trim()) ? userName.trim() : generateGuestName();
     const avatarColor = savedColor || AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)];
+    const clientDeviceId = deviceId || null;
 
-    // Role persistence: Only restore host if room was empty or user is existing host
+    // Check if this device is ALREADY in the room (e.g. browser refresh or quick reconnect)
+    let existingSocketId = null;
+    let existingUser = null;
+
+    for (const [sId, u] of room.users.entries()) {
+      if (clientDeviceId && u.deviceId === clientDeviceId) {
+        existingSocketId = sId;
+        existingUser = u;
+        break;
+      }
+      if (sId === socket.id) {
+        existingSocketId = sId;
+        existingUser = u;
+        break;
+      }
+      // Fallback: Same username and user was host in single-user room
+      if (previousRole === 'host' && u.name === finalName && (u.role === 'host' || room.hostId === sId)) {
+        existingSocketId = sId;
+        existingUser = u;
+        break;
+      }
+    }
+
     let role = 'listener';
-    if (room.users.size === 0 || room.hostId === socket.id) {
-      role = 'host';
-      room.hostId = socket.id;
-    } else if (previousRole === 'host' && (!room.hostId || !room.users.has(room.hostId))) {
-      role = 'host';
-      room.hostId = socket.id;
-    } else if (previousRole === 'dj') {
-      role = 'dj';
+    let isReconnectingDevice = false;
+
+    if (existingUser) {
+      isReconnectingDevice = true;
+      role = existingUser.role;
+
+      // If the device was host or room.hostId matches, maintain host status!
+      if (existingUser.role === 'host' || room.hostId === existingSocketId) {
+        role = 'host';
+        room.hostId = socket.id;
+      }
+
+      // Remove the old socket entry from room.users immediately
+      room.users.delete(existingSocketId);
+
+      // Clean up old socket from socket.io room
+      if (existingSocketId !== socket.id) {
+        const oldSocket = io.sockets.sockets.get(existingSocketId);
+        if (oldSocket) {
+          try {
+            oldSocket.leave(code);
+            oldSocket.disconnect(true);
+          } catch (e) {}
+        }
+      }
+    } else {
+      // Role persistence for brand new user
+      if (room.users.size === 0 || room.hostId === socket.id) {
+        role = 'host';
+        room.hostId = socket.id;
+      } else if (previousRole === 'host' && (!room.hostId || !room.users.has(room.hostId))) {
+        role = 'host';
+        room.hostId = socket.id;
+      } else if (previousRole === 'dj') {
+        role = 'dj';
+      }
     }
 
     const user = {
       id: socket.id,
+      deviceId: clientDeviceId || existingUser?.deviceId || `dev_${socket.id}`,
       name: finalName,
       role,
-      isAudioReady: false,
-      avatarColor,
-      joinedAt: Date.now()
+      isAudioReady: existingUser ? existingUser.isAudioReady : false,
+      avatarColor: existingUser?.avatarColor || avatarColor,
+      joinedAt: existingUser ? existingUser.joinedAt : Date.now()
     };
 
     room.users.set(socket.id, user);
@@ -1455,22 +1509,25 @@ io.on('connection', (socket) => {
 
     socket.join(code);
 
-    const joinMessage = {
-      id: `msg-${Date.now()}`,
-      user: { name: 'System', role: 'system', avatarColor: '#00f0ff' },
-      text: `${finalName} joined the party! 🎧`,
-      timestamp: Date.now(),
-      isSystem: true
-    };
-    room.chatMessages.push(joinMessage);
-    if (room.chatMessages.length > 100) room.chatMessages.shift();
+    // Only broadcast chat announcement for genuinely NEW devices, not page refreshes
+    if (!isReconnectingDevice) {
+      const joinMessage = {
+        id: `msg-${Date.now()}`,
+        user: { name: 'System', role: 'system', avatarColor: '#00f0ff' },
+        text: `${finalName} joined the party! 🎧`,
+        timestamp: Date.now(),
+        isSystem: true
+      };
+      room.chatMessages.push(joinMessage);
+      if (room.chatMessages.length > 100) room.chatMessages.shift();
+      io.to(code).emit('new_chat_message', joinMessage);
+    }
 
-    // Broadcast updated user list and join message
+    // Broadcast updated user list (with exactly 1 entry per physical device)
     io.to(code).emit('room_users_updated', {
       users: Array.from(room.users.values()),
       hostId: room.hostId
     });
-    io.to(code).emit('new_chat_message', joinMessage);
 
     const roomSnapshot = serializeRoom(room);
     if (typeof callback === 'function') {
@@ -2084,12 +2141,74 @@ io.on('connection', (socket) => {
     }
   });
 
-  // 9. Disconnect Handling
+  // 8. Explicit Leave Room Handling
+  socket.on('leave_room', ({ deviceId } = {}) => {
+    if (!currentRoomCode) return;
+    const room = rooms.get(currentRoomCode);
+    if (!room) return;
+
+    let targetSocketId = socket.id;
+    if (deviceId) {
+      for (const [sId, u] of room.users.entries()) {
+        if (u.deviceId === deviceId) {
+          targetSocketId = sId;
+          break;
+        }
+      }
+    }
+
+    const leavingUser = room.users.get(targetSocketId);
+    if (!leavingUser) return;
+
+    room.users.delete(targetSocketId);
+
+    if (room.users.size === 0) {
+      setTimeout(() => {
+        const r = rooms.get(currentRoomCode);
+        if (r && r.users.size === 0) {
+          rooms.delete(currentRoomCode);
+        }
+      }, 300000);
+    } else {
+      if (room.hostId === targetSocketId) {
+        const nextUser = room.users.values().next().value;
+        if (nextUser) {
+          room.hostId = nextUser.id;
+          nextUser.role = 'host';
+        }
+      }
+
+      io.to(currentRoomCode).emit('room_users_updated', {
+        users: Array.from(room.users.values()),
+        hostId: room.hostId
+      });
+
+      const leaveMsg = {
+        id: `msg-${Date.now()}`,
+        user: { name: 'System', role: 'system', avatarColor: '#555' },
+        text: `${leavingUser.name} left the room.`,
+        timestamp: Date.now(),
+        isSystem: true
+      };
+      room.chatMessages.push(leaveMsg);
+      if (room.chatMessages.length > 100) room.chatMessages.shift();
+      io.to(currentRoomCode).emit('new_chat_message', leaveMsg);
+    }
+
+    socket.leave(currentRoomCode);
+    currentRoomCode = null;
+    currentUser = null;
+  });
+
+  // 9. Disconnect Handling (Gracefully ignores sockets that were already superseded by refresh)
   socket.on('disconnect', () => {
     if (currentRoomCode) {
       const room = rooms.get(currentRoomCode);
       if (room) {
         const leavingUser = room.users.get(socket.id);
+        // If this socket was already replaced/removed by reconnected device on refresh, do nothing!
+        if (!leavingUser) return;
+
         room.users.delete(socket.id);
 
         if (room.users.size === 0) {
@@ -2123,6 +2242,8 @@ io.on('connection', (socket) => {
               timestamp: Date.now(),
               isSystem: true
             };
+            room.chatMessages.push(leaveMsg);
+            if (room.chatMessages.length > 100) room.chatMessages.shift();
             io.to(currentRoomCode).emit('new_chat_message', leaveMsg);
           }
         }
