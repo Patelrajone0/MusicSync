@@ -456,11 +456,29 @@ export function App() {
   const handleOpenSearch = () => {
     const el = document.getElementById('universal-music-library');
     if (el) {
-      el.scrollIntoView({ behavior: 'smooth' });
-      const input = el.querySelector('input');
-      if (input) {
-        input.focus();
-      }
+      // Calculate top position taking sticky header into account
+      const header = document.querySelector('header');
+      const headerHeight = header ? header.getBoundingClientRect().height + 16 : 80;
+      const targetTop = el.getBoundingClientRect().top + window.scrollY - headerHeight;
+
+      window.scrollTo({
+        top: Math.max(0, targetTop),
+        behavior: 'smooth',
+      });
+
+      // Subtle neon arrival pulse animation to guide user's attention
+      el.classList.add('ring-2', 'ring-cyan-400', 'shadow-[0_0_30px_rgba(0,240,255,0.35)]');
+      setTimeout(() => {
+        el.classList.remove('ring-2', 'ring-cyan-400', 'shadow-[0_0_30px_rgba(0,240,255,0.35)]');
+      }, 1400);
+
+      // Gently focus the search input after scroll begins without jumping or breaking the smooth animation
+      setTimeout(() => {
+        const input = el.querySelector('input');
+        if (input) {
+          input.focus({ preventScroll: true });
+        }
+      }, 600);
     } else {
       setIsSearchOpen(true);
     }
