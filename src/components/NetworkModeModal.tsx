@@ -173,10 +173,10 @@ export const NetworkModeModal: React.FC<NetworkModeModalProps> = ({
             </div>
             <div className="flex items-center gap-1 text-[10px] font-mono text-emerald-400 font-bold mb-1">
               <Zap className="w-3 h-3 fill-emerald-400 shrink-0" />
-              <span>&lt; 3ms Ping · 0ms Lag</span>
+              <span>Same Network Only · 0ms Lag</span>
             </div>
             <p className="text-[11px] text-slate-400 leading-snug">
-              Same Wi-Fi / Hotspot. No internet latency.
+              Same Wi-Fi / Hotspot only. Outside networks blocked.
             </p>
           </button>
 
@@ -203,10 +203,10 @@ export const NetworkModeModal: React.FC<NetworkModeModalProps> = ({
             </div>
             <div className="flex items-center gap-1 text-[10px] font-mono text-cyan-400 font-bold mb-1">
               <Globe className="w-3 h-3 shrink-0" />
-              <span>Any Network · 4G/5G</span>
+              <span>Open to All · 4G/5G</span>
             </div>
             <p className="text-[11px] text-slate-400 leading-snug">
-              Connect from anywhere in the world.
+              Any network can join from anywhere.
             </p>
           </button>
         </div>
@@ -223,7 +223,7 @@ export const NetworkModeModal: React.FC<NetworkModeModalProps> = ({
                   Connect Nearby Devices on Same Wi-Fi
                 </h4>
                 <p className="text-[11px] text-slate-300 mt-1">
-                  Connect all phones to the <span className="text-emerald-400 font-semibold">same Wi-Fi or mobile hotspot</span>. Audio signals stream over your local router with zero internet ping for acoustic unison!
+                  Connect all phones to the <span className="text-emerald-400 font-semibold">same Wi-Fi or mobile hotspot</span>. Devices on outside networks or mobile data cannot join this room.
                 </p>
               </div>
             </div>
@@ -261,7 +261,7 @@ export const NetworkModeModal: React.FC<NetworkModeModalProps> = ({
 
             <div className="flex items-center gap-1.5 text-[10px] text-slate-400 bg-dark-950/50 p-2 rounded-lg">
               <Info className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-              <span>Tip: Nearby devices can scan this QR code with their camera to join with 0ms latency.</span>
+              <span>Strict Network Rule: Devices must be on the host's Wi-Fi. Outside networks are blocked from joining.</span>
             </div>
           </div>
         ) : (
@@ -272,10 +272,10 @@ export const NetworkModeModal: React.FC<NetworkModeModalProps> = ({
               </div>
               <div className="min-w-0">
                 <h4 className="text-xs sm:text-sm font-bold text-white leading-tight">
-                  Connect from Different Networks & Mobile Data
+                  Open to Everyone (Any Network & 4G/5G)
                 </h4>
                 <p className="text-[11px] text-slate-300 mt-1">
-                  Allows friends on cellular data (4G/5G) or outside Wi-Fi to sync with you through the public server.
+                  Open for all! Allows friends on cellular data (4G/5G) or outside Wi-Fi networks to connect and sync from anywhere in the world.
                 </p>
               </div>
             </div>

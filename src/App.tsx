@@ -465,6 +465,9 @@ export function App() {
             console.log('Could not auto-rejoin room:', response.error);
             clearStoredSession();
             setInitialRoomCode(targetRoom);
+            if (response.error && (response.error.includes('Local Wi-Fi Only') || response.error.includes('same Wi-Fi'))) {
+              setKickedNotice(response.error);
+            }
             const cleanUrl = window.location.pathname;
             window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
           }

@@ -1387,6 +1387,32 @@ app.get('*', (req, res, next) => {
 // SOCKET.IO REAL-TIME & NTP SYNC CORE
 // ----------------------------------------------------
 
+// Client IP Extraction & Normalization for Strict Same-Network (Local Wi-Fi) Verification
+function getClientIp(socket) {
+  const forwarded = socket.handshake.headers['x-forwarded-for'];
+  if (forwarded) {
+    return forwarded.split(',')[0].trim();
+  }
+  return (
+    socket.handshake.headers['cf-connecting-ip'] ||
+    socket.handshake.headers['x-real-ip'] ||
+    socket.handshake.address ||
+    ''
+  );
+}
+
+function normalizeIp(ip) {
+  if (!ip) return '';
+  let str = String(ip).trim();
+  if (str.startsWith('::ffff:')) {
+    str = str.substring(7);
+  }
+  if (str === '::1' || str === 'localhost') {
+    return '127.0.0.1';
+  }
+  return str;
+}
+
 io.on('connection', (socket) => {
   let currentRoomCode = null;
   let currentUser = null;
@@ -1410,6 +1436,7 @@ io.on('connection', (socket) => {
     const userName = data?.userName?.trim() || generateGuestName();
     const avatarColor = AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)];
     const deviceId = data?.deviceId || `dev_${socket.id}`;
+    const clientIp = normalizeIp(getClientIp(socket));
 
     const user = {
       id: socket.id,
@@ -1418,13 +1445,15 @@ io.on('connection', (socket) => {
       role: 'host',
       isAudioReady: false,
       avatarColor,
-      joinedAt: Date.now()
+      joinedAt: Date.now(),
+      ip: clientIp
     };
 
     const newRoom = {
       code,
       createdAt: Date.now(),
       hostId: socket.id,
+      hostNetworkIp: clientIp,
       users: new Map([[socket.id, user]]),
       queue: [],
       currentTrack: null,
@@ -1477,6 +1506,7 @@ io.on('connection', (socket) => {
     const finalName = (userName && userName.trim()) ? userName.trim() : generateGuestName();
     const avatarColor = savedColor || AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)];
     const clientDeviceId = deviceId || null;
+    const clientIp = normalizeIp(getClientIp(socket));
 
     // Check if this device is ALREADY in the room (e.g. browser refresh or quick reconnect)
     let existingSocketId = null;
@@ -1498,6 +1528,22 @@ io.on('connection', (socket) => {
         existingSocketId = sId;
         existingUser = u;
         break;
+      }
+    }
+
+    // STRICT SAME-NETWORK CHECK FOR LOCAL WI-FI MODE:
+    // If the room is in Local Wi-Fi Mode, only devices sharing the exact same network IP as the host can join!
+    const isReconnectingHost = existingUser && (existingUser.role === 'host' || room.hostId === existingSocketId);
+    if (room.networkMode === 'local' && room.hostNetworkIp && !isReconnectingHost) {
+      if (clientIp !== room.hostNetworkIp) {
+        if (typeof callback === 'function') {
+          return callback({
+            success: false,
+            error: 'Local Wi-Fi Only: This room is in Local Wi-Fi mode and only allows devices connected to the same Wi-Fi or mobile hotspot as the host. Please connect to the host\'s Wi-Fi network, or ask the host to switch to Online Cloud Mode.',
+            code: 'DIFFERENT_NETWORK'
+          });
+        }
+        return;
       }
     }
 
@@ -1547,8 +1593,13 @@ io.on('connection', (socket) => {
       role,
       isAudioReady: existingUser ? existingUser.isAudioReady : false,
       avatarColor: existingUser?.avatarColor || avatarColor,
-      joinedAt: existingUser ? existingUser.joinedAt : Date.now()
+      joinedAt: existingUser ? existingUser.joinedAt : Date.now(),
+      ip: clientIp
     };
+
+    if (role === 'host') {
+      room.hostNetworkIp = clientIp;
+    }
 
     room.users.set(socket.id, user);
     currentRoomCode = code;
@@ -1842,6 +1893,41 @@ io.on('connection', (socket) => {
 
     if (mode !== 'local' && mode !== 'online') return;
     room.networkMode = mode;
+
+    if (mode === 'local') {
+      const hostIp = normalizeIp(getClientIp(socket)) || room.hostNetworkIp;
+      room.hostNetworkIp = hostIp;
+
+      // Disconnect/remove any listener who is NOT on the same Wi-Fi / network as the host
+      const kickedSocketIds = [];
+      for (const [sId, member] of room.users.entries()) {
+        if (member.role !== 'host' && sId !== socket.id) {
+          if (member.ip && hostIp && member.ip !== hostIp) {
+            kickedSocketIds.push(sId);
+          }
+        }
+      }
+
+      for (const sId of kickedSocketIds) {
+        room.users.delete(sId);
+        io.to(sId).emit('kicked_from_room', {
+          reason: 'The host switched to Local Wi-Fi Mode. Only devices connected to the same Wi-Fi or mobile hotspot can remain in this room.'
+        });
+        const kickedSocket = io.sockets.sockets.get(sId);
+        if (kickedSocket) {
+          try {
+            kickedSocket.leave(currentRoomCode);
+          } catch (e) {}
+        }
+      }
+
+      if (kickedSocketIds.length > 0) {
+        io.to(currentRoomCode).emit('room_users_updated', {
+          users: Array.from(room.users.values()),
+          hostId: room.hostId
+        });
+      }
+    }
 
     io.to(currentRoomCode).emit('room_network_mode_updated', {
       mode,
