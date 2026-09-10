@@ -129,12 +129,18 @@ export function App() {
     }
   }, []);
 
-  // Listen to sync engine telemetry stats
+  // Listen to sync engine telemetry stats & autoplay status
   useEffect(() => {
-    const unsub = syncEngine.onStatsChange((stats) => {
+    const unsubStats = syncEngine.onStatsChange((stats) => {
       setSyncStats(stats);
     });
-    return unsub;
+    const unsubAutoplay = syncEngine.onAutoplayBlocked((blocked) => {
+      setIsAudioUnlocked(!blocked);
+    });
+    return () => {
+      unsubStats();
+      unsubAutoplay();
+    };
   }, []);
 
   // Synchronize Room Code with Native MediaSession
@@ -162,7 +168,9 @@ export function App() {
       },
       onPause: () => {
         if (currentUser?.role === 'host' || currentUser?.role === 'dj') {
-          socket.emit('request_pause');
+          const currentPos = syncEngine.getCurrentPosition();
+          syncEngine.pausePlayback(currentPos);
+          socket.emit('request_pause', { position: currentPos });
         } else {
           syncEngine.pausePlayback();
         }
@@ -333,7 +341,7 @@ export function App() {
       setMasterVolume(room.masterVolume);
       syncEngine.setVolume(room.masterVolume);
     }
-    setIsAudioUnlocked(true);
+    setIsAudioUnlocked(syncEngine.isUnlocked());
 
     // Save session and persistent user name in localStorage forever!
     saveStoredSession({

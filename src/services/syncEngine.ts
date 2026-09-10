@@ -18,16 +18,19 @@ class SyncEngine {
 
   // Playback state
   private currentTrack: Track | null = null;
+  private loadedAudioUrl: string | null = null;
   private scheduledServerTime: number = 0;
   private startPosition: number = 0;
   private isPlaying: boolean = false;
   private scheduledTimerId: any = null;
   private driftCheckIntervalId: any = null;
   private lastDriftMs: number = 0;
+  private isAutoplayBlocked: boolean = false;
 
   // Callbacks
   private onStatsChangeCallbacks: Set<(stats: SyncStats) => void> = new Set();
   private onPositionUpdateCallbacks: Set<(position: number, duration: number) => void> = new Set();
+  private onAutoplayBlockedCallbacks: Set<(blocked: boolean) => void> = new Set();
   private onTrackEndedCallback: (() => void) | null = null;
 
   constructor() {
@@ -56,6 +59,7 @@ class SyncEngine {
     if (!this.audio) {
       const audio = new Audio();
       audio.preload = 'auto';
+      audio.preservesPitch = true;
       audio.volume = this.masterVolume;
 
       audio.addEventListener('error', () => {
@@ -85,7 +89,25 @@ class SyncEngine {
     }
   }
 
-  // 2. Unlock Audio on User Gesture
+  // Safe time seeker that waits for metadata if audio is not yet loaded
+  private setTimeSafe(timeSec: number) {
+    if (!this.audio) return;
+    const clamped = Math.max(0, timeSec);
+    if (this.audio.readyState >= 1) {
+      try {
+        this.audio.currentTime = clamped;
+      } catch (e) {}
+    } else {
+      const onLoaded = () => {
+        try {
+          if (this.audio) this.audio.currentTime = clamped;
+        } catch (e) {}
+      };
+      this.audio.addEventListener('loadedmetadata', onLoaded, { once: true });
+    }
+  }
+
+  // 2. Unlock Audio on User Gesture (Seamless instant sync on user tap)
   public async unlockAudio(): Promise<boolean> {
     try {
       this.initAudio();
@@ -93,14 +115,25 @@ class SyncEngine {
       if (this.audio) {
         this.audio.volume = this.masterVolume;
 
-        // If a track is already loaded, start or un-pause it
-        if (this.currentTrack && this.audio.src) {
+        // If a track should be currently playing, start it immediately in this user-gesture!
+        if (this.currentTrack) {
+          if (this.loadedAudioUrl !== this.currentTrack.audioUrl) {
+            this.loadedAudioUrl = this.currentTrack.audioUrl;
+            this.audio.src = this.currentTrack.audioUrl;
+            this.audio.load();
+          }
+
           if (this.isPlaying) {
-            await this.audio.play().catch(() => {});
+            const serverNow = this.getServerTime();
+            const elapsedSec = (serverNow - this.scheduledServerTime - this.hardwareDelayOffset) / 1000;
+            const currentPos = Math.max(0, this.startPosition + elapsedSec);
+            this.setTimeSafe(currentPos);
+            await this.audio.play();
+            this.startDriftCorrectionLoop();
           }
         } else {
           // Prime audio element with brief silent buffer so browser marks element as user-activated
-          if (!this.audio.src) {
+          if (!this.audio.src || this.audio.src === '') {
             this.audio.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
             const p = this.audio.play();
             if (p !== undefined) {
@@ -111,6 +144,8 @@ class SyncEngine {
         }
       }
 
+      this.isAutoplayBlocked = false;
+      this.notifyAutoplayBlocked(false);
       socket.emit('set_audio_ready', { isReady: true });
       return true;
     } catch (err) {
@@ -281,8 +316,9 @@ class SyncEngine {
     this.initAudio();
     if (!this.audio) return;
 
-    // Load track into audio element if changed
-    if (this.audio.src !== track.audioUrl) {
+    // Load track into audio element only if the audio URL actually changed
+    if (this.loadedAudioUrl !== track.audioUrl) {
+      this.loadedAudioUrl = track.audioUrl;
       this.audio.src = track.audioUrl;
       this.audio.load();
     }
@@ -291,9 +327,7 @@ class SyncEngine {
     const delayMs = scheduledServerTime - currentServerTime - this.hardwareDelayOffset;
 
     if (delayMs > 0) {
-      try {
-        this.audio.currentTime = startPosition;
-      } catch (e) {}
+      this.setTimeSafe(startPosition);
       this.scheduledTimerId = setTimeout(() => {
         this.executePlay(startPosition);
       }, delayMs);
@@ -308,19 +342,30 @@ class SyncEngine {
   private executePlay(startSec: number) {
     if (!this.audio) return;
 
-    if (Math.abs(this.audio.currentTime - startSec) > 0.05) {
-      try {
-        this.audio.currentTime = Math.max(0, startSec);
-      } catch (e) {}
+    if (Math.abs(this.audio.currentTime - startSec) > 0.04) {
+      this.setTimeSafe(startSec);
     }
 
     this.audio.volume = this.masterVolume;
 
     const playPromise = this.audio.play();
     if (playPromise !== undefined) {
-      playPromise.catch((err) => {
-        console.warn('[AudioEngine] Playback promise error:', err);
-      });
+      playPromise
+        .then(() => {
+          if (this.isAutoplayBlocked) {
+            this.isAutoplayBlocked = false;
+            this.notifyAutoplayBlocked(false);
+          }
+        })
+        .catch((err: any) => {
+          if (err?.name === 'NotAllowedError' || err?.name === 'AbortError') {
+            console.warn('[AudioEngine] Autoplay blocked by browser policy:', err.message);
+            this.isAutoplayBlocked = true;
+            this.notifyAutoplayBlocked(true);
+          } else {
+            console.warn('[AudioEngine] Playback promise warning:', err);
+          }
+        });
     }
   }
 
@@ -331,8 +376,8 @@ class SyncEngine {
 
     if (this.audio) {
       this.audio.pause();
-      if (typeof atPosition === 'number') {
-        this.audio.currentTime = atPosition;
+      if (typeof atPosition === 'number' && atPosition >= 0) {
+        this.setTimeSafe(atPosition);
       }
       this.audio.playbackRate = 1.0;
     }
@@ -343,11 +388,11 @@ class SyncEngine {
 
   public seekPlayback(position: number) {
     if (this.audio) {
-      this.audio.currentTime = Math.max(0, position);
+      this.setTimeSafe(position);
     }
   }
 
-  // 6. Continuous Drift Correction Loop
+  // 6. Continuous Drift Correction Loop (Runs every 250ms for near-zero latency multi-device lock)
   private startDriftCorrectionLoop() {
     if (this.driftCheckIntervalId) clearInterval(this.driftCheckIntervalId);
 
@@ -363,22 +408,22 @@ class SyncEngine {
       const driftMs = (actualPos - expectedPos) * 1000;
       this.lastDriftMs = Math.round(driftMs);
 
-      // Micro-Rate Adjustment to keep all devices tightly locked within <25ms
-      if (Math.abs(driftMs) < 25) {
+      // Micro-Rate Adjustment to keep all devices tightly locked within <15ms
+      if (Math.abs(driftMs) < 15) {
         if (this.audio.playbackRate !== 1.0) {
           this.audio.playbackRate = 1.0;
         }
-      } else if (driftMs > 25 && driftMs < 250) {
+      } else if (driftMs >= 15 && driftMs < 200) {
         this.audio.playbackRate = 0.98;
-      } else if (driftMs < -25 && driftMs > -250) {
+      } else if (driftMs <= -15 && driftMs > -200) {
         this.audio.playbackRate = 1.02;
-      } else if (Math.abs(driftMs) >= 250) {
-        this.audio.currentTime = Math.max(0, expectedPos);
+      } else if (Math.abs(driftMs) >= 200) {
+        this.setTimeSafe(expectedPos);
         this.audio.playbackRate = 1.0;
       }
 
       this.notifyStats();
-    }, 400);
+    }, 250);
   }
 
   private clearScheduledTimers() {
@@ -458,7 +503,8 @@ class SyncEngine {
     this.initAudio();
     if (!this.audio) return;
 
-    if (this.currentTrack && (!this.audio.src || this.audio.src === '' || this.audio.src.endsWith('/'))) {
+    if (this.currentTrack && this.loadedAudioUrl !== this.currentTrack.audioUrl) {
+      this.loadedAudioUrl = this.currentTrack.audioUrl;
       this.audio.src = this.currentTrack.audioUrl;
       this.audio.load();
     }
@@ -471,6 +517,21 @@ class SyncEngine {
     this.isPlaying = true;
     this.executePlay(pos);
     mediaSessionService.setPlaybackState('playing');
+  }
+
+  public onAutoplayBlocked(cb: (blocked: boolean) => void) {
+    this.onAutoplayBlockedCallbacks.add(cb);
+    return () => {
+      this.onAutoplayBlockedCallbacks.delete(cb);
+    };
+  }
+
+  private notifyAutoplayBlocked(blocked: boolean) {
+    this.onAutoplayBlockedCallbacks.forEach((cb) => cb(blocked));
+  }
+
+  public isUnlocked(): boolean {
+    return !this.isAutoplayBlocked;
   }
 
   public cleanup() {

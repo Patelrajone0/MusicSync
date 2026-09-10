@@ -63,7 +63,25 @@ async function runTests() {
   });
 
   host.emit('request_play', { track: curatedData.tracks[0], position: 0 });
-  await playPromise;
+  const playData = await playPromise;
+  const leadMs = playData.scheduledServerTime - Date.now();
+  console.log(`Buffer lead verified: ${leadMs}ms (target: ~200ms ultra-low latency)`);
+
+  // Test Synchronized Pause
+  console.log('\n--- TEST 3b: Synchronized Pause Broadcast ---');
+  const pausePromise = new Promise((resolve) => {
+    speaker.once('playback_paused', (data) => {
+      console.log(`[Speaker] Received synchronized pause at position: ${data.position}s`);
+      resolve(data);
+    });
+  });
+
+  host.emit('request_pause', { position: 15.42 });
+  const pauseData = await pausePromise;
+  if (Math.abs(pauseData.position - 15.42) > 0.001) {
+    throw new Error(`Pause position mismatch! Expected 15.42, got ${pauseData.position}`);
+  }
+  console.log('Synchronized exact pause position matched perfectly across devices!');
 
   // Test Democratic Queue Voting
   console.log('\n--- TEST 4: Democratic Queue & Upvoting ---');

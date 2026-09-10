@@ -189,16 +189,22 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
       return;
     }
 
-    // Host / DJ toggle: control room playback
+    // Host / DJ toggle: control room playback with exact zero-delay synchronization
     const nextPlayState = !isPlaying;
     setOptimisticPlaying(nextPlayState);
 
     if (nextPlayState) {
-      syncEngine.resumeLocalAudio();
-      socket.emit('request_play', { track: currentTrack, position: currentPosition });
+      if (socket.connected) {
+        // Emit to server to schedule synchronized play for all devices at the exact same millisecond
+        socket.emit('request_play', { track: currentTrack, position: currentPosition });
+      } else {
+        // Offline fallback
+        syncEngine.resumeLocalAudio();
+      }
     } else {
-      syncEngine.pausePlayback();
-      socket.emit('request_pause');
+      // Pause locally immediately for instantaneous feedback, and broadcast exact position to all devices
+      syncEngine.pausePlayback(currentPosition);
+      socket.emit('request_pause', { position: currentPosition });
     }
   };
 

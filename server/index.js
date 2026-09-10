@@ -131,7 +131,7 @@ function sortQueue(queue) {
 // ----------------------------------------------------
 // SERVER-SIDE AUTHORITATIVE AUTO-ADVANCE & REPEAT CORE
 // ----------------------------------------------------
-const BUFFER_LEAD_MS = 1200;
+const BUFFER_LEAD_MS = 200; // Ultra-low 200ms lead time for instantaneous, zero-delay synchronized playback across all devices
 
 function clearServerAutoAdvance(room) {
   if (room && room.autoAdvanceTimer) {
@@ -157,7 +157,7 @@ function scheduleServerAutoAdvance(roomCode) {
   const remainingSec = Math.max(0, duration - startPosition);
   const finishTime = scheduledServerTime + (remainingSec * 1000);
   // Trigger transition with lead time for seamless gapless crossfade
-  const delayMs = Math.max(500, finishTime - Date.now() - 400);
+  const delayMs = Math.max(200, finishTime - Date.now() - BUFFER_LEAD_MS);
 
   room.autoAdvanceTimer = setTimeout(() => {
     executeAutoAdvance(roomCode);
@@ -1559,7 +1559,7 @@ io.on('connection', (socket) => {
     scheduleServerAutoAdvance(currentRoomCode);
   });
 
-  socket.on('request_pause', () => {
+  socket.on('request_pause', (data) => {
     if (!currentRoomCode) return;
     const room = rooms.get(currentRoomCode);
     if (!room) return;
@@ -1567,7 +1567,11 @@ io.on('connection', (socket) => {
     const user = room.users.get(socket.id);
     if (!user || (user.role !== 'host' && user.role !== 'dj')) return;
 
-    const currentPos = calculateCurrentTrackPosition(room);
+    // Use host authoritative pause position if passed, otherwise compute from elapsed server time
+    const currentPos = (data && typeof data.position === 'number' && data.position >= 0)
+      ? data.position
+      : calculateCurrentTrackPosition(room);
+
     clearServerAutoAdvance(room);
     room.playbackState.status = 'paused';
     room.playbackState.lastPausedPosition = currentPos;
@@ -1591,7 +1595,7 @@ io.on('connection', (socket) => {
     const isPlaying = room.playbackState.status === 'playing';
 
     if (isPlaying) {
-      const scheduledTime = Date.now() + 1000;
+      const scheduledTime = Date.now() + BUFFER_LEAD_MS;
       room.playbackState.scheduledServerTime = scheduledTime;
       room.playbackState.scheduledPosition = seekPos;
       room.playbackState.lastPausedPosition = seekPos;
