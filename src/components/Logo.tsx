@@ -45,9 +45,9 @@ export const Logo: React.FC<LogoProps> = ({
             />
 
             {showTagline && (
-              <div className="flex items-center gap-2 px-3.5 py-1 rounded-full bg-dark-900/90 border border-white/10 shadow-lg mt-3 relative z-10 backdrop-blur-md">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
-                <span className="text-[10px] sm:text-[11px] font-semibold tracking-wider text-slate-300 uppercase font-mono">
+              <div className="flex items-center gap-2 px-3.5 py-1 rounded-full bg-dark-900/90 border border-cyan-400/30 shadow-[0_0_14px_rgba(0,240,255,0.2)] mt-3 relative z-10 backdrop-blur-md">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_6px_rgba(52,211,153,0.9)]" />
+                <span className="text-[10px] sm:text-[11px] font-semibold tracking-wider text-slate-200 uppercase font-mono">
                   Multi-Device Speaker Mesh
                 </span>
               </div>
