@@ -2,12 +2,17 @@ import React, { useState, useEffect } from 'react';
 import {
   ArrowRight,
   User as UserIcon,
+  Wifi,
+  Globe,
+  Zap,
+  Radio,
 } from 'lucide-react';
 import { RoomState, User } from '../types';
 import { socket } from '../services/socket';
 import { syncEngine } from '../services/syncEngine';
 import { Logo } from './Logo';
 import { getDeviceId } from '../utils/deviceId';
+import { NetworkMode } from './NetworkModeModal';
 
 interface LobbyProps {
   onRoomReady: (room: RoomState, user: User) => void;
@@ -29,6 +34,21 @@ export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' 
   const [isJoining, setIsJoining] = useState(false);
   const [isEntering, setIsEntering] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>('');
+
+  const [networkMode, setNetworkMode] = useState<NetworkMode>(() => {
+    try {
+      return (localStorage.getItem('musicsync_network_mode') as NetworkMode) || 'local';
+    } catch {
+      return 'local';
+    }
+  });
+
+  const handleNetworkModeChange = (mode: NetworkMode) => {
+    setNetworkMode(mode);
+    try {
+      localStorage.setItem('musicsync_network_mode', mode);
+    } catch {}
+  };
 
   useEffect(() => {
     try {
@@ -68,7 +88,7 @@ export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' 
         setErrorMessage('Connection taking longer than expected. Please check your internet or retry.');
       }, 12000);
 
-      socket.emit('create_room', { userName, deviceId: getDeviceId() }, (res: any) => {
+      socket.emit('create_room', { userName, deviceId: getDeviceId(), networkMode }, (res: any) => {
         clearTimeout(timeoutId);
         if (res && res.success && res.room && res.user) {
           setIsEntering(true);
@@ -241,22 +261,112 @@ export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' 
             </p>
           </div>
 
+          {/* Network Mode Setting (Under Username & Above Create Button) */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                <div className="relative w-4 h-4 rounded-full p-[1px] bg-gradient-to-tr from-cyan-400 via-sky-400 to-fuchsia-500 shadow-[0_0_6px_rgba(0,240,255,0.4)] shrink-0 flex items-center justify-center">
+                  <div className="w-full h-full rounded-full bg-dark-950 flex items-center justify-center">
+                    <Radio className="w-2.5 h-2.5 text-cyan-400" />
+                  </div>
+                </div>
+                <label className="text-[11px] font-bold text-slate-300 uppercase tracking-wider font-mono">
+                  Room Network Mode
+                </label>
+              </div>
+              <span className={`text-[10px] font-mono font-bold ${networkMode === 'local' ? 'text-emerald-400' : 'text-cyan-400'}`}>
+                {networkMode === 'local' ? '⚡ Same Wi-Fi (0ms Lag)' : '🌐 Open to Anyone'}
+              </span>
+            </div>
+
+            {/* 2 Selectable Mode Cards */}
+            <div className="grid grid-cols-2 gap-2 w-full">
+              {/* Option A: Local Wi-Fi */}
+              <button
+                type="button"
+                onClick={() => handleNetworkModeChange('local')}
+                className={`p-2.5 sm:p-3 rounded-2xl border text-left transition-all duration-200 cursor-pointer active:scale-[0.98] ${
+                  networkMode === 'local'
+                    ? 'bg-emerald-950/60 border-emerald-400 shadow-[0_0_20px_rgba(52,211,153,0.3)] ring-1 ring-emerald-400/60'
+                    : 'bg-dark-950/70 hover:bg-dark-850/80 border-white/10 text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className="inline-flex items-center gap-1.5 text-xs font-bold text-white">
+                    <Wifi className={`w-3.5 h-3.5 ${networkMode === 'local' ? 'text-emerald-400' : 'text-slate-400'}`} />
+                    <span>Local Wi-Fi</span>
+                  </span>
+                  {networkMode === 'local' && (
+                    <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                      SELECTED
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-1 text-[10px] font-mono text-emerald-400 font-bold mb-0.5">
+                  <Zap className="w-3 h-3 fill-emerald-400 shrink-0" />
+                  <span>0ms Delay · Same Wi-Fi</span>
+                </div>
+                <p className="text-[10px] sm:text-[11px] text-slate-400 leading-tight">
+                  Acoustic unison on same Wi-Fi / hotspot only.
+                </p>
+              </button>
+
+              {/* Option B: Online Cloud */}
+              <button
+                type="button"
+                onClick={() => handleNetworkModeChange('online')}
+                className={`p-2.5 sm:p-3 rounded-2xl border text-left transition-all duration-200 cursor-pointer active:scale-[0.98] ${
+                  networkMode === 'online'
+                    ? 'bg-cyan-950/60 border-cyan-400 shadow-[0_0_20px_rgba(0,240,255,0.3)] ring-1 ring-cyan-400/60'
+                    : 'bg-dark-950/70 hover:bg-dark-850/80 border-white/10 text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className="inline-flex items-center gap-1.5 text-xs font-bold text-white">
+                    <Globe className={`w-3.5 h-3.5 ${networkMode === 'online' ? 'text-cyan-400' : 'text-slate-400'}`} />
+                    <span>Online Cloud</span>
+                  </span>
+                  {networkMode === 'online' && (
+                    <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">
+                      SELECTED
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-1 text-[10px] font-mono text-cyan-400 font-bold mb-0.5">
+                  <Globe className="w-3 h-3 shrink-0" />
+                  <span>Open for All</span>
+                </div>
+                <p className="text-[10px] sm:text-[11px] text-slate-400 leading-tight">
+                  Anyone on cellular (4G/5G) or outside networks.
+                </p>
+              </button>
+            </div>
+          </div>
+
           {/* Action 1: Create New Room */}
           <div>
             <button
               onClick={handleCreateRoom}
               disabled={isCreating || isJoining || isEntering}
-              className="w-full py-3 sm:py-3.5 px-3 sm:px-6 rounded-full bg-gradient-to-r from-cyan-400 via-sky-400 to-cyan-300 hover:brightness-105 active:scale-[0.98] text-black font-extrabold text-xs sm:text-sm shadow-[0_0_25px_rgba(0,240,255,0.45)] hover:shadow-[0_0_35px_rgba(0,240,255,0.8)] transition-all duration-200 flex items-center justify-center gap-1.5 sm:gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed select-none"
+              className={`w-full py-3 sm:py-3.5 px-3 sm:px-6 rounded-full font-extrabold text-xs sm:text-sm transition-all duration-200 flex items-center justify-center gap-1.5 sm:gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed select-none active:scale-[0.98] ${
+                networkMode === 'local'
+                  ? 'bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-300 hover:brightness-105 text-black shadow-[0_0_25px_rgba(52,211,153,0.45)] hover:shadow-[0_0_35px_rgba(52,211,153,0.7)]'
+                  : 'bg-gradient-to-r from-cyan-400 via-sky-400 to-cyan-300 hover:brightness-105 text-black shadow-[0_0_25px_rgba(0,240,255,0.45)] hover:shadow-[0_0_35px_rgba(0,240,255,0.8)]'
+              }`}
             >
-              {(isCreating || isEntering) && (
+              {(isCreating || isEntering) ? (
                 <div className="w-3.5 h-3.5 sm:w-4 sm:h-4 border-2 border-black border-t-transparent rounded-full animate-spin shrink-0" />
+              ) : networkMode === 'local' ? (
+                <Zap className="w-4 h-4 fill-black shrink-0" />
+              ) : (
+                <Globe className="w-4 h-4 shrink-0" />
               )}
               <span className="font-black tracking-tight text-xs sm:text-sm text-black truncate">
                 {isEntering
                   ? 'Entering Music Room...'
                   : isCreating
-                  ? 'Creating Music Room...'
-                  : 'Create New Music Room'}
+                  ? `Creating ${networkMode === 'local' ? 'Local Wi-Fi' : 'Online Cloud'} Room...`
+                  : `Create ${networkMode === 'local' ? 'Local Wi-Fi Room (0ms Delay)' : 'Online Cloud Room (Worldwide)'}`}
               </span>
             </button>
           </div>
