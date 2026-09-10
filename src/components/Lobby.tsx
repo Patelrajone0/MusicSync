@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import {
   Sparkles,
   ArrowRight,
-  Shuffle,
   User as UserIcon,
 } from 'lucide-react';
 import { RoomState, User } from '../types';
@@ -15,22 +14,6 @@ interface LobbyProps {
   initialRoomCode?: string;
 }
 
-const GUEST_ADJECTIVES = [
-  'Neon', 'Cyber', 'Cosmic', 'Electric', 'Sonic', 'Astral', 'Hyper',
-  'Pulse', 'Quantum', 'Glitch', 'Turbo', 'Vibe', 'Solar', 'Velvet', 'Prism'
-];
-const GUEST_ANIMALS = [
-  'Tiger', 'Falcon', 'Panda', 'Wolf', 'Panther', 'Fox', 'Viper',
-  'Otter', 'Jaguar', 'Lynx', 'Raven', 'Eagle', 'Cheetah', 'Badger', 'Cobra'
-];
-
-function getRandomGuestName(): string {
-  const adj = GUEST_ADJECTIVES[Math.floor(Math.random() * GUEST_ADJECTIVES.length)];
-  const animal = GUEST_ANIMALS[Math.floor(Math.random() * GUEST_ANIMALS.length)];
-  const num = Math.floor(10 + Math.random() * 90);
-  return `${adj}-${animal}-${num}`;
-}
-
 const USER_NAME_STORAGE_KEY = 'musicsync_user_name';
 
 export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' }) => {
@@ -39,11 +22,7 @@ export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' 
       const saved = localStorage.getItem(USER_NAME_STORAGE_KEY);
       if (saved && saved.trim()) return saved.trim();
     } catch (e) {}
-    const defaultName = getRandomGuestName();
-    try {
-      localStorage.setItem(USER_NAME_STORAGE_KEY, defaultName);
-    } catch (e) {}
-    return defaultName;
+    return '';
   });
   const [roomCodeInput, setRoomCodeInput] = useState<string>(initialRoomCode);
   const [isCreating, setIsCreating] = useState(false);
@@ -67,17 +46,7 @@ export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' 
     const val = e.target.value;
     setUserName(val);
     try {
-      if (val.trim()) {
-        localStorage.setItem(USER_NAME_STORAGE_KEY, val.trim());
-      }
-    } catch (e) {}
-  };
-
-  const handleShuffleName = () => {
-    const freshName = getRandomGuestName();
-    setUserName(freshName);
-    try {
-      localStorage.setItem(USER_NAME_STORAGE_KEY, freshName);
+      localStorage.setItem(USER_NAME_STORAGE_KEY, val.trim());
     } catch (e) {}
   };
 
@@ -190,27 +159,15 @@ export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' 
                 Anonymous ID
               </span>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="relative flex-1">
-                <input
-                  type="text"
-                  value={userName}
-                  onChange={handleNameChange}
-                  placeholder="Username"
-                  maxLength={24}
-                  className="w-full bg-dark-950/90 border border-white/10 hover:border-cyan-400/30 focus:border-cyan-400 focus:shadow-[0_0_16px_rgba(0,240,255,0.25)] rounded-full px-4 py-2.5 sm:py-3 text-base sm:text-sm text-white font-semibold focus:outline-none transition-all duration-200"
-                />
-              </div>
-              <button
-                type="button"
-                onClick={handleShuffleName}
-                title="Generate random name"
-                className="relative w-11 h-11 rounded-full p-[1.5px] bg-gradient-to-tr from-cyan-400 via-sky-400 to-fuchsia-500 shadow-[0_0_10px_rgba(0,240,255,0.35)] hover:shadow-[0_0_18px_rgba(0,240,255,0.7)] active:scale-95 transition-all duration-200 shrink-0 flex items-center justify-center cursor-pointer group/shuffle"
-              >
-                <div className="w-full h-full rounded-full bg-dark-950 group-hover/shuffle:bg-dark-900 flex items-center justify-center text-cyan-400 group-hover/shuffle:text-white transition-colors">
-                  <Shuffle className="w-4 h-4 group-hover/shuffle:rotate-180 transition-transform duration-500" />
-                </div>
-              </button>
+            <div className="relative w-full">
+              <input
+                type="text"
+                value={userName}
+                onChange={handleNameChange}
+                placeholder="Enter your username"
+                maxLength={24}
+                className="w-full bg-dark-950/90 border border-white/10 hover:border-cyan-400/30 focus:border-cyan-400 focus:shadow-[0_0_16px_rgba(0,240,255,0.25)] rounded-full px-5 py-2.5 sm:py-3 text-base sm:text-sm text-white font-semibold focus:outline-none transition-all duration-200"
+              />
             </div>
             <p className="text-[11px] text-slate-500 mt-1.5 pl-1">
               No account required. Instant anonymous access.
