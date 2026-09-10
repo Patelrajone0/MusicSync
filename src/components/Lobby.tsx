@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Sparkles,
   ArrowRight,
   User as UserIcon,
 } from 'lucide-react';
@@ -174,23 +173,13 @@ export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' 
             <button
               onClick={handleCreateRoom}
               disabled={isCreating || isJoining}
-              className="w-full p-1.5 pl-2.5 pr-6 rounded-full bg-gradient-to-r from-cyan-400 via-sky-400 to-cyan-300 hover:brightness-105 active:scale-[0.98] text-black font-extrabold text-sm shadow-[0_0_25px_rgba(0,240,255,0.45)] hover:shadow-[0_0_35px_rgba(0,240,255,0.8)] transition-all duration-200 flex items-center justify-center gap-3 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed group/create"
+              className="w-full py-3.5 px-6 rounded-full bg-gradient-to-r from-cyan-400 via-sky-400 to-cyan-300 hover:brightness-105 active:scale-[0.98] text-black font-extrabold text-sm shadow-[0_0_25px_rgba(0,240,255,0.45)] hover:shadow-[0_0_35px_rgba(0,240,255,0.8)] transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              {isCreating ? (
-                <div className="relative w-8 h-8 rounded-full p-[1.5px] bg-gradient-to-tr from-cyan-200 via-white to-fuchsia-400 shadow-[0_0_8px_rgba(0,0,0,0.3)] shrink-0 flex items-center justify-center">
-                  <div className="w-full h-full rounded-full bg-dark-950 flex items-center justify-center">
-                    <div className="w-4 h-4 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
-                  </div>
-                </div>
-              ) : (
-                <div className="relative w-8 h-8 rounded-full p-[1.5px] bg-gradient-to-tr from-cyan-200 via-white to-fuchsia-400 shadow-[0_0_10px_rgba(0,0,0,0.3)] shrink-0 flex items-center justify-center group-hover/create:scale-105 transition-transform duration-200">
-                  <div className="w-full h-full rounded-full bg-dark-950 flex items-center justify-center text-cyan-400">
-                    <Sparkles className="w-4 h-4 fill-cyan-400" />
-                  </div>
-                </div>
+              {isCreating && (
+                <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin shrink-0" />
               )}
               <span className="font-black tracking-tight text-sm text-black">
-                {isCreating ? 'Creating Party Room...' : 'Create New Party Room'}
+                {isCreating ? 'Creating Music Room...' : 'Create New Music Room'}
               </span>
             </button>
           </div>
