@@ -280,10 +280,13 @@ export function App() {
     const handleMasterVolumeUpdated = (data: { volume: number; setBy: string }) => {
       setMasterVolume(data.volume);
       syncEngine.setVolume(data.volume);
-      setMasterVolumeNotice(data);
-      setTimeout(() => {
-        setMasterVolumeNotice((prev) => (prev?.volume === data.volume ? null : prev));
-      }, 3500);
+      // Only show the floating notice if someone else adjusted the master volume
+      if (!currentUser?.name || data.setBy !== currentUser.name) {
+        setMasterVolumeNotice(data);
+        setTimeout(() => {
+          setMasterVolumeNotice((prev) => (prev?.volume === data.volume ? null : prev));
+        }, 3500);
+      }
     };
 
     const handleKickedFromRoom = (data: { reason?: string }) => {

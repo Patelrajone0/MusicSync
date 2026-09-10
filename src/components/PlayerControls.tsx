@@ -413,7 +413,7 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
   const progressPercent = Math.min(100, Math.max(0, (currentPos / trackDuration) * 100));
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-40 bg-dark-950/95 backdrop-blur-2xl border-t border-white/10 px-2.5 py-1.5 sm:px-4 sm:py-2 md:px-8 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))] sm:pb-[calc(0.65rem+env(safe-area-inset-bottom,0px))] select-none w-full max-w-full overflow-hidden">
+    <div className="fixed bottom-0 left-0 right-0 z-40 bg-dark-950/95 backdrop-blur-2xl border-t border-white/10 px-2.5 py-1.5 sm:px-4 sm:py-2 md:px-8 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))] sm:pb-[calc(0.65rem+env(safe-area-inset-bottom,0px))] select-none w-full max-w-full overflow-visible">
       {/* Audio Unlock Warning Banner if browser muted */}
       {!isAudioUnlocked && (
         <div className="max-w-7xl mx-auto mb-2 sm:mb-2.5">
@@ -439,9 +439,19 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
 
       {/* Floating Status Toast for Shuffle / Repeat */}
       {statusToast && (
-        <div className="absolute -top-10 left-1/2 -translate-x-1/2 pointer-events-none z-50 animate-spring-pop whitespace-nowrap bg-dark-900/95 border border-[#1ed760]/40 px-3 py-1 rounded-full shadow-2xl flex items-center gap-1.5 text-xs text-[#1ed760] font-medium max-w-[90vw] truncate">
+        <div className="absolute -top-11 left-1/2 -translate-x-1/2 pointer-events-none z-50 animate-spring-pop whitespace-nowrap bg-dark-900/95 border border-[#1ed760]/40 px-3 py-1 rounded-full shadow-2xl flex items-center gap-1.5 text-xs text-[#1ed760] font-medium max-w-[90vw] truncate">
           <Sparkles className="w-3 h-3 text-[#1ed760] shrink-0" />
           <span className="truncate">{statusToast}</span>
+        </div>
+      )}
+
+      {/* Master Volume Notice HUD Toast (Floats cleanly above player bar, never clipped) */}
+      {masterVolumeNotice && (
+        <div className="absolute -top-11 right-4 sm:right-6 md:right-8 pointer-events-none z-50 animate-spring-pop whitespace-nowrap bg-dark-900/95 backdrop-blur-md border border-amber-500/40 px-3 py-1 rounded-full shadow-2xl flex items-center gap-1.5 text-xs text-amber-300 font-medium">
+          <Crown className="w-3.5 h-3.5 text-amber-400 fill-amber-400 shrink-0" />
+          <span>
+            {masterVolumeNotice.setBy}: {Math.round(masterVolumeNotice.volume * 100)}%
+          </span>
         </div>
       )}
 
@@ -693,16 +703,7 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
         {/* Column 3: Volume Controls & Host Hub (Desktop, Right) */}
         <div className="hidden md:flex items-center justify-end gap-2 sm:gap-3 w-[26%] max-w-xs shrink-0">
           <div className="relative flex items-center gap-1.5 sm:gap-2">
-            
-            {/* Master Volume Notice HUD Toast */}
-            {masterVolumeNotice && (
-              <div className="absolute -top-10 right-0 pointer-events-none z-50 animate-spring-pop whitespace-nowrap bg-dark-900/95 border border-amber-500/40 px-2.5 py-1 rounded-full shadow-2xl flex items-center gap-1.5 text-[11px] text-amber-300 font-medium">
-                <Crown className="w-3 h-3 text-amber-400 fill-amber-400" />
-                <span>
-                  {masterVolumeNotice.setBy}: {Math.round(masterVolumeNotice.volume * 100)}%
-                </span>
-              </div>
-            )}
+
 
             {/* Host Master / Local Switcher Pill */}
             {isHost && (
