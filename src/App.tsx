@@ -622,109 +622,82 @@ export function App() {
           </button>
         </div>
 
-        {/* Section 1: Clean Now Playing + Optional Compact Chat */}
-        <section className={`grid grid-cols-1 ${isChatVisible ? 'lg:grid-cols-12' : ''} gap-3.5 sm:gap-5 items-start`}>
-          {/* Compact Now Playing Card */}
-          <div className={`${isChatVisible ? 'lg:col-span-7' : 'w-full'} bg-dark-900/70 backdrop-blur-xl border border-white/10 hover:border-cyan-400/30 rounded-2xl p-4 sm:p-5 relative flex flex-col justify-between shadow-xl overflow-hidden transition-all duration-300`}>
-            {/* Top Bar */}
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2 px-2.5 py-1 rounded-full bg-dark-950/80 border border-white/10 shadow-sm">
-                <span
-                  className={`w-2 h-2 rounded-full ${
-                    isPlaying
-                      ? 'bg-cyan-400 shadow-[0_0_8px_rgba(0,240,255,0.9)] animate-pulse'
-                      : 'bg-amber-400/80 shadow-[0_0_6px_rgba(251,191,36,0.6)]'
-                  }`}
-                />
-                <span className="text-[10px] sm:text-[11px] font-mono uppercase tracking-wider text-slate-300 font-medium">
-                  {isPlaying ? 'Synced Broadcast' : 'Playback Paused'}
-                </span>
-              </div>
-
-              <button
-                type="button"
-                onClick={handleOpenSearch}
-                className="group text-xs text-cyan-400 hover:text-white font-medium flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-cyan-400/10 hover:bg-cyan-400/20 border border-cyan-400/25 hover:border-cyan-400/50 transition-all duration-200 active:scale-95 cursor-pointer"
-              >
-                <span>Browse Songs</span>
-                <span className="group-hover:translate-x-0.5 transition-transform duration-200">→</span>
-              </button>
-            </div>
-
-            {/* Track Metadata */}
-            {currentTrack ? (
-              <div className="flex items-center justify-between gap-3 sm:gap-4">
-                <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
-                  {/* Circular Artwork with Neon Halo Ring */}
-                  <div className="relative w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full p-[2px] bg-gradient-to-tr from-cyan-400 via-sky-400 to-fuchsia-500 shadow-[0_0_14px_rgba(0,240,255,0.45)] group-hover:shadow-[0_0_20px_rgba(0,240,255,0.7)] shrink-0 flex items-center justify-center transition-shadow duration-300">
-                    <img
-                      src={currentTrack.artwork || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=160'}
-                      alt={currentTrack.title}
-                      className="w-full h-full rounded-full object-cover bg-dark-950 border border-dark-950"
+        {/* Section 1: Now Playing (Rendered when a track is active) + Live Chat */}
+        {(currentTrack || isChatVisible) && (
+          <section className={`grid grid-cols-1 ${isChatVisible && currentTrack ? 'lg:grid-cols-12' : ''} gap-3.5 sm:gap-5 items-start animate-fade-in`}>
+            {/* Now Playing Card - Only displayed when a track is actually active */}
+            {currentTrack && (
+              <div className={`${isChatVisible ? 'lg:col-span-7' : 'w-full'} bg-dark-900/70 backdrop-blur-xl border border-white/10 hover:border-cyan-400/30 rounded-2xl p-3.5 sm:p-4 md:p-5 relative flex flex-col justify-between shadow-xl overflow-hidden transition-all duration-300`}>
+                {/* Top Bar */}
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2 px-2.5 py-1 rounded-full bg-dark-950/80 border border-white/10 shadow-sm">
+                    <span
+                      className={`w-2 h-2 rounded-full ${
+                        isPlaying
+                          ? 'bg-cyan-400 shadow-[0_0_8px_rgba(0,240,255,0.9)] animate-pulse'
+                          : 'bg-amber-400/80 shadow-[0_0_6px_rgba(251,191,36,0.6)]'
+                      }`}
                     />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <span className="text-[10px] font-mono uppercase tracking-wider text-cyan-400 font-semibold">
-                      Now Playing
+                    <span className="text-[10px] sm:text-[11px] font-mono uppercase tracking-wider text-slate-300 font-medium">
+                      {isPlaying ? 'Synced Broadcast' : 'Playback Paused'}
                     </span>
-                    <h2 className="text-sm sm:text-base md:text-lg font-bold text-white truncate tracking-tight">
-                      {cleanTrackTitle(currentTrack.title, currentTrack.artist)}
-                    </h2>
-                    <p className="text-xs md:text-sm text-slate-300 truncate mt-0.5">{currentTrack.artist}</p>
-                    <div className="flex items-center gap-1.5 sm:gap-2 mt-1.5 sm:mt-2 flex-wrap">
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-dark-800 border border-white/5 text-slate-400 font-mono">
-                        {currentTrack.genre || 'Music'}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleOpenSearch}
+                    className="group text-xs text-cyan-400 hover:text-white font-medium flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-cyan-400/10 hover:bg-cyan-400/20 border border-cyan-400/25 hover:border-cyan-400/50 transition-all duration-200 active:scale-95 cursor-pointer"
+                  >
+                    <span>Browse Songs</span>
+                    <span className="group-hover:translate-x-0.5 transition-transform duration-200">→</span>
+                  </button>
+                </div>
+
+                {/* Track Metadata */}
+                <div className="flex items-center justify-between gap-3 sm:gap-4">
+                  <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+                    {/* Circular Artwork with Neon Halo Ring */}
+                    <div className="relative w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full p-[2px] bg-gradient-to-tr from-cyan-400 via-sky-400 to-fuchsia-500 shadow-[0_0_14px_rgba(0,240,255,0.45)] group-hover:shadow-[0_0_20px_rgba(0,240,255,0.7)] shrink-0 flex items-center justify-center transition-shadow duration-300">
+                      <img
+                        src={currentTrack.artwork || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=160'}
+                        alt={currentTrack.title}
+                        className="w-full h-full rounded-full object-cover bg-dark-950 border border-dark-950"
+                      />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <span className="text-[10px] font-mono uppercase tracking-wider text-cyan-400 font-semibold">
+                        Now Playing
                       </span>
-                      <span className="text-[10px] text-slate-500 font-mono truncate max-w-[150px] sm:max-w-none">
-                        Added by {currentTrack.addedBy || 'Host'}
-                      </span>
+                      <h2 className="text-sm sm:text-base md:text-lg font-bold text-white truncate tracking-tight">
+                        {cleanTrackTitle(currentTrack.title, currentTrack.artist)}
+                      </h2>
+                      <p className="text-xs md:text-sm text-slate-300 truncate mt-0.5">{currentTrack.artist}</p>
+                      <div className="flex items-center gap-1.5 sm:gap-2 mt-1.5 sm:mt-2 flex-wrap">
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-dark-800 border border-white/5 text-slate-400 font-mono">
+                          {currentTrack.genre || 'Music'}
+                        </span>
+                        <span className="text-[10px] text-slate-500 font-mono truncate max-w-[150px] sm:max-w-none">
+                          Added by {currentTrack.addedBy || 'Host'}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ) : (
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 p-4 sm:p-5 rounded-2xl bg-dark-950/60 border border-dashed border-cyan-400/30 text-center sm:text-left transition-all duration-200 group/empty">
-                <div className="flex items-center gap-3.5 sm:gap-4">
-                  {/* Circular Music Icon with Neon Halo Ring */}
-                  <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-full p-[2px] bg-gradient-to-tr from-cyan-400 via-sky-400 to-fuchsia-500 shadow-[0_0_14px_rgba(0,240,255,0.45)] group-hover/empty:shadow-[0_0_22px_rgba(0,240,255,0.7)] shrink-0 flex items-center justify-center transition-all duration-300">
-                    <div className="w-full h-full rounded-full bg-dark-950 flex items-center justify-center text-cyan-400 shadow-inner">
-                      <Music2 className="w-5 h-5 sm:w-6 sm:h-6" />
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-sm sm:text-base font-bold text-white tracking-tight">No track currently playing</p>
-                    <p className="text-xs text-slate-400 mt-0.5">Pick a song to play across all synced speakers</p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleOpenSearch}
-                  className="group flex items-center gap-2 p-1 pl-1.5 pr-3.5 sm:pr-4 rounded-full bg-dark-900 hover:bg-dark-850 border border-cyan-400/40 hover:border-cyan-400 text-white text-xs font-bold transition-all duration-200 shadow-[0_0_12px_rgba(0,240,255,0.25)] hover:shadow-[0_0_18px_rgba(0,240,255,0.5)] active:scale-95 shrink-0 cursor-pointer select-none"
-                >
-                  <div className="relative w-[22px] h-[22px] sm:w-[24px] sm:h-[24px] rounded-full p-[1.5px] bg-gradient-to-tr from-cyan-400 via-sky-400 to-fuchsia-500 shadow-[0_0_8px_rgba(0,240,255,0.5)] group-hover:shadow-[0_0_12px_rgba(0,240,255,0.8)] shrink-0 flex items-center justify-center transition-shadow">
-                    <div className="w-full h-full rounded-full bg-cyan-400 flex items-center justify-center text-black font-black">
-                      <Plus className="w-3 h-3 stroke-[2.5]" />
-                    </div>
-                  </div>
-                  <span className="text-white group-hover:text-cyan-300 transition-colors tracking-tight">
-                    Pick a Track
-                  </span>
-                </button>
               </div>
             )}
-          </div>
 
-          {/* Compact Live Chat (Rendered when toggled open) */}
-          {isChatVisible && (
-            <div className="lg:col-span-5 flex flex-col">
-              <LiveChatAndReactions
-                messages={chatMessages}
-                currentUser={currentUser}
-                onHide={() => setIsChatVisible(false)}
-              />
-            </div>
-          )}
-        </section>
+            {/* Compact Live Chat (Rendered when toggled open) */}
+            {isChatVisible && (
+              <div className={`${currentTrack ? 'lg:col-span-5' : 'w-full'} flex flex-col`}>
+                <LiveChatAndReactions
+                  messages={chatMessages}
+                  currentUser={currentUser}
+                  onHide={() => setIsChatVisible(false)}
+                />
+              </div>
+            )}
+          </section>
+        )}
 
         {/* Section 2: Up Next Collaborative Queue (Spacious) */}
         <section className="flex-1">
