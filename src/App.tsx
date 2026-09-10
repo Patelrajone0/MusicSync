@@ -443,7 +443,7 @@ export function App() {
             <img
               src="/musicsync-logo.png"
               alt="MusicSync Logo"
-              className="w-full max-w-[340px] sm:max-w-[420px] md:max-w-[460px] h-auto object-contain relative z-10 drop-shadow-[0_8px_32px_rgba(0,0,0,0.8)]"
+              className="w-full max-w-[340px] sm:max-w-[420px] md:max-w-[460px] h-auto object-contain relative z-10 mix-blend-screen drop-shadow-[0_8px_32px_rgba(0,0,0,0.8)] border-none outline-none"
             />
           </div>
 
