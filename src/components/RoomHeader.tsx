@@ -257,33 +257,33 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
             />
           </button>
 
-          {/* Network Mode Indicator Button (Local Wi-Fi vs Online Cloud) */}
+          {/* Room Type Display Badge & QR Viewer Button */}
           <button
             type="button"
             onClick={() => setShowNetworkModal(true)}
-            className={`group/network flex items-center gap-1.5 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-full border text-xs font-semibold transition-all duration-200 active:scale-95 shrink-0 shadow-lg cursor-pointer select-none ${
+            className={`group/network flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full border text-xs font-semibold transition-all duration-200 active:scale-95 shrink-0 shadow-lg cursor-pointer select-none ${
               networkMode === 'local'
                 ? 'bg-emerald-500/15 hover:bg-emerald-500/25 border-emerald-400/50 text-emerald-300 shadow-[0_0_12px_rgba(52,211,153,0.25)]'
                 : 'bg-cyan-500/15 hover:bg-cyan-500/25 border-cyan-400/50 text-cyan-300 shadow-[0_0_12px_rgba(0,240,255,0.25)]'
             }`}
             title={
               networkMode === 'local'
-                ? '⚡ Local Wi-Fi Mode (<3ms Ping). Click to view Wi-Fi QR code or switch modes'
-                : '🌐 Online Cloud Mode. Click to view Cloud QR code or switch modes'
+                ? 'Local Wi-Fi Room (0ms Delay). Click to view QR code & invite link'
+                : 'Online Cloud Room (Worldwide). Click to view QR code & invite link'
             }
           >
             {networkMode === 'local' ? (
               <>
                 <Wifi className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                <span className="hidden sm:inline">Local (0ms)</span>
-                <span className="sm:hidden font-mono">Local</span>
+                <span className="hidden sm:inline font-bold">Local Wi-Fi Room</span>
+                <span className="sm:hidden font-mono font-bold">Local Room</span>
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.9)] animate-pulse" />
               </>
             ) : (
               <>
                 <Globe className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-                <span className="hidden sm:inline">Online</span>
-                <span className="sm:hidden font-mono">Online</span>
+                <span className="hidden sm:inline font-bold">Online Cloud Room</span>
+                <span className="sm:hidden font-mono font-bold">Cloud Room</span>
                 <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_6px_rgba(0,240,255,0.9)]" />
               </>
             )}
