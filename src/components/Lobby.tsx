@@ -144,20 +144,15 @@ export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' 
 
           {/* Username Input */}
           <div>
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-1.5">
-                <div className="relative w-4 h-4 rounded-full p-[1px] bg-gradient-to-tr from-cyan-400 via-sky-400 to-fuchsia-500 shadow-[0_0_6px_rgba(0,240,255,0.4)] shrink-0 flex items-center justify-center">
-                  <div className="w-full h-full rounded-full bg-dark-950 flex items-center justify-center">
-                    <UserIcon className="w-2.5 h-2.5 text-cyan-400" />
-                  </div>
+            <div className="flex items-center gap-1.5 mb-2">
+              <div className="relative w-4 h-4 rounded-full p-[1px] bg-gradient-to-tr from-cyan-400 via-sky-400 to-fuchsia-500 shadow-[0_0_6px_rgba(0,240,255,0.4)] shrink-0 flex items-center justify-center">
+                <div className="w-full h-full rounded-full bg-dark-950 flex items-center justify-center">
+                  <UserIcon className="w-2.5 h-2.5 text-cyan-400" />
                 </div>
-                <label className="text-[11px] font-bold text-slate-300 uppercase tracking-wider font-mono">
-                  Username
-                </label>
               </div>
-              <span className="text-[10px] font-mono text-cyan-400/80">
-                Anonymous ID
-              </span>
+              <label className="text-[11px] font-bold text-slate-300 uppercase tracking-wider font-mono">
+                Username
+              </label>
             </div>
             <div className="relative w-full">
               <input
