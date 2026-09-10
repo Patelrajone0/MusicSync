@@ -75,6 +75,7 @@ export interface RoomState {
   playbackState: PlaybackState;
   chatMessages: ChatMessage[];
   masterVolume?: number;
+  networkMode?: 'local' | 'online';
 }
 
 export interface SyncStats {

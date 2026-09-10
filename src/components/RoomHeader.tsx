@@ -30,6 +30,8 @@ interface RoomHeaderProps {
   onOpenHistory?: () => void;
   onLeaveRoom?: () => void;
   masterVolume?: number;
+  currentNetworkMode?: NetworkMode;
+  onSetNetworkMode?: (mode: NetworkMode) => void;
 }
 
 export const RoomHeader: React.FC<RoomHeaderProps> = ({
@@ -39,12 +41,22 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
   hostId,
   onLeaveRoom,
   masterVolume,
+  currentNetworkMode,
+  onSetNetworkMode,
 }) => {
+  const isHost = Boolean(
+    currentUser && (
+      currentUser.role === 'host' ||
+      (hostId && currentUser.id === hostId) ||
+      users.some((u) => u.id === currentUser.id && u.role === 'host')
+    )
+  );
   const [copiedCode, setCopiedCode] = useState(false);
   const [showUsersModal, setShowUsersModal] = useState(false);
   const [showExitModal, setShowExitModal] = useState(false);
   const [showNetworkModal, setShowNetworkModal] = useState(false);
   const [networkMode, setNetworkMode] = useState<NetworkMode>(() => {
+    if (currentNetworkMode) return currentNetworkMode;
     try {
       return (localStorage.getItem('musicsync_network_mode') as NetworkMode) || 'local';
     } catch {
@@ -54,11 +66,38 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
   const [userToKick, setUserToKick] = useState<User | null>(null);
   const [userToMakeHost, setUserToMakeHost] = useState<User | null>(null);
 
+  useEffect(() => {
+    if (currentNetworkMode) {
+      setNetworkMode(currentNetworkMode);
+    }
+  }, [currentNetworkMode]);
+
+  useEffect(() => {
+    const handleModeUpdate = ({ mode }: { mode: NetworkMode }) => {
+      if (mode === 'local' || mode === 'online') {
+        setNetworkMode(mode);
+        try {
+          localStorage.setItem('musicsync_network_mode', mode);
+        } catch {}
+      }
+    };
+    socket.on('room_network_mode_updated', handleModeUpdate);
+    return () => {
+      socket.off('room_network_mode_updated', handleModeUpdate);
+    };
+  }, []);
+
   const handleSelectNetworkMode = (mode: NetworkMode) => {
     setNetworkMode(mode);
     try {
       localStorage.setItem('musicsync_network_mode', mode);
     } catch {}
+
+    if (onSetNetworkMode) {
+      onSetNetworkMode(mode);
+    } else if (isHost) {
+      socket.emit('set_room_network_mode', { mode });
+    }
   };
 
   // Listen to Escape key to close modals
@@ -75,14 +114,6 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
-
-  const isHost = Boolean(
-    currentUser && (
-      currentUser.role === 'host' ||
-      (hostId && currentUser.id === hostId) ||
-      users.some((u) => u.id === currentUser.id && u.role === 'host')
-    )
-  );
 
   const handleCopyCode = () => {
     navigator.clipboard.writeText(roomCode);

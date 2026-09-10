@@ -131,7 +131,16 @@ function sortQueue(queue) {
 // ----------------------------------------------------
 // SERVER-SIDE AUTHORITATIVE AUTO-ADVANCE & REPEAT CORE
 // ----------------------------------------------------
-const BUFFER_LEAD_MS = 500; // 500ms lead time gives mobile devices (especially iPhone/Safari) sufficient window to buffer audio before playback starts synchronously
+const BUFFER_LEAD_MS = 350; // 350ms lead time for Online mode
+
+// Helper to determine buffer lead based on room's network mode
+function getBufferLead(room) {
+  // In Local Wi-Fi Mode, zero internet latency allows near-instant (50ms) scheduling
+  if (room && room.networkMode === 'local') {
+    return 50;
+  }
+  return BUFFER_LEAD_MS;
+}
 
 function clearServerAutoAdvance(room) {
   if (room && room.autoAdvanceTimer) {
@@ -157,7 +166,7 @@ function scheduleServerAutoAdvance(roomCode) {
   const remainingSec = Math.max(0, duration - startPosition);
   const finishTime = scheduledServerTime + (remainingSec * 1000);
   // Trigger transition with lead time for seamless gapless crossfade
-  const delayMs = Math.max(200, finishTime - Date.now() - BUFFER_LEAD_MS);
+  const delayMs = Math.max(100, finishTime - Date.now() - getBufferLead(room));
 
   room.autoAdvanceTimer = setTimeout(() => {
     executeAutoAdvance(roomCode);
@@ -207,7 +216,7 @@ function executeAutoAdvance(roomCode) {
 
   // 1. Repeat Single Track Mode
   if (room.repeatMode === 'one') {
-    const scheduledTime = Date.now() + BUFFER_LEAD_MS;
+    const scheduledTime = Date.now() + getBufferLead(room);
     room.playbackState = {
       status: 'playing',
       scheduledServerTime: scheduledTime,
@@ -232,7 +241,7 @@ function executeAutoAdvance(roomCode) {
   const nextTrack = getNextTrack(room);
   if (nextTrack) {
     room.currentTrack = nextTrack;
-    const scheduledTime = Date.now() + BUFFER_LEAD_MS;
+    const scheduledTime = Date.now() + getBufferLead(room);
 
     room.playbackState = {
       status: 'playing',
@@ -279,10 +288,13 @@ app.get('/api/health', (req, res) => {
 function getLocalNetworkIp() {
   try {
     const interfaces = os.networkInterfaces();
+    // Look for genuine LAN private IPv4 address (192.168.x.x, 10.x.x.x, 172.16-31.x.x)
     for (const name of Object.keys(interfaces)) {
       for (const iface of interfaces[name]) {
         if (iface.family === 'IPv4' && !iface.internal) {
-          return iface.address;
+          if (iface.address.startsWith('192.168.') || iface.address.startsWith('10.') || iface.address.startsWith('172.')) {
+            return iface.address;
+          }
         }
       }
     }
@@ -291,13 +303,16 @@ function getLocalNetworkIp() {
 }
 
 app.get('/api/network-info', (req, res) => {
-  const localIp = getLocalNetworkIp();
   const hostHeader = req.headers.host || '';
+  const isLocalhost = hostHeader.includes('localhost') || hostHeader.includes('127.0.0.1');
+  const isCloud = Boolean(process.env.RENDER || (process.env.PORT && process.env.NODE_ENV === 'production') || !isLocalhost);
+  const localIp = !isCloud ? getLocalNetworkIp() : null;
+  const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'http';
   res.json({
+    isCloud,
     localIp,
     serverPort: PORT,
-    localUrl: `http://${localIp}:3000`,
-    onlineUrl: `${req.protocol}://${hostHeader}`,
+    publicUrl: `${protocol}://${hostHeader}`,
   });
 });
 
@@ -1431,6 +1446,7 @@ io.on('connection', (socket) => {
       ],
       masterVolume: 0.9,
       repeatMode: 'off',
+      networkMode: data?.networkMode === 'online' ? 'online' : 'local',
       autoAdvanceTimer: null
     };
 
@@ -1601,7 +1617,7 @@ io.on('connection', (socket) => {
       ? position
       : (room.currentTrack?.id === targetTrack.id ? calculateCurrentTrackPosition(room) : 0);
 
-    const scheduledTime = Date.now() + BUFFER_LEAD_MS;
+    const scheduledTime = Date.now() + getBufferLead(room);
 
     // Keep track in room.queue - NEVER remove it from Up Next!
     const existingIndex = room.queue.findIndex(q =>
@@ -1683,7 +1699,7 @@ io.on('connection', (socket) => {
     const isPlaying = room.playbackState.status === 'playing';
 
     if (isPlaying) {
-      const scheduledTime = Date.now() + BUFFER_LEAD_MS;
+      const scheduledTime = Date.now() + getBufferLead(room);
       room.playbackState.scheduledServerTime = scheduledTime;
       room.playbackState.scheduledPosition = seekPos;
       room.playbackState.lastPausedPosition = seekPos;
@@ -1724,7 +1740,7 @@ io.on('connection', (socket) => {
         nextTrack = room.queue[0];
       }
       room.currentTrack = nextTrack;
-      const scheduledTime = Date.now() + BUFFER_LEAD_MS;
+      const scheduledTime = Date.now() + getBufferLead(room);
 
       room.playbackState = {
         status: 'playing',
@@ -1768,7 +1784,7 @@ io.on('connection', (socket) => {
     if (room.queue.length > 0) {
       const prevTrack = getPreviousTrack(room) || room.queue[0];
       room.currentTrack = prevTrack;
-      const scheduledTime = Date.now() + BUFFER_LEAD_MS;
+      const scheduledTime = Date.now() + getBufferLead(room);
 
       room.playbackState = {
         status: 'playing',
@@ -1809,6 +1825,26 @@ io.on('connection', (socket) => {
 
     io.to(currentRoomCode).emit('master_volume_updated', {
       volume: clamped,
+      setBy: user.name
+    });
+  });
+
+  // 5c. Room Network Mode (Local Wi-Fi vs Online Cloud)
+  socket.on('set_room_network_mode', ({ mode }) => {
+    if (!currentRoomCode) return;
+    const room = rooms.get(currentRoomCode);
+    if (!room) return;
+
+    const user = room.users.get(socket.id);
+    if (!user || user.role !== 'host') {
+      return socket.emit('error_message', 'Only Room Host can switch network mode.');
+    }
+
+    if (mode !== 'local' && mode !== 'online') return;
+    room.networkMode = mode;
+
+    io.to(currentRoomCode).emit('room_network_mode_updated', {
+      mode,
       setBy: user.name
     });
   });
@@ -2295,7 +2331,8 @@ function serializeRoom(room) {
     },
     chatMessages: room.chatMessages,
     masterVolume: typeof room.masterVolume === 'number' ? room.masterVolume : 0.9,
-    repeatMode: room.repeatMode || 'off'
+    repeatMode: room.repeatMode || 'off',
+    networkMode: room.networkMode || 'local'
   };
 }
 

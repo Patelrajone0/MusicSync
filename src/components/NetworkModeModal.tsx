@@ -21,47 +21,62 @@ export const NetworkModeModal: React.FC<NetworkModeModalProps> = ({
   onSelectMode,
 }) => {
   const [selectedTab, setSelectedTab] = useState<NetworkMode>(currentMode);
-  const [localIp, setLocalIp] = useState<string>('192.168.1.1');
+  const [localIp, setLocalIp] = useState<string>('');
   const [localUrl, setLocalUrl] = useState<string>('');
   const [onlineUrl, setOnlineUrl] = useState<string>('');
   const [localQr, setLocalQr] = useState<string>('');
   const [onlineQr, setOnlineQr] = useState<string>('');
   const [copiedLink, setCopiedLink] = useState<string | null>(null);
 
-  // Fetch local network IP from server
+  const isLocalhost =
+    typeof window !== 'undefined' &&
+    (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+
+  // Fetch local network IP from server if on localhost, otherwise use current live origin
   useEffect(() => {
     if (!isOpen) return;
 
-    fetch('/api/network-info')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.localIp) {
-          setLocalIp(data.localIp);
-          const port = window.location.port || '3000';
-          const localHostUrl = `http://${data.localIp}:${port}`;
-          setLocalUrl(localHostUrl);
-        }
-      })
-      .catch(() => {
-        // Fallback to current host if network-info fails
-        const fallback = window.location.origin;
-        setLocalUrl(fallback);
-      });
-
     const currentOrigin = typeof window !== 'undefined' ? window.location.origin : '';
     setOnlineUrl(currentOrigin);
-  }, [isOpen]);
+
+    if (isLocalhost) {
+      fetch('/api/network-info')
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.localIp && data.localIp !== 'localhost' && !data.isCloud) {
+            setLocalIp(data.localIp);
+            const port = window.location.port ? `:${window.location.port}` : '';
+            setLocalUrl(`http://${data.localIp}${port}`);
+          } else {
+            setLocalUrl(currentOrigin);
+          }
+        })
+        .catch(() => {
+          setLocalUrl(currentOrigin);
+        });
+    } else {
+      // On live production deployments, local mode operates over the live domain with 0ms sync
+      setLocalUrl(currentOrigin);
+    }
+  }, [isOpen, isLocalhost]);
+
+  // Construct valid join URLs with mode query parameter
+  const roomParam = roomCode ? `?room=${roomCode}` : '';
+  const localModeParam = roomParam ? `${roomParam}&mode=local` : '?mode=local';
+  const onlineModeParam = roomParam ? `${roomParam}&mode=online` : '?mode=online';
+
+  const basePath = typeof window !== 'undefined' ? (window.location.pathname || '') : '';
+  const currentLocalJoinUrl = localUrl ? `${localUrl}${basePath}${localModeParam}` : '';
+  const currentOnlineJoinUrl = onlineUrl ? `${onlineUrl}${basePath}${onlineModeParam}` : '';
 
   // Generate QR codes for both modes
   useEffect(() => {
     if (!isOpen) return;
 
-    const roomParam = roomCode ? `?room=${roomCode}` : '';
-
     // Generate Local QR
-    const targetLocal = localUrl ? `${localUrl}${roomParam}` : window.location.href;
+    const targetLocal = currentLocalJoinUrl || (typeof window !== 'undefined' ? window.location.href : '');
     QRCode.toDataURL(targetLocal, {
-      width: 190,
+      width: 200,
       margin: 1.5,
       color: { dark: '#040812', light: '#ffffff' },
     })
@@ -69,15 +84,15 @@ export const NetworkModeModal: React.FC<NetworkModeModalProps> = ({
       .catch(() => {});
 
     // Generate Online QR
-    const targetOnline = onlineUrl ? `${onlineUrl}${roomParam}` : window.location.href;
+    const targetOnline = currentOnlineJoinUrl || (typeof window !== 'undefined' ? window.location.href : '');
     QRCode.toDataURL(targetOnline, {
-      width: 190,
+      width: 200,
       margin: 1.5,
       color: { dark: '#040812', light: '#ffffff' },
     })
       .then((url) => setOnlineQr(url))
       .catch(() => {});
-  }, [isOpen, localUrl, onlineUrl, roomCode]);
+  }, [isOpen, currentLocalJoinUrl, currentOnlineJoinUrl]);
 
   useEffect(() => {
     setSelectedTab(currentMode);
@@ -85,11 +100,8 @@ export const NetworkModeModal: React.FC<NetworkModeModalProps> = ({
 
   if (!isOpen || typeof document === 'undefined') return null;
 
-  const roomParam = roomCode ? `?room=${roomCode}` : '';
-  const currentLocalJoinUrl = localUrl ? `${localUrl}${roomParam}` : '';
-  const currentOnlineJoinUrl = onlineUrl ? `${onlineUrl}${roomParam}` : '';
-
   const handleCopy = (url: string, type: string) => {
+    if (!url) return;
     navigator.clipboard.writeText(url);
     setCopiedLink(type);
     setTimeout(() => setCopiedLink(null), 2000);
@@ -230,10 +242,10 @@ export const NetworkModeModal: React.FC<NetworkModeModalProps> = ({
               <div className="flex-1 min-w-0 space-y-2 w-full text-center sm:text-left">
                 <div>
                   <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block">
-                    Local Wi-Fi URL (Host IP: {localIp})
+                    {isLocalhost && localIp ? `Local Wi-Fi URL (Host LAN: ${localIp})` : 'Direct Local-Sync Link (0ms Delay)'}
                   </span>
                   <div className="text-xs font-mono font-bold text-emerald-300 truncate select-all mt-0.5">
-                    {currentLocalJoinUrl || 'Loading local IP...'}
+                    {currentLocalJoinUrl || (typeof window !== 'undefined' ? window.location.href : '')}
                   </div>
                 </div>
                 <button

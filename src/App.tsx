@@ -14,6 +14,7 @@ import {
 } from './types';
 import { Lobby } from './components/Lobby';
 import { RoomHeader } from './components/RoomHeader';
+import { NetworkMode } from './components/NetworkModeModal';
 import { PlayerControls } from './components/PlayerControls';
 import { QueueList } from './components/QueueList';
 import { LiveChatAndReactions } from './components/LiveChatAndReactions';
@@ -121,7 +122,21 @@ export function App() {
     return Boolean(urlRoom || (session && session.roomCode));
   });
 
-  // Query parameter support (?room=CODE)
+  // Network mode state (synchronized across room)
+  const [networkMode, setNetworkMode] = useState<NetworkMode>(() => {
+    try {
+      const urlMode = new URLSearchParams(window.location.search).get('mode') as NetworkMode;
+      if (urlMode === 'local' || urlMode === 'online') {
+        localStorage.setItem('musicsync_network_mode', urlMode);
+        return urlMode;
+      }
+      return (localStorage.getItem('musicsync_network_mode') as NetworkMode) || 'local';
+    } catch {
+      return 'local';
+    }
+  });
+
+  // Query parameter support (?room=CODE, ?mode=local|online)
   const [initialRoomCode, setInitialRoomCode] = useState<string>('');
 
   useEffect(() => {
@@ -129,6 +144,16 @@ export function App() {
     const code = params.get('room');
     if (code) {
       setInitialRoomCode(code.replace(/\D/g, ''));
+    }
+    const modeParam = params.get('mode') as NetworkMode;
+    if (modeParam === 'local' || modeParam === 'online') {
+      setNetworkMode(modeParam);
+      syncEngine.setNetworkMode(modeParam);
+      try {
+        localStorage.setItem('musicsync_network_mode', modeParam);
+      } catch {}
+    } else {
+      syncEngine.setNetworkMode(networkMode);
     }
   }, []);
 
@@ -320,6 +345,16 @@ export function App() {
       handleLeaveRoom();
     };
 
+    const handleRoomNetworkModeUpdated = (data: { mode: NetworkMode }) => {
+      if (data.mode === 'local' || data.mode === 'online') {
+        setNetworkMode(data.mode);
+        syncEngine.setNetworkMode(data.mode);
+        try {
+          localStorage.setItem('musicsync_network_mode', data.mode);
+        } catch {}
+      }
+    };
+
     socket.on('room_users_updated', handleRoomUsersUpdated);
     socket.on('queue_updated', handleQueueUpdated);
     socket.on('playback_scheduled', handlePlaybackScheduled);
@@ -328,6 +363,7 @@ export function App() {
     socket.on('new_chat_message', handleNewChatMessage);
     socket.on('master_volume_updated', handleMasterVolumeUpdated);
     socket.on('kicked_from_room', handleKickedFromRoom);
+    socket.on('room_network_mode_updated', handleRoomNetworkModeUpdated);
 
     return () => {
       socket.off('room_users_updated', handleRoomUsersUpdated);
@@ -338,6 +374,7 @@ export function App() {
       socket.off('new_chat_message', handleNewChatMessage);
       socket.off('master_volume_updated', handleMasterVolumeUpdated);
       socket.off('kicked_from_room', handleKickedFromRoom);
+      socket.off('room_network_mode_updated', handleRoomNetworkModeUpdated);
     };
   }, [roomCode, currentUser]);
 
@@ -358,6 +395,10 @@ export function App() {
     if (typeof room.masterVolume === 'number') {
       setMasterVolume(room.masterVolume);
       syncEngine.setVolume(room.masterVolume);
+    }
+    if (room.networkMode) {
+      setNetworkMode(room.networkMode);
+      syncEngine.setNetworkMode(room.networkMode);
     }
     setIsAudioUnlocked(syncEngine.isUnlocked());
 
@@ -642,6 +683,12 @@ export function App() {
         hostId={hostId}
         onLeaveRoom={handleLeaveRoom}
         masterVolume={masterVolume}
+        currentNetworkMode={networkMode}
+        onSetNetworkMode={(mode) => {
+          setNetworkMode(mode);
+          syncEngine.setNetworkMode(mode);
+          socket.emit('set_room_network_mode', { mode });
+        }}
       />
 
       {/* 2. Main Synchronized Party Content */}

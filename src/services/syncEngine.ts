@@ -27,6 +27,7 @@ class SyncEngine {
   private lastDriftMs: number = 0;
   private lastSeekTime: number = 0;
   private isAutoplayBlocked: boolean = false;
+  private networkMode: 'local' | 'online' = 'local';
 
   // Callbacks
   private onStatsChangeCallbacks: Set<(stats: SyncStats) => void> = new Set();
@@ -272,6 +273,22 @@ class SyncEngine {
     return this.hardwareDelayOffset;
   }
 
+  public setNetworkMode(mode: 'local' | 'online') {
+    this.networkMode = mode;
+    try {
+      localStorage.setItem('musicsync_network_mode', mode);
+    } catch (e) {}
+
+    if (this.isPlaying) {
+      this.startDriftCorrectionLoop();
+    }
+    this.notifyStats();
+  }
+
+  public getNetworkMode(): 'local' | 'online' {
+    return this.networkMode;
+  }
+
   private setupSocketListeners() {
     socket.on('connect', () => {
       this.startNtpSync();
@@ -450,7 +467,7 @@ class SyncEngine {
       }
 
       this.notifyStats();
-    }, 250);
+    }, this.networkMode === 'local' ? 120 : 250);
   }
 
   private clearScheduledTimers() {

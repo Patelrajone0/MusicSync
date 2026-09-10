@@ -358,11 +358,32 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
     }
   }, [masterVolume]);
 
+  const lastVolumeEmitRef = useRef<number>(0);
+  const volumeEmitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const emitMasterVolume = (val: number) => {
+    if (!isHost) return;
+    socket.emit('set_master_volume', { volume: val });
+  };
+
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = parseFloat(e.target.value);
     setVolume(val);
     setIsMuted(val === 0);
     syncEngine.setVolume(val);
+
+    if (isHost) {
+      const now = Date.now();
+      if (now - lastVolumeEmitRef.current > 40) {
+        lastVolumeEmitRef.current = now;
+        emitMasterVolume(val);
+      } else {
+        if (volumeEmitTimerRef.current) clearTimeout(volumeEmitTimerRef.current);
+        volumeEmitTimerRef.current = setTimeout(() => {
+          emitMasterVolume(val);
+        }, 45);
+      }
+    }
   };
 
   const toggleMute = () => {
@@ -371,11 +392,17 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
       setIsMuted(false);
       setVolume(target);
       syncEngine.setVolume(target);
+      if (isHost) {
+        emitMasterVolume(target);
+      }
     } else {
       setPrevVolume(volume);
       setIsMuted(true);
       setVolume(0);
       syncEngine.setVolume(0);
+      if (isHost) {
+        emitMasterVolume(0);
+      }
     }
   };
 
@@ -458,13 +485,32 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
               <p className="text-xs text-slate-400 font-medium">No song playing</p>
             )}
           </div>
-          <div className="flex items-center gap-1 shrink-0">
+          <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
+            {isHost && (
+              <span title="Host Master Volume">
+                <Crown className="w-3 h-3 text-amber-400 fill-amber-400 shrink-0" />
+              </span>
+            )}
             <button
               onClick={toggleMute}
-              className={`p-1.5 rounded-lg text-slate-400 hover:text-white ${isMuted || volume === 0 ? 'text-red-400' : ''}`}
+              className={`p-1.5 rounded-lg text-slate-400 hover:text-white active:scale-95 ${isMuted || volume === 0 ? 'text-red-400' : ''}`}
+              title={isMuted ? 'Unmute' : 'Mute'}
             >
               {isMuted || volume === 0 ? <VolumeX className="w-4 h-4 text-red-400" /> : <Volume2 className="w-4 h-4 text-slate-300" />}
             </button>
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.01"
+              value={isMuted ? 0 : volume}
+              onChange={handleVolumeChange}
+              className={`w-14 sm:w-16 h-1 rounded-lg appearance-none cursor-pointer bg-dark-800 ${isHost ? 'accent-amber-400' : 'accent-[#1ed760]'}`}
+              title={`${isHost ? 'Host Master ' : ''}Volume: ${Math.round((isMuted ? 0 : volume) * 100)}%`}
+            />
+            <span className="text-[10px] font-mono text-slate-400 w-6 text-right select-none tabular-nums">
+              {Math.round((isMuted ? 0 : volume) * 100)}%
+            </span>
           </div>
         </div>
 
@@ -721,6 +767,13 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
               )}
             </button>
 
+            {/* Host Master Volume Indicator Badge */}
+            {isHost && (
+              <span title="Host Master Volume: Controls all connected party devices simultaneously">
+                <Crown className="w-3.5 h-3.5 text-amber-400 fill-amber-400 shrink-0 cursor-help animate-pulse" />
+              </span>
+            )}
+
             {/* Volume Range Slider */}
             <input
               type="range"
@@ -729,12 +782,14 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
               step="0.01"
               value={isMuted ? 0 : volume}
               onChange={handleVolumeChange}
-              className="w-18 lg:w-24 h-1.5 rounded-lg appearance-none cursor-pointer bg-dark-800 accent-[#1ed760]"
-              title={`Volume: ${Math.round((isMuted ? 0 : volume) * 100)}%`}
+              className={`w-18 lg:w-24 h-1.5 rounded-lg appearance-none cursor-pointer bg-dark-800 ${
+                isHost ? 'accent-amber-400' : 'accent-[#1ed760]'
+              }`}
+              title={`${isHost ? 'Host Master ' : ''}Volume: ${Math.round((isMuted ? 0 : volume) * 100)}%`}
             />
 
             {/* Percentage Display */}
-            <span className="text-[11px] font-mono text-slate-400 w-8 text-right select-none">
+            <span className={`text-[11px] font-mono w-8 text-right select-none tabular-nums ${isHost ? 'text-amber-300 font-semibold' : 'text-slate-400'}`}>
               {Math.round((isMuted ? 0 : volume) * 100)}%
             </span>
           </div>
