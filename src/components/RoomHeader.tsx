@@ -14,10 +14,13 @@ import {
   ShieldCheck,
   X,
   LogOut,
-  Loader2
+  Loader2,
+  Wifi,
+  Globe
 } from 'lucide-react';
 import { User, UserRole } from '../types';
 import { socket } from '../services/socket';
+import { NetworkModeModal, NetworkMode } from './NetworkModeModal';
 
 interface RoomHeaderProps {
   roomCode: string;
@@ -40,8 +43,23 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
   const [copiedCode, setCopiedCode] = useState(false);
   const [showUsersModal, setShowUsersModal] = useState(false);
   const [showExitModal, setShowExitModal] = useState(false);
+  const [showNetworkModal, setShowNetworkModal] = useState(false);
+  const [networkMode, setNetworkMode] = useState<NetworkMode>(() => {
+    try {
+      return (localStorage.getItem('musicsync_network_mode') as NetworkMode) || 'local';
+    } catch {
+      return 'local';
+    }
+  });
   const [userToKick, setUserToKick] = useState<User | null>(null);
   const [userToMakeHost, setUserToMakeHost] = useState<User | null>(null);
+
+  const handleSelectNetworkMode = (mode: NetworkMode) => {
+    setNetworkMode(mode);
+    try {
+      localStorage.setItem('musicsync_network_mode', mode);
+    } catch {}
+  };
 
   // Listen to Escape key to close modals
   useEffect(() => {
@@ -49,6 +67,7 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
       if (e.key === 'Escape') {
         setShowUsersModal(false);
         setShowExitModal(false);
+        setShowNetworkModal(false);
         setUserToKick(null);
         setUserToMakeHost(null);
       }
@@ -205,6 +224,38 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
               className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_6px_rgba(52,211,153,0.9)] ml-0.5 shrink-0 hidden xs:inline-block"
               title="Mesh synchronized"
             />
+          </button>
+
+          {/* Network Mode Indicator Button (Local Wi-Fi vs Online Cloud) */}
+          <button
+            type="button"
+            onClick={() => setShowNetworkModal(true)}
+            className={`group/network flex items-center gap-1.5 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-full border text-xs font-semibold transition-all duration-200 active:scale-95 shrink-0 shadow-lg cursor-pointer select-none ${
+              networkMode === 'local'
+                ? 'bg-emerald-500/15 hover:bg-emerald-500/25 border-emerald-400/50 text-emerald-300 shadow-[0_0_12px_rgba(52,211,153,0.25)]'
+                : 'bg-cyan-500/15 hover:bg-cyan-500/25 border-cyan-400/50 text-cyan-300 shadow-[0_0_12px_rgba(0,240,255,0.25)]'
+            }`}
+            title={
+              networkMode === 'local'
+                ? '⚡ Local Wi-Fi Mode (<3ms Ping). Click to view Wi-Fi QR code or switch modes'
+                : '🌐 Online Cloud Mode. Click to view Cloud QR code or switch modes'
+            }
+          >
+            {networkMode === 'local' ? (
+              <>
+                <Wifi className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                <span className="hidden sm:inline">Local (0ms)</span>
+                <span className="sm:hidden font-mono">Local</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.9)] animate-pulse" />
+              </>
+            ) : (
+              <>
+                <Globe className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                <span className="hidden sm:inline">Online</span>
+                <span className="sm:hidden font-mono">Online</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_6px_rgba(0,240,255,0.9)]" />
+              </>
+            )}
           </button>
 
           {/* Exit Room Button - Matching Cyber Capsule with Neon Accent */}
@@ -624,6 +675,14 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
         </div>,
         document.body
       )}
+      {/* Network Mode Switcher Modal (Local Wi-Fi vs Online Cloud) */}
+      <NetworkModeModal
+        isOpen={showNetworkModal}
+        onClose={() => setShowNetworkModal(false)}
+        roomCode={roomCode}
+        currentMode={networkMode}
+        onSelectMode={handleSelectNetworkMode}
+      />
     </header>
   );
 };

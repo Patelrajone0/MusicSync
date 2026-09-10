@@ -291,9 +291,13 @@ function getLocalNetworkIp() {
 }
 
 app.get('/api/network-info', (req, res) => {
+  const localIp = getLocalNetworkIp();
+  const hostHeader = req.headers.host || '';
   res.json({
-    localIp: getLocalNetworkIp(),
+    localIp,
     serverPort: PORT,
+    localUrl: `http://${localIp}:3000`,
+    onlineUrl: `${req.protocol}://${hostHeader}`,
   });
 });
 
@@ -358,6 +362,8 @@ app.delete('/api/favorites/:trackId', async (req, res) => {
     res.status(500).json({ error: 'Internal server error removing favorite' });
   }
 });
+
+
 
 // Cache resolved SoundCloud media URLs to eliminate round-trip latency on Range requests (crucial for iOS Safari)
 const soundcloudMediaUrlCache = new Map();
