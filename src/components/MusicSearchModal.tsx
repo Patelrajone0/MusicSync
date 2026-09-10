@@ -6,7 +6,6 @@ import {
   Pause,
   X,
   Music,
-  Link,
   Check,
   Disc,
   Flame,
@@ -24,7 +23,7 @@ import {
   Star
 } from 'lucide-react';
 import { Track } from '../types';
-import { searchTracks, getSearchSuggestions, createCustomTrack, cleanTrackTitle, isJunkOrSpamTrack } from '../services/musicApi';
+import { searchTracks, getSearchSuggestions, cleanTrackTitle, isJunkOrSpamTrack } from '../services/musicApi';
 import { userTasteEngine, TasteSummary, HistoryItem } from '../services/userTaste';
 import { socket } from '../services/socket';
 import { syncEngine } from '../services/syncEngine';
@@ -138,15 +137,11 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const isLoadingMoreRef = useRef<boolean>(false);
 
-  // Tabs: search (original songs), mixed (remixes/mashups/non-stop), favorites, history, custom
-  const [activeTab, setActiveTab] = useState<'search' | 'mixed' | 'favorites' | 'history' | 'custom'>('search');
+  // Tabs: search (original songs), mixed (remixes/mashups/non-stop), history
+  const [activeTab, setActiveTab] = useState<'search' | 'mixed' | 'history'>('search');
   const [historyItems, setHistoryItems] = useState<HistoryItem[]>(() => userTasteEngine.getHistory());
   const [historySearchQuery, setHistorySearchQuery] = useState('');
-  const [favoritesSearchQuery, setFavoritesSearchQuery] = useState('');
-  const [customUrl, setCustomUrl] = useState('');
-  const [customTitle, setCustomTitle] = useState('');
-  const [customArtist, setCustomArtist] = useState('');
-  const { favorites, favoriteCount, isFavorite, toggleFavorite } = useFavorites();
+  const { isFavorite, toggleFavorite } = useFavorites();
 
   // Subscribe to taste and history updates
   useEffect(() => {
@@ -188,7 +183,7 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
 
   // Live autocomplete debounced fetch
   useEffect(() => {
-    if (!query.trim() || activeTab === 'history' || activeTab === 'custom' || activeTab === 'favorites') {
+    if (!query.trim() || activeTab === 'history') {
       setAutocompleteSuggestions([]);
       return;
     }
@@ -435,7 +430,7 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
     return () => observer.disconnect();
   }, [hasMore, isLoading, currentOffset, activeTab, query, results.length]);
 
-  const handleTabChange = (tab: 'search' | 'mixed' | 'favorites' | 'history' | 'custom') => {
+  const handleTabChange = (tab: 'search' | 'mixed' | 'history') => {
     setActiveTab(tab);
     stopPreview();
     setQuery('');
@@ -479,19 +474,6 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
         return next;
       });
     }, 2000);
-  };
-
-  const handleAddCustomTrack = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!customUrl.trim()) return;
-    syncEngine.unlockAudio().catch(() => {});
-    const track = createCustomTrack(customUrl, customTitle, customArtist);
-    socket.emit('queue_add', { track });
-    userTasteEngine.recordInteraction(track, 'queued');
-    setCustomUrl('');
-    setCustomTitle('');
-    setCustomArtist('');
-    onClose();
   };
 
   const handleClearAllHistory = () => {
@@ -754,22 +736,6 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
             </span>
           </button>
           <button
-            onClick={() => handleTabChange('favorites')}
-            className={`pb-2 px-3 text-xs font-semibold border-b-2 transition-all whitespace-nowrap shrink-0 flex items-center gap-1.5 ${
-              activeTab === 'favorites'
-                ? 'border-amber-400 text-amber-300 bg-amber-500/10 rounded-t-lg shadow-sm'
-                : 'border-transparent text-amber-400/80 hover:text-amber-300'
-            }`}
-          >
-            <Star className={`w-3.5 h-3.5 ${activeTab === 'favorites' ? 'fill-amber-400 text-amber-400' : 'text-amber-400'}`} />
-            <span>Favorites</span>
-            {favoriteCount > 0 && (
-              <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-amber-500/20 text-amber-300 font-mono font-bold">
-                {favoriteCount}
-              </span>
-            )}
-          </button>
-          <button
             onClick={() => handleTabChange('history')}
             className={`pb-2 px-3 text-xs font-semibold border-b-2 transition-all whitespace-nowrap shrink-0 flex items-center gap-1.5 ${
               activeTab === 'history'
@@ -784,17 +750,6 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
                 {historyItems.length}
               </span>
             )}
-          </button>
-          <button
-            onClick={() => handleTabChange('custom')}
-            className={`pb-2 px-3 text-xs font-semibold border-b-2 transition-all whitespace-nowrap shrink-0 flex items-center gap-1.5 ${
-              activeTab === 'custom'
-                ? 'border-electric-purple text-electric-purple'
-                : 'border-transparent text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            <Link className="w-3.5 h-3.5" />
-            <span>Paste Stream URL</span>
           </button>
         </div>
 
@@ -1343,166 +1298,7 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
           </div>
         )}
 
-        {/* Tab: Saved Favorites */}
-        {activeTab === 'favorites' && (
-          <div className="p-4 flex-1 flex flex-col min-h-0">
-            {/* Top Controls: Search filter within favorites */}
-            <div className="flex items-center gap-2 mb-3">
-              <div className="relative flex-1">
-                <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-slate-400" />
-                <input
-                  type="text"
-                  value={favoritesSearchQuery}
-                  onChange={(e) => setFavoritesSearchQuery(e.target.value)}
-                  placeholder="Filter your saved favorites..."
-                  className="w-full bg-dark-950 border border-white/10 rounded-xl pl-9 pr-8 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-400 transition-colors"
-                />
-                {favoritesSearchQuery && (
-                  <button
-                    onClick={() => setFavoritesSearchQuery('')}
-                    className="absolute right-2.5 top-2.5 text-slate-400 hover:text-white"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                )}
-              </div>
-              <div className="px-3 py-1.5 rounded-xl bg-amber-400/10 border border-amber-400/20 text-[11px] font-mono font-semibold text-amber-300 shrink-0">
-                {favorites.length} Starred
-              </div>
-            </div>
 
-            {/* Favorites List */}
-            <div className="flex-1 overflow-y-auto space-y-2 pr-1">
-              {(() => {
-                const queryLower = favoritesSearchQuery.toLowerCase().trim();
-                const filteredFavorites = queryLower
-                  ? favorites.filter(
-                      (t) =>
-                        t.title.toLowerCase().includes(queryLower) ||
-                        t.artist.toLowerCase().includes(queryLower) ||
-                        (t.album && t.album.toLowerCase().includes(queryLower)) ||
-                        (t.language && t.language.toLowerCase().includes(queryLower))
-                    )
-                  : favorites;
-
-                if (filteredFavorites.length === 0) {
-                  return (
-                    <div className="py-12 text-center text-slate-500 border border-dashed border-amber-500/20 bg-amber-500/[0.02] rounded-2xl p-6">
-                      <div className="w-12 h-12 rounded-2xl bg-amber-400/10 border border-amber-400/20 flex items-center justify-center text-amber-400 mb-3 mx-auto shadow-[0_0_20px_rgba(251,191,36,0.15)]">
-                        <Star className="w-6 h-6 fill-amber-400 text-amber-400" />
-                      </div>
-                      <h4 className="text-sm font-bold text-white mb-1">
-                        {favorites.length === 0 ? 'No favorites saved yet' : 'No matching favorites found'}
-                      </h4>
-                      <p className="text-xs text-slate-400 max-w-sm mx-auto mb-4">
-                        {favorites.length === 0
-                          ? 'Star any song using the ★ button next to + Add to permanently save it to your library across browser sessions.'
-                          : 'Try a different search keyword.'}
-                      </p>
-                      {favorites.length === 0 && (
-                        <button
-                          onClick={() => handleTabChange('search')}
-                          className="px-4 py-2 rounded-xl bg-amber-400 text-black font-bold text-xs hover:bg-white transition-all shadow-md active:scale-95"
-                        >
-                          Explore Original Songs
-                        </button>
-                      )}
-                    </div>
-                  );
-                }
-
-                return filteredFavorites.map((track) => {
-                  const isAdded = addedTrackIds.has(track.id);
-                  const isPreviewing = previewTrackId === track.id;
-                  return (
-                    <div
-                      key={track.id}
-                      className="flex items-center justify-between p-2.5 rounded-xl border border-white/5 bg-dark-950/70 hover:border-amber-400/30 transition-all group"
-                    >
-                      <div className="flex items-center gap-3 min-w-0 flex-1">
-                        {/* Artwork */}
-                        <div className="relative w-11 h-11 rounded-lg overflow-hidden bg-dark-800 shrink-0">
-                          <img
-                            src={track.artwork || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=100'}
-                            alt={track.title}
-                            className="w-full h-full object-cover"
-                          />
-                          <button
-                            onClick={() => togglePreview(track)}
-                            title={isPreviewing ? 'Stop Preview' : 'Audition Preview'}
-                            className={`absolute inset-0 flex items-center justify-center bg-black/50 transition-opacity ${
-                              isPreviewing ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-                            }`}
-                          >
-                            {isPreviewing ? (
-                              <Pause className="w-4 h-4 text-electric-cyan fill-current" />
-                            ) : (
-                              <Play className="w-4 h-4 text-white fill-current ml-0.5" />
-                            )}
-                          </button>
-                        </div>
-
-                        {/* Title & Artist */}
-                        <div className="min-w-0 flex-1">
-                          <h4 className="text-xs font-semibold text-white truncate group-hover:text-amber-300 transition-colors">
-                            {cleanTrackTitle(track.title, track.artist)}
-                          </h4>
-                          <p className="text-[11px] text-slate-400 truncate">{track.artist}</p>
-                          <div className="flex items-center gap-1.5 mt-0.5">
-                            {track.languageBadge && (
-                              <span className="text-[10px] px-1.5 py-0.2 rounded-full font-mono bg-dark-800 text-slate-300 border border-white/5">
-                                {track.languageBadge}
-                              </span>
-                            )}
-                            <span className="text-[10px] text-slate-500 font-mono">
-                              {Math.floor(track.duration / 60)}:{(track.duration % 60).toString().padStart(2, '0')}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Actions */}
-                      <div className="flex items-center gap-1.5 shrink-0 ml-2">
-                        {/* Star Button (Click to unstar) */}
-                        <button
-                          type="button"
-                          onClick={() => toggleFavorite(track)}
-                          className="p-1.5 rounded-lg text-amber-400 bg-amber-400/15 hover:bg-rose-500/20 hover:text-rose-400 border border-amber-400/30 transition-all active:scale-90"
-                          title="Remove from Favorites"
-                        >
-                          <Star className="w-3.5 h-3.5 fill-current" />
-                        </button>
-
-                        {/* Add to Queue Button */}
-                        <button
-                          onClick={() => handleAddTrack(track)}
-                          className={`flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all active:scale-95 ${
-                            isAdded
-                              ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
-                              : 'bg-electric-cyan text-black hover:bg-white shadow-md'
-                          }`}
-                          title="Add to room queue"
-                        >
-                          {isAdded ? (
-                            <>
-                              <Check className="w-3.5 h-3.5" />
-                              <span>Added!</span>
-                            </>
-                          ) : (
-                            <>
-                              <Plus className="w-3.5 h-3.5" />
-                              <span>Add</span>
-                            </>
-                          )}
-                        </button>
-                      </div>
-                    </div>
-                  );
-                });
-              })()}
-            </div>
-          </div>
-        )}
 
         {/* Tab 2: Listening History */}
         {activeTab === 'history' && (
@@ -1694,61 +1490,6 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
                 })()
               )}
             </div>
-          </div>
-        )}
-
-        {/* Tab 3: Custom Audio URL Stream */}
-        {activeTab === 'custom' && (
-          <div className="p-6">
-            <form onSubmit={handleAddCustomTrack} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                  Direct Audio Stream URL (MP3, AAC, OGG, WebM, M3U8):
-                </label>
-                <input
-                  type="url"
-                  required
-                  placeholder="https://example.com/audio/my-track.mp3"
-                  value={customUrl}
-                  onChange={(e) => setCustomUrl(e.target.value)}
-                  className="w-full bg-dark-950 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-electric-purple"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">Track Title (Optional):</label>
-                  <input
-                    type="text"
-                    placeholder="E.g. Bass Drop Live"
-                    value={customTitle}
-                    onChange={(e) => setCustomTitle(e.target.value)}
-                    className="w-full bg-dark-950 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-electric-purple"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">Artist (Optional):</label>
-                  <input
-                    type="text"
-                    placeholder="E.g. DJ Shadow"
-                    value={customArtist}
-                    onChange={(e) => setCustomArtist(e.target.value)}
-                    className="w-full bg-dark-950 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-electric-purple"
-                  />
-                </div>
-              </div>
-
-              <div className="p-3 rounded-xl bg-dark-950 border border-white/5 text-xs text-slate-400">
-                <strong className="text-slate-300">Tip:</strong> You can paste any direct web audio stream or hosted sound file. When queued, all connected devices will synchronize playback to this URL simultaneously!
-              </div>
-
-              <button
-                type="submit"
-                className="w-full py-2.5 rounded-xl bg-gradient-to-r from-electric-purple to-electric-cyan text-black font-bold text-sm hover:brightness-110 transition-all shadow-lg active:scale-95"
-              >
-                Add Stream to Room Queue
-              </button>
-            </form>
           </div>
         )}
       </div>
