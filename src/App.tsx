@@ -165,9 +165,13 @@ export function App() {
     const unsubAutoplay = syncEngine.onAutoplayBlocked((blocked) => {
       setIsAudioUnlocked(!blocked);
     });
+    const unsubPlaybackError = syncEngine.onPlaybackError((msg) => {
+      console.warn('[App] Playback notification:', msg);
+    });
     return () => {
       unsubStats();
       unsubAutoplay();
+      unsubPlaybackError();
     };
   }, []);
 
@@ -182,6 +186,9 @@ export function App() {
   useEffect(() => {
     mediaSessionService.setHandlers({
       onPlay: () => {
+        if (currentTrack) {
+          syncEngine.primePlayback(currentTrack, syncEngine.getCurrentPosition());
+        }
         if (!isAudioUnlocked) {
           handleUnlockAudio();
         }
@@ -379,7 +386,7 @@ export function App() {
   }, [roomCode, currentUser]);
 
   const handleUnlockAudio = async () => {
-    const success = await syncEngine.unlockAudio();
+    const success = await syncEngine.unlockAudio(currentTrack, playbackState.scheduledPosition);
     setIsAudioUnlocked(success);
   };
 

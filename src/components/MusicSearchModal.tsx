@@ -506,7 +506,7 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
 
   const handlePlayNow = (track: Track) => {
     stopPreview();
-    syncEngine.unlockAudio().catch(() => {});
+    syncEngine.primePlayback(track, 0);
     socket.emit('request_play', { track, position: 0 });
     userTasteEngine.recordInteraction(track, 'queued');
     setTasteSummary(userTasteEngine.getTasteSummary());

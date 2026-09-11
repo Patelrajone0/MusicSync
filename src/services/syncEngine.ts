@@ -22,6 +22,7 @@ class SyncEngine {
   private scheduledServerTime: number = 0;
   private startPosition: number = 0;
   private isPlaying: boolean = false;
+  private isBuffering: boolean = false;
   private scheduledTimerId: any = null;
   private driftCheckIntervalId: any = null;
   private lastDriftMs: number = 0;
@@ -33,6 +34,8 @@ class SyncEngine {
   private onStatsChangeCallbacks: Set<(stats: SyncStats) => void> = new Set();
   private onPositionUpdateCallbacks: Set<(position: number, duration: number) => void> = new Set();
   private onAutoplayBlockedCallbacks: Set<(blocked: boolean) => void> = new Set();
+  private onBufferingCallbacks: Set<(isBuffering: boolean) => void> = new Set();
+  private onPlaybackErrorCallbacks: Set<(errorMsg: string) => void> = new Set();
   private onTrackEndedCallback: (() => void) | null = null;
 
   constructor() {
@@ -65,10 +68,31 @@ class SyncEngine {
       audio.volume = this.masterVolume;
 
       audio.addEventListener('error', () => {
-        console.error('[AudioEngine] Media error:', audio.error?.message || 'Media stream error', 'code:', audio.error?.code, 'src:', audio.src);
+        const errMsg = audio.error?.message || (audio.error?.code === 4 ? 'Audio source not supported or stream offline' : 'Media stream error');
+        console.error('[AudioEngine] Media error:', errMsg, 'code:', audio.error?.code, 'src:', audio.src);
+        this.isBuffering = false;
+        this.notifyBuffering(false);
+        this.notifyPlaybackError(errMsg);
+      });
+
+      audio.addEventListener('waiting', () => {
+        this.isBuffering = true;
+        this.notifyBuffering(true);
+      });
+
+      audio.addEventListener('playing', () => {
+        this.isBuffering = false;
+        this.notifyBuffering(false);
+      });
+
+      audio.addEventListener('canplay', () => {
+        this.isBuffering = false;
+        this.notifyBuffering(false);
       });
 
       audio.addEventListener('ended', () => {
+        this.isBuffering = false;
+        this.notifyBuffering(false);
         if (this.onTrackEndedCallback) {
           this.onTrackEndedCallback();
         }
@@ -110,38 +134,39 @@ class SyncEngine {
   }
 
   // 2. Unlock Audio on User Gesture (Seamless instant sync on user tap)
-  public async unlockAudio(): Promise<boolean> {
+  public async unlockAudio(targetTrack?: Track | null, position?: number): Promise<boolean> {
     try {
       this.initAudio();
+
+      const trackToUse = targetTrack || this.currentTrack;
 
       if (this.audio) {
         this.audio.volume = this.masterVolume;
 
         // If a track should be currently playing, start it immediately in this user-gesture!
-        if (this.currentTrack) {
-          if (this.loadedAudioUrl !== this.currentTrack.audioUrl) {
-            this.loadedAudioUrl = this.currentTrack.audioUrl;
-            this.audio.src = this.currentTrack.audioUrl;
+        if (trackToUse && trackToUse.audioUrl) {
+          this.currentTrack = trackToUse;
+          if (this.loadedAudioUrl !== trackToUse.audioUrl) {
+            this.loadedAudioUrl = trackToUse.audioUrl;
+            this.audio.src = trackToUse.audioUrl;
             this.audio.load();
           }
 
-          if (this.isPlaying) {
-            const serverNow = this.getServerTime();
-            const elapsedSec = (serverNow - this.scheduledServerTime + this.hardwareDelayOffset) / 1000;
-            const currentPos = Math.max(0, this.startPosition + elapsedSec);
-            this.setTimeSafe(currentPos);
-            await this.audio.play();
-            this.startDriftCorrectionLoop();
-          }
+          const startPos = typeof position === 'number' ? position : this.startPosition;
+          this.setTimeSafe(startPos);
+          this.isPlaying = true;
+          this.isAutoplayBlocked = false;
+          this.notifyAutoplayBlocked(false);
+          await this.audio.play();
+          this.startDriftCorrectionLoop();
         } else {
           // Prime audio element with brief silent buffer so browser marks element as user-activated
           if (!this.audio.src || this.audio.src === '') {
             this.audio.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
-            const p = this.audio.play();
-            if (p !== undefined) {
-              await p.catch(() => {});
-              this.audio.pause();
-            }
+          }
+          const p = this.audio.play();
+          if (p !== undefined) {
+            await p.catch(() => {});
           }
         }
       }
@@ -153,6 +178,58 @@ class SyncEngine {
     } catch (err) {
       console.warn('[AudioEngine] Audio unlock warning:', err);
       return false;
+    }
+  }
+
+  // 2b. Synchronously prime the HTMLAudioElement directly during the user click gesture
+  public primePlayback(track?: Track | null, position: number = 0): boolean {
+    if (typeof window === 'undefined') return false;
+    this.initAudio();
+    if (!this.audio) return false;
+
+    this.isAutoplayBlocked = false;
+    this.notifyAutoplayBlocked(false);
+
+    const targetTrack = track || this.currentTrack;
+    if (targetTrack && targetTrack.audioUrl) {
+      this.currentTrack = targetTrack;
+      if (this.loadedAudioUrl !== targetTrack.audioUrl) {
+        this.loadedAudioUrl = targetTrack.audioUrl;
+        this.audio.src = targetTrack.audioUrl;
+        this.audio.load();
+      }
+      this.setTimeSafe(position);
+      this.isPlaying = true;
+      this.audio.volume = this.masterVolume;
+
+      const playPromise = this.audio.play();
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            this.isAutoplayBlocked = false;
+            this.notifyAutoplayBlocked(false);
+          })
+          .catch((err) => {
+            if (err?.name === 'NotAllowedError' || err?.name === 'AbortError') {
+              console.warn('[AudioEngine] Prime playback blocked by browser policy:', err.message);
+              this.isAutoplayBlocked = true;
+              this.isPlaying = false;
+              this.notifyAutoplayBlocked(true);
+            }
+          });
+      }
+      socket.emit('set_audio_ready', { isReady: true });
+      return true;
+    } else {
+      if (!this.audio.src || this.audio.src === '') {
+        this.audio.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
+      }
+      const p = this.audio.play();
+      if (p !== undefined) {
+        p.catch(() => {});
+      }
+      socket.emit('set_audio_ready', { isReady: true });
+      return true;
     }
   }
 
@@ -344,6 +421,18 @@ class SyncEngine {
     const currentServerTime = this.getServerTime();
     const delayMs = scheduledServerTime - currentServerTime - this.hardwareDelayOffset;
 
+    // If audio is already actively playing from user gesture priming and the delay is minimal (<160ms),
+    // align time directly without pausing or scheduling a redundant setTimeout!
+    if (this.audio && !this.audio.paused && delayMs < 160) {
+      const elapsedSec = (currentServerTime - scheduledServerTime + this.hardwareDelayOffset) / 1000;
+      const expectedPos = Math.max(0, startPosition + elapsedSec);
+      if (Math.abs(this.audio.currentTime - expectedPos) > 0.08) {
+        this.setTimeSafe(expectedPos);
+      }
+      this.startDriftCorrectionLoop();
+      return;
+    }
+
     if (delayMs > 0) {
       this.setTimeSafe(startPosition);
       this.scheduledTimerId = setTimeout(() => {
@@ -396,9 +485,12 @@ class SyncEngine {
           if (err?.name === 'NotAllowedError' || err?.name === 'AbortError') {
             console.warn('[AudioEngine] Autoplay blocked by browser policy:', err.message);
             this.isAutoplayBlocked = true;
+            this.isPlaying = false;
             this.notifyAutoplayBlocked(true);
+            this.notifyPlaybackError('Audio blocked by browser. Tap to enable speaker audio.');
           } else {
             console.warn('[AudioEngine] Playback promise warning:', err);
+            this.notifyPlaybackError(err?.message || 'Playback stream error');
           }
         });
     }
@@ -407,6 +499,8 @@ class SyncEngine {
   public pausePlayback(atPosition?: number) {
     this.clearScheduledTimers();
     this.isPlaying = false;
+    this.isBuffering = false;
+    this.notifyBuffering(false);
     mediaSessionService.setPlaybackState('paused');
 
     if (this.audio) {
@@ -572,6 +666,32 @@ class SyncEngine {
 
   private notifyAutoplayBlocked(blocked: boolean) {
     this.onAutoplayBlockedCallbacks.forEach((cb) => cb(blocked));
+  }
+
+  public onBuffering(cb: (isBuffering: boolean) => void) {
+    this.onBufferingCallbacks.add(cb);
+    return () => {
+      this.onBufferingCallbacks.delete(cb);
+    };
+  }
+
+  private notifyBuffering(isBuffering: boolean) {
+    this.onBufferingCallbacks.forEach((cb) => cb(isBuffering));
+  }
+
+  public onPlaybackError(cb: (errorMsg: string) => void) {
+    this.onPlaybackErrorCallbacks.add(cb);
+    return () => {
+      this.onPlaybackErrorCallbacks.delete(cb);
+    };
+  }
+
+  private notifyPlaybackError(errorMsg: string) {
+    this.onPlaybackErrorCallbacks.forEach((cb) => cb(errorMsg));
+  }
+
+  public getIsBuffering(): boolean {
+    return this.isBuffering;
   }
 
   public isUnlocked(): boolean {

@@ -1802,7 +1802,9 @@ io.on('connection', (socket) => {
 
     // Determine target track
     const targetTrack = track || room.currentTrack || room.queue[0];
-    if (!targetTrack) return;
+    if (!targetTrack) {
+      return socket.emit('error_message', 'No song loaded in queue to play. Please select a song from library.');
+    }
 
     const startPos = (typeof position === 'number' && position >= 0)
       ? position

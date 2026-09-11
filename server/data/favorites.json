@@ -1,8 +1,22 @@
 {
   "users": {
     "user_mttx3qb9_xvn4kpk": {
-      "updatedAt": 1789037097394,
+      "updatedAt": 1789116411083,
       "tracks": [
+        {
+          "id": "local_1789113667674_wcxqn",
+          "title": "Starboy",
+          "artist": "The Weeknd",
+          "album": "",
+          "duration": 228,
+          "genre": "",
+          "language": "",
+          "languageBadge": "",
+          "artwork": "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=160",
+          "audioUrl": "/api/stream/local/local_1789113667674_wcxqn.mp3",
+          "source": "local",
+          "favoritedAt": 1789116411083
+        },
         {
           "id": "sc-590622648",
           "title": "No Lie (feat. Dua Lipa)",
@@ -132,8 +146,23 @@
       ]
     },
     "user_mtvldovb_7cus6gf": {
-      "updatedAt": 1789052430790,
-      "tracks": []
+      "updatedAt": 1789113674340,
+      "tracks": [
+        {
+          "id": "local_1789113667674_wcxqn",
+          "title": "Starboy",
+          "artist": "The Weeknd",
+          "album": "",
+          "duration": 228,
+          "genre": "",
+          "language": "",
+          "languageBadge": "",
+          "artwork": "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=160",
+          "audioUrl": "/api/stream/local/local_1789113667674_wcxqn.mp3",
+          "source": "local",
+          "favoritedAt": 1789113674340
+        }
+      ]
     }
   }
 }

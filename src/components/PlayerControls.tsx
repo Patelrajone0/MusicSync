@@ -60,6 +60,7 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
 
   // Instant optimistic play state for 0ms perceived latency
   const [optimisticPlaying, setOptimisticPlaying] = useState<boolean | null>(null);
+  const [isBuffering, setIsBuffering] = useState<boolean>(false);
   const isPlaying = optimisticPlaying !== null ? optimisticPlaying : playbackState.status === 'playing';
 
   // Shuffle & Repeat state with persistent storage
@@ -90,6 +91,38 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
   useEffect(() => {
     setOptimisticPlaying(null);
   }, [playbackState.status, playbackState.scheduledServerTime]);
+
+  // Safety fallback: if optimisticPlaying was set but authoritative broadcast never arrived, revert after 2.5s
+  useEffect(() => {
+    if (optimisticPlaying === null) return;
+    const timer = setTimeout(() => {
+      setOptimisticPlaying(null);
+    }, 2500);
+    return () => clearTimeout(timer);
+  }, [optimisticPlaying]);
+
+  // Listen for sync engine buffering state
+  useEffect(() => {
+    const unsubBuffering = syncEngine.onBuffering((buffering) => {
+      setIsBuffering(buffering);
+    });
+    return unsubBuffering;
+  }, []);
+
+  // Listen for server error messages to display HUD toast & revert optimistic state
+  useEffect(() => {
+    const handleErrorMessage = (msg: string) => {
+      setStatusToast(msg);
+      setOptimisticPlaying(null);
+      setTimeout(() => {
+        setStatusToast((prev) => (prev === msg ? null : prev));
+      }, 3200);
+    };
+    socket.on('error_message', handleErrorMessage);
+    return () => {
+      socket.off('error_message', handleErrorMessage);
+    };
+  }, []);
 
   // Keep track of active song
   useEffect(() => {
@@ -161,10 +194,25 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
       onUnlockAudio();
     }
 
-    // If no song loaded yet: play queue[0] if available. Never trigger search bar on play/pause!
+    // If no song loaded yet:
     if (!currentTrack) {
-      if (queue && queue.length > 0 && queue[0] && canControl) {
-        socket.emit('request_play', { track: queue[0], position: 0 });
+      if (queue && queue.length > 0 && queue[0]) {
+        if (canControl) {
+          syncEngine.primePlayback(queue[0], 0);
+          setOptimisticPlaying(true);
+          if (socket.connected) {
+            socket.emit('request_play', { track: queue[0], position: 0 });
+          } else {
+            syncEngine.resumeLocalAudio();
+          }
+        } else {
+          setStatusToast('Waiting for room host to start playback');
+          setTimeout(() => setStatusToast((prev) => (prev === 'Waiting for room host to start playback' ? null : prev)), 3000);
+        }
+      } else {
+        setStatusToast('Queue is empty - Select a song to play');
+        setTimeout(() => setStatusToast((prev) => (prev === 'Queue is empty - Select a song to play' ? null : prev)), 3000);
+        onOpenSearch();
       }
       return;
     }
@@ -174,15 +222,26 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
       if (isPlaying) {
         syncEngine.pausePlayback();
         setOptimisticPlaying(false);
+        setStatusToast('Local audio muted');
+        setTimeout(() => setStatusToast((prev) => (prev === 'Local audio muted' ? null : prev)), 2500);
       } else {
-        if (playbackState.status === 'playing' && playbackState.scheduledServerTime > 0) {
-          const serverNow = syncEngine.getServerTime();
-          const elapsed = (serverNow - playbackState.scheduledServerTime) / 1000;
-          const pos = Math.max(0, playbackState.scheduledPosition + elapsed);
-          syncEngine.seekPlayback(pos);
+        if (playbackState.status === 'playing') {
+          if (playbackState.scheduledServerTime > 0) {
+            const serverNow = syncEngine.getServerTime();
+            const elapsed = (serverNow - playbackState.scheduledServerTime) / 1000;
+            const pos = Math.max(0, playbackState.scheduledPosition + elapsed);
+            syncEngine.primePlayback(currentTrack, pos);
+          } else {
+            syncEngine.primePlayback(currentTrack, currentPosition);
+          }
+          syncEngine.resumeLocalAudio();
+          setOptimisticPlaying(true);
+          setStatusToast('Local speaker active');
+          setTimeout(() => setStatusToast((prev) => (prev === 'Local speaker active' ? null : prev)), 2500);
+        } else {
+          setStatusToast('Playback paused by Host');
+          setTimeout(() => setStatusToast((prev) => (prev === 'Playback paused by Host' ? null : prev)), 2500);
         }
-        syncEngine.resumeLocalAudio();
-        setOptimisticPlaying(true);
       }
       return;
     }
@@ -192,6 +251,9 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
     setOptimisticPlaying(nextPlayState);
 
     if (nextPlayState) {
+      // Synchronously prime the audio element directly in this user-gesture event!
+      syncEngine.primePlayback(currentTrack, currentPosition);
+
       if (socket.connected) {
         // Emit to server to schedule synchronized play for all devices at the exact same millisecond
         socket.emit('request_play', { track: currentTrack, position: currentPosition });
@@ -202,7 +264,9 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
     } else {
       // Pause locally immediately for instantaneous feedback, and broadcast exact position to all devices
       syncEngine.pausePlayback(currentPosition);
-      socket.emit('request_pause', { position: currentPosition });
+      if (socket.connected) {
+        socket.emit('request_pause', { position: currentPosition });
+      }
     }
   };
 
@@ -258,14 +322,22 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
   const handlePrevious = () => {
     triggerBtnAnimation('prev');
 
-    if (!canControl) return;
+    if (!canControl) {
+      setStatusToast('Only Host or DJ can control playback');
+      setTimeout(() => setStatusToast((prev) => (prev === 'Only Host or DJ can control playback' ? null : prev)), 2500);
+      return;
+    }
 
     // If more than 3 seconds into the track, rewind to start
     if (currentPosition > 3) {
+      if (currentTrack) {
+        syncEngine.primePlayback(currentTrack, 0);
+      }
       syncEngine.seekPlayback(0);
       setCurrentPosition(0);
       socket.emit('request_seek', { position: 0 });
       if (!isPlaying && currentTrack) {
+        setOptimisticPlaying(true);
         socket.emit('request_play', { track: currentTrack, position: 0 });
       }
       return;
@@ -278,13 +350,20 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
   // 3. Next Track / Skip
   const handleSkip = () => {
     triggerBtnAnimation('next');
-    if (!currentTrack && queue && queue.length > 0 && queue[0]) {
-      if (canControl) {
-        socket.emit('request_play', { track: queue[0], position: 0 });
-      }
+    if (!canControl) {
+      setStatusToast('Only Host or DJ can skip songs');
+      setTimeout(() => setStatusToast((prev) => (prev === 'Only Host or DJ can skip songs' ? null : prev)), 2500);
       return;
     }
-    if (!canControl) return;
+    if (!currentTrack && queue && queue.length > 0 && queue[0]) {
+      syncEngine.primePlayback(queue[0], 0);
+      setOptimisticPlaying(true);
+      socket.emit('request_play', { track: queue[0], position: 0 });
+      return;
+    }
+    if (queue && queue.length > 0 && queue[0]) {
+      syncEngine.primePlayback(queue[0], 0);
+    }
     socket.emit('request_skip');
   };
 
@@ -611,12 +690,14 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
             <button
               type="button"
               onClick={handleTogglePlay}
-              className={`ctrl-btn ctrl-btn-play w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-white text-black flex items-center justify-center shadow-lg shadow-white/10 cursor-pointer active:scale-95 transition-transform ${
+              className={`ctrl-btn ctrl-btn-play relative w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-white text-black flex items-center justify-center shadow-lg shadow-white/10 cursor-pointer active:scale-95 transition-transform ${
                 animatingBtn === 'play' ? 'animate-spring-pop' : ''
               }`}
               title={isPlaying ? 'Pause' : 'Play'}
             >
-              {isPlaying ? (
+              {isBuffering && isPlaying ? (
+                <div className="w-5 h-5 border-2 border-black/25 border-t-black rounded-full animate-spin" />
+              ) : isPlaying ? (
                 <Pause className="w-5 h-5 fill-black text-black" />
               ) : (
                 <Play className="w-5 h-5 fill-black text-black ml-0.5" />

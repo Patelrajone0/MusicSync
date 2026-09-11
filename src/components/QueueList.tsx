@@ -43,7 +43,7 @@ export const QueueList: React.FC<QueueListProps> = ({
 
   const handleForcePlay = (track: Track) => {
     if (!canControl) return;
-    syncEngine.unlockAudio().catch(() => {});
+    syncEngine.primePlayback(track, 0);
     socket.emit('request_play', { track, position: 0 });
   };
 

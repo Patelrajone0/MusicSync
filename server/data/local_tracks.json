@@ -1,1 +1,14 @@
-[]
+[
+  {
+    "id": "local_1789113667674_wcxqn",
+    "title": "Starboy",
+    "artist": "The Weeknd",
+    "duration": 228,
+    "artwork": "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=160",
+    "audioUrl": "/api/stream/local/local_1789113667674_wcxqn.mp3",
+    "source": "local",
+    "fileSize": 9102838,
+    "format": "MP3",
+    "uploadedAt": 1789113667722
+  }
+]
