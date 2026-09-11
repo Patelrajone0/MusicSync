@@ -144,7 +144,6 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
   // Tabs: search (original songs), mixed (remixes/mashups/non-stop), history, local (device import)
   const [activeTab, setActiveTab] = useState<'search' | 'mixed' | 'history' | 'local'>('search');
   const [historyItems, setHistoryItems] = useState<HistoryItem[]>(() => userTasteEngine.getHistory());
-  const [historySearchQuery, setHistorySearchQuery] = useState('');
   const { isFavorite, toggleFavorite } = useFavorites();
 
   // Local music import state
@@ -1365,42 +1364,26 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
 
 
 
-        {/* Tab 2: Listening History */}
+        {/* Tab 3: Listening History */}
         {activeTab === 'history' && (
           <div className="p-4 flex-1 flex flex-col min-h-0">
-            {/* Top Controls: Search filter & Clear History */}
-            <div className="flex items-center gap-2 mb-3">
-              <div className="relative flex-1">
-                <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-slate-400" />
-                <input
-                  type="text"
-                  value={historySearchQuery}
-                  onChange={(e) => setHistorySearchQuery(e.target.value)}
-                  placeholder="Filter history by song, artist, or language..."
-                  className="w-full bg-dark-950 border border-white/10 rounded-xl pl-9 pr-8 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-electric-cyan transition-colors"
-                />
-                {historySearchQuery && (
-                  <button
-                    onClick={() => setHistorySearchQuery('')}
-                    className="absolute right-2.5 top-2 text-slate-400 hover:text-white"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                )}
-              </div>
-
-              {historyItems.length > 0 && (
+            {/* Top Bar: Clear History button if history exists */}
+            {historyItems.length > 0 && (
+              <div className="flex items-center justify-between gap-2 mb-3">
+                <span className="text-xs text-slate-400 font-mono">
+                  {historyItems.length} {historyItems.length === 1 ? 'song' : 'songs'} in playback history
+                </span>
                 <button
                   type="button"
                   onClick={handleClearAllHistory}
-                  className="px-3 py-2 bg-dark-950 hover:bg-red-500/10 border border-white/10 hover:border-red-500/30 text-xs text-slate-400 hover:text-red-400 rounded-xl transition-all flex items-center gap-1.5 shrink-0"
+                  className="px-3 py-1.5 bg-dark-950 hover:bg-red-500/10 border border-white/10 hover:border-red-500/30 text-xs text-slate-400 hover:text-red-400 rounded-xl transition-all flex items-center gap-1.5 shrink-0 cursor-pointer"
                   title="Clear all playback history"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Clear</span>
+                  <span>Clear History</span>
                 </button>
-              )}
-            </div>
+              </div>
+            )}
 
             {/* History List */}
             <div
@@ -1419,29 +1402,10 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
                   </p>
                 </div>
               ) : (
-                (() => {
-                  const filtered = historyItems.filter((item) => {
-                    if (!historySearchQuery.trim()) return true;
-                    const q = historySearchQuery.toLowerCase();
-                    return (
-                      item.track.title.toLowerCase().includes(q) ||
-                      item.track.artist.toLowerCase().includes(q) ||
-                      (item.track.language && item.track.language.toLowerCase().includes(q))
-                    );
-                  });
-
-                  if (filtered.length === 0) {
-                    return (
-                      <div className="text-center py-12 text-slate-500 text-xs">
-                        No songs in history matching "{historySearchQuery}".
-                      </div>
-                    );
-                  }
-
-                  return filtered.map((item) => {
-                    const { track } = item;
-                    const isAdded = addedTrackIds.has(track.id);
-                    const isPreviewing = previewTrackId === track.id;
+                historyItems.map((item) => {
+                  const { track } = item;
+                  const isAdded = addedTrackIds.has(track.id);
+                  const isPreviewing = previewTrackId === track.id;
 
                     return (
                       <div
@@ -1551,8 +1515,7 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
                         </div>
                       </div>
                     );
-                  });
-                })()
+                  })
               )}
             </div>
           </div>
