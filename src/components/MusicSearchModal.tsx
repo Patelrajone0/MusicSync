@@ -22,7 +22,6 @@ import {
   Trash2,
   Star,
   HardDrive,
-  FolderUp,
   FileAudio,
   Upload
 } from 'lucide-react';
@@ -154,7 +153,6 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
   const [uploadProgress, setUploadProgress] = useState<LocalUploadProgress>(() => localMusicService.getUploadState());
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const folderInputRef = useRef<HTMLInputElement | null>(null);
 
   // Subscribe to taste, history, and local tracks updates
   useEffect(() => {
@@ -1577,21 +1575,6 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
                 }
               }}
             />
-            <input
-              ref={folderInputRef}
-              type="file"
-              // @ts-ignore
-              webkitdirectory=""
-              directory=""
-              multiple
-              className="hidden"
-              onChange={(e) => {
-                if (e.target.files && e.target.files.length > 0) {
-                  localMusicService.importFiles(e.target.files);
-                  e.target.value = '';
-                }
-              }}
-            />
 
             {/* Top Toolbar: Search filter, File buttons, Clear All */}
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 mb-3">
@@ -1619,12 +1602,12 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
               <div className="flex items-center gap-2 shrink-0">
                 <button
                   type="button"
-                  onClick={() => folderInputRef.current?.click()}
+                  onClick={() => fileInputRef.current?.click()}
                   className="px-3.5 py-2 rounded-xl bg-dark-950 hover:bg-white/5 border border-white/10 hover:border-cyan-400/40 text-slate-200 hover:text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer shadow-sm"
-                  title="Import an entire folder of music from your device"
+                  title="Import audio song file from your device (.mp3, .wav, .flac, .m4a)"
                 >
-                  <FolderUp className="w-3.5 h-3.5 text-cyan-400" />
-                  <span>Import Folder</span>
+                  <FileAudio className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>Import Song</span>
                 </button>
 
                 {localTracks.length > 0 && (
