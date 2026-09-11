@@ -20,7 +20,11 @@ import {
   History,
   Clock,
   Trash2,
-  Star
+  Star,
+  HardDrive,
+  FolderUp,
+  FileAudio,
+  Upload
 } from 'lucide-react';
 import { Track } from '../types';
 import { searchTracks, getSearchSuggestions, cleanTrackTitle, isJunkOrSpamTrack } from '../services/musicApi';
@@ -28,6 +32,7 @@ import { userTasteEngine, TasteSummary, HistoryItem } from '../services/userTast
 import { socket } from '../services/socket';
 import { syncEngine } from '../services/syncEngine';
 import { useFavorites } from '../services/favoritesService';
+import { localMusicService, LocalUploadProgress } from '../services/localMusicService';
 
 function formatTimeAgo(timestamp: number): string {
   const diff = Date.now() - timestamp;
@@ -137,19 +142,37 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const isLoadingMoreRef = useRef<boolean>(false);
 
-  // Tabs: search (original songs), mixed (remixes/mashups/non-stop), history
-  const [activeTab, setActiveTab] = useState<'search' | 'mixed' | 'history'>('search');
+  // Tabs: search (original songs), mixed (remixes/mashups/non-stop), history, local (device import)
+  const [activeTab, setActiveTab] = useState<'search' | 'mixed' | 'history' | 'local'>('search');
   const [historyItems, setHistoryItems] = useState<HistoryItem[]>(() => userTasteEngine.getHistory());
   const [historySearchQuery, setHistorySearchQuery] = useState('');
   const { isFavorite, toggleFavorite } = useFavorites();
 
-  // Subscribe to taste and history updates
+  // Local music import state
+  const [localTracks, setLocalTracks] = useState<Track[]>(() => localMusicService.getTracks());
+  const [localSearchQuery, setLocalSearchQuery] = useState('');
+  const [uploadProgress, setUploadProgress] = useState<LocalUploadProgress>(() => localMusicService.getUploadState());
+  const [isDragOver, setIsDragOver] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const folderInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Subscribe to taste, history, and local tracks updates
   useEffect(() => {
     const unsub = userTasteEngine.subscribe(() => {
       setHistoryItems(userTasteEngine.getHistory());
       setTasteSummary(userTasteEngine.getTasteSummary());
     });
-    return unsub;
+    const unsubLocal = localMusicService.subscribe(() => {
+      setLocalTracks(localMusicService.getTracks());
+    });
+    const unsubUpload = localMusicService.subscribeUpload((p) => {
+      setUploadProgress(p);
+    });
+    return () => {
+      unsub();
+      unsubLocal();
+      unsubUpload();
+    };
   }, []);
 
   // Initial load when modal opens, inline mounts, or filter/tab changes
@@ -183,7 +206,7 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
 
   // Live autocomplete debounced fetch
   useEffect(() => {
-    if (!query.trim() || activeTab === 'history') {
+    if (!query.trim() || activeTab === 'history' || activeTab === 'local') {
       setAutocompleteSuggestions([]);
       return;
     }
@@ -430,7 +453,7 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
     return () => observer.disconnect();
   }, [hasMore, isLoading, currentOffset, activeTab, query, results.length]);
 
-  const handleTabChange = (tab: 'search' | 'mixed' | 'history') => {
+  const handleTabChange = (tab: 'search' | 'mixed' | 'history' | 'local') => {
     setActiveTab(tab);
     stopPreview();
     setQuery('');
@@ -481,6 +504,28 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
       userTasteEngine.clearHistory();
       setHistoryItems([]);
       stopPreview();
+    }
+  };
+
+  const handlePlayNow = (track: Track) => {
+    stopPreview();
+    syncEngine.unlockAudio().catch(() => {});
+    socket.emit('request_play', { track, position: 0 });
+    userTasteEngine.recordInteraction(track, 'queued');
+    setTasteSummary(userTasteEngine.getTasteSummary());
+  };
+
+  const handleDeleteLocalTrack = async (trackId: string) => {
+    if (previewTrackId === trackId) {
+      stopPreview();
+    }
+    await localMusicService.deleteTrack(trackId);
+  };
+
+  const handleClearAllLocalTracks = async () => {
+    if (window.confirm('Are you sure you want to delete all imported local songs?')) {
+      stopPreview();
+      await localMusicService.clearAllTracks();
     }
   };
 
@@ -748,6 +793,28 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
             {historyItems.length > 0 && (
               <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-electric-cyan/20 text-electric-cyan font-mono font-bold">
                 {historyItems.length}
+              </span>
+            )}
+          </button>
+
+          {/* Local Music Import (Directly Beside Listening History) */}
+          <button
+            onClick={() => handleTabChange('local')}
+            className={`pb-2 px-3 text-xs font-bold border-b-2 transition-all whitespace-nowrap shrink-0 flex items-center gap-1.5 ${
+              activeTab === 'local'
+                ? 'border-cyan-400 text-cyan-300 bg-cyan-500/10 rounded-t-lg shadow-sm'
+                : 'border-transparent text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <HardDrive className="w-3.5 h-3.5 text-cyan-400" />
+            <span>Local Music Import</span>
+            {localTracks.length > 0 ? (
+              <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-cyan-400/20 text-cyan-300 font-mono font-bold">
+                {localTracks.length}
+              </span>
+            ) : (
+              <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-white/5 text-slate-400 font-mono">
+                Device
               </span>
             )}
           </button>
@@ -1480,6 +1547,338 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
                             onClick={() => handleRemoveHistoryItem(item.id)}
                             className="p-1.5 text-slate-500 hover:text-red-400 hover:bg-white/5 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
                             title="Remove from history"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  });
+                })()
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Tab 4: Local Music Import */}
+        {activeTab === 'local' && (
+          <div className="p-4 flex-1 flex flex-col min-h-0">
+            {/* Hidden native file inputs */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept="audio/*,.mp3,.wav,.flac,.m4a,.aac,.ogg,.opus,.wma"
+              className="hidden"
+              onChange={(e) => {
+                if (e.target.files && e.target.files.length > 0) {
+                  localMusicService.importFiles(e.target.files);
+                  e.target.value = '';
+                }
+              }}
+            />
+            <input
+              ref={folderInputRef}
+              type="file"
+              // @ts-ignore
+              webkitdirectory=""
+              directory=""
+              multiple
+              className="hidden"
+              onChange={(e) => {
+                if (e.target.files && e.target.files.length > 0) {
+                  localMusicService.importFiles(e.target.files);
+                  e.target.value = '';
+                }
+              }}
+            />
+
+            {/* Top Toolbar: Search filter, File buttons, Clear All */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 mb-3">
+              {/* Filter Search Box */}
+              <div className="relative flex-1">
+                <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-slate-400" />
+                <input
+                  type="text"
+                  value={localSearchQuery}
+                  onChange={(e) => setLocalSearchQuery(e.target.value)}
+                  placeholder="Filter local music by title, artist, or format..."
+                  className="w-full bg-dark-950 border border-white/10 rounded-xl pl-9 pr-8 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 transition-colors"
+                />
+                {localSearchQuery && (
+                  <button
+                    onClick={() => setLocalSearchQuery('')}
+                    className="absolute right-2.5 top-2 text-slate-400 hover:text-white"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex-1 sm:flex-none px-3.5 py-2 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-black font-bold text-xs flex items-center justify-center gap-1.5 shadow-[0_0_12px_rgba(0,240,255,0.25)] transition-all active:scale-95 cursor-pointer"
+                  title="Select individual audio files from your device"
+                >
+                  <Upload className="w-3.5 h-3.5 stroke-[2.5]" />
+                  <span>Choose Files</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => folderInputRef.current?.click()}
+                  className="flex-1 sm:flex-none px-3 py-2 rounded-xl bg-dark-950 hover:bg-white/5 border border-white/10 hover:border-cyan-400/40 text-slate-200 hover:text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer"
+                  title="Import an entire folder of music from your device"
+                >
+                  <FolderUp className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>Import Folder</span>
+                </button>
+
+                {localTracks.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleClearAllLocalTracks}
+                    className="px-2.5 py-2 bg-dark-950 hover:bg-red-500/10 border border-white/10 hover:border-red-500/30 text-xs text-slate-400 hover:text-red-400 rounded-xl transition-all flex items-center gap-1 shrink-0 cursor-pointer"
+                    title="Remove all imported local files"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span className="hidden md:inline">Clear</span>
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Drag & Drop Import Dropzone */}
+            <div
+              onDragOver={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsDragOver(true);
+              }}
+              onDragLeave={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsDragOver(false);
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsDragOver(false);
+                if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                  localMusicService.importFiles(e.dataTransfer.files);
+                }
+              }}
+              onClick={() => fileInputRef.current?.click()}
+              className={`mb-3.5 p-3.5 sm:p-4 rounded-2xl border-2 border-dashed transition-all duration-300 flex flex-col items-center justify-center text-center cursor-pointer select-none ${
+                isDragOver
+                  ? 'border-cyan-400 bg-cyan-500/10 shadow-[0_0_25px_rgba(0,240,255,0.3)] scale-[1.01]'
+                  : 'border-white/10 hover:border-cyan-400/40 bg-dark-950/60 hover:bg-dark-950/90'
+              }`}
+            >
+              <div className="flex items-center gap-2 text-cyan-400 mb-1">
+                <HardDrive className={`w-4 h-4 sm:w-5 sm:h-5 ${isDragOver ? 'animate-bounce' : ''}`} />
+                <span className="text-xs sm:text-sm font-bold text-white">
+                  {isDragOver ? 'Drop your audio files here!' : 'Drop audio files or click to browse from device'}
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-400 max-w-md leading-relaxed">
+                Supports <strong className="text-slate-300 font-mono">MP3, WAV, FLAC, M4A, AAC, OGG</strong>. Tracks upload to room server with byte-range streaming for synchronized room playback!
+              </p>
+            </div>
+
+            {/* Upload Progress Indicator Banner */}
+            {uploadProgress.isUploading && (
+              <div className="mb-3 p-3 rounded-xl bg-cyan-950/40 border border-cyan-400/30 text-xs shadow-md animate-fade-in">
+                <div className="flex items-center justify-between text-cyan-300 mb-1.5 font-mono text-[11px]">
+                  <div className="flex items-center gap-2 truncate">
+                    <Loader2 className="w-3.5 h-3.5 animate-spin text-cyan-400 shrink-0" />
+                    <span className="truncate">
+                      Uploading: <strong className="text-white">{uploadProgress.currentFile || 'audio file'}</strong>
+                    </span>
+                  </div>
+                  <span className="font-bold text-cyan-400 shrink-0 ml-2">
+                    {uploadProgress.progress}% ({uploadProgress.completedFiles}/{uploadProgress.totalFiles})
+                  </span>
+                </div>
+                <div className="w-full bg-dark-950 rounded-full h-1.5 overflow-hidden">
+                  <div
+                    className="bg-gradient-to-r from-cyan-400 via-sky-400 to-fuchsia-500 h-full rounded-full transition-all duration-200"
+                    style={{ width: `${Math.max(5, uploadProgress.progress)}%` }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Local Tracks List */}
+            <div
+              className={`overflow-y-auto space-y-2 pr-1 relative ${
+                inline ? 'max-h-[500px] min-h-[260px]' : 'flex-1 min-h-0'
+              }`}
+            >
+              {localTracks.length === 0 ? (
+                <div className="text-center py-12 px-6 border border-dashed border-white/5 rounded-xl bg-dark-950/40">
+                  <div className="inline-flex items-center justify-center p-3 rounded-full bg-cyan-400/10 text-cyan-400 mb-3 shadow-[0_0_14px_rgba(0,240,255,0.2)]">
+                    <HardDrive className="w-6 h-6" />
+                  </div>
+                  <h4 className="text-sm font-semibold text-white mb-1">No Local Music Imported Yet</h4>
+                  <p className="text-xs text-slate-400 max-w-sm mx-auto mb-4 leading-relaxed">
+                    Import your own MP3s or music folders from your computer or phone. They will be shared and synchronized with everyone in this room!
+                  </p>
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="px-4 py-2 rounded-full bg-cyan-400 text-black font-bold text-xs hover:bg-white transition-all shadow-md active:scale-95 inline-flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Upload className="w-3.5 h-3.5 stroke-[2.5]" />
+                    <span>Choose Music Files</span>
+                  </button>
+                </div>
+              ) : (
+                (() => {
+                  const filtered = localTracks.filter((track) => {
+                    if (!localSearchQuery.trim()) return true;
+                    const q = localSearchQuery.toLowerCase();
+                    return (
+                      track.title.toLowerCase().includes(q) ||
+                      track.artist.toLowerCase().includes(q) ||
+                      (track.format && track.format.toLowerCase().includes(q))
+                    );
+                  });
+
+                  if (filtered.length === 0) {
+                    return (
+                      <div className="text-center py-12 text-slate-500 text-xs">
+                        No local songs matching "{localSearchQuery}".
+                      </div>
+                    );
+                  }
+
+                  return filtered.map((track, idx) => {
+                    const isAdded = addedTrackIds.has(track.id);
+                    const isPreviewing = previewTrackId === track.id;
+                    const isStarred = isFavorite(track.id);
+
+                    return (
+                      <div
+                        key={track.id || `local-${idx}`}
+                        className="flex items-center justify-between p-2.5 rounded-xl bg-dark-950 border border-white/5 hover:border-cyan-400/30 transition-all group shadow-sm"
+                      >
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                          {/* Artwork Thumbnail with Play/Pause Audition Button */}
+                          <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-dark-850 shrink-0 shadow-sm border border-white/10 flex items-center justify-center">
+                            <div className="w-full h-full bg-gradient-to-tr from-cyan-950 via-slate-900 to-fuchsia-950 flex items-center justify-center text-cyan-400">
+                              <FileAudio className="w-6 h-6 stroke-[1.5]" />
+                            </div>
+
+                            <button
+                              onClick={() => togglePreview(track)}
+                              title={isPreviewing ? 'Stop Local Preview' : 'Listen Preview locally (Audition)'}
+                              className={`absolute inset-0 flex items-center justify-center bg-black/60 transition-opacity cursor-pointer ${
+                                isPreviewing ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                              }`}
+                            >
+                              {isPreviewing ? (
+                                <Pause className="w-5 h-5 text-cyan-400 fill-current" />
+                              ) : (
+                                <Play className="w-5 h-5 text-white fill-current ml-0.5" />
+                              )}
+                            </button>
+                          </div>
+
+                          {/* Title, Artist, and Badges */}
+                          <div className="min-w-0 flex-1">
+                            <h4 className="text-xs sm:text-sm font-bold text-white truncate group-hover:text-cyan-300 transition-colors">
+                              {cleanTrackTitle(track.title, track.artist)}
+                            </h4>
+                            <p className="text-[11px] sm:text-xs text-slate-400 truncate">{track.artist}</p>
+
+                            <div className="flex items-center gap-1.5 sm:gap-2 mt-1 flex-wrap text-[10px]">
+                              {track.format && (
+                                <span className="px-1.5 py-0.2 rounded-full font-mono font-bold bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">
+                                  {track.format}
+                                </span>
+                              )}
+
+                              <span className="px-1.5 py-0.2 rounded-full font-mono bg-dark-800 text-slate-300 border border-white/5">
+                                {formatTrackDuration(track.duration)}
+                              </span>
+
+                              {track.fileSize && (
+                                <span className="px-1.5 py-0.2 rounded-full font-mono bg-dark-800 text-slate-400 border border-white/5">
+                                  {(track.fileSize / (1024 * 1024)).toFixed(1)} MB
+                                </span>
+                              )}
+
+                              <span className="text-[10px] text-slate-500 font-mono flex items-center gap-1">
+                                <HardDrive className="w-2.5 h-2.5 text-cyan-400/70" />
+                                <span>Local Device</span>
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                          {/* Star Favorite */}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleFavorite(track);
+                            }}
+                            className={`p-1.5 rounded-lg border transition-all active:scale-90 cursor-pointer ${
+                              isStarred
+                                ? 'bg-amber-400/20 text-amber-400 border-amber-400/40 shadow-[0_0_10px_rgba(251,191,36,0.25)]'
+                                : 'text-slate-400 border-transparent hover:text-amber-300 hover:bg-white/5'
+                            }`}
+                            title={isStarred ? 'Remove from Favorites' : 'Add to Favorites'}
+                          >
+                            <Star className={`w-3.5 h-3.5 ${isStarred ? 'fill-amber-400 text-amber-400' : ''}`} />
+                          </button>
+
+                          {/* Play Now */}
+                          <button
+                            type="button"
+                            onClick={() => handlePlayNow(track)}
+                            className="hidden sm:flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-dark-900 hover:bg-cyan-500/20 text-slate-200 hover:text-cyan-300 border border-white/10 hover:border-cyan-400/40 transition-all active:scale-95 cursor-pointer"
+                            title="Play immediately across the room"
+                          >
+                            <Play className="w-3 h-3 fill-current" />
+                            <span>Play</span>
+                          </button>
+
+                          {/* Add to Queue */}
+                          <button
+                            type="button"
+                            onClick={() => handleAddTrack(track)}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all active:scale-95 cursor-pointer ${
+                              isAdded
+                                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
+                                : 'bg-cyan-400 text-black hover:bg-white shadow-md'
+                            }`}
+                            title="Add to room queue"
+                          >
+                            {isAdded ? (
+                              <>
+                                <Check className="w-3.5 h-3.5" />
+                                <span>Queued!</span>
+                              </>
+                            ) : (
+                              <>
+                                <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+                                <span>Add</span>
+                              </>
+                            )}
+                          </button>
+
+                          {/* Delete Local Track */}
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteLocalTrack(track.id)}
+                            className="p-1.5 text-slate-500 hover:text-red-400 hover:bg-white/5 rounded-lg transition-colors cursor-pointer"
+                            title="Delete this local file from library"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>

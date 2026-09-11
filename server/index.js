@@ -4,6 +4,7 @@ import { Server } from 'socket.io';
 import cors from 'cors';
 import path from 'path';
 import os from 'os';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { Readable } from 'stream';
 import play from 'play-dl';
@@ -485,6 +486,145 @@ app.get('/api/stream/proxy', async (req, res) => {
     console.error('Proxy stream error:', err.message);
     if (!res.headersSent) res.status(500).send('Audio proxy streaming error');
   }
+});
+
+// ----------------------------------------------------
+// LOCAL MUSIC IMPORT & STREAMING SYSTEM
+// ----------------------------------------------------
+const UPLOADS_DIR = path.join(__dirname, 'data', 'uploads');
+const LOCAL_TRACKS_FILE = path.join(__dirname, 'data', 'local_tracks.json');
+
+if (!fs.existsSync(UPLOADS_DIR)) {
+  try {
+    fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+  } catch (err) {
+    console.warn('Failed to create uploads directory:', err.message);
+  }
+}
+
+let localTracks = [];
+try {
+  if (fs.existsSync(LOCAL_TRACKS_FILE)) {
+    const raw = fs.readFileSync(LOCAL_TRACKS_FILE, 'utf-8');
+    localTracks = JSON.parse(raw);
+  }
+} catch (err) {
+  console.warn('Failed to load local_tracks.json:', err.message);
+  localTracks = [];
+}
+
+function saveLocalTracksToDisk() {
+  try {
+    fs.writeFileSync(LOCAL_TRACKS_FILE, JSON.stringify(localTracks, null, 2));
+  } catch (err) {
+    console.warn('Failed to write local_tracks.json:', err.message);
+  }
+}
+
+// 1. Upload Local Audio Track (Direct Disk Stream with 0MB RAM footprint)
+app.post('/api/tracks/local-upload', (req, res) => {
+  try {
+    const rawFilename = req.query.filename ? decodeURIComponent(req.query.filename) : `track_${Date.now()}.mp3`;
+    const ext = path.extname(rawFilename) || '.mp3';
+    const safeTrackId = `local_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    const storedFileName = `${safeTrackId}${ext}`;
+    const targetFilePath = path.join(UPLOADS_DIR, storedFileName);
+
+    const writeStream = fs.createWriteStream(targetFilePath);
+    req.pipe(writeStream);
+
+    writeStream.on('finish', () => {
+      try {
+        const stats = fs.statSync(targetFilePath);
+        const title = req.query.title ? decodeURIComponent(req.query.title) : path.basename(rawFilename, ext);
+        const artist = req.query.artist ? decodeURIComponent(req.query.artist) : 'Local Device';
+        const duration = req.query.duration ? parseFloat(req.query.duration) : 0;
+
+        const newTrack = {
+          id: safeTrackId,
+          title: title || 'Local Audio Track',
+          artist: artist || 'Local Device',
+          duration: duration > 0 ? duration : 0,
+          artwork: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=160',
+          audioUrl: `/api/stream/local/${encodeURIComponent(storedFileName)}`,
+          source: 'local',
+          fileSize: stats.size,
+          format: ext.replace('.', '').toUpperCase(),
+          uploadedAt: Date.now()
+        };
+
+        localTracks.unshift(newTrack);
+        saveLocalTracksToDisk();
+        console.log(`> Local audio track uploaded & registered: "${newTrack.title}" (${storedFileName})`);
+        res.json({ success: true, track: newTrack });
+      } catch (innerErr) {
+        console.error('Error finalizing local track upload:', innerErr);
+        res.status(500).json({ error: 'Failed to finalize uploaded audio file' });
+      }
+    });
+
+    writeStream.on('error', (err) => {
+      console.error('Upload writeStream error:', err);
+      res.status(500).json({ error: 'Failed to write local track to disk' });
+    });
+  } catch (err) {
+    console.error('Local upload endpoint error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 2. Stream Local Audio Track (Full HTTP 206 Range Request / Partial Content Support)
+app.get('/api/stream/local/:filename', (req, res) => {
+  const safeName = path.basename(req.params.filename);
+  const filePath = path.join(UPLOADS_DIR, safeName);
+
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).send('Local audio track not found on server');
+  }
+
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Headers', '*');
+  res.setHeader('Access-Control-Expose-Headers', 'Content-Range, Content-Length, Accept-Ranges');
+  res.setHeader('Accept-Ranges', 'bytes');
+
+  res.sendFile(filePath, { acceptRanges: true }, (err) => {
+    if (err && !res.headersSent) {
+      res.status(err.status || 500).send('Error streaming local audio track');
+    }
+  });
+});
+
+// 3. Get All Uploaded Local Audio Tracks
+app.get('/api/tracks/local', (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.json({ tracks: localTracks });
+});
+
+// 4. Delete Uploaded Local Audio Track
+app.delete('/api/tracks/local/:id', (req, res) => {
+  const trackId = req.params.id;
+  const index = localTracks.findIndex((t) => t.id === trackId);
+
+  if (index !== -1) {
+    const track = localTracks[index];
+    const filename = path.basename(track.audioUrl || '');
+    const filePath = path.join(UPLOADS_DIR, filename);
+
+    try {
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+    } catch (e) {
+      console.warn('Failed to unlink local audio file:', e.message);
+    }
+
+    localTracks.splice(index, 1);
+    saveLocalTracksToDisk();
+    console.log(`> Local audio track deleted: ${trackId}`);
+    return res.json({ success: true, id: trackId });
+  }
+
+  res.status(404).json({ error: 'Track not found' });
 });
 
 // ----------------------------------------------------

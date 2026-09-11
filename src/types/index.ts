@@ -33,6 +33,8 @@ export interface Track {
   isMixed?: boolean;
   isLongMix?: boolean;
   mixBadge?: string;
+  fileSize?: number;
+  format?: string;
 }
 
 export interface PlaybackState {
