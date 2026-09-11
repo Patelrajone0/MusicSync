@@ -1619,18 +1619,8 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
               <div className="flex items-center gap-2 shrink-0">
                 <button
                   type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="flex-1 sm:flex-none px-3.5 py-2 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-black font-bold text-xs flex items-center justify-center gap-1.5 shadow-[0_0_12px_rgba(0,240,255,0.25)] transition-all active:scale-95 cursor-pointer"
-                  title="Select individual audio files from your device"
-                >
-                  <Upload className="w-3.5 h-3.5 stroke-[2.5]" />
-                  <span>Choose Files</span>
-                </button>
-
-                <button
-                  type="button"
                   onClick={() => folderInputRef.current?.click()}
-                  className="flex-1 sm:flex-none px-3 py-2 rounded-xl bg-dark-950 hover:bg-white/5 border border-white/10 hover:border-cyan-400/40 text-slate-200 hover:text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer"
+                  className="px-3.5 py-2 rounded-xl bg-dark-950 hover:bg-white/5 border border-white/10 hover:border-cyan-400/40 text-slate-200 hover:text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer shadow-sm"
                   title="Import an entire folder of music from your device"
                 >
                   <FolderUp className="w-3.5 h-3.5 text-cyan-400" />
@@ -1724,16 +1714,9 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
                     <HardDrive className="w-6 h-6" />
                   </div>
                   <h4 className="text-sm font-semibold text-white mb-1">No Local Music Imported Yet</h4>
-                  <p className="text-xs text-slate-400 max-w-sm mx-auto mb-4 leading-relaxed">
-                    Import your own MP3s or music folders from your computer or phone. They will be shared and synchronized with everyone in this room!
+                  <p className="text-xs text-slate-400 max-w-sm mx-auto leading-relaxed">
+                    Import your own MP3s or music folders from your computer or phone using the dropzone above. They will be shared and synchronized with everyone in this room!
                   </p>
-                  <button
-                    onClick={() => fileInputRef.current?.click()}
-                    className="px-4 py-2 rounded-full bg-cyan-400 text-black font-bold text-xs hover:bg-white transition-all shadow-md active:scale-95 inline-flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <Upload className="w-3.5 h-3.5 stroke-[2.5]" />
-                    <span>Choose Music Files</span>
-                  </button>
                 </div>
               ) : (
                 (() => {
