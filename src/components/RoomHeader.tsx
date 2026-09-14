@@ -129,7 +129,7 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
     <header className="sticky top-0 z-40 bg-dark-950/90 backdrop-blur-xl border-b border-white/10 px-2 py-1.5 sm:px-4 sm:py-2.5 md:px-8 w-full select-none">
       <div className="max-w-6xl mx-auto flex items-center justify-between gap-1 sm:gap-3 w-full">
         {/* Dynamic Island Unified Cyber Capsule (Variation 1A) */}
-        <div className="inline-flex items-center bg-dark-900/90 hover:bg-dark-850 border border-white/10 hover:border-cyan-400/40 rounded-full p-1 pl-1.5 pr-1 shadow-lg transition-all duration-200 gap-2 sm:gap-2.5 shrink-0 select-none">
+        <div className="inline-flex items-center bg-dark-900/90 hover:bg-dark-850 border border-white/10 hover:border-cyan-400/40 rounded-full p-0.5 sm:p-1 pl-1 sm:pl-1.5 pr-1 shadow-lg transition-all duration-200 gap-1 sm:gap-2.5 shrink-0 select-none">
           {/* Circular Brand Mark with Neon Halo Ring */}
           <a
             href="/"
@@ -140,7 +140,7 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
             title="Refresh MusicSync"
             className="flex items-center gap-1.5 sm:gap-2 group cursor-pointer focus:outline-none transition-transform active:scale-95"
           >
-            <div className="relative w-[26px] h-[26px] sm:w-[28px] sm:h-[28px] rounded-full p-[1.5px] bg-gradient-to-tr from-cyan-400 via-sky-400 to-fuchsia-500 shadow-[0_0_10px_rgba(0,240,255,0.45)] group-hover:shadow-[0_0_14px_rgba(0,240,255,0.7)] transition-shadow shrink-0 flex items-center justify-center">
+            <div className="relative w-[24px] h-[24px] sm:w-[28px] sm:h-[28px] rounded-full p-[1.5px] bg-gradient-to-tr from-cyan-400 via-sky-400 to-fuchsia-500 shadow-[0_0_10px_rgba(0,240,255,0.45)] group-hover:shadow-[0_0_14px_rgba(0,240,255,0.7)] transition-shadow shrink-0 flex items-center justify-center">
               <img
                 src="/musicsync-icon.png"
                 alt="MusicSync Logo"
@@ -152,8 +152,8 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
             </span>
           </a>
 
-          {/* Mini Live Equalizer Wave Bars */}
-          <div className="flex items-center gap-0.5 h-3 px-0.5 sm:px-1 select-none" title="Live audio mesh synchronized">
+          {/* Mini Live Equalizer Wave Bars - shown on tablet/desktop */}
+          <div className="hidden sm:flex items-center gap-0.5 h-3 px-0.5 sm:px-1 select-none" title="Live audio mesh synchronized">
             <span className="w-0.5 bg-cyan-400 rounded-full animate-wave-1 h-3.5"></span>
             <span className="w-0.5 bg-cyan-400 rounded-full animate-wave-2 h-2"></span>
             <span className="w-0.5 bg-cyan-400 rounded-full animate-wave-3 h-3"></span>
@@ -163,14 +163,14 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
           <button
             onClick={handleCopyCode}
             title="Click to copy Room Code"
-            className={`group/btn flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full border transition-all active:scale-95 cursor-pointer shrink-0 ${
+            className={`group/btn flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-full border transition-all active:scale-95 cursor-pointer shrink-0 ${
               copiedCode
                 ? 'bg-emerald-500/20 border-emerald-400/60 text-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.3)]'
                 : 'bg-white/5 hover:bg-cyan-400 hover:text-black border-white/10 hover:border-cyan-400 text-slate-300'
             }`}
           >
             <span
-              className={`w-1.5 h-1.5 rounded-full transition-colors ${
+              className={`w-1.5 h-1.5 rounded-full transition-colors hidden xs:inline-block ${
                 copiedCode
                   ? 'bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.9)]'
                   : 'bg-emerald-400 animate-pulse group-hover/btn:bg-black'
@@ -182,18 +182,18 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
             {copiedCode ? (
               <Check className="w-3 h-3 text-emerald-400 shrink-0" />
             ) : (
-              <Copy className="w-3 h-3 text-slate-400 group-hover/btn:text-black transition-colors shrink-0" />
+              <Copy className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-slate-400 group-hover/btn:text-black transition-colors shrink-0" />
             )}
           </button>
         </div>
 
         {/* Action Controls & Connected Members */}
-        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
 
           {/* Connected Devices Button - Dynamic Cyber Capsule with Neon Halo Avatars */}
           <button
             onClick={handleOpenUsers}
-            className={`group/devices flex items-center gap-1.5 sm:gap-2 p-1 pl-1.5 pr-2.5 sm:pr-3 rounded-full border text-xs font-semibold transition-all duration-200 active:scale-95 shrink-0 shadow-lg cursor-pointer select-none ${
+            className={`group/devices flex items-center gap-1 sm:gap-2 p-1 pl-1.5 pr-2 sm:pr-3 rounded-full border text-xs font-semibold transition-all duration-200 active:scale-95 shrink-0 shadow-lg cursor-pointer select-none ${
               showUsersModal
                 ? 'bg-cyan-500/15 border-cyan-400 text-white shadow-[0_0_14px_rgba(0,240,255,0.35)]'
                 : 'bg-dark-900/90 hover:bg-dark-850 border-white/10 hover:border-cyan-400/40 text-slate-200 hover:text-white'
@@ -206,7 +206,7 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
                 users.slice(0, 2).map((u, idx) => (
                   <div
                     key={u.id}
-                    className="relative w-[22px] h-[22px] sm:w-[24px] sm:h-[24px] rounded-full p-[1.5px] bg-gradient-to-tr from-cyan-400 via-sky-400 to-fuchsia-500 shadow-[0_0_8px_rgba(0,240,255,0.4)] group-hover/devices:shadow-[0_0_12px_rgba(0,240,255,0.65)] transition-shadow duration-200 shrink-0 flex items-center justify-center ring-1 ring-dark-950"
+                    className="relative w-[20px] h-[20px] sm:w-[24px] sm:h-[24px] rounded-full p-[1.5px] bg-gradient-to-tr from-cyan-400 via-sky-400 to-fuchsia-500 shadow-[0_0_8px_rgba(0,240,255,0.4)] group-hover/devices:shadow-[0_0_12px_rgba(0,240,255,0.65)] transition-shadow duration-200 shrink-0 flex items-center justify-center ring-1 ring-dark-950"
                     style={{ zIndex: 10 - idx }}
                   >
                     <div
@@ -218,7 +218,7 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
                   </div>
                 ))
               ) : (
-                <div className="relative w-[22px] h-[22px] sm:w-[24px] sm:h-[24px] rounded-full p-[1.5px] bg-gradient-to-tr from-cyan-400 via-sky-400 to-fuchsia-500 shadow-[0_0_8px_rgba(0,240,255,0.4)] shrink-0 flex items-center justify-center">
+                <div className="relative w-[20px] h-[20px] sm:w-[24px] sm:h-[24px] rounded-full p-[1.5px] bg-gradient-to-tr from-cyan-400 via-sky-400 to-fuchsia-500 shadow-[0_0_8px_rgba(0,240,255,0.4)] shrink-0 flex items-center justify-center">
                   <div className="w-full h-full rounded-full bg-dark-950 flex items-center justify-center text-cyan-400">
                     <Smartphone className="w-3 h-3" />
                   </div>
@@ -238,16 +238,16 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
 
             {/* Live Synchronized Mesh Indicator Dot */}
             <span
-              className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_6px_rgba(52,211,153,0.9)] ml-0.5 shrink-0 hidden xs:inline-block"
+              className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_6px_rgba(52,211,153,0.9)] ml-0.5 shrink-0 hidden sm:inline-block"
               title="Mesh synchronized"
             />
           </button>
 
-          {/* Room Type Display Badge & QR Viewer Button */}
+          {/* Room Type Display Badge & QR Viewer Button (Compact on phone) */}
           <button
             type="button"
             onClick={() => setShowNetworkModal(true)}
-            className={`group/network flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full border text-xs font-semibold transition-all duration-200 active:scale-95 shrink-0 shadow-lg cursor-pointer select-none ${
+            className={`group/network flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border text-xs font-semibold transition-all duration-200 active:scale-95 shrink-0 shadow-lg cursor-pointer select-none ${
               networkMode === 'local'
                 ? 'bg-emerald-500/15 hover:bg-emerald-500/25 border-emerald-400/50 text-emerald-300 shadow-[0_0_12px_rgba(52,211,153,0.25)]'
                 : 'bg-cyan-500/15 hover:bg-cyan-500/25 border-cyan-400/50 text-cyan-300 shadow-[0_0_12px_rgba(0,240,255,0.25)]'
@@ -261,21 +261,21 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
             {networkMode === 'local' ? (
               <>
                 <Wifi className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                <span className="font-bold">Local</span>
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.9)] animate-pulse" />
-                <QrCode className="w-3 h-3 text-emerald-400/70 group-hover/network:text-emerald-300 transition-colors shrink-0 ml-0.5" />
+                <span className="font-bold hidden sm:inline">Local</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.9)] animate-pulse hidden sm:inline-block" />
+                <QrCode className="w-3 h-3 text-emerald-400/80 group-hover/network:text-emerald-300 transition-colors shrink-0" />
               </>
             ) : (
               <>
                 <Globe className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-                <span className="font-bold">Online</span>
-                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_6px_rgba(0,240,255,0.9)]" />
-                <QrCode className="w-3 h-3 text-cyan-400/70 group-hover/network:text-cyan-300 transition-colors shrink-0 ml-0.5" />
+                <span className="font-bold hidden sm:inline">Online</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_6px_rgba(0,240,255,0.9)] hidden sm:inline-block" />
+                <QrCode className="w-3 h-3 text-cyan-400/80 group-hover/network:text-cyan-300 transition-colors shrink-0" />
               </>
             )}
           </button>
 
-          {/* Exit Room Button - Matching Cyber Capsule with Neon Accent */}
+          {/* Exit Room Button - Always completely in view on phones */}
           {onLeaveRoom && (
             <button
               type="button"
@@ -284,10 +284,11 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
                 e.stopPropagation();
                 setShowExitModal(true);
               }}
-              className="group/exit flex items-center gap-1.5 p-1 sm:px-2.5 sm:py-1 rounded-full bg-dark-900/90 hover:bg-red-500/15 border border-white/10 hover:border-red-500/40 text-slate-300 hover:text-red-400 text-xs font-semibold shadow-lg transition-all duration-200 active:scale-95 shrink-0 cursor-pointer select-none"
+              className="group/exit flex items-center gap-1 sm:gap-1.5 p-1 sm:px-2.5 sm:py-1 rounded-full bg-dark-900/90 hover:bg-red-500/15 border border-white/10 hover:border-red-500/40 text-slate-300 hover:text-red-400 text-xs font-semibold shadow-lg transition-all duration-200 active:scale-95 shrink-0 cursor-pointer select-none"
               title="Exit Room"
+              aria-label="Exit Room"
             >
-              <div className="w-[22px] h-[22px] sm:w-[24px] sm:h-[24px] rounded-full p-[1.5px] bg-gradient-to-tr from-rose-500/80 via-red-500/80 to-amber-500/80 shadow-[0_0_8px_rgba(244,63,94,0.35)] group-hover/exit:shadow-[0_0_12px_rgba(244,63,94,0.65)] shrink-0 flex items-center justify-center transition-all duration-200">
+              <div className="w-[20px] h-[20px] sm:w-[24px] sm:h-[24px] rounded-full p-[1.5px] bg-gradient-to-tr from-rose-500/80 via-red-500/80 to-amber-500/80 shadow-[0_0_8px_rgba(244,63,94,0.35)] group-hover/exit:shadow-[0_0_12px_rgba(244,63,94,0.65)] shrink-0 flex items-center justify-center transition-all duration-200">
                 <div className="w-full h-full rounded-full bg-dark-950 flex items-center justify-center text-rose-400 group-hover/exit:text-rose-300">
                   <LogOut className="w-3 h-3 shrink-0" />
                 </div>
