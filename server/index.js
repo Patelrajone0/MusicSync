@@ -1760,19 +1760,7 @@ io.on('connection', (socket) => {
 
     socket.join(code);
 
-    // Only broadcast chat announcement for genuinely NEW devices, not page refreshes
-    if (!isReconnectingDevice) {
-      const joinMessage = {
-        id: `msg-${Date.now()}`,
-        user: { name: 'System', role: 'system', avatarColor: '#00f0ff' },
-        text: `${finalName} joined the party! 🎧`,
-        timestamp: Date.now(),
-        isSystem: true
-      };
-      room.chatMessages.push(joinMessage);
-      if (room.chatMessages.length > 100) room.chatMessages.shift();
-      io.to(code).emit('new_chat_message', joinMessage);
-    }
+
 
     // Broadcast updated user list (with exactly 1 entry per physical device)
     io.to(code).emit('room_users_updated', {
@@ -2116,15 +2104,7 @@ io.on('connection', (socket) => {
       scheduleServerAutoAdvance(currentRoomCode);
     }
 
-    const chatAlert = {
-      id: `msg-${Date.now()}`,
-      user: { name: 'System', role: 'system', avatarColor: '#9d4edd' },
-      text: `🎵 ${user ? user.name : 'Guest'} added "${track.title}" to the queue`,
-      timestamp: Date.now(),
-      isSystem: true
-    };
-    room.chatMessages.push(chatAlert);
-    io.to(currentRoomCode).emit('new_chat_message', chatAlert);
+
   });
 
   socket.on('queue_vote', ({ queueId, type }) => {
@@ -2201,15 +2181,7 @@ io.on('connection', (socket) => {
         [room.queue[i], room.queue[j]] = [room.queue[j], room.queue[i]];
       }
       io.to(currentRoomCode).emit('queue_updated', { queue: room.queue });
-      const chatAlert = {
-        id: `msg-${Date.now()}`,
-        user: { name: 'System', role: 'system', avatarColor: '#1ed760' },
-        text: `🔀 ${user.name} shuffled the upcoming queue`,
-        timestamp: Date.now(),
-        isSystem: true
-      };
-      room.chatMessages.push(chatAlert);
-      io.to(currentRoomCode).emit('new_chat_message', chatAlert);
+
     }
   });
 
@@ -2253,15 +2225,7 @@ io.on('connection', (socket) => {
         hostId: room.hostId
       });
 
-      const promoMsg = {
-        id: `msg-${Date.now()}`,
-        user: { name: 'System', role: 'system', avatarColor: '#ffb703' },
-        text: `👑 ${target.name} is now the Room Host!`,
-        timestamp: Date.now(),
-        isSystem: true
-      };
-      room.chatMessages.push(promoMsg);
-      io.to(currentRoomCode).emit('new_chat_message', promoMsg);
+
     }
   });
 
@@ -2283,15 +2247,7 @@ io.on('connection', (socket) => {
         hostId: room.hostId
       });
 
-      const reclaimMsg = {
-        id: `msg-${Date.now()}`,
-        user: { name: 'System', role: 'system', avatarColor: '#ffb703' },
-        text: `👑 ${user.name} reclaimed Room Host!`,
-        timestamp: Date.now(),
-        isSystem: true
-      };
-      room.chatMessages.push(reclaimMsg);
-      io.to(currentRoomCode).emit('new_chat_message', reclaimMsg);
+
     }
   });
 
@@ -2314,15 +2270,7 @@ io.on('connection', (socket) => {
         hostId: room.hostId
       });
 
-      const promoMsg = {
-        id: `msg-${Date.now()}`,
-        user: { name: 'System', role: 'system', avatarColor: '#00f0ff' },
-        text: `👑 ${target.name} is now a ${target.role.toUpperCase()}!`,
-        timestamp: Date.now(),
-        isSystem: true
-      };
-      room.chatMessages.push(promoMsg);
-      io.to(currentRoomCode).emit('new_chat_message', promoMsg);
+
     }
   });
 
@@ -2360,64 +2308,12 @@ io.on('connection', (socket) => {
         hostId: room.hostId
       });
 
-      const kickMsg = {
-        id: `msg-${Date.now()}`,
-        user: { name: 'System', role: 'system', avatarColor: '#f43f5e' },
-        text: `🚪 ${target.name} was removed from the room by the host.`,
-        timestamp: Date.now(),
-        isSystem: true
-      };
-      room.chatMessages.push(kickMsg);
-      io.to(currentRoomCode).emit('new_chat_message', kickMsg);
+
     }
   });
 
 
-  // 8. Live Chat & Floating Reactions
-  socket.on('send_chat', ({ text }) => {
-    if (!currentRoomCode || !text || !text.trim()) return;
-    const room = rooms.get(currentRoomCode);
-    if (!room) return;
 
-    const user = room.users.get(socket.id);
-    if (!user) return;
-
-    const chatMsg = {
-      id: `msg-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-      user: {
-        id: user.id,
-        name: user.name,
-        role: user.role,
-        avatarColor: user.avatarColor
-      },
-      text: text.trim().substring(0, 300),
-      timestamp: Date.now(),
-      isSystem: false
-    };
-
-    room.chatMessages.push(chatMsg);
-    if (room.chatMessages.length > 150) room.chatMessages.shift();
-
-    io.to(currentRoomCode).emit('new_chat_message', chatMsg);
-  });
-
-  socket.on('send_reaction', ({ emoji, reactionId }) => {
-    if (!currentRoomCode || !emoji) return;
-    const room = rooms.get(currentRoomCode);
-    if (!room) return;
-
-    const user = room.users.get(socket.id);
-    const reactionPayload = {
-      id: reactionId || `react-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-      emoji,
-      userId: socket.id,
-      userName: user ? user.name : 'Guest',
-      timestamp: Date.now()
-    };
-
-    io.to(currentRoomCode).emit('new_reaction', reactionPayload);
-    io.to(currentRoomCode).emit('reaction_received', reactionPayload);
-  });
 
   // 8.5. Persistent Favorites Events
   socket.on('favorites_get', async ({ userId }, callback) => {
@@ -2489,16 +2385,7 @@ io.on('connection', (socket) => {
         hostId: room.hostId
       });
 
-      const leaveMsg = {
-        id: `msg-${Date.now()}`,
-        user: { name: 'System', role: 'system', avatarColor: '#555' },
-        text: `${leavingUser.name} left the room.`,
-        timestamp: Date.now(),
-        isSystem: true
-      };
-      room.chatMessages.push(leaveMsg);
-      if (room.chatMessages.length > 100) room.chatMessages.shift();
-      io.to(currentRoomCode).emit('new_chat_message', leaveMsg);
+
     }
 
     socket.leave(currentRoomCode);
@@ -2540,18 +2427,7 @@ io.on('connection', (socket) => {
             hostId: room.hostId
           });
 
-          if (leavingUser) {
-            const leaveMsg = {
-              id: `msg-${Date.now()}`,
-              user: { name: 'System', role: 'system', avatarColor: '#555' },
-              text: `${leavingUser.name} left the room.`,
-              timestamp: Date.now(),
-              isSystem: true
-            };
-            room.chatMessages.push(leaveMsg);
-            if (room.chatMessages.length > 100) room.chatMessages.shift();
-            io.to(currentRoomCode).emit('new_chat_message', leaveMsg);
-          }
+
         }
       }
     }
