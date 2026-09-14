@@ -23,9 +23,7 @@ import {
   Star,
   HardDrive,
   FileAudio,
-  Upload,
-  ChevronDown,
-  ChevronUp
+  Upload
 } from 'lucide-react';
 import { Track } from '../types';
 import { searchTracks, getSearchSuggestions, cleanTrackTitle, isJunkOrSpamTrack } from '../services/musicApi';
@@ -109,8 +107,6 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
   const [currentOffset, setCurrentOffset] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [addedTrackIds, setAddedTrackIds] = useState<Set<string>>(new Set());
-  const [isLibraryCollapsed, setIsLibraryCollapsed] = useState<boolean>(false);
-
   const getListScrollClassName = (defaultMaxH = 'max-h-[460px] sm:max-h-[520px]') => {
     if (!inline) return 'overflow-y-auto flex-1 min-h-0';
     if (demoMode === 'option1') {
@@ -755,7 +751,7 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
             </p>
           </div>
         </div>
-        {!inline ? (
+        {!inline && (
           <button
             onClick={() => {
               stopPreview();
@@ -765,21 +761,8 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
           >
             <X className="w-5 h-5" />
           </button>
-        ) : (
-          <button
-            type="button"
-            onClick={() => setIsLibraryCollapsed(!isLibraryCollapsed)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-dark-950/80 hover:bg-dark-850 border border-white/10 hover:border-cyan-400/40 text-xs font-semibold text-cyan-300 transition-all active:scale-95 shrink-0 select-none shadow-sm cursor-pointer"
-            title={isLibraryCollapsed ? 'Expand Music Library' : 'Collapse Music Library'}
-          >
-            <span>{isLibraryCollapsed ? 'Expand' : 'Collapse'}</span>
-            {isLibraryCollapsed ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronUp className="w-3.5 h-3.5" />}
-          </button>
         )}
       </div>
-
-      {!isLibraryCollapsed && (
-        <>
 
       {/* Tab Toggle */}
       <div className="flex border-b border-white/5 px-4 pt-2.5 gap-1.5 overflow-x-auto no-scrollbar bg-dark-950/40">
@@ -1845,9 +1828,7 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
             </div>
           </div>
         )}
-      </>
-    )}
-  </div>
+      </div>
   );
 
   if (inline) {
