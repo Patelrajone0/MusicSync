@@ -19,6 +19,14 @@ import {
 
 initFavoritesDb().catch((err) => console.error('Favorites DB init error:', err));
 
+process.on('uncaughtException', (err) => {
+  console.warn('> Handled uncaughtException:', err?.message || err);
+});
+
+process.on('unhandledRejection', (reason) => {
+  console.warn('> Handled unhandledRejection:', reason?.message || reason);
+});
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
