@@ -1511,6 +1511,19 @@ function getCoreSongSignature(title = '', artist = '') {
   }
 });
 
+// Google AdSense ads.txt route
+app.get('/ads.txt', (req, res) => {
+  const distAdsPath = path.join(__dirname, '../dist/ads.txt');
+  const publicAdsPath = path.join(__dirname, '../public/ads.txt');
+  if (fs.existsSync(distAdsPath)) {
+    return res.type('text/plain').sendFile(distAdsPath);
+  }
+  if (fs.existsSync(publicAdsPath)) {
+    return res.type('text/plain').sendFile(publicAdsPath);
+  }
+  res.type('text/plain').send('google.com, pub-7606917595989618, DIRECT, f08c47fec0942fa0\n');
+});
+
 // Serve frontend in production
 const distPath = path.join(__dirname, '../dist');
 app.use(express.static(distPath));
