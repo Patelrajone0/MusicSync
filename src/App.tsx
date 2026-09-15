@@ -631,7 +631,7 @@ export function App() {
       onClick={() => {
         if (!isAudioUnlocked) handleUnlockAudio();
       }}
-      className="min-h-screen bg-dark-950 text-slate-100 flex flex-col relative w-full max-w-full overflow-x-clip"
+      className="min-h-screen lg:h-screen lg:max-h-screen lg:overflow-hidden bg-dark-950 text-slate-100 flex flex-col relative w-full max-w-full overflow-x-clip"
     >
       {/* 1. Sticky Room Navigation Header */}
       <RoomHeader
@@ -645,7 +645,7 @@ export function App() {
       />
 
       {/* Sleek Dynamic Tab Navigation Bar (Desktop & Tablet) */}
-      <div className="hidden md:block w-full bg-dark-950/85 backdrop-blur-xl border-b border-white/10 px-3 py-1.5 sticky top-[48px] z-30 select-none">
+      <div className="hidden md:block w-full bg-dark-950/85 backdrop-blur-xl border-b border-white/10 px-3 py-1.5 shrink-0 z-30 select-none">
         <div className="max-w-md mx-auto flex items-center justify-between p-1 bg-dark-900/90 rounded-full border border-white/10 shadow-lg gap-1.5">
           {/* Tab 1: Player & Up Next Queue */}
           <button
@@ -691,19 +691,19 @@ export function App() {
       </div>
 
       {/* 2. Active Tab Content */}
-      <main className="max-w-7xl mx-auto w-full px-3 py-2 sm:px-4 sm:py-2.5 flex-1 flex flex-col gap-3 pb-44 md:pb-36">
+      <main className="max-w-7xl mx-auto w-full px-3 py-1.5 sm:px-4 sm:py-2 flex-1 min-h-0 flex flex-col gap-2 pb-36 md:pb-24 lg:pb-20 overflow-hidden">
         {/* TAB 1: 🎵 Unified Player & Up Next Experience */}
         {(activeTab === 'player' || activeTab === 'queue') && (
-          <div className="flex-1 w-full animate-fade-in">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-4 lg:gap-5 items-start">
-              {/* Left Column: Player Card (Exact Match to Uploaded Screenshot, perfectly fitted) */}
-              <div className="lg:col-span-5 w-full flex flex-col items-center">
-                <div className="w-full max-w-md bg-[#080c14]/95 backdrop-blur-2xl border border-white/10 hover:border-cyan-400/30 rounded-[28px] sm:rounded-[32px] p-4 sm:p-5 md:p-6 flex flex-col items-center text-center shadow-[0_25px_60px_rgba(0,0,0,0.85)] relative overflow-hidden transition-all duration-300">
+          <div className="flex-1 w-full h-full min-h-0 animate-fade-in flex flex-col justify-center">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-4 lg:gap-5 items-stretch h-full min-h-0">
+              {/* Left Column: Player Card (Fitted perfectly within viewport) */}
+              <div className="lg:col-span-5 w-full flex flex-col items-center justify-center min-h-0">
+                <div className="w-full max-w-md bg-[#080c14]/95 backdrop-blur-2xl border border-white/10 hover:border-cyan-400/30 rounded-[28px] sm:rounded-[32px] p-3.5 sm:p-4 md:p-5 flex flex-col items-center text-center shadow-[0_25px_60px_rgba(0,0,0,0.85)] relative overflow-hidden transition-all duration-300">
                   {/* Ambient Top Radial Lighting */}
                   <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-80 h-80 bg-gradient-to-b from-cyan-500/15 via-sky-500/5 to-transparent rounded-full blur-3xl pointer-events-none" />
 
                   {/* Top Header Row: Centered Status Pill */}
-                  <div className="w-full flex items-center justify-center relative mb-3 sm:mb-4">
+                  <div className="w-full flex items-center justify-center relative mb-2 sm:mb-2.5">
                     <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#0c1420]/95 border border-white/10 shadow-[0_4px_16px_rgba(0,0,0,0.5)] select-none">
                       <span
                         className={`w-2 h-2 rounded-full ${
@@ -724,26 +724,26 @@ export function App() {
                     </div>
                   </div>
 
-                  {/* The Visualizer Box (Exact match to uploaded design: rounded-2xl black box, perfectly proportioned) */}
-                  <div className="w-full h-44 sm:h-48 md:h-52 rounded-2xl sm:rounded-3xl overflow-hidden bg-black border border-white/10 shadow-inner relative my-0.5">
-                    <AudioVisualizer isPlaying={isPlaying} height={200} className="w-full h-full" />
+                  {/* The Visualizer Box (Exact match, perfectly proportioned) */}
+                  <div className="w-full h-36 sm:h-40 md:h-44 rounded-2xl sm:rounded-3xl overflow-hidden bg-black border border-white/10 shadow-inner relative my-0.5">
+                    <AudioVisualizer isPlaying={isPlaying} height={176} className="w-full h-full" />
                   </div>
 
-                  {/* Track Typography (Exact match: bold title + cyan artist) */}
+                  {/* Track Typography */}
                   <div className="w-full max-w-sm flex flex-col items-center">
                     <h2
-                      className="text-2xl sm:text-3xl font-black text-white tracking-tight leading-tight mt-3 sm:mt-4 mb-0.5 text-center px-2 truncate w-full font-sans drop-shadow-md"
+                      className="text-xl sm:text-2xl font-black text-white tracking-tight leading-tight mt-2 sm:mt-2.5 mb-0.5 text-center px-2 truncate w-full font-sans drop-shadow-md"
                       title={currentTrack ? cleanTrackTitle(currentTrack.title, currentTrack.artist) : 'Starboy'}
                     >
                       {currentTrack ? cleanTrackTitle(currentTrack.title, currentTrack.artist) : 'Starboy'}
                     </h2>
-                    <p className="text-sm sm:text-base text-[#00f0ff] font-bold text-center mb-2.5 sm:mb-3 truncate w-full">
+                    <p className="text-xs sm:text-sm text-[#00f0ff] font-bold text-center mb-1.5 sm:mb-2 truncate w-full">
                       {currentTrack ? currentTrack.artist : 'The Weeknd feat. Daft Punk'}
                     </p>
 
                     {/* Metadata Pill Row */}
-                    <div className="flex items-center justify-center gap-2 text-[11px] sm:text-xs text-slate-400 mb-3 sm:mb-4 flex-wrap">
-                      <span className="px-3 py-0.5 rounded-full bg-[#121926] border border-white/10 text-slate-200 font-medium tracking-wide">
+                    <div className="flex items-center justify-center gap-2 text-[10px] sm:text-[11px] text-slate-400 mb-2 sm:mb-2.5 flex-wrap">
+                      <span className="px-2.5 py-0.5 rounded-full bg-[#121926] border border-white/10 text-slate-200 font-medium tracking-wide">
                         {currentTrack?.genre || 'Synced Audio'}
                       </span>
                       <span className="text-slate-400">
@@ -756,9 +756,9 @@ export function App() {
                   <button
                     type="button"
                     onClick={() => setActiveTab('search')}
-                    className="w-full max-w-[260px] sm:max-w-[280px] py-2.5 sm:py-3 px-5 rounded-2xl sm:rounded-full bg-cyan-400 hover:bg-white text-black font-extrabold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(0,240,255,0.4)] hover:shadow-[0_0_30px_rgba(0,240,255,0.8)] transition-all duration-200 active:scale-95 cursor-pointer select-none"
+                    className="w-full max-w-[240px] sm:max-w-[260px] py-2 sm:py-2.5 px-4 rounded-2xl sm:rounded-full bg-cyan-400 hover:bg-white text-black font-extrabold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-[0_0_18px_rgba(0,240,255,0.4)] hover:shadow-[0_0_28px_rgba(0,240,255,0.75)] transition-all duration-200 active:scale-95 cursor-pointer select-none"
                   >
-                    <Search className="w-4 h-4 stroke-[2.5] text-black" />
+                    <Search className="w-3.5 h-3.5 stroke-[2.5] text-black" />
                     <span>Browse & Add Songs</span>
                   </button>
 
@@ -769,7 +769,7 @@ export function App() {
                       const el = document.getElementById('upnext-queue-section');
                       if (el) el.scrollIntoView({ behavior: 'smooth' });
                     }}
-                    className="lg:hidden mt-2.5 text-xs text-slate-400 hover:text-white flex items-center gap-1.5 transition-colors"
+                    className="lg:hidden mt-2 text-xs text-slate-400 hover:text-white flex items-center gap-1.5 transition-colors"
                   >
                     <ListMusic className="w-3.5 h-3.5 text-cyan-400" />
                     <span>Jump to Queue ({queue.length})</span>
@@ -778,7 +778,7 @@ export function App() {
               </div>
 
               {/* Right Column: Up Next (Collaborative Queue & Favorites) */}
-              <div id="upnext-queue-section" className="lg:col-span-7 w-full">
+              <div id="upnext-queue-section" className="lg:col-span-7 w-full h-full min-h-0 flex flex-col">
                 <QueueList
                   queue={queue}
                   currentTrack={currentTrack}
@@ -793,7 +793,7 @@ export function App() {
 
         {/* TAB 2: 🔍 Search / Library (Universal Music Catalog & Local MP3s) */}
         {activeTab === 'search' && (
-          <div className="flex-1 w-full animate-fade-in">
+          <div className="flex-1 w-full h-full min-h-0 overflow-y-auto animate-fade-in pr-1">
             <MusicSearchModal inline={true} />
           </div>
         )}
