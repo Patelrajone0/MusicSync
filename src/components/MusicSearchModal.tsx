@@ -23,7 +23,8 @@ import {
   Star,
   HardDrive,
   FileAudio,
-  Upload
+  Upload,
+  ChevronDown
 } from 'lucide-react';
 import { Track } from '../types';
 import { searchTracks, getSearchSuggestions, cleanTrackTitle, isJunkOrSpamTrack } from '../services/musicApi';
@@ -725,423 +726,366 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
           : 'max-w-2xl w-full max-h-[88vh] animate-modal-spring'
       }`}
     >
-      {/* Header */}
-      <div className="p-4 md:p-5 border-b border-white/10 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-full p-[1.5px] bg-gradient-to-tr from-cyan-400 via-sky-400 to-fuchsia-500 shadow-[0_0_12px_rgba(0,240,255,0.45)] shrink-0 flex items-center justify-center">
+      {/* 1. Header with Integrated Tab Dock (Option 2: YouTube Music Style) */}
+      <div className="p-3 sm:p-4 border-b border-white/10 flex flex-wrap sm:flex-nowrap items-center justify-between gap-2.5">
+        {/* Left: Icon & Title */}
+        <div className="flex items-center gap-2.5 shrink-0">
+          <div className="relative w-8 h-8 sm:w-9 sm:h-9 rounded-full p-[1.5px] bg-gradient-to-tr from-cyan-400 via-sky-400 to-fuchsia-500 shadow-[0_0_10px_rgba(0,240,255,0.4)] shrink-0 flex items-center justify-center">
             <div className="w-full h-full rounded-full bg-dark-950 flex items-center justify-center text-cyan-400">
-              <Music className="w-4 h-4 sm:w-5 sm:h-5" />
+              <Music className="w-4 h-4" />
             </div>
           </div>
-          <div>
-            <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">Universal Music Library</h3>
-          </div>
+          <h3 className="text-sm sm:text-base font-bold text-white tracking-tight whitespace-nowrap">Universal Music Library</h3>
         </div>
-        {!inline && (
-          <button
-            onClick={() => {
-              stopPreview();
-              onClose();
-            }}
-            className="p-1.5 rounded-full text-slate-400 hover:text-white hover:bg-dark-800 transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        )}
-      </div>
 
-      {/* Tab Toggle */}
-      <div className="flex border-b border-white/5 px-4 pt-2.5 gap-1.5 overflow-x-auto no-scrollbar bg-dark-950/40">
+        {/* Right: Integrated Segmented Tab Dock */}
+        <div className="flex items-center gap-1 p-1 bg-dark-950/90 rounded-full border border-white/10 shadow-inner overflow-x-auto no-scrollbar">
+          {/* Tab 1: Songs */}
           <button
+            type="button"
             onClick={() => handleTabChange('search')}
-            className={`pb-2 px-3 text-xs font-semibold border-b-2 transition-all whitespace-nowrap shrink-0 flex items-center gap-1.5 ${
+            className={`px-3 py-1 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 active:scale-95 cursor-pointer ${
               activeTab === 'search'
-                ? 'border-electric-cyan text-electric-cyan'
-                : 'border-transparent text-slate-400 hover:text-slate-200'
+                ? 'bg-gradient-to-r from-cyan-400 to-sky-400 text-black shadow-[0_0_10px_rgba(0,240,255,0.4)]'
+                : 'text-slate-400 hover:text-white hover:bg-white/5'
             }`}
           >
-            <Disc className="w-3.5 h-3.5" />
-            <span>Original Songs</span>
+            <Disc className={`w-3 h-3 ${activeTab === 'search' ? 'animate-spin' : ''}`} style={{ animationDuration: '4s' }} />
+            <span>Songs</span>
           </button>
+
+          {/* Tab 2: Mixes */}
           <button
+            type="button"
             onClick={() => handleTabChange('mixed')}
-            className={`pb-2 px-3 text-xs font-bold border-b-2 transition-all whitespace-nowrap shrink-0 flex items-center gap-1.5 ${
+            className={`px-3 py-1 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 active:scale-95 cursor-pointer ${
               activeTab === 'mixed'
-                ? 'border-amber-400 text-amber-300 bg-amber-500/10 rounded-t-lg shadow-sm'
-                : 'border-transparent text-amber-400/80 hover:text-amber-300'
+                ? 'bg-gradient-to-r from-amber-400 to-rose-400 text-black shadow-[0_0_10px_rgba(251,191,36,0.4)]'
+                : 'text-amber-400/80 hover:text-amber-300 hover:bg-amber-400/10'
             }`}
           >
-            <Flame className="w-3.5 h-3.5 text-amber-400 fill-current animate-pulse" />
-            <span>🔥 Mixed Songs (Party & Non-Stop)</span>
-            <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/40 font-mono font-bold">
-              Party
-            </span>
+            <Flame className="w-3 h-3 fill-current" />
+            <span>Mixes</span>
           </button>
+
+          {/* Tab 3: History */}
           <button
+            type="button"
             onClick={() => handleTabChange('history')}
-            className={`pb-2 px-3 text-xs font-semibold border-b-2 transition-all whitespace-nowrap shrink-0 flex items-center gap-1.5 ${
+            className={`px-2.5 sm:px-3 py-1 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 active:scale-95 cursor-pointer ${
               activeTab === 'history'
-                ? 'border-electric-cyan text-electric-cyan'
-                : 'border-transparent text-slate-400 hover:text-slate-200'
+                ? 'bg-gradient-to-r from-cyan-400 to-sky-400 text-black shadow-[0_0_10px_rgba(0,240,255,0.4)]'
+                : 'text-slate-400 hover:text-white hover:bg-white/5'
             }`}
           >
-            <History className="w-3.5 h-3.5" />
-            <span>Listening History</span>
+            <History className="w-3 h-3" />
+            <span>History</span>
             {historyItems.length > 0 && (
-              <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-electric-cyan/20 text-electric-cyan font-mono font-bold">
+              <span className={`px-1.5 py-0.2 rounded-full text-[9px] font-mono font-bold ${
+                activeTab === 'history' ? 'bg-black text-cyan-300' : 'bg-cyan-500/20 text-cyan-300'
+              }`}>
                 {historyItems.length}
               </span>
             )}
           </button>
 
-          {/* Local Music Import (Directly Beside Listening History) */}
+          {/* Tab 4: Local */}
           <button
+            type="button"
             onClick={() => handleTabChange('local')}
-            className={`pb-2 px-3 text-xs font-bold border-b-2 transition-all whitespace-nowrap shrink-0 flex items-center gap-1.5 ${
+            className={`px-2.5 sm:px-3 py-1 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 active:scale-95 cursor-pointer ${
               activeTab === 'local'
-                ? 'border-cyan-400 text-cyan-300 bg-cyan-500/10 rounded-t-lg shadow-sm'
-                : 'border-transparent text-slate-400 hover:text-slate-200'
+                ? 'bg-gradient-to-r from-cyan-400 to-sky-400 text-black shadow-[0_0_10px_rgba(0,240,255,0.4)]'
+                : 'text-slate-400 hover:text-white hover:bg-white/5'
             }`}
           >
-            <HardDrive className="w-3.5 h-3.5 text-cyan-400" />
-            <span>Local Music Import</span>
-            {localTracks.length > 0 ? (
-              <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-cyan-400/20 text-cyan-300 font-mono font-bold">
+            <HardDrive className="w-3 h-3" />
+            <span>Local</span>
+            {localTracks.length > 0 && (
+              <span className={`px-1.5 py-0.2 rounded-full text-[9px] font-mono font-bold ${
+                activeTab === 'local' ? 'bg-black text-cyan-300' : 'bg-cyan-500/20 text-cyan-300'
+              }`}>
                 {localTracks.length}
-              </span>
-            ) : (
-              <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-white/5 text-slate-400 font-mono">
-                Device
               </span>
             )}
           </button>
+
+          {!inline && (
+            <button
+              onClick={() => {
+                stopPreview();
+                onClose();
+              }}
+              className="p-1 rounded-full text-slate-400 hover:text-white hover:bg-white/10 transition-colors ml-1"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
         </div>
+      </div>
 
-        {/* Filter Pills Bar for Normal Original Songs */}
-        {activeTab === 'search' && (
-          <div className="bg-dark-950 px-4 py-2 border-b border-white/5 flex items-center justify-between gap-2 overflow-x-auto no-scrollbar">
-            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
-              <span className="text-[11px] font-mono text-slate-400 uppercase tracking-wider shrink-0 mr-1">Explore:</span>
-              {languageOptions.map((opt) => {
-                const isSelected = selectedLanguage === opt.id;
-                return (
-                  <button
-                    key={opt.id}
-                    onClick={() => handleLanguageChange(opt.id)}
-                    className={`px-3.5 py-1 rounded-full text-xs font-medium whitespace-nowrap shrink-0 transition-all ${
-                      isSelected
-                        ? 'bg-cyan-400 text-black font-semibold shadow-sm border border-cyan-400'
-                        : 'bg-dark-850 hover:bg-dark-800 text-slate-300 hover:text-white border border-white/5'
-                    }`}
-                  >
-                    {opt.label}
-                  </button>
-                );
-              })}
-            </div>
-
-            <button
-              type="button"
-              onClick={handleRotateSuggestions}
-              disabled={isLoading}
-              title="Rotate & suggest different trending songs"
-              className="px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap shrink-0 transition-all bg-white/5 hover:bg-white/10 text-cyan-300 border border-cyan-400/20 hover:border-cyan-400/50 flex items-center gap-1.5 shadow-sm active:scale-95 disabled:opacity-50"
-            >
-              <RotateCcw className={`w-3 h-3 text-cyan-400 ${isRotating || isLoading ? 'animate-spin' : ''}`} />
-              <span className="hidden sm:inline">Fresh Songs</span>
-              <span className="sm:hidden">Fresh</span>
-            </button>
-          </div>
-        )}
-
-        {/* Filter Pills Bar for Mixed Songs */}
-        {activeTab === 'mixed' && (
-          <div className="bg-dark-950 px-4 py-2 border-b border-white/5 flex items-center justify-between gap-2 overflow-x-auto no-scrollbar">
-            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
-              <span className="text-[11px] font-mono text-amber-400 uppercase tracking-wider shrink-0 mr-1 flex items-center gap-1">
-                <Flame className="w-3 h-3 fill-current" />
-                Party Lang:
-              </span>
-              {mixedLanguageOptions.map((opt) => {
-                const isSelected = selectedMixedLanguage === opt.id;
-                return (
-                  <button
-                    key={opt.id}
-                    onClick={() => handleMixedLanguageChange(opt.id as any)}
-                    className={`px-3.5 py-1 rounded-full text-xs font-medium whitespace-nowrap shrink-0 transition-all ${
-                      isSelected
-                        ? 'bg-gradient-to-r from-amber-400 to-rose-400 text-black font-bold shadow-md border border-amber-400'
-                        : 'bg-dark-850 hover:bg-dark-800 text-slate-300 hover:text-white border border-white/5'
-                    }`}
-                  >
-                    {opt.label}
-                  </button>
-                );
-              })}
-            </div>
-
-            <button
-              type="button"
-              onClick={handleRotateSuggestions}
-              disabled={isLoading}
-              title="Rotate & suggest different party mixes and remixes"
-              className="px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap shrink-0 transition-all bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 hover:border-amber-500/60 flex items-center gap-1.5 shadow-sm active:scale-95 disabled:opacity-50"
-            >
-              <RotateCcw className={`w-3 h-3 text-amber-400 ${isRotating || isLoading ? 'animate-spin' : ''}`} />
-              <span className="hidden sm:inline">New Mix</span>
-              <span className="sm:hidden">New</span>
-            </button>
-          </div>
-        )}
-
-        {/* Tab 1 & Tab 2: Catalog Search (Original Songs & Mixed Songs) */}
-        {(activeTab === 'search' || activeTab === 'mixed') && (
-          <div className="p-3 sm:p-4 flex-1 flex flex-col min-h-0">
-            {/* Mixed Songs Banner */}
-            {activeTab === 'mixed' && (
-              <div className="mb-3 p-3 rounded-xl bg-gradient-to-r from-amber-950/40 via-rose-950/30 to-dark-950 border border-amber-500/30 flex items-center gap-3 text-xs shadow-md">
-                <div className="p-2 rounded-xl bg-amber-500/20 text-amber-300 shrink-0">
-                  <Flame className="w-5 h-5 fill-current animate-pulse" />
-                </div>
-                <div className="min-w-0">
-                  <h4 className="font-bold text-white text-xs sm:text-sm flex items-center gap-2 flex-wrap">
-                    <span>Mixed Songs & Non-Stop Sets</span>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 font-mono font-bold border border-rose-500/30">
-                      Party Mode Active
-                    </span>
-                  </h4>
-                  <p className="text-[11px] text-slate-300 mt-0.5">
-                    Continuous multi-hour songs, DJ mixes & mashups in English, Hindi, Gujarati & Punjabi. Kept strictly separate from original songs.
-                  </p>
-                </div>
+      {/* Tab 1 & Tab 2: Catalog Search (Original Songs & Mixed Songs) */}
+      {(activeTab === 'search' || activeTab === 'mixed') && (
+        <div className="p-3 sm:p-4 flex-1 flex flex-col min-h-0">
+          {/* Mixed Songs Mini Banner */}
+          {activeTab === 'mixed' && (
+            <div className="mb-2.5 p-2 sm:p-2.5 rounded-xl bg-gradient-to-r from-amber-950/40 via-rose-950/30 to-dark-950 border border-amber-500/30 flex items-center gap-2.5 text-xs shadow-md">
+              <div className="p-1.5 rounded-lg bg-amber-500/20 text-amber-300 shrink-0">
+                <Flame className="w-4 h-4 fill-current animate-pulse" />
               </div>
-            )}
+              <div className="min-w-0">
+                <span className="font-bold text-white text-xs">Mixed Songs & Non-Stop Sets</span>
+                <span className="text-[10px] text-slate-300 ml-2 hidden sm:inline">Continuous DJ mixes, mashups & party sets</span>
+              </div>
+            </div>
+          )}
 
-            {/* Search Input with Live Autocomplete */}
-            <div ref={searchInputContainerRef} className="relative mb-3">
-              <form onSubmit={handleSearch} className="relative">
-                <Search className="absolute left-3.5 sm:left-4 top-3 w-4 h-4 text-slate-400" />
-                <input
-                  type="text"
-                  value={query}
-                  onFocus={() => setShowAutocomplete(true)}
-                  onChange={(e) => {
-                    setQuery(e.target.value);
-                    setShowAutocomplete(true);
+          {/* 2. Modern Search Bar with Integrated Language Filter Selector */}
+          <div ref={searchInputContainerRef} className="relative mb-2.5">
+            <form onSubmit={handleSearch} className="relative flex items-center">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+              <input
+                type="text"
+                value={query}
+                onFocus={() => setShowAutocomplete(true)}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                  setShowAutocomplete(true);
+                }}
+                placeholder={
+                  activeTab === 'mixed'
+                    ? 'Search party mixes, DJ sets, remixes...'
+                    : 'Search songs, artists, or genres...'
+                }
+                className="w-full bg-dark-950/80 border border-white/10 rounded-full pl-10 pr-40 sm:pr-48 py-2 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 focus:shadow-[0_0_12px_rgba(0,240,255,0.25)] transition-all"
+                autoFocus={!inline}
+              />
+
+              {query && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setQuery('');
+                    loadDefaultResults();
                   }}
-                  placeholder={
-                    activeTab === 'mixed'
-                      ? selectedMixedLanguage === 'hindi'
-                        ? 'Search Hindi party mixes, remixes & mashups...'
-                        : selectedMixedLanguage === 'gujarati'
-                        ? 'Search Gujarati non-stop Garba, Dandiya & DJ mixes...'
-                        : selectedMixedLanguage === 'punjabi'
-                        ? 'Search Punjabi Bhangra mixes, dhol bass & mashups...'
-                        : selectedMixedLanguage === 'english'
-                        ? 'Search English EDM festival sets, club mixes & reworks...'
-                        : 'Search remixes, party mashups & multi-hour non-stop sets...'
-                      : selectedLanguage === 'for_you'
-                      ? 'Search recommendations...'
-                      : selectedLanguage === 'trending'
-                      ? 'Search trending songs...'
-                      : selectedLanguage === 'hindi'
-                      ? 'Search Hindi original songs...'
-                      : selectedLanguage === 'gujarati'
-                      ? 'Search Gujarati original songs...'
-                      : selectedLanguage === 'punjabi'
-                      ? 'Search Punjabi original songs...'
-                      : 'Search original English, Hindi, Gujarati & Punjabi songs...'
-                  }
-                  className="w-full bg-dark-950/80 border border-white/10 rounded-full pl-10 sm:pl-11 pr-24 sm:pr-28 py-2.5 text-base sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 focus:shadow-[0_0_12px_rgba(0,240,255,0.25)] transition-all"
-                  autoFocus={!inline}
-                />
-                {query && (
+                  className="absolute right-32 sm:right-36 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1 rounded-full hover:bg-white/10"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+
+              {/* Integrated Language Filter Dropdown inside Search Bar */}
+              <div className="absolute right-16 sm:right-18 top-1/2 -translate-y-1/2 flex items-center">
+                {activeTab === 'search' && (
+                  <div className="relative">
+                    <select
+                      value={selectedLanguage}
+                      onChange={(e) => handleLanguageChange(e.target.value as any)}
+                      className="bg-dark-900/95 hover:bg-dark-850 text-cyan-300 text-[11px] font-semibold py-1 pl-2.5 pr-5 rounded-full border border-white/10 hover:border-cyan-400/40 focus:outline-none focus:border-cyan-400 appearance-none cursor-pointer transition-all"
+                    >
+                      {languageOptions.map((opt) => (
+                        <option key={opt.id} value={opt.id} className="bg-dark-900 text-white">
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="w-2.5 h-2.5 text-cyan-400 absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  </div>
+                )}
+
+                {activeTab === 'mixed' && (
+                  <div className="relative">
+                    <select
+                      value={selectedMixedLanguage}
+                      onChange={(e) => handleMixedLanguageChange(e.target.value as any)}
+                      className="bg-dark-900/95 hover:bg-dark-850 text-amber-300 text-[11px] font-semibold py-1 pl-2.5 pr-5 rounded-full border border-amber-500/20 hover:border-amber-400/40 focus:outline-none focus:border-amber-400 appearance-none cursor-pointer transition-all"
+                    >
+                      {mixedLanguageOptions.map((opt) => (
+                        <option key={opt.id} value={opt.id} className="bg-dark-900 text-white">
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="w-2.5 h-2.5 text-amber-400 absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  </div>
+                )}
+              </div>
+
+              <button
+                type="submit"
+                className={`absolute right-1.5 top-1/2 -translate-y-1/2 px-3 py-1 font-bold text-xs rounded-full transition-all active:scale-95 cursor-pointer shadow-md ${
+                  activeTab === 'mixed'
+                    ? 'bg-gradient-to-r from-amber-400 to-rose-400 text-black hover:brightness-110 shadow-[0_0_8px_rgba(251,191,36,0.3)]'
+                    : 'bg-cyan-400 text-black hover:bg-white shadow-[0_0_8px_rgba(0,240,255,0.35)]'
+                }`}
+              >
+                Search
+              </button>
+            </form>
+
+            {/* Floating Autocomplete Dropdown */}
+            {showAutocomplete && autocompleteSuggestions.length > 0 && (
+              <div
+                ref={autocompleteRef}
+                className="absolute left-0 right-0 top-full mt-1.5 z-30 bg-dark-950/95 backdrop-blur-xl border border-white/15 rounded-xl shadow-2xl overflow-hidden divide-y divide-white/5 animate-popover-spring"
+              >
+                <div className="px-3 py-1.5 text-[10px] font-mono text-slate-400 bg-dark-900/60 uppercase tracking-wider flex items-center gap-1">
+                  <Sparkles className="w-3 h-3 text-electric-cyan" /> Suggested Matches
+                </div>
+                {autocompleteSuggestions.map((item, idx) => (
                   <button
+                    key={idx}
                     type="button"
                     onClick={() => {
-                      setQuery('');
-                      loadDefaultResults();
+                      setQuery(item);
+                      handleSearch(undefined, item, undefined, 0);
+                      setShowAutocomplete(false);
                     }}
-                    className="absolute right-20 sm:right-24 top-2.5 text-slate-400 hover:text-white p-1 rounded-full hover:bg-white/10"
+                    className="w-full text-left px-3.5 py-2.5 text-xs text-slate-200 hover:text-white hover:bg-white/10 flex items-center justify-between transition-colors group"
                   >
-                    <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                    <span className="flex items-center gap-2">
+                      <Search className="w-3.5 h-3.5 text-slate-400 group-hover:text-electric-cyan" />
+                      <span className="font-medium">{item}</span>
+                    </span>
+                    <span className="text-[10px] text-slate-500 font-mono group-hover:text-slate-300">Tap to search</span>
                   </button>
-                )}
-                <button
-                  type="submit"
-                  className={`absolute right-1.5 sm:right-2 top-1.5 px-3.5 sm:px-4 py-1.5 font-bold text-xs rounded-full transition-all active:scale-95 cursor-pointer shadow-md ${
-                    activeTab === 'mixed'
-                      ? 'bg-gradient-to-r from-amber-400 to-rose-400 text-black hover:brightness-110 shadow-[0_0_10px_rgba(251,191,36,0.3)]'
-                      : 'bg-cyan-400 text-black hover:bg-white shadow-[0_0_10px_rgba(0,240,255,0.35)]'
-                  }`}
-                >
-                  Search
-                </button>
-              </form>
+                ))}
+              </div>
+            )}
+          </div>
 
-              {/* Floating Autocomplete Dropdown */}
-              {showAutocomplete && autocompleteSuggestions.length > 0 && (
-                <div
-                  ref={autocompleteRef}
-                  className="absolute left-0 right-0 top-full mt-1.5 z-30 bg-dark-950/95 backdrop-blur-xl border border-white/15 rounded-xl shadow-2xl overflow-hidden divide-y divide-white/5 animate-popover-spring"
+          {/* Personalized "For You" Banner (Original Mode) */}
+          {activeTab === 'search' && selectedLanguage === 'for_you' && (
+            <div className="p-2 sm:p-2.5 bg-purple-950/40 border border-purple-500/30 rounded-xl mb-2.5 flex items-center justify-between text-xs text-purple-200 shadow-inner">
+              <div className="flex items-center gap-2 min-w-0">
+                <Sparkles className="w-3.5 h-3.5 text-purple-400 shrink-0 animate-pulse" />
+                <span className="truncate text-[11px]">
+                  {tasteSummary.topArtists.length > 0 ? (
+                    <>
+                      Curated for you based on: <strong className="text-white">{tasteSummary.topArtists.slice(0, 3).join(', ')}</strong>
+                    </>
+                  ) : (
+                    <>Queue songs in rooms to train your personalized listening engine!</>
+                  )}
+                </span>
+              </div>
+              {tasteSummary.totalInteractions > 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    userTasteEngine.clearTasteProfile();
+                    setTasteSummary(userTasteEngine.getTasteSummary());
+                    loadDefaultResults('for_you', 'normal');
+                  }}
+                  className="text-[10px] text-slate-400 hover:text-red-400 underline ml-2 shrink-0 flex items-center gap-1"
                 >
-                  <div className="px-3 py-1.5 text-[10px] font-mono text-slate-400 bg-dark-900/60 uppercase tracking-wider flex items-center gap-1">
-                    <Sparkles className="w-3 h-3 text-electric-cyan" /> Suggested Matches
-                  </div>
-                  {autocompleteSuggestions.map((item, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => {
-                        setQuery(item);
-                        handleSearch(undefined, item, undefined, 0);
-                        setShowAutocomplete(false);
-                      }}
-                      className="w-full text-left px-3.5 py-2.5 text-xs text-slate-200 hover:text-white hover:bg-white/10 flex items-center justify-between transition-colors group"
-                    >
-                      <span className="flex items-center gap-2">
-                        <Search className="w-3.5 h-3.5 text-slate-400 group-hover:text-electric-cyan" />
-                        <span className="font-medium">{item}</span>
-                      </span>
-                      <span className="text-[10px] text-slate-500 font-mono group-hover:text-slate-300">Tap to search</span>
-                    </button>
-                  ))}
-                </div>
+                  <RotateCcw className="w-3 h-3" />
+                  Reset
+                </button>
               )}
             </div>
+          )}
 
-            {/* Personalized "For You" Banner (Original Mode) */}
-            {activeTab === 'search' && selectedLanguage === 'for_you' && (
-              <div className="p-2.5 sm:p-3 bg-purple-950/40 border border-purple-500/30 rounded-xl mb-3 flex items-center justify-between text-xs text-purple-200 shadow-inner">
-                <div className="flex items-center gap-2 min-w-0">
-                  <Sparkles className="w-4 h-4 text-purple-400 shrink-0 animate-pulse" />
-                  <span className="truncate text-[11px] sm:text-xs">
-                    {tasteSummary.topArtists.length > 0 ? (
-                      <>
-                        Curated for you based on: <strong className="text-white">{tasteSummary.topArtists.slice(0, 3).join(', ')}</strong>
-                      </>
-                    ) : (
-                      <>Queue songs in rooms to train your personalized listening engine!</>
-                    )}
-                  </span>
-                </div>
-                {tasteSummary.totalInteractions > 0 && (
+          {/* 3. Single Unified Scrolling Ribbon of Tags & Artists */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1.5 mb-2.5 no-scrollbar scroll-smooth">
+            {activeTab === 'search' ? (
+              <>
+                {languageOptions.map((opt) => {
+                  const isSelected = selectedLanguage === opt.id;
+                  return (
+                    <button
+                      key={opt.id}
+                      onClick={() => handleLanguageChange(opt.id)}
+                      className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap shrink-0 transition-all ${
+                        isSelected
+                          ? 'bg-cyan-400 text-black shadow-[0_0_8px_rgba(0,240,255,0.35)] border border-cyan-400'
+                          : 'bg-dark-850 hover:bg-dark-800 text-slate-300 hover:text-white border border-white/5'
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  );
+                })}
+
+                {currentArtists.slice(0, 12).map((artist) => (
                   <button
+                    key={artist}
                     type="button"
                     onClick={() => {
-                      userTasteEngine.clearTasteProfile();
-                      setTasteSummary(userTasteEngine.getTasteSummary());
-                      loadDefaultResults('for_you', 'normal');
+                      setQuery(artist);
+                      handleSearch(undefined, artist, selectedLanguage, 0, 'normal');
                     }}
-                    className="text-[10px] text-slate-400 hover:text-red-400 underline ml-2 shrink-0 flex items-center gap-1"
+                    className={`px-3 py-1 rounded-full text-xs whitespace-nowrap shrink-0 transition-all shadow-sm ${
+                      query.toLowerCase() === artist.toLowerCase()
+                        ? 'bg-cyan-500/15 border border-cyan-400 text-cyan-300 font-bold'
+                        : 'bg-dark-900 hover:bg-dark-850 border border-white/5 hover:border-cyan-400/30 text-slate-300 hover:text-white'
+                    }`}
                   >
-                    <RotateCcw className="w-3 h-3" />
-                    Reset Taste
+                    {artist}
                   </button>
-                )}
-              </div>
-            )}
+                ))}
 
-            {/* Suggestions Ribbon: Party Mix Vibes (Mixed Mode) vs Artists/Moods (Original Mode) */}
-            {activeTab === 'mixed' ? (
-              <div className="mb-3 space-y-1.5">
-                <div className="flex items-center justify-between text-[11px]">
-                  <div className="flex items-center gap-1.5 font-semibold text-amber-400">
-                    <Flame className="w-3.5 h-3.5 fill-current" />
-                    <span>Party Mix Categories ({currentMixedVibes.length})</span>
-                  </div>
-                  <span className="text-[10px] text-slate-500 font-mono hidden sm:inline">
-                    {results.length > 0 ? `${results.length} party tracks loaded` : 'Party Mixes'}
-                  </span>
-                </div>
-                <div className="flex items-center gap-1.5 overflow-x-auto pb-1.5 no-scrollbar scroll-smooth">
-                  {currentMixedVibes.map((vibe) => (
-                    <button
-                      key={vibe.label}
-                      type="button"
-                      onClick={() => {
-                        setQuery(vibe.q);
-                        handleSearch(undefined, vibe.q, selectedMixedLanguage, 0, 'mixed');
-                      }}
-                      className={`px-3 py-1 bg-dark-850 hover:bg-dark-800 border rounded-lg text-xs whitespace-nowrap shrink-0 transition-all shadow-sm flex items-center gap-1 ${
-                        query.toLowerCase() === vibe.q.toLowerCase()
-                          ? 'border-amber-400 text-amber-300 bg-amber-500/10 font-bold'
-                          : 'border-white/5 hover:border-amber-500/30 text-slate-300 hover:text-white'
-                      }`}
-                    >
-                      <span>{vibe.label}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
+                <button
+                  type="button"
+                  onClick={handleRotateSuggestions}
+                  disabled={isLoading}
+                  title="Rotate & suggest different songs"
+                  className="px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap shrink-0 transition-all bg-white/5 hover:bg-white/10 text-cyan-300 border border-cyan-400/20 hover:border-cyan-400/50 flex items-center gap-1 shadow-sm active:scale-95 disabled:opacity-50"
+                >
+                  <RotateCcw className={`w-3 h-3 text-cyan-400 ${isRotating || isLoading ? 'animate-spin' : ''}`} />
+                  <span>Fresh</span>
+                </button>
+              </>
             ) : (
-              <div className="mb-3 space-y-1.5">
-                {/* Category Toggle Tabs */}
-                <div className="flex items-center justify-between text-[11px]">
-                  <div className="flex items-center gap-2">
+              <>
+                {mixedLanguageOptions.map((opt) => {
+                  const isSelected = selectedMixedLanguage === opt.id;
+                  return (
                     <button
-                      type="button"
-                      onClick={() => setSuggestionTab('artists')}
-                      className={`flex items-center gap-1 font-semibold transition-colors ${
-                        suggestionTab === 'artists' ? 'text-electric-cyan font-bold' : 'text-slate-400 hover:text-slate-200'
+                      key={opt.id}
+                      onClick={() => handleMixedLanguageChange(opt.id as any)}
+                      className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap shrink-0 transition-all ${
+                        isSelected
+                          ? 'bg-gradient-to-r from-amber-400 to-rose-400 text-black shadow-md border border-amber-400'
+                          : 'bg-dark-850 hover:bg-dark-800 text-slate-300 hover:text-white border border-white/5'
                       }`}
                     >
-                      <Flame className="w-3.5 h-3.5 text-amber-400" />
-                      <span>Artists ({currentArtists.length})</span>
+                      {opt.label}
                     </button>
-                    <span className="text-slate-600">•</span>
-                    <button
-                      type="button"
-                      onClick={() => setSuggestionTab('moods')}
-                      className={`flex items-center gap-1 font-semibold transition-colors ${
-                        suggestionTab === 'moods' ? 'text-electric-cyan font-bold' : 'text-slate-400 hover:text-slate-200'
-                      }`}
-                    >
-                      <Compass className="w-3.5 h-3.5 text-purple-400" />
-                      <span>Vibes ({currentMoods.length})</span>
-                    </button>
-                  </div>
-                  <span className="text-[10px] text-slate-500 font-mono hidden sm:inline">
-                    {results.length > 0 ? `${results.length} songs loaded` : 'Infinite feed'}
-                  </span>
-                </div>
+                  );
+                })}
 
-                {/* Scrollable Suggestion Chips */}
-                <div className="flex items-center gap-1.5 overflow-x-auto pb-1.5 no-scrollbar scroll-smooth">
-                  {suggestionTab === 'artists'
-                    ? currentArtists.map((artist) => (
-                        <button
-                          key={artist}
-                          type="button"
-                          onClick={() => {
-                            setQuery(artist);
-                            handleSearch(undefined, artist, selectedLanguage, 0, 'normal');
-                          }}
-                          className={`px-3 py-1 bg-dark-850 hover:bg-dark-800 border rounded-lg text-xs whitespace-nowrap shrink-0 transition-all shadow-sm ${
-                            query.toLowerCase() === artist.toLowerCase()
-                              ? 'border-electric-cyan text-electric-cyan bg-electric-cyan/10 font-semibold'
-                              : 'border-white/5 hover:border-white/20 text-slate-300 hover:text-white'
-                          }`}
-                        >
-                          {artist}
-                        </button>
-                      ))
-                    : currentMoods.map((mood) => (
-                        <button
-                          key={mood.label}
-                          type="button"
-                          onClick={() => {
-                            setQuery(mood.q);
-                            handleSearch(undefined, mood.q, selectedLanguage, 0, 'normal');
-                          }}
-                          className="px-3 py-1 bg-dark-850 hover:bg-dark-800 border border-white/5 hover:border-white/20 rounded-lg text-slate-300 hover:text-white text-xs whitespace-nowrap shrink-0 transition-all shadow-sm flex items-center gap-1"
-                        >
-                          {mood.label}
-                        </button>
-                      ))}
-                </div>
-              </div>
+                {currentMixedVibes.map((vibe) => (
+                  <button
+                    key={vibe.label}
+                    type="button"
+                    onClick={() => {
+                      setQuery(vibe.q);
+                      handleSearch(undefined, vibe.q, selectedMixedLanguage, 0, 'mixed');
+                    }}
+                    className={`px-3 py-1 rounded-full text-xs whitespace-nowrap shrink-0 transition-all shadow-sm flex items-center gap-1 ${
+                      query.toLowerCase() === vibe.q.toLowerCase()
+                        ? 'border border-amber-400 text-amber-300 bg-amber-500/15 font-bold shadow-[0_0_8px_rgba(251,191,36,0.25)]'
+                        : 'bg-dark-900 hover:bg-dark-850 border border-white/5 hover:border-amber-500/30 text-slate-300 hover:text-white'
+                    }`}
+                  >
+                    <span>{vibe.label}</span>
+                  </button>
+                ))}
+
+                <button
+                  type="button"
+                  onClick={handleRotateSuggestions}
+                  disabled={isLoading}
+                  title="Rotate & suggest different party mixes"
+                  className="px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap shrink-0 transition-all bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 hover:border-amber-500/60 flex items-center gap-1 shadow-sm active:scale-95 disabled:opacity-50"
+                >
+                  <RotateCcw className={`w-3 h-3 text-amber-400 ${isRotating || isLoading ? 'animate-spin' : ''}`} />
+                  <span>New</span>
+                </button>
+              </>
             )}
+          </div>
 
             {/* Results List with Endless Infinite Scroll */}
             <div
