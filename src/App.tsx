@@ -630,7 +630,7 @@ export function App() {
       onClick={() => {
         if (!isAudioUnlocked) handleUnlockAudio();
       }}
-      className="min-h-screen bg-dark-950 text-slate-100 flex flex-col relative pb-36 sm:pb-32 w-full max-w-full overflow-x-clip"
+      className="min-h-screen bg-dark-950 text-slate-100 flex flex-col relative w-full max-w-full overflow-x-clip"
     >
       {/* 1. Sticky Room Navigation Header */}
       <RoomHeader
@@ -644,7 +644,7 @@ export function App() {
       />
 
       {/* Sleek Dynamic Tab Navigation Bar (Desktop & Tablet) */}
-      <div className="hidden md:block w-full bg-dark-950/85 backdrop-blur-xl border-b border-white/10 px-3 py-2 sticky top-[48px] z-30 select-none">
+      <div className="hidden md:block w-full bg-dark-950/85 backdrop-blur-xl border-b border-white/10 px-3 py-1.5 sticky top-[48px] z-30 select-none">
         <div className="max-w-md mx-auto flex items-center justify-between p-1 bg-dark-900/90 rounded-full border border-white/10 shadow-lg gap-1.5">
           {/* Tab 1: Player & Up Next Queue */}
           <button
@@ -653,7 +653,7 @@ export function App() {
               setActiveTab('player');
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
-            className={`flex-1 flex items-center justify-center gap-2 py-1.5 px-4 rounded-full text-xs font-bold transition-all duration-200 active:scale-95 cursor-pointer ${
+            className={`flex-1 flex items-center justify-center gap-2 py-1 px-4 rounded-full text-xs font-bold transition-all duration-200 active:scale-95 cursor-pointer ${
               activeTab === 'player' || activeTab === 'queue'
                 ? 'bg-gradient-to-r from-cyan-400 to-sky-400 text-black shadow-[0_0_14px_rgba(0,240,255,0.4)]'
                 : 'text-slate-400 hover:text-white hover:bg-white/5'
@@ -677,7 +677,7 @@ export function App() {
               setActiveTab('search');
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-4 rounded-full text-xs font-bold transition-all duration-200 active:scale-95 cursor-pointer ${
+            className={`flex-1 flex items-center justify-center gap-1.5 py-1 px-4 rounded-full text-xs font-bold transition-all duration-200 active:scale-95 cursor-pointer ${
               activeTab === 'search'
                 ? 'bg-gradient-to-r from-cyan-400 to-sky-400 text-black shadow-[0_0_14px_rgba(0,240,255,0.4)]'
                 : 'text-slate-400 hover:text-white hover:bg-white/5'
@@ -690,20 +690,20 @@ export function App() {
       </div>
 
       {/* 2. Active Tab Content */}
-      <main className="max-w-7xl mx-auto w-full px-3 py-3 sm:px-4 sm:py-5 flex-1 flex flex-col gap-4 pb-44 md:pb-28">
+      <main className="max-w-7xl mx-auto w-full px-3 py-2 sm:px-4 sm:py-2.5 flex-1 flex flex-col gap-3 pb-36 md:pb-24">
         {/* TAB 1: 🎵 Unified Player & Up Next Experience */}
         {(activeTab === 'player' || activeTab === 'queue') && (
           <div className="flex-1 w-full animate-fade-in">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 items-start">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-4 lg:gap-5 items-start">
               {/* Left Column: Player (Hero Now Playing, Album Artwork & Vinyl) */}
               <div className="lg:col-span-5 w-full flex flex-col items-center">
                 {currentTrack ? (
-                  <div className="w-full bg-dark-900/70 backdrop-blur-xl border border-white/10 hover:border-cyan-400/30 rounded-3xl p-5 sm:p-7 flex flex-col items-center text-center shadow-2xl relative overflow-hidden transition-all duration-300">
+                  <div className="w-full bg-dark-900/70 backdrop-blur-xl border border-white/10 hover:border-cyan-400/30 rounded-2xl sm:rounded-3xl p-3 sm:p-4 md:p-5 flex flex-col items-center text-center shadow-2xl relative overflow-hidden transition-all duration-300">
                     {/* Ambient Neon Glow Aura */}
                     <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-64 h-64 bg-cyan-500/15 rounded-full blur-3xl pointer-events-none" />
 
                     {/* Top Status Pill */}
-                    <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-dark-950/80 border border-white/10 shadow-sm mb-5 sm:mb-6">
+                    <div className="flex items-center gap-1.5 sm:gap-2 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full bg-dark-950/80 border border-white/10 shadow-sm mb-2.5 sm:mb-3">
                       <span
                         className={`w-2 h-2 rounded-full ${
                           isPlaying
@@ -711,13 +711,13 @@ export function App() {
                             : 'bg-amber-400/80 shadow-[0_0_6px_rgba(251,191,36,0.6)]'
                         }`}
                       />
-                      <span className="text-[11px] font-mono uppercase tracking-wider text-slate-300 font-medium">
+                      <span className="text-[10px] sm:text-[11px] font-mono uppercase tracking-wider text-slate-300 font-medium">
                         {isPlaying ? 'Synced Broadcast Active' : 'Playback Paused'}
                       </span>
                     </div>
 
                     {/* Hero Circular Artwork with Spinning Vinyl Ring */}
-                    <div className="relative w-40 h-40 sm:w-52 sm:h-52 lg:w-56 lg:h-56 rounded-full p-[3px] bg-gradient-to-tr from-cyan-400 via-sky-400 to-fuchsia-500 shadow-[0_0_28px_rgba(0,240,255,0.35)] shrink-0 flex items-center justify-center mb-5 transition-all duration-300">
+                    <div className="relative w-32 h-32 sm:w-36 sm:h-36 md:w-44 md:h-44 rounded-full p-[2.5px] bg-gradient-to-tr from-cyan-400 via-sky-400 to-fuchsia-500 shadow-[0_0_20px_rgba(0,240,255,0.35)] shrink-0 flex items-center justify-center mb-2.5 sm:mb-3 transition-all duration-300">
                       <img
                         src={currentTrack.artwork || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=320'}
                         alt={currentTrack.title}
@@ -727,37 +727,37 @@ export function App() {
                         style={{ animationDuration: '20s' }}
                       />
                       {/* Center Vinyl Spindle Hole */}
-                      <div className="absolute w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-dark-950 border-2 border-cyan-400/80 shadow-[0_0_10px_rgba(0,240,255,0.5)] flex items-center justify-center">
-                        <div className="w-2.5 h-2.5 rounded-full bg-cyan-400" />
+                      <div className="absolute w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-dark-950 border-2 border-cyan-400/80 shadow-[0_0_8px_rgba(0,240,255,0.5)] flex items-center justify-center">
+                        <div className="w-2 h-2 rounded-full bg-cyan-400" />
                       </div>
                     </div>
 
                     {/* Track Metadata */}
-                    <div className="w-full max-w-sm mb-5">
-                      <h2 className="text-base sm:text-xl font-black text-white truncate tracking-tight mb-1" title={cleanTrackTitle(currentTrack.title, currentTrack.artist)}>
+                    <div className="w-full max-w-sm mb-2.5 sm:mb-3">
+                      <h2 className="text-sm sm:text-base md:text-lg font-black text-white truncate tracking-tight mb-0.5" title={cleanTrackTitle(currentTrack.title, currentTrack.artist)}>
                         {cleanTrackTitle(currentTrack.title, currentTrack.artist)}
                       </h2>
                       <p className="text-xs sm:text-sm text-cyan-300 font-medium truncate">{currentTrack.artist}</p>
                       
-                      <div className="flex items-center justify-center gap-2 mt-2.5 flex-wrap">
-                        <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-dark-800 border border-white/10 text-slate-300 font-mono">
+                      <div className="flex items-center justify-center gap-2 mt-1 sm:mt-1.5 flex-wrap">
+                        <span className="text-[10px] sm:text-[11px] px-2 py-0.5 rounded-full bg-dark-800 border border-white/10 text-slate-300 font-mono">
                           {currentTrack.genre || 'Music'}
                         </span>
-                        <span className="text-[11px] text-slate-400 font-mono">
+                        <span className="text-[10px] sm:text-[11px] text-slate-400 font-mono">
                           Added by <strong className="text-white">{currentTrack.addedBy || 'Host'}</strong>
                         </span>
                       </div>
                     </div>
 
                     {/* Quick Navigation Action Buttons */}
-                    <div className="flex items-center gap-2.5 w-full justify-center">
+                    <div className="flex items-center gap-2 sm:gap-2.5 w-full justify-center">
                       <button
                         type="button"
                         onClick={() => {
                           const el = document.getElementById('upnext-queue-section');
                           if (el) el.scrollIntoView({ behavior: 'smooth' });
                         }}
-                        className="lg:hidden flex-1 max-w-[180px] py-2.5 px-3.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold text-slate-200 hover:text-white flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer shadow-md"
+                        className="lg:hidden flex-1 max-w-[170px] py-1.5 sm:py-2 px-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold text-slate-200 hover:text-white flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer shadow-md"
                       >
                         <ListMusic className="w-3.5 h-3.5 text-cyan-400" />
                         <span>Jump to Queue ({queue.length})</span>
@@ -766,7 +766,7 @@ export function App() {
                       <button
                         type="button"
                         onClick={() => setActiveTab('search')}
-                        className="flex-1 max-w-[220px] py-2.5 px-3.5 rounded-xl bg-cyan-400 hover:bg-white text-black font-bold text-xs flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer shadow-[0_0_16px_rgba(0,240,255,0.35)]"
+                        className="flex-1 max-w-[200px] py-1.5 sm:py-2 px-3.5 rounded-xl bg-cyan-400 hover:bg-white text-black font-bold text-xs flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer shadow-[0_0_14px_rgba(0,240,255,0.35)]"
                       >
                         <Search className="w-3.5 h-3.5" />
                         <span>Browse & Add Songs</span>
@@ -774,24 +774,24 @@ export function App() {
                     </div>
                   </div>
                 ) : (
-                  <div className="w-full bg-dark-900/70 backdrop-blur-xl border border-white/10 rounded-3xl p-6 sm:p-8 flex flex-col items-center text-center shadow-2xl">
-                    <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full p-[2px] bg-gradient-to-tr from-cyan-400 via-sky-400 to-fuchsia-500 shadow-[0_0_24px_rgba(0,240,255,0.4)] flex items-center justify-center mb-4">
+                  <div className="w-full bg-dark-900/70 backdrop-blur-xl border border-white/10 rounded-2xl sm:rounded-3xl p-4 sm:p-5 flex flex-col items-center text-center shadow-2xl">
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full p-[2px] bg-gradient-to-tr from-cyan-400 via-sky-400 to-fuchsia-500 shadow-[0_0_20px_rgba(0,240,255,0.4)] flex items-center justify-center mb-2.5">
                       <div className="w-full h-full rounded-full bg-dark-950 flex items-center justify-center text-cyan-400">
-                        <Disc3 className="w-10 h-10 animate-spin" style={{ animationDuration: '8s' }} />
+                        <Disc3 className="w-8 h-8 animate-spin" style={{ animationDuration: '8s' }} />
                       </div>
                     </div>
 
-                    <h3 className="text-base sm:text-lg font-black text-white mb-1.5">
+                    <h3 className="text-sm sm:text-base font-black text-white mb-1">
                       No Track Playing
                     </h3>
-                    <p className="text-xs text-slate-400 max-w-xs mb-5 leading-relaxed">
+                    <p className="text-xs text-slate-400 max-w-xs mb-3 leading-relaxed">
                       The room audio mesh is ready and synchronized. Pick any song from the catalog to start broadcasting to all devices!
                     </p>
 
                     <button
                       type="button"
                       onClick={() => setActiveTab('search')}
-                      className="py-2.5 px-5 rounded-full bg-gradient-to-r from-cyan-400 to-sky-400 hover:from-white hover:to-cyan-200 text-black font-black text-xs flex items-center gap-1.5 shadow-[0_0_18px_rgba(0,240,255,0.4)] transition-all active:scale-95 cursor-pointer"
+                      className="py-1.5 sm:py-2 px-4 rounded-full bg-gradient-to-r from-cyan-400 to-sky-400 hover:from-white hover:to-cyan-200 text-black font-black text-xs flex items-center gap-1.5 shadow-[0_0_16px_rgba(0,240,255,0.4)] transition-all active:scale-95 cursor-pointer"
                     >
                       <Search className="w-3.5 h-3.5 stroke-[2.5]" />
                       <span>Search & Play Songs</span>
