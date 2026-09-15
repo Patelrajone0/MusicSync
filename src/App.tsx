@@ -80,6 +80,8 @@ function clearStoredSession() {
   } catch (e) {}
 }
 
+export type TabDesign = 'glass' | 'rail' | 'tactile' | 'header' | 'ghost';
+
 export function App() {
   // Room session state
   const [roomCode, setRoomCode] = useState<string | null>(null);
@@ -112,6 +114,22 @@ export function App() {
   const [isHistoryOpen, setIsHistoryOpen] = useState<boolean>(false);
   const [kickedNotice, setKickedNotice] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'player' | 'queue' | 'search'>('player');
+
+  // Interactive Live Tab Design state
+  const [tabDesign, setTabDesign] = useState<TabDesign>(() => {
+    try {
+      return (localStorage.getItem('musicsync_tab_design') as TabDesign) || 'glass';
+    } catch {
+      return 'glass';
+    }
+  });
+
+  const handleSelectTabDesign = (design: TabDesign) => {
+    setTabDesign(design);
+    try {
+      localStorage.setItem('musicsync_tab_design', design);
+    } catch {}
+  };
 
   // Auto-reconnect state on page refresh
   const [isReconnecting, setIsReconnecting] = useState<boolean>(() => {
@@ -624,22 +642,6 @@ export function App() {
         }
       }
     }, 150);
-  };
-
-  type TabDesign = 'glass' | 'rail' | 'tactile' | 'header' | 'ghost';
-  const [tabDesign, setTabDesign] = useState<TabDesign>(() => {
-    try {
-      return (localStorage.getItem('musicsync_tab_design') as TabDesign) || 'glass';
-    } catch {
-      return 'glass';
-    }
-  });
-
-  const handleSelectTabDesign = (design: TabDesign) => {
-    setTabDesign(design);
-    try {
-      localStorage.setItem('musicsync_tab_design', design);
-    } catch {}
   };
 
   return (
