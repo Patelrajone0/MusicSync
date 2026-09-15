@@ -1,5 +1,4 @@
 import React, { useEffect, useRef } from 'react';
-import { Waves, Radio, Activity, Sparkles } from 'lucide-react';
 import { syncEngine } from '../services/syncEngine';
 
 interface AudioVisualizerProps {
@@ -384,22 +383,6 @@ export const AudioVisualizer: React.FC<AudioVisualizerProps> = ({
   return (
     <div className={`relative overflow-hidden w-full h-full ${className}`}>
       <canvas ref={canvasRef} className="w-full h-full block" />
-
-      {/* Floating Pill Badge (Exact match to uploaded design) */}
-      <div className="absolute bottom-3 right-3 flex items-center gap-1.5 px-2 py-1.5 rounded-full bg-[#08121f]/90 border border-white/10 backdrop-blur-md shadow-lg pointer-events-none select-none z-10">
-        <div className="w-6 h-6 rounded-full bg-cyan-400 flex items-center justify-center text-black shadow-[0_0_10px_#00f0ff]">
-          <Waves className="w-3.5 h-3.5 stroke-[2.5]" />
-        </div>
-        <div className="p-1 text-slate-300">
-          <Radio className="w-3.5 h-3.5" />
-        </div>
-        <div className="p-1 text-slate-300">
-          <Activity className="w-3.5 h-3.5" />
-        </div>
-        <div className="p-1 text-slate-300">
-          <Sparkles className="w-3.5 h-3.5" />
-        </div>
-      </div>
     </div>
   );
 };
