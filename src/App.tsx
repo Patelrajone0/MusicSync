@@ -20,7 +20,7 @@ import { MusicSearchModal } from './components/MusicSearchModal';
 import { PlaybackHistoryModal } from './components/PlaybackHistoryModal';
 import { Logo } from './components/Logo';
 import { AudioVisualizer } from './components/AudioVisualizer';
-import { UserX, Disc3, ListMusic, Search, Waves, Radio } from 'lucide-react';
+import { UserX, Disc3, ListMusic, Search } from 'lucide-react';
 
 import { userTasteEngine } from './services/userTaste';
 import { cleanTrackTitle } from './services/musicApi';
@@ -702,12 +702,8 @@ export function App() {
                   {/* Ambient Top Radial Lighting */}
                   <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-80 h-80 bg-gradient-to-b from-cyan-500/15 via-sky-500/5 to-transparent rounded-full blur-3xl pointer-events-none" />
 
-                  {/* Top Header Row (Exact match to uploaded design: centered status pill + top-right circular broadcast icon) */}
-                  <div className="w-full flex items-center justify-between relative mb-3 sm:mb-4">
-                    {/* Balanced spacer for perfect centering */}
-                    <div className="w-8 h-8 opacity-0 pointer-events-none" />
-
-                    {/* Centered Status Pill */}
+                  {/* Top Header Row: Centered Status Pill */}
+                  <div className="w-full flex items-center justify-center relative mb-3 sm:mb-4">
                     <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#0c1420]/95 border border-white/10 shadow-[0_4px_16px_rgba(0,0,0,0.5)] select-none">
                       <span
                         className={`w-2 h-2 rounded-full ${
@@ -725,14 +721,6 @@ export function App() {
                           ? 'Playback Paused'
                           : 'Playback Paused'}
                       </span>
-                    </div>
-
-                    {/* Top-Right Circular Broadcast Indicator Button */}
-                    <div
-                      className="w-8 h-8 rounded-full bg-[#0c1420]/90 border border-cyan-400/30 flex items-center justify-center text-cyan-400 shadow-[0_0_12px_rgba(0,240,255,0.2)] hover:border-cyan-400/60 transition-all select-none"
-                      title="Sync Broadcast Connected"
-                    >
-                      <Radio className="w-3.5 h-3.5 text-cyan-400" />
                     </div>
                   </div>
 
