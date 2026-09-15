@@ -691,26 +691,26 @@ export function App() {
       </div>
 
       {/* 2. Active Tab Content */}
-      <main className="max-w-7xl mx-auto w-full px-3 py-2 sm:px-4 sm:py-2.5 flex-1 flex flex-col gap-3 pb-36 md:pb-24">
+      <main className="max-w-7xl mx-auto w-full px-3 py-2 sm:px-4 sm:py-2.5 flex-1 flex flex-col gap-3 pb-44 md:pb-36">
         {/* TAB 1: 🎵 Unified Player & Up Next Experience */}
         {(activeTab === 'player' || activeTab === 'queue') && (
           <div className="flex-1 w-full animate-fade-in">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-4 lg:gap-5 items-start">
-              {/* Left Column: Player Card (Exact Match to Uploaded Screenshot) */}
+              {/* Left Column: Player Card (Exact Match to Uploaded Screenshot, perfectly fitted) */}
               <div className="lg:col-span-5 w-full flex flex-col items-center">
-                <div className="w-full bg-[#080c14]/95 backdrop-blur-2xl border border-white/10 hover:border-cyan-400/30 rounded-[32px] p-6 sm:p-8 flex flex-col items-center text-center shadow-[0_25px_60px_rgba(0,0,0,0.85)] relative overflow-hidden transition-all duration-300">
+                <div className="w-full max-w-md bg-[#080c14]/95 backdrop-blur-2xl border border-white/10 hover:border-cyan-400/30 rounded-[28px] sm:rounded-[32px] p-4 sm:p-5 md:p-6 flex flex-col items-center text-center shadow-[0_25px_60px_rgba(0,0,0,0.85)] relative overflow-hidden transition-all duration-300">
                   {/* Ambient Top Radial Lighting */}
                   <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-80 h-80 bg-gradient-to-b from-cyan-500/15 via-sky-500/5 to-transparent rounded-full blur-3xl pointer-events-none" />
 
                   {/* Top Header Row (Exact match to uploaded design: centered status pill + top-right circular broadcast icon) */}
-                  <div className="w-full flex items-center justify-between relative mb-5 sm:mb-6">
+                  <div className="w-full flex items-center justify-between relative mb-3 sm:mb-4">
                     {/* Balanced spacer for perfect centering */}
-                    <div className="w-9 h-9 opacity-0 pointer-events-none" />
+                    <div className="w-8 h-8 opacity-0 pointer-events-none" />
 
                     {/* Centered Status Pill */}
-                    <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-[#0c1420]/95 border border-white/10 shadow-[0_4px_16px_rgba(0,0,0,0.5)] select-none">
+                    <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#0c1420]/95 border border-white/10 shadow-[0_4px_16px_rgba(0,0,0,0.5)] select-none">
                       <span
-                        className={`w-2.5 h-2.5 rounded-full ${
+                        className={`w-2 h-2 rounded-full ${
                           isPlaying
                             ? 'bg-cyan-400 shadow-[0_0_12px_#00f0ff] animate-pulse'
                             : currentTrack
@@ -718,7 +718,7 @@ export function App() {
                             : 'bg-[#eab308] shadow-[0_0_12px_rgba(234,179,8,0.95)]'
                         }`}
                       />
-                      <span className="text-[11px] sm:text-xs font-mono uppercase tracking-[0.22em] text-slate-200 font-bold">
+                      <span className="text-[10px] sm:text-[11px] font-mono uppercase tracking-[0.22em] text-slate-200 font-bold">
                         {isPlaying
                           ? 'Playback Active'
                           : currentTrack
@@ -729,33 +729,33 @@ export function App() {
 
                     {/* Top-Right Circular Broadcast Indicator Button */}
                     <div
-                      className="w-9 h-9 rounded-full bg-[#0c1420]/90 border border-cyan-400/30 flex items-center justify-center text-cyan-400 shadow-[0_0_12px_rgba(0,240,255,0.2)] hover:border-cyan-400/60 transition-all select-none"
+                      className="w-8 h-8 rounded-full bg-[#0c1420]/90 border border-cyan-400/30 flex items-center justify-center text-cyan-400 shadow-[0_0_12px_rgba(0,240,255,0.2)] hover:border-cyan-400/60 transition-all select-none"
                       title="Sync Broadcast Connected"
                     >
-                      <Radio className="w-4 h-4 text-cyan-400" />
+                      <Radio className="w-3.5 h-3.5 text-cyan-400" />
                     </div>
                   </div>
 
-                  {/* The Visualizer Box (Exact match to uploaded design: rounded-3xl black box) */}
-                  <div className="w-full h-52 sm:h-60 md:h-64 rounded-3xl overflow-hidden bg-black border border-white/10 shadow-inner relative my-1">
-                    <AudioVisualizer isPlaying={isPlaying} height={240} className="w-full h-full" />
+                  {/* The Visualizer Box (Exact match to uploaded design: rounded-2xl black box, perfectly proportioned) */}
+                  <div className="w-full h-44 sm:h-48 md:h-52 rounded-2xl sm:rounded-3xl overflow-hidden bg-black border border-white/10 shadow-inner relative my-0.5">
+                    <AudioVisualizer isPlaying={isPlaying} height={200} className="w-full h-full" />
                   </div>
 
                   {/* Track Typography (Exact match: bold title + cyan artist) */}
                   <div className="w-full max-w-sm flex flex-col items-center">
                     <h2
-                      className="text-3xl sm:text-4xl font-black text-white tracking-tight leading-tight mt-5 sm:mt-6 mb-1 text-center px-2 truncate w-full font-sans drop-shadow-md"
+                      className="text-2xl sm:text-3xl font-black text-white tracking-tight leading-tight mt-3 sm:mt-4 mb-0.5 text-center px-2 truncate w-full font-sans drop-shadow-md"
                       title={currentTrack ? cleanTrackTitle(currentTrack.title, currentTrack.artist) : 'Starboy'}
                     >
                       {currentTrack ? cleanTrackTitle(currentTrack.title, currentTrack.artist) : 'Starboy'}
                     </h2>
-                    <p className="text-base sm:text-lg text-[#00f0ff] font-bold text-center mb-3.5 truncate w-full">
+                    <p className="text-sm sm:text-base text-[#00f0ff] font-bold text-center mb-2.5 sm:mb-3 truncate w-full">
                       {currentTrack ? currentTrack.artist : 'The Weeknd feat. Daft Punk'}
                     </p>
 
                     {/* Metadata Pill Row */}
-                    <div className="flex items-center justify-center gap-2.5 text-xs text-slate-400 mb-5 flex-wrap">
-                      <span className="px-3.5 py-1 rounded-full bg-[#121926] border border-white/10 text-slate-200 font-medium tracking-wide">
+                    <div className="flex items-center justify-center gap-2 text-[11px] sm:text-xs text-slate-400 mb-3 sm:mb-4 flex-wrap">
+                      <span className="px-3 py-0.5 rounded-full bg-[#121926] border border-white/10 text-slate-200 font-medium tracking-wide">
                         {currentTrack?.genre || 'Synced Audio'}
                       </span>
                       <span className="text-slate-400">
@@ -768,9 +768,9 @@ export function App() {
                   <button
                     type="button"
                     onClick={() => setActiveTab('search')}
-                    className="w-full max-w-[280px] sm:max-w-[320px] py-3.5 px-6 rounded-2xl sm:rounded-full bg-cyan-400 hover:bg-white text-black font-extrabold text-sm sm:text-base flex items-center justify-center gap-2.5 shadow-[0_0_24px_rgba(0,240,255,0.5)] hover:shadow-[0_0_35px_rgba(0,240,255,0.85)] transition-all duration-200 active:scale-95 cursor-pointer select-none"
+                    className="w-full max-w-[260px] sm:max-w-[280px] py-2.5 sm:py-3 px-5 rounded-2xl sm:rounded-full bg-cyan-400 hover:bg-white text-black font-extrabold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(0,240,255,0.4)] hover:shadow-[0_0_30px_rgba(0,240,255,0.8)] transition-all duration-200 active:scale-95 cursor-pointer select-none"
                   >
-                    <Search className="w-5 h-5 stroke-[2.5] text-black" />
+                    <Search className="w-4 h-4 stroke-[2.5] text-black" />
                     <span>Browse & Add Songs</span>
                   </button>
 
@@ -781,7 +781,7 @@ export function App() {
                       const el = document.getElementById('upnext-queue-section');
                       if (el) el.scrollIntoView({ behavior: 'smooth' });
                     }}
-                    className="lg:hidden mt-3 text-xs text-slate-400 hover:text-white flex items-center gap-1.5 transition-colors"
+                    className="lg:hidden mt-2.5 text-xs text-slate-400 hover:text-white flex items-center gap-1.5 transition-colors"
                   >
                     <ListMusic className="w-3.5 h-3.5 text-cyan-400" />
                     <span>Jump to Queue ({queue.length})</span>

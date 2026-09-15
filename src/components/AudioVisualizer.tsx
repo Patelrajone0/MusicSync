@@ -182,36 +182,47 @@ export const AudioVisualizer: React.FC<AudioVisualizerProps> = ({
     playing: boolean
   ) => {
     const centerY = h / 2;
-    const barCount = Math.min(88, Math.max(52, Math.floor(w / 7.6)));
+    const barCount = Math.min(84, Math.max(48, Math.floor(w / 7.8)));
     const spacing = w / barCount;
-    const barWidth = Math.max(3.0, spacing * 0.60);
-    const maxHalfHeight = h * 0.44;
+    const barWidth = Math.max(2.8, spacing * 0.58);
+
+    // Safe vertical bounds: keep generous padding so visuals NEVER touch or go out of borders
+    const topMargin = 18;
+    const bottomMargin = 18;
+    const usableHalfHeight = Math.max(16, (h / 2) - 22);
 
     // Helper to calculate the 4-peak mountain envelope matching the reference image
     const getLobeEnvelope = (ratio: number) => {
-      const p1 = Math.exp(-Math.pow((ratio - 0.16) / 0.075, 2)) * 0.70; // Left: Green/Teal
-      const p2 = Math.exp(-Math.pow((ratio - 0.38) / 0.065, 2)) * 0.60; // Mid-left: Blue
-      const p3 = Math.exp(-Math.pow((ratio - 0.63) / 0.082, 2)) * 0.95; // Center-right: Tallest Magenta/Pink
-      const p4 = Math.exp(-Math.pow((ratio - 0.85) / 0.072, 2)) * 0.72; // Right: Orange/Yellow
-      const baseline = 0.07;
-      return Math.min(1.0, baseline + p1 + p2 + p3 + p4);
+      // Taper smoothly at extreme edges so waves converge cleanly into the center horizon
+      const edgeTaper = Math.min(1.0, Math.sin(ratio * Math.PI) * 2.2);
+
+      const p1 = Math.exp(-Math.pow((ratio - 0.16) / 0.075, 2)) * 0.65; // Left: Green/Teal
+      const p2 = Math.exp(-Math.pow((ratio - 0.38) / 0.065, 2)) * 0.58; // Mid-left: Blue
+      const p3 = Math.exp(-Math.pow((ratio - 0.63) / 0.082, 2)) * 0.88; // Center-right: Tallest Magenta/Pink
+      const p4 = Math.exp(-Math.pow((ratio - 0.85) / 0.072, 2)) * 0.66; // Right: Orange/Yellow
+      const baseline = 0.06;
+      return Math.min(1.0, (baseline + p1 + p2 + p3 + p4) * edgeTaper);
     };
 
-    // Dynamic rhythm multiplier per lobe
+    // Dynamic rhythm multiplier per lobe (smoothly bounded)
     const getLobePulse = (ratio: number) => {
       if (!playing) return 1.0;
       if (ratio < 0.28) {
         // Lobe 1 (Kick / sub-bass rhythm)
-        return 1.0 + (hasRealFft ? fftBass * 0.95 : kick * 0.85 + groove * 0.25);
+        const kickEffect = hasRealFft ? fftBass * 0.75 : kick * 0.65 + groove * 0.20;
+        return 1.0 + Math.min(0.65, kickEffect);
       } else if (ratio < 0.50) {
         // Lobe 2 (Bassline / mid-bass)
-        return 1.0 + (hasRealFft ? fftBass * 0.45 + fftMid * 0.45 : groove * 0.55 + kick * 0.35);
+        const midBassEffect = hasRealFft ? fftBass * 0.35 + fftMid * 0.35 : groove * 0.40 + kick * 0.25;
+        return 1.0 + Math.min(0.55, midBassEffect);
       } else if (ratio < 0.75) {
         // Lobe 3 (Snare / vocal / lead synth - tallest peak)
-        return 1.0 + (hasRealFft ? fftMid * 1.15 : snare * 1.10 + hat * 0.30);
+        const snareEffect = hasRealFft ? fftMid * 0.85 : snare * 0.75 + hat * 0.20;
+        return 1.0 + Math.min(0.70, snareEffect);
       } else {
         // Lobe 4 (Hi-hats / percussion)
-        return 1.0 + (hasRealFft ? fftHigh * 0.90 : hat * 0.85 + snare * 0.25);
+        const hatEffect = hasRealFft ? fftHigh * 0.65 : hat * 0.60 + snare * 0.20;
+        return 1.0 + Math.min(0.55, hatEffect);
       }
     };
 
@@ -248,10 +259,11 @@ export const AudioVisualizer: React.FC<AudioVisualizerProps> = ({
       }
     };
 
-    // A. Draw Stacked Segmented LED Dashes for Mirrored Equalizer Bars (Exact match to sample)
-    const dashH = 3.6;
+    // A. Draw Stacked Segmented LED Dashes for Mirrored Equalizer Bars
+    const dashH = 3.2;
     const dashGap = 2.0;
     const step = dashH + dashGap;
+    const maxDashHeight = usableHalfHeight * 0.78;
 
     for (let i = 0; i < barCount; i++) {
       const ratio = i / barCount;
@@ -262,8 +274,9 @@ export const AudioVisualizer: React.FC<AudioVisualizerProps> = ({
       const pulse = getLobePulse(ratio);
 
       // Living wave phase undulation
-      const undulate = Math.sin(phase * 1.5 + i * 0.15) * 0.10 + 0.90;
-      const dynamicHeight = Math.max(12, baseEnv * pulse * undulate * maxHalfHeight);
+      const undulate = Math.sin(phase * 1.5 + i * 0.15) * 0.08 + 0.92;
+      const rawHeight = baseEnv * pulse * undulate * maxDashHeight;
+      const dynamicHeight = Math.min(maxDashHeight, Math.max(6, rawHeight));
 
       const color = getLobeColor(ratio, 1.0);
       const numDashes = Math.floor(dynamicHeight / step);
@@ -295,22 +308,24 @@ export const AudioVisualizer: React.FC<AudioVisualizerProps> = ({
 
         ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
 
-        // Upper dash
+        // Upper dash (guaranteed within canvas)
         ctx.fillRect(x, centerY - offset - dashH, barWidth, dashH);
-        // Lower mirrored dash
+        // Lower mirrored dash (guaranteed within canvas)
         ctx.fillRect(x, centerY + offset, barWidth, dashH);
       }
     }
 
-    // B. Draw Dense Multi-Strand Wireframe Contour Ribbon Mesh (Exact match to sample)
+    // B. Draw Dense Multi-Strand Wireframe Contour Ribbon Mesh
     const strandCount = 14;
+    const maxWaveSpan = usableHalfHeight * 0.72;
+
     for (let s = 0; s < strandCount; s++) {
       const strandRatio = s / (strandCount - 1);
       const phaseOffset = (s - 7) * 0.18;
-      const verticalOffset = (strandRatio - 0.5) * 6;
+      const verticalOffset = (strandRatio - 0.5) * 4;
 
       ctx.beginPath();
-      ctx.lineWidth = s === 6 || s === 7 ? 2.0 : 1.2;
+      ctx.lineWidth = s === 6 || s === 7 ? 1.8 : 1.1;
 
       // Color tinting: center strands glow white/cyan, outer strands shift pink/amber
       let strandColor = 'rgba(255, 255, 255, 0.85)';
@@ -327,7 +342,7 @@ export const AudioVisualizer: React.FC<AudioVisualizerProps> = ({
       }
 
       ctx.strokeStyle = strandColor;
-      ctx.shadowBlur = s === 6 || s === 7 ? 10 : 5;
+      ctx.shadowBlur = s === 6 || s === 7 ? 8 : 4;
       ctx.shadowColor = shadowColor;
 
       for (let x = 0; x <= w; x += 3.5) {
@@ -338,9 +353,13 @@ export const AudioVisualizer: React.FC<AudioVisualizerProps> = ({
         // Sinusoidal wave that inflates with the lobe envelope and rhythm
         const wave1 = Math.sin(x * 0.0075 + phase * 1.3 + phaseOffset);
         const wave2 = Math.cos(x * 0.016 - phase * 0.9 + phaseOffset * 0.5) * 0.35;
-        const waveAmp = env * maxHalfHeight * 0.85 * pulse * (wave1 + wave2);
+        // Normalize sum (which reaches up to 1.35) so it stays within [-1, 1]
+        const normalizedWave = (wave1 + wave2) / 1.35;
+        const waveAmp = env * maxWaveSpan * pulse * normalizedWave;
 
-        const y = centerY + verticalOffset + waveAmp;
+        // Guaranteed to stay safely inside bounds without ever going out
+        let y = centerY + verticalOffset + waveAmp;
+        y = Math.max(topMargin, Math.min(h - bottomMargin, y));
 
         if (x === 0) {
           ctx.moveTo(x, y);
