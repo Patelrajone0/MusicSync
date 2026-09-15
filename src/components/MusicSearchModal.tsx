@@ -856,31 +856,33 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
                     ? 'Search party mixes, DJ sets, remixes...'
                     : 'Search songs, artists, or genres...'
                 }
-                className="w-full bg-dark-950/80 border border-white/10 rounded-full pl-10 pr-40 sm:pr-48 py-2 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 focus:shadow-[0_0_12px_rgba(0,240,255,0.25)] transition-all"
+                className="w-full bg-dark-950/80 border border-white/10 rounded-full pl-10 pr-48 sm:pr-56 py-2 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 focus:shadow-[0_0_12px_rgba(0,240,255,0.25)] transition-all"
                 autoFocus={!inline}
               />
 
-              {query && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setQuery('');
-                    loadDefaultResults();
-                  }}
-                  className="absolute right-32 sm:right-36 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1 rounded-full hover:bg-white/10"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              )}
+              {/* Trailing Controls Container: Clear button, Language Dropdown & Search Button */}
+              <div className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center gap-1.5 sm:gap-2 z-10">
+                {query && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setQuery('');
+                      loadDefaultResults();
+                    }}
+                    className="text-slate-400 hover:text-white p-1 rounded-full hover:bg-white/10 transition-colors"
+                    title="Clear search"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
 
-              {/* Integrated Language Filter Dropdown inside Search Bar */}
-              <div className="absolute right-16 sm:right-18 top-1/2 -translate-y-1/2 flex items-center">
+                {/* Integrated Language Filter Dropdown inside Search Bar */}
                 {activeTab === 'search' && (
-                  <div className="relative">
+                  <div className="relative flex items-center shrink-0">
                     <select
                       value={selectedLanguage}
                       onChange={(e) => handleLanguageChange(e.target.value as any)}
-                      className="bg-dark-900/95 hover:bg-dark-850 text-cyan-300 text-[11px] font-semibold py-1 pl-2.5 pr-5 rounded-full border border-white/10 hover:border-cyan-400/40 focus:outline-none focus:border-cyan-400 appearance-none cursor-pointer transition-all"
+                      className="h-7 bg-dark-900/95 hover:bg-dark-850 text-cyan-300 text-[11px] font-semibold pl-2.5 pr-6 rounded-full border border-cyan-400/30 hover:border-cyan-400 focus:outline-none focus:border-cyan-400 appearance-none cursor-pointer transition-all shadow-sm"
                     >
                       {languageOptions.map((opt) => (
                         <option key={opt.id} value={opt.id} className="bg-dark-900 text-white">
@@ -888,16 +890,16 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
                         </option>
                       ))}
                     </select>
-                    <ChevronDown className="w-2.5 h-2.5 text-cyan-400 absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <ChevronDown className="w-3 h-3 text-cyan-400 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
                   </div>
                 )}
 
                 {activeTab === 'mixed' && (
-                  <div className="relative">
+                  <div className="relative flex items-center shrink-0">
                     <select
                       value={selectedMixedLanguage}
                       onChange={(e) => handleMixedLanguageChange(e.target.value as any)}
-                      className="bg-dark-900/95 hover:bg-dark-850 text-amber-300 text-[11px] font-semibold py-1 pl-2.5 pr-5 rounded-full border border-amber-500/20 hover:border-amber-400/40 focus:outline-none focus:border-amber-400 appearance-none cursor-pointer transition-all"
+                      className="h-7 bg-dark-900/95 hover:bg-dark-850 text-amber-300 text-[11px] font-semibold pl-2.5 pr-6 rounded-full border border-amber-500/30 hover:border-amber-400 focus:outline-none focus:border-amber-400 appearance-none cursor-pointer transition-all shadow-sm"
                     >
                       {mixedLanguageOptions.map((opt) => (
                         <option key={opt.id} value={opt.id} className="bg-dark-900 text-white">
@@ -905,21 +907,21 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
                         </option>
                       ))}
                     </select>
-                    <ChevronDown className="w-2.5 h-2.5 text-amber-400 absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <ChevronDown className="w-3 h-3 text-amber-400 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
                   </div>
                 )}
-              </div>
 
-              <button
-                type="submit"
-                className={`absolute right-1.5 top-1/2 -translate-y-1/2 px-3 py-1 font-bold text-xs rounded-full transition-all active:scale-95 cursor-pointer shadow-md ${
-                  activeTab === 'mixed'
-                    ? 'bg-gradient-to-r from-amber-400 to-rose-400 text-black hover:brightness-110 shadow-[0_0_8px_rgba(251,191,36,0.3)]'
-                    : 'bg-cyan-400 text-black hover:bg-white shadow-[0_0_8px_rgba(0,240,255,0.35)]'
-                }`}
-              >
-                Search
-              </button>
+                <button
+                  type="submit"
+                  className={`h-7 px-3 flex items-center justify-center font-bold text-xs rounded-full transition-all active:scale-95 cursor-pointer shadow-md shrink-0 ${
+                    activeTab === 'mixed'
+                      ? 'bg-gradient-to-r from-amber-400 to-rose-400 text-black hover:brightness-110 shadow-[0_0_8px_rgba(251,191,36,0.3)]'
+                      : 'bg-cyan-400 text-black hover:bg-white shadow-[0_0_8px_rgba(0,240,255,0.35)]'
+                  }`}
+                >
+                  Search
+                </button>
+              </div>
             </form>
 
             {/* Floating Autocomplete Dropdown */}
