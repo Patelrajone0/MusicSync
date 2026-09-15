@@ -734,21 +734,7 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
             </div>
           </div>
           <div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="text-base font-bold text-white">Universal Music Library</h3>
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-electric-cyan/10 text-electric-cyan border border-electric-cyan/30 font-mono font-bold uppercase tracking-wider">
-                Limitless Catalog
-              </span>
-              {tasteSummary.totalInteractions > 0 && (
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-300 border border-purple-500/30 font-mono font-semibold hidden sm:inline-flex items-center gap-1">
-                  <Heart className="w-2.5 h-2.5 fill-current text-purple-400" />
-                  Taste AI Calibrated
-                </span>
-              )}
-            </div>
-            <p className="text-xs text-slate-400 mt-0.5">
-              Trending chartbusters & personalized suggestions in <strong className="text-white">English, Hindi, Gujarati & Punjabi</strong>
-            </p>
+            <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">Universal Music Library</h3>
           </div>
         </div>
         {!inline && (
