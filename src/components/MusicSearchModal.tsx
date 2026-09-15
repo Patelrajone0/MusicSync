@@ -495,7 +495,6 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
   };
 
   const handleAddTrack = (track: Track) => {
-    syncEngine.unlockAudio().catch(() => {});
     socket.emit('queue_add', { track });
     // Save to user taste profile!
     userTasteEngine.recordInteraction(track, 'queued');

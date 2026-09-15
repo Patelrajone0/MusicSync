@@ -376,7 +376,8 @@ export function App() {
   }, [roomCode, currentUser]);
 
   const handleUnlockAudio = async () => {
-    const success = await syncEngine.unlockAudio(currentTrack, playbackState.scheduledPosition);
+    const shouldPlay = playbackState.status === 'playing';
+    const success = await syncEngine.unlockAudio(currentTrack, playbackState.scheduledPosition, shouldPlay);
     setIsAudioUnlocked(success);
   };
 

@@ -11,7 +11,8 @@ import {
   VolumeX,
   Radio,
   Sparkles,
-  Crown
+  Crown,
+  ListMusic
 } from 'lucide-react';
 import { Track, PlaybackState, UserRole, SyncStats } from '../types';
 import { syncEngine } from '../services/syncEngine';
@@ -493,8 +494,10 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
     return `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
   };
 
-  const trackDuration = duration || currentTrack?.duration || 1;
-  const currentPos = isDragging ? seekValue : currentPosition;
+  const displayTrack = currentTrack || (queue && queue.length > 0 ? queue[0] : null);
+  const isQueuedOnly = !currentTrack && Boolean(displayTrack);
+  const trackDuration = isQueuedOnly ? (displayTrack?.duration || 1) : (duration || currentTrack?.duration || 1);
+  const currentPos = isQueuedOnly ? 0 : (isDragging ? seekValue : currentPosition);
   const progressPercent = Math.min(100, Math.max(0, (currentPos / trackDuration) * 100));
 
   return (
@@ -546,18 +549,20 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
         {/* Mobile Mini Bar: Compact track info & quick volume (Visible on small screens) */}
         <div className="flex md:hidden items-center justify-between w-full mb-0.5">
           <div className="flex items-center gap-2 min-w-0 flex-1">
-            {currentTrack ? (
+            {displayTrack ? (
               <>
                 <div className="relative w-8 h-8 rounded-full p-[1px] bg-gradient-to-tr from-cyan-400 via-sky-400 to-fuchsia-500 shadow-[0_0_6px_rgba(0,240,255,0.4)] shrink-0 flex items-center justify-center">
                   <img
-                    src={currentTrack.artwork || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=100'}
-                    alt={currentTrack.title}
+                    src={displayTrack.artwork || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=100'}
+                    alt={displayTrack.title}
                     className="w-full h-full rounded-full object-cover bg-dark-950 border border-dark-950"
                   />
                 </div>
                 <div className="min-w-0 overflow-hidden">
-                  <h4 className="text-xs font-semibold text-white truncate leading-tight">{cleanTrackTitle(currentTrack.title, currentTrack.artist)}</h4>
-                  <p className="text-[10px] text-slate-400 truncate leading-tight">{currentTrack.artist}</p>
+                  <h4 className="text-xs font-semibold text-white truncate leading-tight">{cleanTrackTitle(displayTrack.title, displayTrack.artist)}</h4>
+                  <p className="text-[10px] text-slate-400 truncate leading-tight">
+                    {currentTrack ? displayTrack.artist : 'Ready in Up Next • Tap Play'}
+                  </p>
                 </div>
               </>
             ) : (
@@ -595,13 +600,13 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
 
         {/* Column 1: Track Info (Desktop, Left) */}
         <div className="hidden md:flex items-center gap-3 min-w-0 w-[26%] max-w-xs shrink-0">
-          {currentTrack ? (
+          {displayTrack ? (
             <>
               <div className="relative group shrink-0">
                 <div className="relative w-11 h-11 md:w-12 md:h-12 rounded-full p-[1.5px] bg-gradient-to-tr from-cyan-400 via-sky-400 to-fuchsia-500 shadow-[0_0_10px_rgba(0,240,255,0.4)] shrink-0 flex items-center justify-center">
                   <img
-                    src={currentTrack.artwork || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=100'}
-                    alt={currentTrack.title}
+                    src={displayTrack.artwork || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=100'}
+                    alt={displayTrack.title}
                     className="w-full h-full rounded-full object-cover bg-dark-950 border border-dark-950"
                   />
                 </div>
@@ -616,13 +621,20 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
                 )}
               </div>
               <div className="min-w-0 overflow-hidden pr-1">
-                <h4 className="text-xs md:text-sm font-semibold text-white truncate leading-snug">{cleanTrackTitle(currentTrack.title, currentTrack.artist)}</h4>
-                <p className="text-[11px] md:text-xs text-slate-400 truncate leading-snug">{currentTrack.artist}</p>
+                <h4 className="text-xs md:text-sm font-semibold text-white truncate leading-snug">{cleanTrackTitle(displayTrack.title, displayTrack.artist)}</h4>
+                <p className="text-[11px] md:text-xs text-slate-400 truncate leading-snug">{displayTrack.artist}</p>
                 <div className="flex items-center gap-1.5 mt-0.5">
-                  <span className="inline-flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded bg-cyan-950/60 border border-cyan-500/20 text-cyan-300 font-mono">
-                    <Radio className="w-2.5 h-2.5 text-cyan-400 animate-pulse" />
-                    <span>Live Synced</span>
-                  </span>
+                  {currentTrack ? (
+                    <span className="inline-flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded bg-cyan-950/60 border border-cyan-500/20 text-cyan-300 font-mono">
+                      <Radio className="w-2.5 h-2.5 text-cyan-400 animate-pulse" />
+                      <span>{isPlaying ? 'Live Synced' : 'Paused'}</span>
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded bg-cyan-950/70 border border-cyan-400/30 text-cyan-300 font-mono">
+                      <ListMusic className="w-2.5 h-2.5 text-cyan-400" />
+                      <span>Ready in Up Next • Click Play</span>
+                    </span>
+                  )}
                 </div>
               </div>
             </>

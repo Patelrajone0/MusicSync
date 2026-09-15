@@ -134,17 +134,20 @@ class SyncEngine {
   }
 
   // 2. Unlock Audio on User Gesture (Seamless instant sync on user tap)
-  public async unlockAudio(targetTrack?: Track | null, position?: number): Promise<boolean> {
+  // By default, primes the audio element silently without starting playback of loaded tracks,
+  // unless shouldPlay is true OR playback is actively running.
+  public async unlockAudio(targetTrack?: Track | null, position?: number, shouldPlay: boolean = false): Promise<boolean> {
     try {
       this.initAudio();
 
       const trackToUse = targetTrack || this.currentTrack;
+      const isActivelyPlaying = shouldPlay || this.isPlaying;
 
       if (this.audio) {
         this.audio.volume = this.masterVolume;
 
-        // If a track should be currently playing, start it immediately in this user-gesture!
-        if (trackToUse && trackToUse.audioUrl) {
+        // ONLY start audio playback if explicitly requested (shouldPlay) or actively playing
+        if (isActivelyPlaying && trackToUse && trackToUse.audioUrl) {
           this.currentTrack = trackToUse;
           if (this.loadedAudioUrl !== trackToUse.audioUrl) {
             this.loadedAudioUrl = trackToUse.audioUrl;
@@ -160,13 +163,13 @@ class SyncEngine {
           await this.audio.play();
           this.startDriftCorrectionLoop();
         } else {
-          // Prime audio element with brief silent buffer so browser marks element as user-activated
-          if (!this.audio.src || this.audio.src === '') {
+          // Prime audio element with brief silent buffer so browser marks element as user-activated WITHOUT playing song
+          if (!this.audio.src || this.audio.src === '' || this.audio.src.startsWith('data:audio/wav')) {
             this.audio.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
-          }
-          const p = this.audio.play();
-          if (p !== undefined) {
-            await p.catch(() => {});
+            const p = this.audio.play();
+            if (p !== undefined) {
+              await p.catch(() => {});
+            }
           }
         }
       }
