@@ -645,7 +645,7 @@ export function App() {
       />
 
       {/* Sleek Dynamic Tab Navigation Bar (Desktop & Tablet) */}
-      <div className="hidden md:block w-full bg-dark-950/85 backdrop-blur-xl border-b border-white/10 px-3 py-1.5 shrink-0 z-30 select-none">
+      <div className="hidden md:block w-full px-3 py-1.5 shrink-0 z-30 select-none">
         <div className="max-w-md mx-auto flex items-center justify-between p-1 bg-dark-900/90 rounded-full border border-white/10 shadow-lg gap-1.5">
           {/* Tab 1: Player & Up Next Queue */}
           <button
