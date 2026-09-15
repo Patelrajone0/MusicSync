@@ -644,56 +644,39 @@ export function App() {
 
       {/* Sleek Dynamic Tab Navigation Bar (Desktop & Tablet) */}
       <div className="hidden md:block w-full bg-dark-950/85 backdrop-blur-xl border-b border-white/10 px-3 py-2 sticky top-[48px] z-30 select-none">
-        <div className="max-w-md mx-auto flex items-center justify-between p-1 bg-dark-900/90 rounded-full border border-white/10 shadow-lg">
-          {/* Tab 1: Player */}
+        <div className="max-w-md mx-auto flex items-center justify-between p-1 bg-dark-900/90 rounded-full border border-white/10 shadow-lg gap-1.5">
+          {/* Tab 1: Player & Up Next Queue */}
           <button
             type="button"
             onClick={() => {
               setActiveTab('player');
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-full text-xs font-bold transition-all duration-200 active:scale-95 cursor-pointer ${
-              activeTab === 'player'
+            className={`flex-1 flex items-center justify-center gap-2 py-1.5 px-4 rounded-full text-xs font-bold transition-all duration-200 active:scale-95 cursor-pointer ${
+              activeTab === 'player' || activeTab === 'queue'
                 ? 'bg-gradient-to-r from-cyan-400 to-sky-400 text-black shadow-[0_0_14px_rgba(0,240,255,0.4)]'
                 : 'text-slate-400 hover:text-white hover:bg-white/5'
             }`}
           >
-            <Disc3 className={`w-3.5 h-3.5 ${activeTab === 'player' && isPlaying ? 'animate-spin' : ''}`} style={{ animationDuration: '3s' }} />
-            <span>Player</span>
-          </button>
-
-          {/* Tab 2: Up Next */}
-          <button
-            type="button"
-            onClick={() => {
-              setActiveTab('queue');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-full text-xs font-bold transition-all duration-200 active:scale-95 cursor-pointer ${
-              activeTab === 'queue'
-                ? 'bg-gradient-to-r from-cyan-400 to-sky-400 text-black shadow-[0_0_14px_rgba(0,240,255,0.4)]'
-                : 'text-slate-400 hover:text-white hover:bg-white/5'
-            }`}
-          >
-            <ListMusic className="w-3.5 h-3.5" />
-            <span>Up Next</span>
+            <Disc3 className={`w-3.5 h-3.5 ${(activeTab === 'player' || activeTab === 'queue') && isPlaying ? 'animate-spin' : ''}`} style={{ animationDuration: '3s' }} />
+            <span>Player & Queue</span>
             {queue.length > 0 && (
               <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono font-black ${
-                activeTab === 'queue' ? 'bg-black text-cyan-300' : 'bg-cyan-500/20 text-cyan-300'
+                activeTab === 'player' || activeTab === 'queue' ? 'bg-black text-cyan-300' : 'bg-cyan-500/20 text-cyan-300'
               }`}>
                 {queue.length}
               </span>
             )}
           </button>
 
-          {/* Tab 3: Search / Library */}
+          {/* Tab 2: Search / Library */}
           <button
             type="button"
             onClick={() => {
               setActiveTab('search');
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-full text-xs font-bold transition-all duration-200 active:scale-95 cursor-pointer ${
+            className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-4 rounded-full text-xs font-bold transition-all duration-200 active:scale-95 cursor-pointer ${
               activeTab === 'search'
                 ? 'bg-gradient-to-r from-cyan-400 to-sky-400 text-black shadow-[0_0_14px_rgba(0,240,255,0.4)]'
                 : 'text-slate-400 hover:text-white hover:bg-white/5'
@@ -706,125 +689,131 @@ export function App() {
       </div>
 
       {/* 2. Active Tab Content */}
-      <main className="max-w-6xl mx-auto w-full px-3 py-3 sm:px-4 sm:py-5 flex-1 flex flex-col gap-4 pb-44 md:pb-28">
-        {/* TAB 1: 🎵 Player (Hero Now Playing, Album Artwork & Controls) */}
-        {activeTab === 'player' && (
-          <div className="flex-1 flex flex-col items-center justify-center w-full max-w-2xl mx-auto animate-fade-in py-2 sm:py-6">
-            {currentTrack ? (
-              <div className="w-full bg-dark-900/70 backdrop-blur-xl border border-white/10 hover:border-cyan-400/30 rounded-3xl p-5 sm:p-8 flex flex-col items-center text-center shadow-2xl relative overflow-hidden transition-all duration-300">
-                {/* Ambient Neon Glow Aura */}
-                <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-64 h-64 bg-cyan-500/15 rounded-full blur-3xl pointer-events-none" />
-
-                {/* Top Status Pill */}
-                <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-dark-950/80 border border-white/10 shadow-sm mb-5 sm:mb-6">
-                  <span
-                    className={`w-2 h-2 rounded-full ${
-                      isPlaying
-                        ? 'bg-cyan-400 shadow-[0_0_8px_rgba(0,240,255,0.9)] animate-pulse'
-                        : 'bg-amber-400/80 shadow-[0_0_6px_rgba(251,191,36,0.6)]'
-                    }`}
-                  />
-                  <span className="text-[11px] font-mono uppercase tracking-wider text-slate-300 font-medium">
-                    {isPlaying ? 'Synced Broadcast Active' : 'Playback Paused'}
-                  </span>
-                </div>
-
-                {/* Hero Circular Artwork with Spinning Vinyl Ring */}
-                <div className="relative w-44 h-44 sm:w-56 sm:h-56 md:w-64 md:h-64 rounded-full p-[3px] bg-gradient-to-tr from-cyan-400 via-sky-400 to-fuchsia-500 shadow-[0_0_30px_rgba(0,240,255,0.35)] shrink-0 flex items-center justify-center mb-6 transition-all duration-300">
-                  <img
-                    src={currentTrack.artwork || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=320'}
-                    alt={currentTrack.title}
-                    className={`w-full h-full rounded-full object-cover bg-dark-950 border-2 border-dark-950 shadow-inner ${
-                      isPlaying ? 'animate-spin' : ''
-                    }`}
-                    style={{ animationDuration: '20s' }}
-                  />
-                  {/* Center Vinyl Spindle Hole */}
-                  <div className="absolute w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-dark-950 border-2 border-cyan-400/80 shadow-[0_0_10px_rgba(0,240,255,0.5)] flex items-center justify-center">
-                    <div className="w-2.5 h-2.5 rounded-full bg-cyan-400" />
-                  </div>
-                </div>
-
-                {/* Track Metadata */}
-                <div className="w-full max-w-lg mb-6">
-                  <h2 className="text-lg sm:text-2xl font-black text-white truncate tracking-tight mb-1">
-                    {cleanTrackTitle(currentTrack.title, currentTrack.artist)}
-                  </h2>
-                  <p className="text-sm sm:text-base text-cyan-300 font-medium truncate">{currentTrack.artist}</p>
-                  
-                  <div className="flex items-center justify-center gap-2 mt-3 flex-wrap">
-                    <span className="text-xs px-2.5 py-0.5 rounded-full bg-dark-800 border border-white/10 text-slate-300 font-mono">
-                      {currentTrack.genre || 'Music'}
-                    </span>
-                    <span className="text-xs text-slate-400 font-mono">
-                      Added by <strong className="text-white">{currentTrack.addedBy || 'Host'}</strong>
-                    </span>
-                  </div>
-                </div>
-
-                {/* Quick Navigation Action Buttons */}
-                <div className="flex items-center gap-2.5 w-full justify-center">
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab('queue')}
-                    className="flex-1 max-w-[180px] py-2.5 px-3.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold text-slate-200 hover:text-white flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer shadow-md"
-                  >
-                    <ListMusic className="w-3.5 h-3.5 text-cyan-400" />
-                    <span>Up Next ({queue.length})</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab('search')}
-                    className="flex-1 max-w-[180px] py-2.5 px-3.5 rounded-xl bg-cyan-400 text-black font-bold text-xs flex items-center justify-center gap-1.5 hover:bg-white transition-all active:scale-95 cursor-pointer shadow-[0_0_16px_rgba(0,240,255,0.35)]"
-                  >
-                    <Search className="w-3.5 h-3.5" />
-                    <span>Browse Songs</span>
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="w-full bg-dark-900/70 backdrop-blur-xl border border-white/10 rounded-3xl p-8 sm:p-12 flex flex-col items-center text-center shadow-2xl">
-                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full p-[2px] bg-gradient-to-tr from-cyan-400 via-sky-400 to-fuchsia-500 shadow-[0_0_24px_rgba(0,240,255,0.4)] flex items-center justify-center mb-5">
-                  <div className="w-full h-full rounded-full bg-dark-950 flex items-center justify-center text-cyan-400">
-                    <Disc3 className="w-10 h-10 animate-spin" style={{ animationDuration: '8s' }} />
-                  </div>
-                </div>
-
-                <h3 className="text-lg sm:text-xl font-black text-white mb-2">
-                  No Track Playing
-                </h3>
-                <p className="text-xs sm:text-sm text-slate-400 max-w-sm mb-6 leading-relaxed">
-                  The room audio mesh is ready and synchronized. Pick any song from the catalog to start broadcasting to all devices!
-                </p>
-
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('search')}
-                  className="py-3 px-6 rounded-full bg-gradient-to-r from-cyan-400 to-sky-400 hover:from-white hover:to-cyan-200 text-black font-black text-xs sm:text-sm flex items-center gap-2 shadow-[0_0_20px_rgba(0,240,255,0.4)] transition-all active:scale-95 cursor-pointer"
-                >
-                  <Search className="w-4 h-4 stroke-[2.5]" />
-                  <span>Search & Play Songs</span>
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* TAB 2: 📑 Up Next (Collaborative Queue & Favorites) */}
-        {activeTab === 'queue' && (
+      <main className="max-w-7xl mx-auto w-full px-3 py-3 sm:px-4 sm:py-5 flex-1 flex flex-col gap-4 pb-44 md:pb-28">
+        {/* TAB 1: 🎵 Unified Player & Up Next Experience */}
+        {(activeTab === 'player' || activeTab === 'queue') && (
           <div className="flex-1 w-full animate-fade-in">
-            <QueueList
-              queue={queue}
-              currentTrack={currentTrack}
-              userRole={myRole}
-              currentUserId={currentUser?.id}
-              onOpenSearch={() => setActiveTab('search')}
-            />
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 items-start">
+              {/* Left Column: Player (Hero Now Playing, Album Artwork & Vinyl) */}
+              <div className="lg:col-span-5 w-full flex flex-col items-center">
+                {currentTrack ? (
+                  <div className="w-full bg-dark-900/70 backdrop-blur-xl border border-white/10 hover:border-cyan-400/30 rounded-3xl p-5 sm:p-7 flex flex-col items-center text-center shadow-2xl relative overflow-hidden transition-all duration-300">
+                    {/* Ambient Neon Glow Aura */}
+                    <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-64 h-64 bg-cyan-500/15 rounded-full blur-3xl pointer-events-none" />
+
+                    {/* Top Status Pill */}
+                    <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-dark-950/80 border border-white/10 shadow-sm mb-5 sm:mb-6">
+                      <span
+                        className={`w-2 h-2 rounded-full ${
+                          isPlaying
+                            ? 'bg-cyan-400 shadow-[0_0_8px_rgba(0,240,255,0.9)] animate-pulse'
+                            : 'bg-amber-400/80 shadow-[0_0_6px_rgba(251,191,36,0.6)]'
+                        }`}
+                      />
+                      <span className="text-[11px] font-mono uppercase tracking-wider text-slate-300 font-medium">
+                        {isPlaying ? 'Synced Broadcast Active' : 'Playback Paused'}
+                      </span>
+                    </div>
+
+                    {/* Hero Circular Artwork with Spinning Vinyl Ring */}
+                    <div className="relative w-40 h-40 sm:w-52 sm:h-52 lg:w-56 lg:h-56 rounded-full p-[3px] bg-gradient-to-tr from-cyan-400 via-sky-400 to-fuchsia-500 shadow-[0_0_28px_rgba(0,240,255,0.35)] shrink-0 flex items-center justify-center mb-5 transition-all duration-300">
+                      <img
+                        src={currentTrack.artwork || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=320'}
+                        alt={currentTrack.title}
+                        className={`w-full h-full rounded-full object-cover bg-dark-950 border-2 border-dark-950 shadow-inner ${
+                          isPlaying ? 'animate-spin' : ''
+                        }`}
+                        style={{ animationDuration: '20s' }}
+                      />
+                      {/* Center Vinyl Spindle Hole */}
+                      <div className="absolute w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-dark-950 border-2 border-cyan-400/80 shadow-[0_0_10px_rgba(0,240,255,0.5)] flex items-center justify-center">
+                        <div className="w-2.5 h-2.5 rounded-full bg-cyan-400" />
+                      </div>
+                    </div>
+
+                    {/* Track Metadata */}
+                    <div className="w-full max-w-sm mb-5">
+                      <h2 className="text-base sm:text-xl font-black text-white truncate tracking-tight mb-1" title={cleanTrackTitle(currentTrack.title, currentTrack.artist)}>
+                        {cleanTrackTitle(currentTrack.title, currentTrack.artist)}
+                      </h2>
+                      <p className="text-xs sm:text-sm text-cyan-300 font-medium truncate">{currentTrack.artist}</p>
+                      
+                      <div className="flex items-center justify-center gap-2 mt-2.5 flex-wrap">
+                        <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-dark-800 border border-white/10 text-slate-300 font-mono">
+                          {currentTrack.genre || 'Music'}
+                        </span>
+                        <span className="text-[11px] text-slate-400 font-mono">
+                          Added by <strong className="text-white">{currentTrack.addedBy || 'Host'}</strong>
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Quick Navigation Action Buttons */}
+                    <div className="flex items-center gap-2.5 w-full justify-center">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const el = document.getElementById('upnext-queue-section');
+                          if (el) el.scrollIntoView({ behavior: 'smooth' });
+                        }}
+                        className="lg:hidden flex-1 max-w-[180px] py-2.5 px-3.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold text-slate-200 hover:text-white flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer shadow-md"
+                      >
+                        <ListMusic className="w-3.5 h-3.5 text-cyan-400" />
+                        <span>Jump to Queue ({queue.length})</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab('search')}
+                        className="flex-1 max-w-[220px] py-2.5 px-3.5 rounded-xl bg-cyan-400 hover:bg-white text-black font-bold text-xs flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer shadow-[0_0_16px_rgba(0,240,255,0.35)]"
+                      >
+                        <Search className="w-3.5 h-3.5" />
+                        <span>Browse & Add Songs</span>
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="w-full bg-dark-900/70 backdrop-blur-xl border border-white/10 rounded-3xl p-6 sm:p-8 flex flex-col items-center text-center shadow-2xl">
+                    <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full p-[2px] bg-gradient-to-tr from-cyan-400 via-sky-400 to-fuchsia-500 shadow-[0_0_24px_rgba(0,240,255,0.4)] flex items-center justify-center mb-4">
+                      <div className="w-full h-full rounded-full bg-dark-950 flex items-center justify-center text-cyan-400">
+                        <Disc3 className="w-10 h-10 animate-spin" style={{ animationDuration: '8s' }} />
+                      </div>
+                    </div>
+
+                    <h3 className="text-base sm:text-lg font-black text-white mb-1.5">
+                      No Track Playing
+                    </h3>
+                    <p className="text-xs text-slate-400 max-w-xs mb-5 leading-relaxed">
+                      The room audio mesh is ready and synchronized. Pick any song from the catalog to start broadcasting to all devices!
+                    </p>
+
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('search')}
+                      className="py-2.5 px-5 rounded-full bg-gradient-to-r from-cyan-400 to-sky-400 hover:from-white hover:to-cyan-200 text-black font-black text-xs flex items-center gap-1.5 shadow-[0_0_18px_rgba(0,240,255,0.4)] transition-all active:scale-95 cursor-pointer"
+                    >
+                      <Search className="w-3.5 h-3.5 stroke-[2.5]" />
+                      <span>Search & Play Songs</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Right Column: Up Next (Collaborative Queue & Favorites) */}
+              <div id="upnext-queue-section" className="lg:col-span-7 w-full">
+                <QueueList
+                  queue={queue}
+                  currentTrack={currentTrack}
+                  userRole={myRole}
+                  currentUserId={currentUser?.id}
+                  onOpenSearch={() => setActiveTab('search')}
+                />
+              </div>
+            </div>
           </div>
         )}
 
-        {/* TAB 3: 🔍 Search / Library (Universal Music Catalog & Local MP3s) */}
+        {/* TAB 2: 🔍 Search / Library (Universal Music Catalog & Local MP3s) */}
         {activeTab === 'search' && (
           <div className="flex-1 w-full animate-fade-in">
             <MusicSearchModal inline={true} />
@@ -833,58 +822,39 @@ export function App() {
       </main>
 
       {/* Sleek Mobile Bottom Tab Bar */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 h-[58px] bg-dark-950/98 backdrop-blur-2xl border-t border-white/10 px-4 flex items-center justify-around shadow-[0_-10px_35px_rgba(0,0,0,0.85)] select-none">
-        {/* Tab 1: Player */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 h-[58px] bg-dark-950/98 backdrop-blur-2xl border-t border-white/10 px-6 flex items-center justify-around shadow-[0_-10px_35px_rgba(0,0,0,0.85)] select-none">
+        {/* Tab 1: Player & Queue */}
         <button
           type="button"
           onClick={() => {
             setActiveTab('player');
             window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
-          className={`flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition-all active:scale-90 cursor-pointer ${
-            activeTab === 'player'
+          className={`flex flex-col items-center gap-0.5 py-1 px-4 rounded-xl transition-all active:scale-90 cursor-pointer ${
+            activeTab === 'player' || activeTab === 'queue'
               ? 'text-cyan-400 font-bold'
               : 'text-slate-400 hover:text-slate-200'
           }`}
         >
-          <div className={`p-1 rounded-full ${activeTab === 'player' ? 'bg-cyan-500/15 shadow-[0_0_10px_rgba(0,240,255,0.35)]' : ''}`}>
-            <Disc3 className={`w-5 h-5 ${activeTab === 'player' && isPlaying ? 'animate-spin' : ''}`} style={{ animationDuration: '3s' }} />
-          </div>
-          <span className="text-[10px] tracking-tight">Player</span>
-        </button>
-
-        {/* Tab 2: Up Next */}
-        <button
-          type="button"
-          onClick={() => {
-            setActiveTab('queue');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          }}
-          className={`flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition-all active:scale-90 cursor-pointer ${
-            activeTab === 'queue'
-              ? 'text-cyan-400 font-bold'
-              : 'text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          <div className={`relative p-1 rounded-full ${activeTab === 'queue' ? 'bg-cyan-500/15 shadow-[0_0_10px_rgba(0,240,255,0.35)]' : ''}`}>
-            <ListMusic className="w-5 h-5" />
+          <div className={`relative p-1 rounded-full ${(activeTab === 'player' || activeTab === 'queue') ? 'bg-cyan-500/15 shadow-[0_0_10px_rgba(0,240,255,0.35)]' : ''}`}>
+            <Disc3 className={`w-5 h-5 ${(activeTab === 'player' || activeTab === 'queue') && isPlaying ? 'animate-spin' : ''}`} style={{ animationDuration: '3s' }} />
             {queue.length > 0 && (
-              <span className="absolute -top-1 -right-1.5 px-1 py-0.2 rounded-full bg-cyan-400 text-black font-mono font-black text-[9px] shadow-sm">
+              <span className="absolute -top-1 -right-1 px-1 py-0.2 rounded-full bg-cyan-400 text-black font-mono font-black text-[9px] shadow-sm">
                 {queue.length}
               </span>
             )}
           </div>
-          <span className="text-[10px] tracking-tight">Up Next</span>
+          <span className="text-[10px] tracking-tight">Player & Queue</span>
         </button>
 
-        {/* Tab 3: Search / Library */}
+        {/* Tab 2: Search / Library */}
         <button
           type="button"
           onClick={() => {
             setActiveTab('search');
             window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
-          className={`flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition-all active:scale-90 cursor-pointer ${
+          className={`flex flex-col items-center gap-0.5 py-1 px-4 rounded-xl transition-all active:scale-90 cursor-pointer ${
             activeTab === 'search'
               ? 'text-cyan-400 font-bold'
               : 'text-slate-400 hover:text-slate-200'
@@ -893,7 +863,7 @@ export function App() {
           <div className={`p-1 rounded-full ${activeTab === 'search' ? 'bg-cyan-500/15 shadow-[0_0_10px_rgba(0,240,255,0.35)]' : ''}`}>
             <Search className="w-5 h-5" />
           </div>
-          <span className="text-[10px] tracking-tight">Library</span>
+          <span className="text-[10px] tracking-tight">Search & Library</span>
         </button>
       </nav>
 

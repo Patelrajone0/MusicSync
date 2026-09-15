@@ -217,7 +217,7 @@ export const QueueList: React.FC<QueueListProps> = ({
               </div>
             )}
 
-            <div className="space-y-1.5 sm:space-y-2 overflow-y-auto max-h-[440px] pr-1">
+            <div className="space-y-1.5 sm:space-y-2 overflow-y-auto max-h-[440px] lg:max-h-[500px] pr-1">
               {favorites.map((track, idx) => {
                 const isAdded = addedTrackIds.has(track.id);
                 return (
@@ -333,7 +333,7 @@ export const QueueList: React.FC<QueueListProps> = ({
             </div>
           </div>
         ) : (
-          <div className="space-y-1.5 sm:space-y-2 overflow-y-auto max-h-[440px] pr-1">
+          <div className="space-y-1.5 sm:space-y-2 overflow-y-auto max-h-[440px] lg:max-h-[500px] pr-1">
             {queue.map((track, idx) => {
               const isCurrent = Boolean(
                 currentTrack &&
