@@ -150,6 +150,8 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
   const [suggestionTab, setSuggestionTab] = useState<'artists' | 'moods'>('artists');
   const [autocompleteSuggestions, setAutocompleteSuggestions] = useState<string[]>([]);
   const [showAutocomplete, setShowAutocomplete] = useState(false);
+  const [isLangDropdownOpen, setIsLangDropdownOpen] = useState(false);
+  const langDropdownRef = useRef<HTMLDivElement | null>(null);
   const searchInputContainerRef = useRef<HTMLDivElement | null>(null);
   const autocompleteRef = useRef<HTMLDivElement | null>(null);
   const resultsContainerRef = useRef<HTMLDivElement | null>(null);
@@ -234,7 +236,7 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
     return () => clearTimeout(timer);
   }, [query, selectedLanguage, selectedMixedLanguage, activeTab]);
 
-  // Close autocomplete on click outside
+  // Close autocomplete and dropdown on click outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (
@@ -242,6 +244,12 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
         !searchInputContainerRef.current.contains(e.target as Node)
       ) {
         setShowAutocomplete(false);
+      }
+      if (
+        langDropdownRef.current &&
+        !langDropdownRef.current.contains(e.target as Node)
+      ) {
+        setIsLangDropdownOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -569,21 +577,21 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
   };
 
   const languageOptions = [
-    { id: 'all', label: 'All Original' },
-    { id: 'trending', label: 'Trending' },
-    { id: 'for_you', label: 'For You' },
-    { id: 'english', label: 'English' },
-    { id: 'hindi', label: 'Hindi' },
-    { id: 'punjabi', label: 'Punjabi' },
-    { id: 'gujarati', label: 'Gujarati' },
+    { id: 'all', label: 'All Original', icon: Disc, color: 'text-cyan-400' },
+    { id: 'trending', label: 'Trending', icon: Flame, color: 'text-amber-400' },
+    { id: 'for_you', label: 'For You', icon: Sparkles, color: 'text-purple-400' },
+    { id: 'english', label: 'English', icon: Radio, color: 'text-sky-400' },
+    { id: 'hindi', label: 'Hindi', icon: Music, color: 'text-emerald-400' },
+    { id: 'punjabi', label: 'Punjabi', icon: Zap, color: 'text-rose-400' },
+    { id: 'gujarati', label: 'Gujarati', icon: Disc, color: 'text-yellow-400' },
   ] as const;
 
   const mixedLanguageOptions = [
-    { id: 'all', label: '🔥 All Mixed' },
-    { id: 'hindi', label: '🇮🇳 Hindi Mixes' },
-    { id: 'punjabi', label: '🎶 Punjabi Mixes' },
-    { id: 'gujarati', label: '🪘 Gujarati Non-Stop' },
-    { id: 'english', label: '🇬🇧 English Club & EDM' },
+    { id: 'all', label: '🔥 All Mixed', icon: Flame, color: 'text-amber-400' },
+    { id: 'hindi', label: '🇮🇳 Hindi Mixes', icon: Music, color: 'text-rose-400' },
+    { id: 'punjabi', label: '🎶 Punjabi Mixes', icon: Zap, color: 'text-amber-400' },
+    { id: 'gujarati', label: '🪘 Gujarati Non-Stop', icon: Disc, color: 'text-emerald-400' },
+    { id: 'english', label: '🇬🇧 English Club & EDM', icon: Radio, color: 'text-cyan-400' },
   ] as const;
 
   const mixedPartyVibes: Record<string, { label: string; q: string }[]> = {
@@ -876,40 +884,121 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
                   </button>
                 )}
 
-                {/* Integrated Language Filter Dropdown inside Search Bar */}
-                {activeTab === 'search' && (
-                  <div className="relative flex items-center shrink-0">
-                    <select
-                      value={selectedLanguage}
-                      onChange={(e) => handleLanguageChange(e.target.value as any)}
-                      className="h-7 bg-dark-900/95 hover:bg-dark-850 text-cyan-300 text-[11px] font-semibold pl-2.5 pr-6 rounded-full border border-cyan-400/30 hover:border-cyan-400 focus:outline-none focus:border-cyan-400 appearance-none cursor-pointer transition-all shadow-sm"
+                {/* Custom Integrated Theme Dropdown inside Search Bar */}
+                <div ref={langDropdownRef} className="relative flex items-center shrink-0">
+                  {activeTab === 'search' && (
+                    <button
+                      type="button"
+                      onClick={() => setIsLangDropdownOpen((prev) => !prev)}
+                      className={`h-7 px-2.5 rounded-full border text-[11px] font-semibold flex items-center gap-1.5 transition-all shadow-sm cursor-pointer select-none active:scale-95 ${
+                        isLangDropdownOpen
+                          ? 'bg-cyan-500/20 text-cyan-300 border-cyan-400 shadow-[0_0_10px_rgba(0,240,255,0.3)]'
+                          : 'bg-dark-900/95 hover:bg-dark-850 text-cyan-300 border-cyan-400/30 hover:border-cyan-400'
+                      }`}
+                      title="Filter songs by language or category"
                     >
-                      {languageOptions.map((opt) => (
-                        <option key={opt.id} value={opt.id} className="bg-dark-900 text-white">
-                          {opt.label}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown className="w-3 h-3 text-cyan-400 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
-                  </div>
-                )}
+                      <span className="truncate max-w-[85px] sm:max-w-none">
+                        {languageOptions.find((o) => o.id === selectedLanguage)?.label || 'All Original'}
+                      </span>
+                      <ChevronDown
+                        className={`w-3 h-3 text-cyan-400 transition-transform duration-200 shrink-0 ${
+                          isLangDropdownOpen ? 'rotate-180 text-cyan-300' : ''
+                        }`}
+                      />
+                    </button>
+                  )}
 
-                {activeTab === 'mixed' && (
-                  <div className="relative flex items-center shrink-0">
-                    <select
-                      value={selectedMixedLanguage}
-                      onChange={(e) => handleMixedLanguageChange(e.target.value as any)}
-                      className="h-7 bg-dark-900/95 hover:bg-dark-850 text-amber-300 text-[11px] font-semibold pl-2.5 pr-6 rounded-full border border-amber-500/30 hover:border-amber-400 focus:outline-none focus:border-amber-400 appearance-none cursor-pointer transition-all shadow-sm"
+                  {activeTab === 'mixed' && (
+                    <button
+                      type="button"
+                      onClick={() => setIsLangDropdownOpen((prev) => !prev)}
+                      className={`h-7 px-2.5 rounded-full border text-[11px] font-semibold flex items-center gap-1.5 transition-all shadow-sm cursor-pointer select-none active:scale-95 ${
+                        isLangDropdownOpen
+                          ? 'bg-amber-500/20 text-amber-300 border-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.3)]'
+                          : 'bg-dark-900/95 hover:bg-dark-850 text-amber-300 border-amber-500/30 hover:border-amber-400'
+                      }`}
+                      title="Filter mix vibes"
                     >
-                      {mixedLanguageOptions.map((opt) => (
-                        <option key={opt.id} value={opt.id} className="bg-dark-900 text-white">
-                          {opt.label}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown className="w-3 h-3 text-amber-400 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
-                  </div>
-                )}
+                      <span className="truncate max-w-[85px] sm:max-w-none">
+                        {mixedLanguageOptions.find((o) => o.id === selectedMixedLanguage)?.label || 'All Mixed'}
+                      </span>
+                      <ChevronDown
+                        className={`w-3 h-3 text-amber-400 transition-transform duration-200 shrink-0 ${
+                          isLangDropdownOpen ? 'rotate-180 text-amber-300' : ''
+                        }`}
+                      />
+                    </button>
+                  )}
+
+                  {/* Custom Styled Theme Popover Menu */}
+                  {isLangDropdownOpen && (
+                    <div
+                      className={`absolute right-0 top-full mt-2 w-48 sm:w-52 z-50 bg-dark-950/95 backdrop-blur-2xl rounded-2xl border p-1.5 shadow-[0_16px_40px_rgba(0,0,0,0.95)] animate-popover-spring ${
+                        activeTab === 'mixed'
+                          ? 'border-amber-500/30 shadow-[0_16px_40px_rgba(0,0,0,0.95),0_0_20px_rgba(251,191,36,0.15)]'
+                          : 'border-cyan-400/30 shadow-[0_16px_40px_rgba(0,0,0,0.95),0_0_20px_rgba(0,240,255,0.15)]'
+                      }`}
+                    >
+                      <div className="px-2.5 py-1 text-[9px] font-mono uppercase tracking-wider text-slate-400 flex items-center justify-between border-b border-white/5 mb-1">
+                        <span>{activeTab === 'mixed' ? 'Select Mix Vibes' : 'Filter Songs'}</span>
+                        <span className={`text-[8px] px-1 py-0.5 rounded font-mono ${
+                          activeTab === 'mixed' ? 'bg-amber-500/10 text-amber-300' : 'bg-cyan-500/10 text-cyan-300'
+                        }`}>Live Sync</span>
+                      </div>
+                      <div className="space-y-0.5">
+                        {(activeTab === 'mixed' ? mixedLanguageOptions : languageOptions).map((opt) => {
+                          const isSelected =
+                            activeTab === 'mixed'
+                              ? selectedMixedLanguage === opt.id
+                              : selectedLanguage === opt.id;
+                          const IconComp = opt.icon;
+
+                          return (
+                            <button
+                              key={opt.id}
+                              type="button"
+                              onClick={() => {
+                                if (activeTab === 'mixed') {
+                                  handleMixedLanguageChange(opt.id as any);
+                                } else {
+                                  handleLanguageChange(opt.id as any);
+                                }
+                                setIsLangDropdownOpen(false);
+                              }}
+                              className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer select-none active:scale-[0.98] ${
+                                isSelected
+                                  ? activeTab === 'mixed'
+                                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-[0_0_10px_rgba(251,191,36,0.2)]'
+                                    : 'bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 shadow-[0_0_10px_rgba(0,240,255,0.2)]'
+                                  : 'text-slate-300 hover:text-white hover:bg-white/10 border border-transparent'
+                              }`}
+                            >
+                              <div className="flex items-center gap-2 min-w-0">
+                                <IconComp
+                                  className={`w-3.5 h-3.5 shrink-0 ${
+                                    isSelected
+                                      ? activeTab === 'mixed'
+                                        ? 'text-amber-400'
+                                        : 'text-cyan-400'
+                                      : opt.color
+                                  }`}
+                                />
+                                <span className="truncate">{opt.label}</span>
+                              </div>
+                              {isSelected && (
+                                <Check
+                                  className={`w-3.5 h-3.5 shrink-0 ${
+                                    activeTab === 'mixed' ? 'text-amber-400' : 'text-cyan-400'
+                                  }`}
+                                />
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
 
                 <button
                   type="submit"
