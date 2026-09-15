@@ -694,16 +694,16 @@ export function App() {
       <main className="max-w-7xl mx-auto w-full px-3 py-1.5 sm:px-4 sm:py-2 flex-1 min-h-0 flex flex-col gap-2 pb-36 md:pb-24 lg:pb-20 overflow-hidden">
         {/* TAB 1: 🎵 Unified Player & Up Next Experience */}
         {(activeTab === 'player' || activeTab === 'queue') && (
-          <div className="flex-1 w-full h-full min-h-0 animate-fade-in flex flex-col justify-center">
+          <div className="flex-1 w-full h-full min-h-0 animate-fade-in flex flex-col">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-4 lg:gap-5 items-stretch h-full min-h-0">
-              {/* Left Column: Player Card (Fitted perfectly within viewport) */}
-              <div className="lg:col-span-5 w-full flex flex-col items-center justify-center min-h-0">
-                <div className="w-full max-w-md bg-[#080c14]/95 backdrop-blur-2xl border border-white/10 hover:border-cyan-400/30 rounded-[28px] sm:rounded-[32px] p-3.5 sm:p-4 md:p-5 flex flex-col items-center text-center shadow-[0_25px_60px_rgba(0,0,0,0.85)] relative overflow-hidden transition-all duration-300">
+              {/* Left Column: Player Card (Perfect matching border alignment with Up Next) */}
+              <div className="lg:col-span-5 w-full h-full min-h-0 flex flex-col">
+                <div className="w-full h-full bg-[#080c14]/95 backdrop-blur-2xl border border-white/10 hover:border-cyan-400/30 rounded-[28px] sm:rounded-[32px] p-4 sm:p-5 flex flex-col justify-between items-center text-center shadow-[0_25px_60px_rgba(0,0,0,0.85)] relative overflow-hidden transition-all duration-300 min-h-0">
                   {/* Ambient Top Radial Lighting */}
                   <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-80 h-80 bg-gradient-to-b from-cyan-500/15 via-sky-500/5 to-transparent rounded-full blur-3xl pointer-events-none" />
 
                   {/* Top Header Row: Centered Status Pill */}
-                  <div className="w-full flex items-center justify-center relative mb-2 sm:mb-2.5">
+                  <div className="w-full flex items-center justify-center relative shrink-0 mb-1.5">
                     <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#0c1420]/95 border border-white/10 shadow-[0_4px_16px_rgba(0,0,0,0.5)] select-none">
                       <span
                         className={`w-2 h-2 rounded-full ${
@@ -724,25 +724,25 @@ export function App() {
                     </div>
                   </div>
 
-                  {/* The Visualizer Box (Exact match, perfectly proportioned) */}
-                  <div className="w-full h-36 sm:h-40 md:h-44 rounded-2xl sm:rounded-3xl overflow-hidden bg-black border border-white/10 shadow-inner relative my-0.5">
-                    <AudioVisualizer isPlaying={isPlaying} height={176} className="w-full h-full" />
+                  {/* The Visualizer Box */}
+                  <div className="w-full flex-1 min-h-[130px] max-h-[220px] rounded-2xl sm:rounded-3xl overflow-hidden bg-black border border-white/10 shadow-inner relative my-1 shrink-0">
+                    <AudioVisualizer isPlaying={isPlaying} height={180} className="w-full h-full" />
                   </div>
 
                   {/* Track Typography */}
-                  <div className="w-full max-w-sm flex flex-col items-center">
+                  <div className="w-full max-w-sm flex flex-col items-center shrink-0 my-1">
                     <h2
-                      className="text-xl sm:text-2xl font-black text-white tracking-tight leading-tight mt-2 sm:mt-2.5 mb-0.5 text-center px-2 truncate w-full font-sans drop-shadow-md"
+                      className="text-xl sm:text-2xl font-black text-white tracking-tight leading-tight mb-0.5 text-center px-2 truncate w-full font-sans drop-shadow-md"
                       title={currentTrack ? cleanTrackTitle(currentTrack.title, currentTrack.artist) : 'Starboy'}
                     >
                       {currentTrack ? cleanTrackTitle(currentTrack.title, currentTrack.artist) : 'Starboy'}
                     </h2>
-                    <p className="text-xs sm:text-sm text-[#00f0ff] font-bold text-center mb-1.5 sm:mb-2 truncate w-full">
+                    <p className="text-xs sm:text-sm text-[#00f0ff] font-bold text-center mb-1.5 truncate w-full">
                       {currentTrack ? currentTrack.artist : 'The Weeknd feat. Daft Punk'}
                     </p>
 
                     {/* Metadata Pill Row */}
-                    <div className="flex items-center justify-center gap-2 text-[10px] sm:text-[11px] text-slate-400 mb-2 sm:mb-2.5 flex-wrap">
+                    <div className="flex items-center justify-center gap-2 text-[10px] sm:text-[11px] text-slate-400 mb-1 flex-wrap">
                       <span className="px-2.5 py-0.5 rounded-full bg-[#121926] border border-white/10 text-slate-200 font-medium tracking-wide">
                         {currentTrack?.genre || 'Synced Audio'}
                       </span>
@@ -753,14 +753,16 @@ export function App() {
                   </div>
 
                   {/* Glowing Cyan CTA Button */}
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab('search')}
-                    className="w-full max-w-[240px] sm:max-w-[260px] py-2 sm:py-2.5 px-4 rounded-2xl sm:rounded-full bg-cyan-400 hover:bg-white text-black font-extrabold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-[0_0_18px_rgba(0,240,255,0.4)] hover:shadow-[0_0_28px_rgba(0,240,255,0.75)] transition-all duration-200 active:scale-95 cursor-pointer select-none"
-                  >
-                    <Search className="w-3.5 h-3.5 stroke-[2.5] text-black" />
-                    <span>Browse & Add Songs</span>
-                  </button>
+                  <div className="w-full flex flex-col items-center shrink-0 mt-1">
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('search')}
+                      className="w-full max-w-[240px] sm:max-w-[260px] py-2 sm:py-2.5 px-4 rounded-2xl sm:rounded-full bg-cyan-400 hover:bg-white text-black font-extrabold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-[0_0_18px_rgba(0,240,255,0.4)] hover:shadow-[0_0_28px_rgba(0,240,255,0.75)] transition-all duration-200 active:scale-95 cursor-pointer select-none"
+                    >
+                      <Search className="w-3.5 h-3.5 stroke-[2.5] text-black" />
+                      <span>Browse & Add Songs</span>
+                    </button>
+                  </div>
 
                   {/* Mobile Quick Jump */}
                   <button

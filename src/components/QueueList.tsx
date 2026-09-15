@@ -68,9 +68,12 @@ export const QueueList: React.FC<QueueListProps> = ({
   const isShowingFavorites = activeView === 'favorites' || (queue.length === 0 && favorites.length > 0);
 
   return (
-    <div className="bg-dark-900/70 backdrop-blur-xl border border-white/10 hover:border-cyan-400/30 rounded-2xl p-3 sm:p-4 md:p-5 flex flex-col h-full shadow-2xl transition-all duration-300 min-h-0">
+    <div className="w-full h-full bg-[#080c14]/95 backdrop-blur-2xl border border-white/10 hover:border-cyan-400/30 rounded-[28px] sm:rounded-[32px] p-4 sm:p-5 flex flex-col shadow-[0_25px_60px_rgba(0,0,0,0.85)] relative overflow-hidden transition-all duration-300 min-h-0">
+      {/* Ambient Top Radial Lighting */}
+      <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-80 h-80 bg-gradient-to-b from-cyan-500/10 via-sky-500/5 to-transparent rounded-full blur-3xl pointer-events-none" />
+
       {/* Header */}
-      <div className="flex items-center justify-between mb-2.5 sm:mb-3">
+      <div className="flex items-center justify-between mb-2.5 sm:mb-3 shrink-0 relative z-10">
         <div className="flex items-center gap-2 sm:gap-2.5">
           {activeView === 'favorites' ? (
             <>
@@ -217,7 +220,7 @@ export const QueueList: React.FC<QueueListProps> = ({
               </div>
             )}
 
-            <div className="space-y-1.5 sm:space-y-2 overflow-y-auto flex-1 min-h-0 max-h-[360px] lg:max-h-[420px] pr-1">
+            <div className="space-y-1.5 sm:space-y-2 overflow-y-auto flex-1 min-h-0 pr-1 relative z-10">
               {favorites.map((track, idx) => {
                 const isAdded = addedTrackIds.has(track.id);
                 return (
@@ -333,7 +336,7 @@ export const QueueList: React.FC<QueueListProps> = ({
             </div>
           </div>
         ) : (
-          <div className="space-y-1.5 sm:space-y-2 overflow-y-auto flex-1 min-h-0 max-h-[360px] lg:max-h-[420px] pr-1">
+          <div className="space-y-1.5 sm:space-y-2 overflow-y-auto flex-1 min-h-0 pr-1 relative z-10">
             {queue.map((track, idx) => {
               const isCurrent = Boolean(
                 currentTrack &&
