@@ -19,6 +19,7 @@ import { QueueList } from './components/QueueList';
 import { MusicSearchModal } from './components/MusicSearchModal';
 import { PlaybackHistoryModal } from './components/PlaybackHistoryModal';
 import { Logo } from './components/Logo';
+import { AudioVisualizer } from './components/AudioVisualizer';
 import { UserX, Disc3, ListMusic, Search } from 'lucide-react';
 
 import { userTasteEngine } from './services/userTaste';
@@ -696,108 +697,133 @@ export function App() {
           <div className="flex-1 w-full animate-fade-in">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-4 lg:gap-5 items-start">
               {/* Left Column: Player (Hero Now Playing, Album Artwork & Vinyl) */}
-              <div className="lg:col-span-5 w-full flex flex-col items-center">
+              <div className="lg:col-span-5 w-full flex flex-col items-center gap-4">
                 {currentTrack ? (
-                  <div className="w-full bg-dark-900/70 backdrop-blur-xl border border-white/10 hover:border-cyan-400/30 rounded-2xl sm:rounded-3xl p-3 sm:p-4 md:p-5 flex flex-col items-center text-center shadow-2xl relative overflow-hidden transition-all duration-300">
-                    {/* Ambient Neon Glow Aura */}
-                    <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-64 h-64 bg-cyan-500/15 rounded-full blur-3xl pointer-events-none" />
+                  /* Hero Now Playing Card (Exact Match to Uploaded Sample 1) */
+                  <div className="w-full bg-[#080c14]/95 backdrop-blur-2xl border border-white/10 hover:border-cyan-400/30 rounded-[32px] p-6 sm:p-8 flex flex-col items-center text-center shadow-[0_25px_60px_rgba(0,0,0,0.85)] relative overflow-hidden transition-all duration-300">
+                    {/* Ambient Top Radial Lighting */}
+                    <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-80 h-80 bg-gradient-to-b from-cyan-500/15 via-sky-500/5 to-transparent rounded-full blur-3xl pointer-events-none" />
 
-                    {/* Top Status Pill */}
-                    <div className="flex items-center gap-1.5 sm:gap-2 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full bg-dark-950/80 border border-white/10 shadow-sm mb-2.5 sm:mb-3">
+                    {/* Top Status Pill (Exact match to sample: glowing dot + uppercase status) */}
+                    <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-[#0e1622]/90 border border-white/10 shadow-sm mb-6 sm:mb-8 select-none">
                       <span
-                        className={`w-2 h-2 rounded-full ${
+                        className={`w-2.5 h-2.5 rounded-full ${
                           isPlaying
-                            ? 'bg-cyan-400 shadow-[0_0_8px_rgba(0,240,255,0.9)] animate-pulse'
-                            : 'bg-amber-400/80 shadow-[0_0_6px_rgba(251,191,36,0.6)]'
+                            ? 'bg-cyan-400 shadow-[0_0_10px_#00f0ff] animate-pulse'
+                            : 'bg-[#eab308] shadow-[0_0_10px_rgba(234,179,8,0.9)]'
                         }`}
                       />
-                      <span className="text-[10px] sm:text-[11px] font-mono uppercase tracking-wider text-slate-300 font-medium">
+                      <span className="text-[11px] sm:text-xs font-mono uppercase tracking-[0.2em] text-slate-200 font-semibold">
                         {isPlaying ? 'Synced Broadcast Active' : 'Playback Paused'}
                       </span>
                     </div>
 
-                    {/* Hero Circular Artwork with Spinning Vinyl Ring */}
-                    <div className="relative w-32 h-32 sm:w-36 sm:h-36 md:w-44 md:h-44 rounded-full p-[2.5px] bg-gradient-to-tr from-cyan-400 via-sky-400 to-fuchsia-500 shadow-[0_0_20px_rgba(0,240,255,0.35)] shrink-0 flex items-center justify-center mb-2.5 sm:mb-3 transition-all duration-300">
+                    {/* Hero Circular Vinyl Disc Artwork (Exact match to sample 1 with centered spindle hole) */}
+                    <div className="relative w-52 h-52 sm:w-60 sm:h-60 md:w-64 md:h-64 rounded-full p-[3px] bg-gradient-to-tr from-cyan-400 via-sky-400 to-fuchsia-500 shadow-[0_0_35px_rgba(0,240,255,0.4)] shrink-0 flex items-center justify-center transition-all duration-300">
                       <img
-                        src={currentTrack.artwork || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=320'}
+                        src={currentTrack.artwork || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=480'}
                         alt={currentTrack.title}
                         className={`w-full h-full rounded-full object-cover bg-dark-950 border-2 border-dark-950 shadow-inner ${
                           isPlaying ? 'animate-spin' : ''
                         }`}
-                        style={{ animationDuration: '20s' }}
+                        style={{ animationDuration: '24s' }}
                       />
-                      {/* Center Vinyl Spindle Hole */}
-                      <div className="absolute w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-dark-950 border-2 border-cyan-400/80 shadow-[0_0_8px_rgba(0,240,255,0.5)] flex items-center justify-center">
-                        <div className="w-2 h-2 rounded-full bg-cyan-400" />
+                      {/* Center Vinyl Spindle Hole with glowing cyan border and center dot */}
+                      <div className="absolute w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-black border-2 border-cyan-400 shadow-[0_0_14px_rgba(0,240,255,0.8)] flex items-center justify-center pointer-events-none">
+                        <div className="w-3 h-3 rounded-full bg-cyan-400 shadow-[0_0_6px_#00f0ff]" />
                       </div>
                     </div>
 
-                    {/* Track Metadata */}
-                    <div className="w-full max-w-sm mb-2.5 sm:mb-3">
-                      <h2 className="text-sm sm:text-base md:text-lg font-black text-white truncate tracking-tight mb-0.5" title={cleanTrackTitle(currentTrack.title, currentTrack.artist)}>
+                    {/* Track Typography (Bold title + cyan artist) */}
+                    <div className="w-full max-w-sm flex flex-col items-center">
+                      <h2
+                        className="text-2xl sm:text-3xl font-black text-white tracking-tight leading-tight mt-6 sm:mt-7 mb-1.5 text-center px-2 truncate w-full font-sans"
+                        title={cleanTrackTitle(currentTrack.title, currentTrack.artist)}
+                      >
                         {cleanTrackTitle(currentTrack.title, currentTrack.artist)}
                       </h2>
-                      <p className="text-xs sm:text-sm text-cyan-300 font-medium truncate">{currentTrack.artist}</p>
-                      
-                      <div className="flex items-center justify-center gap-2 mt-1 sm:mt-1.5 flex-wrap">
-                        <span className="text-[10px] sm:text-[11px] px-2 py-0.5 rounded-full bg-dark-800 border border-white/10 text-slate-300 font-mono">
-                          {currentTrack.genre || 'Music'}
+                      <p className="text-base sm:text-lg text-cyan-400 font-bold text-center mb-4 truncate w-full">
+                        {currentTrack.artist}
+                      </p>
+
+                      {/* Genre Capsule Badge + Added by info (Exact match to sample 1) */}
+                      <div className="flex items-center justify-center gap-2.5 text-xs text-slate-400 mb-6 flex-wrap">
+                        <span className="px-3.5 py-1 rounded-full bg-[#121926] border border-white/10 text-slate-200 font-medium tracking-wide">
+                          {currentTrack.genre || 'Pop'}
                         </span>
-                        <span className="text-[10px] sm:text-[11px] text-slate-400 font-mono">
-                          Added by <strong className="text-white">{currentTrack.addedBy || 'Host'}</strong>
+                        <span className="text-slate-400">
+                          Added by <strong className="text-white font-bold">{currentTrack.addedBy || 'Host'}</strong>
                         </span>
                       </div>
                     </div>
 
-                    {/* Quick Navigation Action Buttons */}
-                    <div className="flex items-center gap-2 sm:gap-2.5 w-full justify-center">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const el = document.getElementById('upnext-queue-section');
-                          if (el) el.scrollIntoView({ behavior: 'smooth' });
-                        }}
-                        className="lg:hidden flex-1 max-w-[170px] py-1.5 sm:py-2 px-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold text-slate-200 hover:text-white flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer shadow-md"
-                      >
-                        <ListMusic className="w-3.5 h-3.5 text-cyan-400" />
-                        <span>Jump to Queue ({queue.length})</span>
-                      </button>
+                    {/* Glowing Cyan CTA Button (Exact match to sample 1) */}
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('search')}
+                      className="w-full max-w-[280px] sm:max-w-[320px] py-3.5 px-6 rounded-2xl sm:rounded-full bg-cyan-400 hover:bg-white text-black font-extrabold text-sm sm:text-base flex items-center justify-center gap-2.5 shadow-[0_0_24px_rgba(0,240,255,0.5)] hover:shadow-[0_0_35px_rgba(0,240,255,0.85)] transition-all duration-200 active:scale-95 cursor-pointer select-none"
+                    >
+                      <Search className="w-5 h-5 stroke-[2.5] text-black" />
+                      <span>Browse & Add Songs</span>
+                    </button>
 
-                      <button
-                        type="button"
-                        onClick={() => setActiveTab('search')}
-                        className="flex-1 max-w-[200px] py-1.5 sm:py-2 px-3.5 rounded-xl bg-cyan-400 hover:bg-white text-black font-bold text-xs flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer shadow-[0_0_14px_rgba(0,240,255,0.35)]"
-                      >
-                        <Search className="w-3.5 h-3.5" />
-                        <span>Browse & Add Songs</span>
-                      </button>
-                    </div>
+                    {/* Mobile Quick Jump */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const el = document.getElementById('upnext-queue-section');
+                        if (el) el.scrollIntoView({ behavior: 'smooth' });
+                      }}
+                      className="lg:hidden mt-3.5 text-xs text-slate-400 hover:text-white flex items-center gap-1.5 transition-colors"
+                    >
+                      <ListMusic className="w-3.5 h-3.5 text-cyan-400" />
+                      <span>Jump to Queue ({queue.length})</span>
+                    </button>
                   </div>
                 ) : (
-                  <div className="w-full bg-dark-900/70 backdrop-blur-xl border border-white/10 rounded-2xl sm:rounded-3xl p-4 sm:p-5 flex flex-col items-center text-center shadow-2xl">
-                    <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full p-[2px] bg-gradient-to-tr from-cyan-400 via-sky-400 to-fuchsia-500 shadow-[0_0_20px_rgba(0,240,255,0.4)] flex items-center justify-center mb-2.5">
+                  /* Empty State Card styled with the matching deep obsidian theme */
+                  <div className="w-full bg-[#080c14]/95 backdrop-blur-2xl border border-white/10 rounded-[32px] p-6 sm:p-8 flex flex-col items-center text-center shadow-[0_25px_60px_rgba(0,0,0,0.85)] relative overflow-hidden">
+                    <div className="relative w-24 h-24 rounded-full p-[2px] bg-gradient-to-tr from-cyan-400 via-sky-400 to-fuchsia-500 shadow-[0_0_24px_rgba(0,240,255,0.4)] flex items-center justify-center mb-4">
                       <div className="w-full h-full rounded-full bg-dark-950 flex items-center justify-center text-cyan-400">
-                        <Disc3 className="w-8 h-8 animate-spin" style={{ animationDuration: '8s' }} />
+                        <Disc3 className="w-10 h-10 animate-spin" style={{ animationDuration: '8s' }} />
                       </div>
                     </div>
 
-                    <h3 className="text-sm sm:text-base font-black text-white mb-1">
+                    <h3 className="text-lg sm:text-xl font-black text-white mb-1.5">
                       No Track Playing
                     </h3>
-                    <p className="text-xs text-slate-400 max-w-xs mb-3 leading-relaxed">
-                      The room audio mesh is ready and synchronized. Pick any song from the catalog to start broadcasting to all devices!
+                    <p className="text-xs sm:text-sm text-slate-400 max-w-xs mb-6 leading-relaxed">
+                      The room audio mesh is synchronized. Pick any song from the catalog to broadcast live!
                     </p>
 
                     <button
                       type="button"
                       onClick={() => setActiveTab('search')}
-                      className="py-1.5 sm:py-2 px-4 rounded-full bg-gradient-to-r from-cyan-400 to-sky-400 hover:from-white hover:to-cyan-200 text-black font-black text-xs flex items-center gap-1.5 shadow-[0_0_16px_rgba(0,240,255,0.4)] transition-all active:scale-95 cursor-pointer"
+                      className="w-full max-w-[280px] sm:max-w-[320px] py-3.5 px-6 rounded-2xl sm:rounded-full bg-cyan-400 hover:bg-white text-black font-extrabold text-sm sm:text-base flex items-center justify-center gap-2.5 shadow-[0_0_24px_rgba(0,240,255,0.5)] hover:shadow-[0_0_35px_rgba(0,240,255,0.85)] transition-all duration-200 active:scale-95 cursor-pointer select-none"
                     >
-                      <Search className="w-3.5 h-3.5 stroke-[2.5]" />
-                      <span>Search & Play Songs</span>
+                      <Search className="w-5 h-5 stroke-[2.5] text-black" />
+                      <span>Browse & Add Songs</span>
                     </button>
                   </div>
                 )}
+
+                {/* Live Neon Chroma Wave Audio Visualizer (Exact Match to Uploaded Sample 2) */}
+                <div className="w-full bg-[#080c14]/95 backdrop-blur-2xl border border-white/10 rounded-[28px] p-3 sm:p-4 shadow-[0_20px_50px_rgba(0,0,0,0.8)] relative overflow-hidden group">
+                  <div className="flex items-center justify-between px-2 mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_#00f0ff] animate-pulse" />
+                      <span className="text-[11px] font-mono uppercase tracking-wider text-slate-300 font-semibold">
+                        Neon Audio Waves
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-slate-400 font-mono">
+                      {isPlaying ? 'Real-Time Reactivity' : 'Standby Glow'}
+                    </span>
+                  </div>
+                  <div className="w-full h-28 sm:h-36 rounded-2xl overflow-hidden bg-black/80 border border-white/5 relative">
+                    <AudioVisualizer isPlaying={isPlaying} height={140} className="w-full h-full" />
+                  </div>
+                </div>
               </div>
 
               {/* Right Column: Up Next (Collaborative Queue & Favorites) */}
