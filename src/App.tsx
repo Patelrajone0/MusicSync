@@ -626,6 +626,22 @@ export function App() {
     }, 150);
   };
 
+  type TabDesign = 'glass' | 'rail' | 'tactile' | 'header' | 'ghost';
+  const [tabDesign, setTabDesign] = useState<TabDesign>(() => {
+    try {
+      return (localStorage.getItem('musicsync_tab_design') as TabDesign) || 'glass';
+    } catch {
+      return 'glass';
+    }
+  });
+
+  const handleSelectTabDesign = (design: TabDesign) => {
+    setTabDesign(design);
+    try {
+      localStorage.setItem('musicsync_tab_design', design);
+    } catch {}
+  };
+
   return (
     <div
       onClick={() => {
@@ -642,52 +658,248 @@ export function App() {
         onLeaveRoom={handleLeaveRoom}
         masterVolume={masterVolume}
         currentNetworkMode={networkMode}
+        centerContent={
+          tabDesign === 'header' ? (
+            <div className="inline-flex items-center p-0.5 rounded-full bg-dark-900/95 border border-white/10 shadow-lg gap-1 select-none">
+              <button
+                type="button"
+                onClick={() => setActiveTab('player')}
+                className={`flex items-center gap-1.5 py-1 px-3 rounded-full text-xs font-bold transition-all duration-200 cursor-pointer ${
+                  activeTab === 'player' || activeTab === 'queue'
+                    ? 'bg-cyan-400 text-black shadow-[0_0_12px_rgba(0,240,255,0.5)]'
+                    : 'text-slate-400 hover:text-white hover:bg-white/5'
+                }`}
+              >
+                <Disc3 className={`w-3 h-3 ${(activeTab === 'player' || activeTab === 'queue') && isPlaying ? 'animate-spin' : ''}`} style={{ animationDuration: '3s' }} />
+                <span>Player</span>
+                {queue.length > 0 && <span className="text-[10px] font-mono font-bold">({queue.length})</span>}
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('search')}
+                className={`flex items-center gap-1.5 py-1 px-3 rounded-full text-xs font-bold transition-all duration-200 cursor-pointer ${
+                  activeTab === 'search'
+                    ? 'bg-cyan-400 text-black shadow-[0_0_12px_rgba(0,240,255,0.5)]'
+                    : 'text-slate-400 hover:text-white hover:bg-white/5'
+                }`}
+              >
+                <Search className="w-3 h-3" />
+                <span>Library</span>
+              </button>
+            </div>
+          ) : undefined
+        }
       />
 
-      {/* Sleek Dynamic Tab Navigation Bar (Desktop & Tablet) */}
-      <div className="hidden md:block w-full px-3 py-1.5 shrink-0 z-30 select-none">
-        <div className="max-w-md mx-auto flex items-center justify-between p-1 bg-dark-900/90 rounded-full border border-white/10 shadow-lg gap-1.5">
-          {/* Tab 1: Player & Up Next Queue */}
-          <button
-            type="button"
-            onClick={() => {
-              setActiveTab('player');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-            className={`flex-1 flex items-center justify-center gap-2 py-1 px-4 rounded-full text-xs font-bold transition-all duration-200 active:scale-95 cursor-pointer ${
-              activeTab === 'player' || activeTab === 'queue'
-                ? 'bg-gradient-to-r from-cyan-400 to-sky-400 text-black shadow-[0_0_14px_rgba(0,240,255,0.4)]'
-                : 'text-slate-400 hover:text-white hover:bg-white/5'
-            }`}
-          >
-            <Disc3 className={`w-3.5 h-3.5 ${(activeTab === 'player' || activeTab === 'queue') && isPlaying ? 'animate-spin' : ''}`} style={{ animationDuration: '3s' }} />
-            <span>Player & Queue</span>
-            {queue.length > 0 && (
-              <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono font-black ${
-                activeTab === 'player' || activeTab === 'queue' ? 'bg-black text-cyan-300' : 'bg-cyan-500/20 text-cyan-300'
-              }`}>
-                {queue.length}
-              </span>
-            )}
-          </button>
-
-          {/* Tab 2: Search / Library */}
-          <button
-            type="button"
-            onClick={() => {
-              setActiveTab('search');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-1 px-4 rounded-full text-xs font-bold transition-all duration-200 active:scale-95 cursor-pointer ${
-              activeTab === 'search'
-                ? 'bg-gradient-to-r from-cyan-400 to-sky-400 text-black shadow-[0_0_14px_rgba(0,240,255,0.4)]'
-                : 'text-slate-400 hover:text-white hover:bg-white/5'
-            }`}
-          >
-            <Search className="w-3.5 h-3.5" />
-            <span>Search / Library</span>
-          </button>
+      {/* Desktop Tab Switcher & Live Design Previewer */}
+      <div className="hidden md:flex flex-col items-center w-full px-4 pt-1 shrink-0 z-30 select-none">
+        {/* Live Design Style Switcher Pill */}
+        <div className="flex items-center justify-center gap-1 mb-1.5 px-3 py-1 rounded-full bg-dark-950/80 border border-white/5 backdrop-blur-md shadow-sm">
+          <span className="text-[9px] font-mono uppercase tracking-widest text-slate-400 mr-1 flex items-center gap-1">
+            <span>🎨</span>
+            <span>Style:</span>
+          </span>
+          {[
+            { id: 'glass', label: '1. Frosted Glass' },
+            { id: 'rail', label: '2. Neon Rail' },
+            { id: 'tactile', label: '3. DJ Deck' },
+            { id: 'header', label: '4. Integrated Header' },
+            { id: 'ghost', label: '5. Ghost Pills' },
+          ].map((d) => (
+            <button
+              key={d.id}
+              type="button"
+              onClick={() => handleSelectTabDesign(d.id as TabDesign)}
+              className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border transition-all cursor-pointer ${
+                tabDesign === d.id
+                  ? 'bg-cyan-400 text-black border-cyan-300 font-bold shadow-[0_0_8px_rgba(0,240,255,0.4)] scale-105'
+                  : 'bg-dark-900/60 text-slate-400 border-white/10 hover:text-white hover:border-white/30'
+              }`}
+            >
+              {d.label}
+            </button>
+          ))}
         </div>
+
+        {/* Dynamic Navigation Bar based on selected Design */}
+        {tabDesign === 'glass' && (
+          /* DESIGN 1: Minimalist Frosted Glass Capsule */
+          <div className="w-full max-w-sm mx-auto flex items-center justify-between p-1 rounded-full bg-white/[0.04] border border-white/10 backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.6)] gap-1">
+            <button
+              type="button"
+              onClick={() => {
+                setActiveTab('player');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              className={`flex-1 flex items-center justify-center gap-2 py-1.5 px-4 rounded-full text-xs transition-all duration-200 cursor-pointer ${
+                activeTab === 'player' || activeTab === 'queue'
+                  ? 'bg-white/15 text-cyan-300 font-bold border border-cyan-400/40 shadow-[0_0_12px_rgba(0,240,255,0.25)]'
+                  : 'text-slate-400 hover:text-slate-200 font-medium hover:bg-white/5'
+              }`}
+            >
+              <span className={`w-1.5 h-1.5 rounded-full ${
+                (activeTab === 'player' || activeTab === 'queue') ? 'bg-cyan-400 animate-pulse shadow-[0_0_6px_#00f0ff]' : 'bg-slate-600'
+              }`} />
+              <Disc3 className={`w-3.5 h-3.5 ${(activeTab === 'player' || activeTab === 'queue') && isPlaying ? 'animate-spin' : ''}`} style={{ animationDuration: '3s' }} />
+              <span>Player & Queue</span>
+              {queue.length > 0 && (
+                <span className="px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold bg-cyan-500/20 text-cyan-300">
+                  {queue.length}
+                </span>
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setActiveTab('search');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              className={`flex-1 flex items-center justify-center gap-2 py-1.5 px-4 rounded-full text-xs transition-all duration-200 cursor-pointer ${
+                activeTab === 'search'
+                  ? 'bg-white/15 text-cyan-300 font-bold border border-cyan-400/40 shadow-[0_0_12px_rgba(0,240,255,0.25)]'
+                  : 'text-slate-400 hover:text-slate-200 font-medium hover:bg-white/5'
+              }`}
+            >
+              <span className={`w-1.5 h-1.5 rounded-full ${
+                activeTab === 'search' ? 'bg-cyan-400 animate-pulse shadow-[0_0_6px_#00f0ff]' : 'bg-slate-600'
+              }`} />
+              <Search className="w-3.5 h-3.5" />
+              <span>Search / Library</span>
+            </button>
+          </div>
+        )}
+
+        {tabDesign === 'rail' && (
+          /* DESIGN 2: Neon Underline Sliding Rail (Spotify / Linear Style) */
+          <div className="flex items-center justify-center gap-12 py-1 relative">
+            <button
+              type="button"
+              onClick={() => setActiveTab('player')}
+              className="group relative flex items-center gap-2 py-1.5 text-xs tracking-wider uppercase transition-colors cursor-pointer select-none"
+            >
+              <Disc3 className={`w-4 h-4 ${
+                (activeTab === 'player' || activeTab === 'queue') ? 'text-cyan-400 animate-spin' : 'text-slate-500 group-hover:text-slate-300'
+              }`} style={{ animationDuration: '3s' }} />
+              <span className={`font-black ${
+                (activeTab === 'player' || activeTab === 'queue') ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'
+              }`}>
+                Player & Queue
+              </span>
+              {queue.length > 0 && (
+                <span className="px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold bg-cyan-950 text-cyan-300 border border-cyan-500/30">
+                  {queue.length}
+                </span>
+              )}
+              {(activeTab === 'player' || activeTab === 'queue') && (
+                <span className="absolute -bottom-1 left-0 right-0 h-[2.5px] bg-gradient-to-r from-cyan-400 via-sky-300 to-cyan-400 rounded-full shadow-[0_0_10px_#00f0ff]" />
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('search')}
+              className="group relative flex items-center gap-2 py-1.5 text-xs tracking-wider uppercase transition-colors cursor-pointer select-none"
+            >
+              <Search className={`w-4 h-4 ${
+                activeTab === 'search' ? 'text-cyan-400' : 'text-slate-500 group-hover:text-slate-300'
+              }`} />
+              <span className={`font-black ${
+                activeTab === 'search' ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'
+              }`}>
+                Search / Library
+              </span>
+              {activeTab === 'search' && (
+                <span className="absolute -bottom-1 left-0 right-0 h-[2.5px] bg-gradient-to-r from-cyan-400 via-sky-300 to-cyan-400 rounded-full shadow-[0_0_10px_#00f0ff]" />
+              )}
+            </button>
+          </div>
+        )}
+
+        {tabDesign === 'tactile' && (
+          /* DESIGN 3: Tactile DJ Deck Toggle (Pioneer DJ / Studio Deck) */
+          <div className="w-full max-w-sm mx-auto flex items-center justify-between p-1 rounded-xl bg-[#060a12] border border-white/10 shadow-[inset_0_2px_8px_rgba(0,0,0,0.9)] gap-1.5">
+            <button
+              type="button"
+              onClick={() => setActiveTab('player')}
+              className={`flex-1 flex items-center justify-center gap-2 py-1.5 px-3 rounded-lg text-xs font-mono transition-all duration-150 cursor-pointer ${
+                activeTab === 'player' || activeTab === 'queue'
+                  ? 'bg-gradient-to-b from-[#19263e] to-[#0c1424] border border-cyan-400/60 text-cyan-300 font-bold shadow-[0_2px_6px_rgba(0,0,0,0.8),inset_0_1px_0_rgba(255,255,255,0.2)]'
+                  : 'text-slate-500 hover:text-slate-300 hover:bg-white/5 border border-transparent'
+              }`}
+            >
+              <div className={`w-1.5 h-1.5 rounded-full ${
+                (activeTab === 'player' || activeTab === 'queue') ? 'bg-emerald-400 shadow-[0_0_6px_#34d399]' : 'bg-slate-700'
+              }`} />
+              <Disc3 className={`w-3.5 h-3.5 ${(activeTab === 'player' || activeTab === 'queue') && isPlaying ? 'animate-spin' : ''}`} style={{ animationDuration: '3s' }} />
+              <span>DECK A: PLAYER</span>
+              {queue.length > 0 && (
+                <span className="px-1.5 py-0.2 rounded text-[10px] font-mono bg-black text-cyan-300 border border-cyan-500/40">
+                  {queue.length}
+                </span>
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('search')}
+              className={`flex-1 flex items-center justify-center gap-2 py-1.5 px-3 rounded-lg text-xs font-mono transition-all duration-150 cursor-pointer ${
+                activeTab === 'search'
+                  ? 'bg-gradient-to-b from-[#19263e] to-[#0c1424] border border-cyan-400/60 text-cyan-300 font-bold shadow-[0_2px_6px_rgba(0,0,0,0.8),inset_0_1px_0_rgba(255,255,255,0.2)]'
+                  : 'text-slate-500 hover:text-slate-300 hover:bg-white/5 border border-transparent'
+              }`}
+            >
+              <div className={`w-1.5 h-1.5 rounded-full ${
+                activeTab === 'search' ? 'bg-emerald-400 shadow-[0_0_6px_#34d399]' : 'bg-slate-700'
+              }`} />
+              <Search className="w-3.5 h-3.5" />
+              <span>DECK B: SEARCH</span>
+            </button>
+          </div>
+        )}
+
+        {tabDesign === 'ghost' && (
+          /* DESIGN 5: Dual Floating Neon Ghost Capsules */
+          <div className="flex items-center justify-center gap-3 py-1">
+            <button
+              type="button"
+              onClick={() => setActiveTab('player')}
+              className={`flex items-center gap-2 py-1.5 px-5 rounded-full text-xs transition-all duration-200 cursor-pointer ${
+                activeTab === 'player' || activeTab === 'queue'
+                  ? 'bg-cyan-500/15 border border-cyan-400 text-cyan-300 font-black shadow-[0_0_16px_rgba(0,240,255,0.3)]'
+                  : 'bg-dark-900/60 border border-white/10 hover:border-white/20 text-slate-400 font-semibold hover:text-white'
+              }`}
+            >
+              <Disc3 className={`w-3.5 h-3.5 ${(activeTab === 'player' || activeTab === 'queue') && isPlaying ? 'animate-spin' : ''}`} style={{ animationDuration: '3s' }} />
+              <span>Player & Queue</span>
+              {queue.length > 0 && (
+                <span className="px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold bg-cyan-400/20 text-cyan-300 border border-cyan-400/30">
+                  {queue.length}
+                </span>
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('search')}
+              className={`flex items-center gap-2 py-1.5 px-5 rounded-full text-xs transition-all duration-200 cursor-pointer ${
+                activeTab === 'search'
+                  ? 'bg-cyan-500/15 border border-cyan-400 text-cyan-300 font-black shadow-[0_0_16px_rgba(0,240,255,0.3)]'
+                  : 'bg-dark-900/60 border border-white/10 hover:border-white/20 text-slate-400 font-semibold hover:text-white'
+              }`}
+            >
+              <Search className="w-3.5 h-3.5" />
+              <span>Search / Library</span>
+            </button>
+          </div>
+        )}
+
+        {tabDesign === 'header' && (
+          /* DESIGN 4: Notice that tabs are merged inside the top header */
+          <div className="text-[11px] font-mono text-slate-400 flex items-center gap-1.5 py-0.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_6px_#00f0ff]" />
+            <span>Navigation tabs are merged directly into the top header (Dynamic Island mode)</span>
+          </div>
+        )}
       </div>
 
       {/* 2. Active Tab Content */}

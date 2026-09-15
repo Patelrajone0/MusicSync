@@ -32,6 +32,7 @@ interface RoomHeaderProps {
   onLeaveRoom?: () => void;
   masterVolume?: number;
   currentNetworkMode?: NetworkMode;
+  centerContent?: React.ReactNode;
 }
 
 export const RoomHeader: React.FC<RoomHeaderProps> = ({
@@ -42,6 +43,7 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
   onLeaveRoom,
   masterVolume,
   currentNetworkMode,
+  centerContent,
 }) => {
   const isHost = Boolean(
     currentUser && (
@@ -186,6 +188,13 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
             )}
           </button>
         </div>
+
+        {/* Center Slot (e.g. Integrated Navigation Tabs) */}
+        {centerContent && (
+          <div className="hidden md:flex items-center justify-center flex-1 mx-2">
+            {centerContent}
+          </div>
+        )}
 
         {/* Action Controls & Connected Members */}
         <div className="flex items-center gap-1 sm:gap-2 shrink-0">
