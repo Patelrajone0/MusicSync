@@ -147,120 +147,154 @@ export const AudioVisualizer: React.FC<AudioVisualizerProps> = ({
     energy: number
   ) => {
     const centerY = h / 2;
-    const barCount = Math.min(84, Math.floor(w / 7.5));
-    const barWidth = Math.max(2.5, (w / barCount) * 0.55);
+    const barCount = Math.min(92, Math.max(56, Math.floor(w / 7.2)));
     const spacing = w / barCount;
-    const maxHalfHeight = h * 0.46;
+    const barWidth = Math.max(3.2, spacing * 0.62);
+    const maxHalfHeight = h * 0.44;
 
-    // Helper to get multi-color neon gradient matching Image 2 across horizontal position (0 to 1)
-    const getChromaColor = (ratio: number, alpha = 1) => {
-      if (ratio < 0.25) {
-        // Teal / Emerald Green -> Cyan
-        const t = ratio / 0.25;
+    // Helper to calculate the 4-peak mountain envelope matching Image 2
+    const getLobeEnvelope = (ratio: number) => {
+      const p1 = Math.exp(-Math.pow((ratio - 0.16) / 0.075, 2)) * 0.72; // Left: Green/Teal
+      const p2 = Math.exp(-Math.pow((ratio - 0.38) / 0.065, 2)) * 0.62; // Mid-left: Blue
+      const p3 = Math.exp(-Math.pow((ratio - 0.63) / 0.082, 2)) * 0.94; // Center-right: Tallest Magenta/Pink
+      const p4 = Math.exp(-Math.pow((ratio - 0.85) / 0.072, 2)) * 0.74; // Right: Orange/Yellow
+      const baseline = 0.08;
+      return Math.min(1.0, baseline + p1 + p2 + p3 + p4);
+    };
+
+    // Color mapper matching Image 2 (Green/Teal -> Blue -> Vivid Pink/Magenta -> Amber/Yellow)
+    const getLobeColor = (ratio: number, brightness = 1) => {
+      if (ratio < 0.28) {
+        // Emerald Green -> Bright Cyan
+        const t = ratio / 0.28;
         const r = Math.round(0 + t * 0);
-        const g = Math.round(230 + t * 10);
-        const b = Math.round(160 + t * 95);
-        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-      } else if (ratio < 0.5) {
-        // Cyan -> Electric Blue
-        const t = (ratio - 0.25) / 0.25;
-        const r = Math.round(0 + t * 30);
-        const g = Math.round(240 - t * 110);
-        const b = Math.round(255);
-        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+        const g = Math.min(255, Math.round((225 + t * 30) * brightness));
+        const b = Math.min(255, Math.round((120 + t * 135) * brightness));
+        return { r, g, b, hex: `rgb(${r}, ${g}, ${b})` };
+      } else if (ratio < 0.50) {
+        // Cyan -> Electric Royal Blue
+        const t = (ratio - 0.28) / 0.22;
+        const r = Math.round((0 + t * 45) * brightness);
+        const g = Math.round((240 - t * 130) * brightness);
+        const b = Math.min(255, Math.round(255 * brightness));
+        return { r, g, b, hex: `rgb(${r}, ${g}, ${b})` };
       } else if (ratio < 0.75) {
-        // Electric Blue -> Vivid Magenta / Hot Pink
-        const t = (ratio - 0.5) / 0.25;
-        const r = Math.round(30 + t * 225);
-        const g = Math.round(130 - t * 110);
-        const b = Math.round(255 - t * 110);
-        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+        // Electric Blue -> Deep Magenta / Hot Neon Pink
+        const t = (ratio - 0.50) / 0.25;
+        const r = Math.min(255, Math.round((45 + t * 210) * brightness));
+        const g = Math.round((110 - t * 95) * brightness);
+        const b = Math.round((255 - t * 115) * brightness);
+        return { r, g, b, hex: `rgb(${r}, ${g}, ${b})` };
       } else {
         // Hot Pink -> Orange / Golden Yellow
         const t = (ratio - 0.75) / 0.25;
         const r = 255;
-        const g = Math.round(20 + t * 185);
-        const b = Math.round(145 - t * 135);
-        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+        const g = Math.min(255, Math.round((20 + t * 195) * brightness));
+        const b = Math.round((140 - t * 140) * brightness);
+        return { r, g, b, hex: `rgb(${r}, ${g}, ${b})` };
       }
     };
 
-    // A. Draw Mirrored Symmetrical Equalizer Bars
+    // A. Draw Stacked Segmented LED Dashes for Mirrored Equalizer Bars (Image 2 style)
+    const dashH = 3.6;
+    const dashGap = 2.0;
+    const step = dashH + dashGap;
+
     for (let i = 0; i < barCount; i++) {
       const ratio = i / barCount;
-      const x = i * spacing + spacing * 0.25;
+      const x = i * spacing + (spacing - barWidth) / 2;
 
-      // Frequency mapping with natural audio bell-curve
-      const dataIdx = Math.floor(Math.pow(ratio, 1.4) * (len * 0.75));
-      const rawVal = data[dataIdx] || 0;
-      
-      // Amplitude shaping with harmonic motion
-      const waveMod = Math.sin(phase * 1.8 + i * 0.18) * 0.18 + 0.82;
-      const normalized = Math.min(1, Math.max(0.04, (rawVal / 255) * waveMod));
-      const barH = Math.max(3, normalized * maxHalfHeight);
+      // Calculate envelope & audio reactivity
+      const baseEnv = getLobeEnvelope(ratio);
+      const dataIdx = Math.floor(Math.pow(ratio, 1.3) * (len * 0.7));
+      const rawAudio = (data[dataIdx] || 0) / 255;
 
-      // Create vertical linear gradient for this bar (mirrored from center horizon)
-      const grad = ctx.createLinearGradient(x, centerY - barH, x, centerY + barH);
-      const baseColor = getChromaColor(ratio, 0.95);
-      const brightColor = getChromaColor(ratio, 1);
-      const fadeColor = getChromaColor(ratio, 0.12);
+      // Undulating phase modulation for living motion
+      const undulate = Math.sin(phase * 1.6 + i * 0.14) * 0.12 + 0.90;
+      const energyPulse = 1 + (energy / 255) * 0.35;
 
-      grad.addColorStop(0, fadeColor);
-      grad.addColorStop(0.2, baseColor);
-      grad.addColorStop(0.5, brightColor);
-      grad.addColorStop(0.8, baseColor);
-      grad.addColorStop(1, fadeColor);
+      const dynamicHeight = Math.max(
+        12,
+        (baseEnv * 0.75 + rawAudio * 0.4) * undulate * energyPulse * maxHalfHeight
+      );
 
-      ctx.fillStyle = grad;
+      const color = getLobeColor(ratio, 1.0);
+      const numDashes = Math.floor(dynamicHeight / step);
 
-      // Draw mirrored rounded bar
-      ctx.beginPath();
-      if (typeof ctx.roundRect === 'function') {
-        ctx.roundRect(x, centerY - barH, barWidth, barH * 2, [barWidth / 2]);
-      } else {
-        ctx.rect(x, centerY - barH, barWidth, barH * 2);
-      }
-      ctx.fill();
+      for (let d = 0; d < numDashes; d++) {
+        const offset = d * step;
+        const dashRatio = d / Math.max(1, numDashes);
+        
+        // Intensity: brightest at center horizon and tips, luminous color in body
+        let alpha = 0.95;
+        let r = color.r;
+        let g = color.g;
+        let b = color.b;
 
-      // Top & bottom peak luminous dots if high energy
-      if (normalized > 0.45) {
-        ctx.fillStyle = '#ffffff';
-        ctx.shadowBlur = 8;
-        ctx.shadowColor = brightColor;
-        ctx.beginPath();
-        ctx.arc(x + barWidth / 2, centerY - barH, barWidth * 0.6, 0, Math.PI * 2);
-        ctx.arc(x + barWidth / 2, centerY + barH, barWidth * 0.6, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.shadowBlur = 0;
+        if (d === 0) {
+          // Center horizon seam segment: brilliant white-cyan core
+          r = Math.min(255, r + 90);
+          g = Math.min(255, g + 90);
+          b = Math.min(255, b + 90);
+          alpha = 1.0;
+        } else if (d === numDashes - 1 && baseEnv > 0.4) {
+          // Peak tip segment: glowing highlight cap
+          r = Math.min(255, r + 110);
+          g = Math.min(255, g + 110);
+          b = Math.min(255, b + 110);
+          alpha = 1.0;
+        } else {
+          alpha = 0.75 + (1 - dashRatio) * 0.25;
+        }
+
+        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+
+        // Upper dash
+        ctx.fillRect(x, centerY - offset - dashH, barWidth, dashH);
+        // Lower mirrored dash
+        ctx.fillRect(x, centerY + offset, barWidth, dashH);
       }
     }
 
-    // B. Draw Fluid Multi-Strand Sine Wave Filaments (Image 2 style)
-    const strands = [
-      { freq: 0.007, phaseSpeed: 1.2, amp: h * 0.24, color: 'rgba(255, 255, 255, 0.9)', width: 2, shadowColor: '#00f0ff' },
-      { freq: 0.011, phaseSpeed: -0.9, amp: h * 0.19, color: 'rgba(0, 240, 255, 0.85)', width: 1.8, shadowColor: '#00f0ff' },
-      { freq: 0.009, phaseSpeed: 1.5, amp: h * 0.22, color: 'rgba(255, 77, 184, 0.85)', width: 1.8, shadowColor: '#ff007f' },
-      { freq: 0.015, phaseSpeed: -1.4, amp: h * 0.14, color: 'rgba(255, 187, 0, 0.8)', width: 1.5, shadowColor: '#facc15' },
-      { freq: 0.013, phaseSpeed: 0.8, amp: h * 0.16, color: 'rgba(77, 171, 247, 0.75)', width: 1.4, shadowColor: '#0080ff' },
-    ];
+    // B. Draw Dense Multi-Strand Wireframe Contour Ribbon Mesh (Image 2 style)
+    // 14 woven strands with phase offsets that form laser ribbons across the peaks
+    const strandCount = 14;
+    for (let s = 0; s < strandCount; s++) {
+      const strandRatio = s / (strandCount - 1);
+      const phaseOffset = (s - 7) * 0.18;
+      const verticalOffset = (strandRatio - 0.5) * 6;
 
-    strands.forEach((strand, sIdx) => {
       ctx.beginPath();
-      ctx.lineWidth = strand.width;
-      ctx.strokeStyle = strand.color;
-      ctx.shadowBlur = 10;
-      ctx.shadowColor = strand.shadowColor;
+      ctx.lineWidth = s === 6 || s === 7 ? 2.0 : 1.2;
 
-      const energyScale = 0.5 + (energy / 255) * 0.75;
-      const strandPhase = phase * strand.phaseSpeed + sIdx * 0.65;
+      // Color tinting: center strands glow white/cyan, outer strands shift pink/amber
+      let strandColor = 'rgba(255, 255, 255, 0.85)';
+      let shadowColor = '#00f0ff';
+      if (s < 4) {
+        strandColor = 'rgba(0, 240, 255, 0.75)';
+        shadowColor = '#00f0ff';
+      } else if (s > 9) {
+        strandColor = 'rgba(255, 77, 184, 0.75)';
+        shadowColor = '#ff007f';
+      } else if (s % 2 === 0) {
+        strandColor = 'rgba(255, 255, 255, 0.95)';
+        shadowColor = '#ffffff';
+      }
 
-      for (let x = 0; x <= w; x += 3) {
+      ctx.strokeStyle = strandColor;
+      ctx.shadowBlur = s === 6 || s === 7 ? 10 : 5;
+      ctx.shadowColor = shadowColor;
+
+      for (let x = 0; x <= w; x += 3.5) {
         const ratio = x / w;
-        // Harmonic modulation creating dynamic peaks and troughs like Image 2
-        const y =
-          centerY +
-          Math.sin(x * strand.freq + strandPhase) * strand.amp * energyScale * Math.sin(ratio * Math.PI) +
-          Math.cos(x * strand.freq * 2.1 - strandPhase * 0.6) * (strand.amp * 0.35);
+        const env = getLobeEnvelope(ratio);
+
+        // Sinusoidal wave that inflates with the lobe envelope
+        const wave1 = Math.sin(x * 0.0075 + phase * 1.3 + phaseOffset);
+        const wave2 = Math.cos(x * 0.016 - phase * 0.9 + phaseOffset * 0.5) * 0.35;
+        const waveAmp = (env * maxHalfHeight * 0.85) * (wave1 + wave2);
+
+        const y = centerY + verticalOffset + waveAmp;
 
         if (x === 0) {
           ctx.moveTo(x, y);
@@ -270,13 +304,13 @@ export const AudioVisualizer: React.FC<AudioVisualizerProps> = ({
       }
       ctx.stroke();
       ctx.shadowBlur = 0;
-    });
+    }
 
-    // C. Center Luminous Horizon Glow
-    const horizonGrad = ctx.createLinearGradient(0, centerY - 2, 0, centerY + 2);
-    horizonGrad.addColorStop(0, 'rgba(255, 255, 255, 0)');
-    horizonGrad.addColorStop(0.5, 'rgba(255, 255, 255, 0.85)');
-    horizonGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+    // C. Center Luminous Seam Glow (Bright horizontal horizon)
+    const horizonGrad = ctx.createLinearGradient(0, centerY - 2.5, 0, centerY + 2.5);
+    horizonGrad.addColorStop(0, 'rgba(0, 240, 255, 0)');
+    horizonGrad.addColorStop(0.5, 'rgba(255, 255, 255, 0.9)');
+    horizonGrad.addColorStop(1, 'rgba(0, 240, 255, 0)');
 
     ctx.fillStyle = horizonGrad;
     ctx.fillRect(0, centerY - 1.5, w, 3);

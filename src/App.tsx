@@ -20,7 +20,7 @@ import { MusicSearchModal } from './components/MusicSearchModal';
 import { PlaybackHistoryModal } from './components/PlaybackHistoryModal';
 import { Logo } from './components/Logo';
 import { AudioVisualizer } from './components/AudioVisualizer';
-import { UserX, Disc3, ListMusic, Search } from 'lucide-react';
+import { UserX, Disc3, ListMusic, Search, Waves } from 'lucide-react';
 
 import { userTasteEngine } from './services/userTaste';
 import { cleanTrackTitle } from './services/musicApi';
@@ -112,6 +112,7 @@ export function App() {
   const [isHistoryOpen, setIsHistoryOpen] = useState<boolean>(false);
   const [kickedNotice, setKickedNotice] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'player' | 'queue' | 'search'>('player');
+  const [playerVisualMode, setPlayerVisualMode] = useState<'vinyl' | 'wave'>('vinyl');
 
   // Auto-reconnect state on page refresh
   const [isReconnecting, setIsReconnecting] = useState<boolean>(() => {
@@ -697,42 +698,65 @@ export function App() {
           <div className="flex-1 w-full animate-fade-in">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-4 lg:gap-5 items-start">
               {/* Left Column: Player (Hero Now Playing, Album Artwork & Vinyl) */}
-              <div className="lg:col-span-5 w-full flex flex-col items-center gap-4">
+              <div className="lg:col-span-5 w-full flex flex-col items-center">
                 {currentTrack ? (
                   /* Hero Now Playing Card (Exact Match to Uploaded Sample 1) */
                   <div className="w-full bg-[#080c14]/95 backdrop-blur-2xl border border-white/10 hover:border-cyan-400/30 rounded-[32px] p-6 sm:p-8 flex flex-col items-center text-center shadow-[0_25px_60px_rgba(0,0,0,0.85)] relative overflow-hidden transition-all duration-300">
                     {/* Ambient Top Radial Lighting */}
                     <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-80 h-80 bg-gradient-to-b from-cyan-500/15 via-sky-500/5 to-transparent rounded-full blur-3xl pointer-events-none" />
 
-                    {/* Top Status Pill (Exact match to sample: glowing dot + uppercase status) */}
-                    <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-[#0e1622]/90 border border-white/10 shadow-sm mb-6 sm:mb-8 select-none">
-                      <span
-                        className={`w-2.5 h-2.5 rounded-full ${
-                          isPlaying
-                            ? 'bg-cyan-400 shadow-[0_0_10px_#00f0ff] animate-pulse'
-                            : 'bg-[#eab308] shadow-[0_0_10px_rgba(234,179,8,0.9)]'
-                        }`}
-                      />
-                      <span className="text-[11px] sm:text-xs font-mono uppercase tracking-[0.2em] text-slate-200 font-semibold">
-                        {isPlaying ? 'Synced Broadcast Active' : 'Playback Paused'}
-                      </span>
+                    {/* Top Status Pill (Exact match to sample: glowing dot + uppercase status + visual mode toggle) */}
+                    <div className="w-full flex items-center justify-between mb-6 sm:mb-8 relative z-10">
+                      <div className="w-8" />
+                      <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-[#0e1622]/90 border border-white/10 shadow-sm select-none">
+                        <span
+                          className={`w-2.5 h-2.5 rounded-full ${
+                            isPlaying
+                              ? 'bg-cyan-400 shadow-[0_0_10px_#00f0ff] animate-pulse'
+                              : 'bg-[#eab308] shadow-[0_0_10px_rgba(234,179,8,0.9)]'
+                          }`}
+                        />
+                        <span className="text-[11px] sm:text-xs font-mono uppercase tracking-[0.2em] text-slate-200 font-semibold">
+                          {isPlaying ? 'Synced Broadcast Active' : 'Playback Paused'}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setPlayerVisualMode(playerVisualMode === 'vinyl' ? 'wave' : 'vinyl')}
+                        className="p-1.5 rounded-full bg-white/5 hover:bg-white/15 border border-white/10 text-slate-400 hover:text-white transition-all cursor-pointer"
+                        title={playerVisualMode === 'vinyl' ? 'Switch to Neon Audio Waves' : 'Switch to Spinning Vinyl Disc'}
+                      >
+                        {playerVisualMode === 'vinyl' ? (
+                          <Waves className="w-4 h-4 text-cyan-400" />
+                        ) : (
+                          <Disc3 className="w-4 h-4 text-cyan-400 animate-spin" style={{ animationDuration: '4s' }} />
+                        )}
+                      </button>
                     </div>
 
-                    {/* Hero Circular Vinyl Disc Artwork (Exact match to sample 1 with centered spindle hole) */}
-                    <div className="relative w-52 h-52 sm:w-60 sm:h-60 md:w-64 md:h-64 rounded-full p-[3px] bg-gradient-to-tr from-cyan-400 via-sky-400 to-fuchsia-500 shadow-[0_0_35px_rgba(0,240,255,0.4)] shrink-0 flex items-center justify-center transition-all duration-300">
-                      <img
-                        src={currentTrack.artwork || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=480'}
-                        alt={currentTrack.title}
-                        className={`w-full h-full rounded-full object-cover bg-dark-950 border-2 border-dark-950 shadow-inner ${
-                          isPlaying ? 'animate-spin' : ''
-                        }`}
-                        style={{ animationDuration: '24s' }}
-                      />
-                      {/* Center Vinyl Spindle Hole with glowing cyan border and center dot */}
-                      <div className="absolute w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-black border-2 border-cyan-400 shadow-[0_0_14px_rgba(0,240,255,0.8)] flex items-center justify-center pointer-events-none">
-                        <div className="w-3 h-3 rounded-full bg-cyan-400 shadow-[0_0_6px_#00f0ff]" />
+                    {/* Visualizer Display: Vinyl Disc or Live Neon Chroma Waves */}
+                    {playerVisualMode === 'vinyl' ? (
+                      /* Hero Circular Vinyl Disc Artwork (Exact match to sample 1 with centered spindle hole) */
+                      <div className="relative w-52 h-52 sm:w-60 sm:h-60 md:w-64 md:h-64 rounded-full p-[3px] bg-gradient-to-tr from-cyan-400 via-sky-400 to-fuchsia-500 shadow-[0_0_35px_rgba(0,240,255,0.4)] shrink-0 flex items-center justify-center transition-all duration-300">
+                        <img
+                          src={currentTrack.artwork || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=480'}
+                          alt={currentTrack.title}
+                          className={`w-full h-full rounded-full object-cover bg-dark-950 border-2 border-dark-950 shadow-inner ${
+                            isPlaying ? 'animate-spin' : ''
+                          }`}
+                          style={{ animationDuration: '24s' }}
+                        />
+                        {/* Center Vinyl Spindle Hole with glowing cyan border and center dot */}
+                        <div className="absolute w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-black border-2 border-cyan-400 shadow-[0_0_14px_rgba(0,240,255,0.8)] flex items-center justify-center pointer-events-none">
+                          <div className="w-3 h-3 rounded-full bg-cyan-400 shadow-[0_0_6px_#00f0ff]" />
+                        </div>
                       </div>
-                    </div>
+                    ) : (
+                      /* Live Neon Chroma Audio Waves inside the Card */
+                      <div className="w-full h-52 sm:h-60 rounded-2xl overflow-hidden bg-black border border-white/10 shadow-inner relative my-1">
+                        <AudioVisualizer isPlaying={isPlaying} height={240} className="w-full h-full" />
+                      </div>
+                    )}
 
                     {/* Track Typography (Bold title + cyan artist) */}
                     <div className="w-full max-w-sm flex flex-col items-center">
@@ -781,18 +805,29 @@ export function App() {
                     </button>
                   </div>
                 ) : (
-                  /* Empty State Card styled with the matching deep obsidian theme */
-                  <div className="w-full bg-[#080c14]/95 backdrop-blur-2xl border border-white/10 rounded-[32px] p-6 sm:p-8 flex flex-col items-center text-center shadow-[0_25px_60px_rgba(0,0,0,0.85)] relative overflow-hidden">
-                    <div className="relative w-24 h-24 rounded-full p-[2px] bg-gradient-to-tr from-cyan-400 via-sky-400 to-fuchsia-500 shadow-[0_0_24px_rgba(0,240,255,0.4)] flex items-center justify-center mb-4">
-                      <div className="w-full h-full rounded-full bg-dark-950 flex items-center justify-center text-cyan-400">
-                        <Disc3 className="w-10 h-10 animate-spin" style={{ animationDuration: '8s' }} />
-                      </div>
+                  /* When No Track is Playing: Replace with the breathtaking Neon Audio Wave visualizer showcase! */
+                  <div className="w-full bg-[#080c14]/95 backdrop-blur-2xl border border-white/10 hover:border-cyan-400/30 rounded-[32px] p-6 sm:p-7 flex flex-col items-center text-center shadow-[0_25px_60px_rgba(0,0,0,0.85)] relative overflow-hidden transition-all duration-300">
+                    {/* Ambient Top Lighting */}
+                    <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-80 h-80 bg-gradient-to-b from-cyan-500/15 via-sky-500/5 to-transparent rounded-full blur-3xl pointer-events-none" />
+
+                    {/* Top Status Pill */}
+                    <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-[#0e1622]/90 border border-white/10 shadow-sm mb-4 select-none">
+                      <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 shadow-[0_0_10px_#00f0ff] animate-pulse" />
+                      <span className="text-[11px] sm:text-xs font-mono uppercase tracking-[0.2em] text-slate-200 font-semibold">
+                        Standby Audio Mesh Active
+                      </span>
                     </div>
 
-                    <h3 className="text-lg sm:text-xl font-black text-white mb-1.5">
+                    {/* The Hero Neon Audio Waves Visualizer (Exact match to Image 2) */}
+                    <div className="w-full h-52 sm:h-60 rounded-2xl overflow-hidden bg-black border border-white/10 shadow-inner relative my-2">
+                      <AudioVisualizer isPlaying={false} height={240} className="w-full h-full" />
+                    </div>
+
+                    {/* Content & Action */}
+                    <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight mt-4 mb-1">
                       No Track Playing
                     </h3>
-                    <p className="text-xs sm:text-sm text-slate-400 max-w-xs mb-6 leading-relaxed">
+                    <p className="text-xs sm:text-sm text-slate-400 max-w-sm mb-5 leading-relaxed">
                       The room audio mesh is synchronized. Pick any song from the catalog to broadcast live!
                     </p>
 
@@ -806,24 +841,6 @@ export function App() {
                     </button>
                   </div>
                 )}
-
-                {/* Live Neon Chroma Wave Audio Visualizer (Exact Match to Uploaded Sample 2) */}
-                <div className="w-full bg-[#080c14]/95 backdrop-blur-2xl border border-white/10 rounded-[28px] p-3 sm:p-4 shadow-[0_20px_50px_rgba(0,0,0,0.8)] relative overflow-hidden group">
-                  <div className="flex items-center justify-between px-2 mb-2">
-                    <div className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_#00f0ff] animate-pulse" />
-                      <span className="text-[11px] font-mono uppercase tracking-wider text-slate-300 font-semibold">
-                        Neon Audio Waves
-                      </span>
-                    </div>
-                    <span className="text-[10px] text-slate-400 font-mono">
-                      {isPlaying ? 'Real-Time Reactivity' : 'Standby Glow'}
-                    </span>
-                  </div>
-                  <div className="w-full h-28 sm:h-36 rounded-2xl overflow-hidden bg-black/80 border border-white/5 relative">
-                    <AudioVisualizer isPlaying={isPlaying} height={140} className="w-full h-full" />
-                  </div>
-                </div>
               </div>
 
               {/* Right Column: Up Next (Collaborative Queue & Favorites) */}
