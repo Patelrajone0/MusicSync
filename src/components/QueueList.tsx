@@ -68,7 +68,7 @@ export const QueueList: React.FC<QueueListProps> = ({
   const isShowingFavorites = activeView === 'favorites' || (queue.length === 0 && favorites.length > 0);
 
   return (
-    <div className="w-full h-full bg-[#080c14]/95 backdrop-blur-2xl border border-white/10 hover:border-cyan-400/30 rounded-[28px] sm:rounded-[32px] p-4 sm:p-5 flex flex-col shadow-[0_25px_60px_rgba(0,0,0,0.85)] relative overflow-hidden transition-all duration-300 min-h-0">
+    <div className="w-full h-full bg-[#080c14]/95 backdrop-blur-2xl border border-white/10 hover:border-cyan-400/30 rounded-[24px] sm:rounded-[28px] lg:rounded-[32px] p-3.5 sm:p-4 lg:p-5 flex flex-col shadow-[0_25px_60px_rgba(0,0,0,0.85)] relative overflow-hidden transition-all duration-300 min-h-0">
       {/* Ambient Top Radial Lighting */}
       <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-80 h-80 bg-gradient-to-b from-cyan-500/10 via-sky-500/5 to-transparent rounded-full blur-3xl pointer-events-none" />
 
