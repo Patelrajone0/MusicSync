@@ -6,6 +6,8 @@ class SyncEngine {
   private audio: HTMLAudioElement | null = null;
   private preloadAudio: HTMLAudioElement | null = null;
   private audioContext: AudioContext | null = null;
+  private analyserNode: AnalyserNode | null = null;
+  private mediaSourceNode: MediaElementAudioSourceNode | null = null;
   private masterVolume: number = 0.9;
   private crossfadeDuration: number = 2.5; // seconds
 
@@ -64,6 +66,7 @@ class SyncEngine {
     if (!this.audio) {
       const audio = new Audio();
       audio.preload = 'auto';
+      audio.crossOrigin = 'anonymous';
       audio.preservesPitch = true;
       audio.volume = this.masterVolume;
 
@@ -578,8 +581,39 @@ class SyncEngine {
     }
   }
 
+  public setupAudioNodes() {
+    if (typeof window === 'undefined' || !this.audio) return;
+    try {
+      if (!this.audioContext) {
+        const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+        if (AudioCtx) {
+          this.audioContext = new AudioCtx();
+        }
+      }
+      if (this.audioContext && !this.analyserNode) {
+        this.analyserNode = this.audioContext.createAnalyser();
+        this.analyserNode.fftSize = 256;
+        this.analyserNode.smoothingTimeConstant = 0.75;
+      }
+      if (this.audioContext && this.analyserNode && !this.mediaSourceNode) {
+        this.mediaSourceNode = this.audioContext.createMediaElementSource(this.audio);
+        this.mediaSourceNode.connect(this.analyserNode);
+        this.analyserNode.connect(this.audioContext.destination);
+      }
+    } catch (e) {
+      // Handled if media element already connected
+    }
+  }
+
+  public getAudioElement(): HTMLAudioElement | null {
+    return this.audio;
+  }
+
   public getAnalyser(): AnalyserNode | null {
-    return null;
+    if (!this.analyserNode) {
+      this.setupAudioNodes();
+    }
+    return this.analyserNode;
   }
 
   public getAudioContext(): AudioContext | null {
