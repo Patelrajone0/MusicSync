@@ -93,6 +93,8 @@ interface MusicSearchModalProps {
   onClose?: () => void;
   inline?: boolean;
   demoMode?: 'option1' | 'option2' | 'option3';
+  queue?: Track[];
+  currentTrack?: Track | null;
 }
 
 export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
@@ -100,6 +102,8 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
   onClose = () => {},
   inline = false,
   demoMode = 'option1',
+  queue,
+  currentTrack,
 }) => {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<Track[]>([]);
@@ -108,6 +112,93 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
   const [currentOffset, setCurrentOffset] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [addedTrackIds, setAddedTrackIds] = useState<Set<string>>(new Set());
+
+  // Internal queue and currentTrack fallback if not supplied via props
+  const [internalQueue, setInternalQueue] = useState<Track[]>([]);
+  const [internalCurrentTrack, setInternalCurrentTrack] = useState<Track | null>(null);
+
+  useEffect(() => {
+    const handleQueueUpdated = ({ queue: q }: { queue: Track[] }) => {
+      setInternalQueue(q || []);
+    };
+    const handlePlaybackScheduled = (data: { track: Track }) => {
+      if (data?.track) setInternalCurrentTrack(data.track);
+    };
+    socket.on('queue_updated', handleQueueUpdated);
+    socket.on('playback_scheduled', handlePlaybackScheduled);
+    return () => {
+      socket.off('queue_updated', handleQueueUpdated);
+      socket.off('playback_scheduled', handlePlaybackScheduled);
+    };
+  }, []);
+
+  const activeQueue = queue !== undefined ? queue : internalQueue;
+  const activeCurrentTrack = currentTrack !== undefined ? currentTrack : internalCurrentTrack;
+
+  // Keep addedTrackIds synchronized with active queue & playback state
+  useEffect(() => {
+    setAddedTrackIds((prev) => {
+      if (prev.size === 0) return prev;
+      const next = new Set<string>();
+      for (const id of prev) {
+        const inQueue = activeQueue.some((q) => q.id === id || q.queueId === id);
+        const isCurrent = activeCurrentTrack?.id === id || activeCurrentTrack?.queueId === id;
+        if (inQueue || isCurrent) {
+          next.add(id);
+        }
+      }
+      return next;
+    });
+  }, [activeQueue, activeCurrentTrack]);
+
+  // Helper to check if a track is in the player (currentTrack) or in the queue
+  const isTrackInPlayer = (track: Track): boolean => {
+    if (!track) return false;
+    if (addedTrackIds.has(track.id)) return true;
+
+    const tId = track.id;
+    const tTitle = track.title ? track.title.trim().toLowerCase() : '';
+    const tArtist = track.artist ? track.artist.trim().toLowerCase() : '';
+    const tAudio = track.audioUrl || '';
+
+    // 1. Check current active track
+    if (activeCurrentTrack) {
+      if (tId && (activeCurrentTrack.id === tId || activeCurrentTrack.queueId === tId)) return true;
+      if (tAudio && activeCurrentTrack.audioUrl && activeCurrentTrack.audioUrl === tAudio) return true;
+      if (
+        tTitle &&
+        tArtist &&
+        activeCurrentTrack.title &&
+        activeCurrentTrack.artist &&
+        activeCurrentTrack.title.trim().toLowerCase() === tTitle &&
+        activeCurrentTrack.artist.trim().toLowerCase() === tArtist
+      ) {
+        return true;
+      }
+    }
+
+    // 2. Check active room queue
+    if (activeQueue && activeQueue.length > 0) {
+      return activeQueue.some((q) => {
+        if (tId && (q.id === tId || q.queueId === tId)) return true;
+        if (tAudio && q.audioUrl && q.audioUrl === tAudio) return true;
+        if (
+          tTitle &&
+          tArtist &&
+          q.title &&
+          q.artist &&
+          q.title.trim().toLowerCase() === tTitle &&
+          q.artist.trim().toLowerCase() === tArtist
+        ) {
+          return true;
+        }
+        return false;
+      });
+    }
+
+    return false;
+  };
+
   const getListScrollClassName = (defaultMaxH = 'max-h-[460px] sm:max-h-[520px]') => {
     if (!inline) return 'overflow-y-auto flex-1 min-h-0';
     if (demoMode === 'option1') {
@@ -509,13 +600,6 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
     setTasteSummary(userTasteEngine.getTasteSummary());
 
     setAddedTrackIds((prev) => new Set(prev).add(track.id));
-    setTimeout(() => {
-      setAddedTrackIds((prev) => {
-        const next = new Set(prev);
-        next.delete(track.id);
-        return next;
-      });
-    }, 2000);
   };
 
   const handleClearAllHistory = () => {
@@ -1113,7 +1197,7 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
               ) : (
                 <>
                   {results.map((track) => {
-                    const isAdded = addedTrackIds.has(track.id);
+                    const isAdded = isTrackInPlayer(track);
                     const isPreviewing = previewTrackId === track.id;
                     const isLongTrack = track.duration >= 600 || track.isLongMix;
 
@@ -1236,19 +1320,21 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
 
                         {/* Add Button */}
                         <button
+                          type="button"
                           onClick={() => handleAddTrack(track)}
-                          className={`flex items-center gap-1 sm:gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all active:scale-95 shrink-0 ml-1.5 shadow-sm ${
+                          className={`flex items-center gap-1 sm:gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all active:scale-95 shrink-0 ml-1.5 shadow-sm cursor-pointer ${
                             isAdded
-                              ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 shadow-[0_0_8px_rgba(52,211,153,0.3)]'
+                              ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/50 shadow-[0_0_10px_rgba(16,185,129,0.35)] hover:bg-emerald-500/30'
                               : activeTab === 'mixed'
                               ? 'bg-gradient-to-r from-amber-400 to-rose-400 text-black hover:brightness-110 shadow-[0_0_10px_rgba(251,191,36,0.3)]'
                               : 'bg-dark-900 hover:bg-dark-850 text-cyan-300 border border-cyan-400/40 hover:border-cyan-400 shadow-[0_0_8px_rgba(0,240,255,0.25)]'
                           }`}
+                          title={isAdded ? 'Added to player queue' : 'Add to queue'}
                         >
                           {isAdded ? (
                             <>
-                              <Check className="w-3.5 h-3.5" />
-                              <span>Added!</span>
+                              <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+                              <span>Added</span>
                             </>
                           ) : (
                             <>
@@ -1335,7 +1421,7 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
               ) : (
                 historyItems.map((item) => {
                   const { track } = item;
-                  const isAdded = addedTrackIds.has(track.id);
+                  const isAdded = isTrackInPlayer(track);
                   const isPreviewing = previewTrackId === track.id;
 
                     return (
@@ -1415,18 +1501,19 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
                           </button>
 
                           <button
+                            type="button"
                             onClick={() => handleAddTrack(track)}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all active:scale-95 ${
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all active:scale-95 cursor-pointer ${
                               isAdded
-                                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
+                                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/50 shadow-[0_0_10px_rgba(16,185,129,0.35)] hover:bg-emerald-500/30'
                                 : 'bg-electric-cyan text-black hover:bg-white shadow-md'
                             }`}
-                            title="Add back to room queue"
+                            title={isAdded ? 'Added to player queue' : 'Add back to room queue'}
                           >
                             {isAdded ? (
                               <>
-                                <Check className="w-3.5 h-3.5" />
-                                <span>Queued!</span>
+                                <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+                                <span>Added</span>
                               </>
                             ) : (
                               <>
@@ -1614,7 +1701,7 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
                   }
 
                   return filtered.map((track, idx) => {
-                    const isAdded = addedTrackIds.has(track.id);
+                    const isAdded = isTrackInPlayer(track);
                     const isPreviewing = previewTrackId === track.id;
                     const isStarred = isFavorite(track.id);
 
@@ -1713,15 +1800,15 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
                             onClick={() => handleAddTrack(track)}
                             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all active:scale-95 cursor-pointer ${
                               isAdded
-                                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
+                                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/50 shadow-[0_0_10px_rgba(16,185,129,0.35)] hover:bg-emerald-500/30'
                                 : 'bg-cyan-400 text-black hover:bg-white shadow-md'
                             }`}
-                            title="Add to room queue"
+                            title={isAdded ? 'Added to player queue' : 'Add to room queue'}
                           >
                             {isAdded ? (
                               <>
-                                <Check className="w-3.5 h-3.5" />
-                                <span>Queued!</span>
+                                <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+                                <span>Added</span>
                               </>
                             ) : (
                               <>

@@ -24,6 +24,8 @@ import { useFavorites } from '../services/favoritesService';
 interface PlaybackHistoryModalProps {
   isOpen: boolean;
   onClose: () => void;
+  queue?: Track[];
+  currentTrack?: Track | null;
 }
 
 function formatTimeAgo(timestamp: number): string {
@@ -41,11 +43,102 @@ function formatTimeAgo(timestamp: number): string {
   return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
-export const PlaybackHistoryModal: React.FC<PlaybackHistoryModalProps> = ({ isOpen, onClose }) => {
+export const PlaybackHistoryModal: React.FC<PlaybackHistoryModalProps> = ({
+  isOpen,
+  onClose,
+  queue,
+  currentTrack,
+}) => {
   const [historyItems, setHistoryItems] = useState<HistoryItem[]>(() => userTasteEngine.getHistory());
   const [searchFilter, setSearchFilter] = useState('');
   const [addedIds, setAddedIds] = useState<Set<string>>(new Set());
   const { isFavorite, toggleFavorite } = useFavorites();
+
+  // Internal queue and currentTrack fallback if not supplied via props
+  const [internalQueue, setInternalQueue] = useState<Track[]>([]);
+  const [internalCurrentTrack, setInternalCurrentTrack] = useState<Track | null>(null);
+
+  useEffect(() => {
+    const handleQueueUpdated = ({ queue: q }: { queue: Track[] }) => {
+      setInternalQueue(q || []);
+    };
+    const handlePlaybackScheduled = (data: { track: Track }) => {
+      if (data?.track) setInternalCurrentTrack(data.track);
+    };
+    socket.on('queue_updated', handleQueueUpdated);
+    socket.on('playback_scheduled', handlePlaybackScheduled);
+    return () => {
+      socket.off('queue_updated', handleQueueUpdated);
+      socket.off('playback_scheduled', handlePlaybackScheduled);
+    };
+  }, []);
+
+  const activeQueue = queue !== undefined ? queue : internalQueue;
+  const activeCurrentTrack = currentTrack !== undefined ? currentTrack : internalCurrentTrack;
+
+  // Keep addedIds synchronized with active queue & playback state
+  useEffect(() => {
+    setAddedIds((prev) => {
+      if (prev.size === 0) return prev;
+      const next = new Set<string>();
+      for (const id of prev) {
+        const inQueue = activeQueue.some((q) => q.id === id || q.queueId === id);
+        const isCurrent = activeCurrentTrack?.id === id || activeCurrentTrack?.queueId === id;
+        if (inQueue || isCurrent) {
+          next.add(id);
+        }
+      }
+      return next;
+    });
+  }, [activeQueue, activeCurrentTrack]);
+
+  // Helper to check if a track is in the player (currentTrack) or in the queue
+  const isTrackInPlayer = (track: Track): boolean => {
+    if (!track) return false;
+    if (addedIds.has(track.id)) return true;
+
+    const tId = track.id;
+    const tTitle = track.title ? track.title.trim().toLowerCase() : '';
+    const tArtist = track.artist ? track.artist.trim().toLowerCase() : '';
+    const tAudio = track.audioUrl || '';
+
+    // Check activeCurrentTrack
+    if (activeCurrentTrack) {
+      if (tId && (activeCurrentTrack.id === tId || activeCurrentTrack.queueId === tId)) return true;
+      if (tAudio && activeCurrentTrack.audioUrl && activeCurrentTrack.audioUrl === tAudio) return true;
+      if (
+        tTitle &&
+        tArtist &&
+        activeCurrentTrack.title &&
+        activeCurrentTrack.artist &&
+        activeCurrentTrack.title.trim().toLowerCase() === tTitle &&
+        activeCurrentTrack.artist.trim().toLowerCase() === tArtist
+      ) {
+        return true;
+      }
+    }
+
+    // Check activeQueue
+    if (activeQueue && activeQueue.length > 0) {
+      return activeQueue.some((q) => {
+        if (tId && (q.id === tId || q.queueId === tId)) return true;
+        if (tAudio && q.audioUrl && q.audioUrl === tAudio) return true;
+        if (
+          tTitle &&
+          tArtist &&
+          q.title &&
+          q.artist &&
+          q.title.trim().toLowerCase() === tTitle &&
+          q.artist.trim().toLowerCase() === tArtist
+        ) {
+          return true;
+        }
+        return false;
+      });
+    }
+
+    return false;
+  };
 
   // Local audio preview
   const [previewTrackId, setPreviewTrackId] = useState<string | null>(null);
@@ -108,13 +201,6 @@ export const PlaybackHistoryModal: React.FC<PlaybackHistoryModalProps> = ({ isOp
     userTasteEngine.recordInteraction(track, 'queued');
 
     setAddedIds((prev) => new Set(prev).add(track.id));
-    setTimeout(() => {
-      setAddedIds((prev) => {
-        const next = new Set(prev);
-        next.delete(track.id);
-        return next;
-      });
-    }, 2000);
   };
 
   const handleClearAll = () => {
@@ -239,7 +325,7 @@ export const PlaybackHistoryModal: React.FC<PlaybackHistoryModalProps> = ({ isOp
           ) : (
             filteredItems.map((item) => {
               const { track } = item;
-              const isAdded = addedIds.has(track.id);
+              const isAdded = isTrackInPlayer(track);
               const isPreviewing = previewTrackId === track.id;
 
               return (
@@ -325,18 +411,19 @@ export const PlaybackHistoryModal: React.FC<PlaybackHistoryModalProps> = ({ isOp
                     </button>
 
                     <button
+                      type="button"
                       onClick={() => handleQueueAgain(track)}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all active:scale-95 ${
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all active:scale-95 cursor-pointer ${
                         isAdded
-                          ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
+                          ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/50 shadow-[0_0_10px_rgba(16,185,129,0.35)] hover:bg-emerald-500/30'
                           : 'bg-electric-cyan text-black hover:bg-white shadow-md'
                       }`}
-                      title="Add back to room queue"
+                      title={isAdded ? 'Added to player queue' : 'Add back to room queue'}
                     >
                       {isAdded ? (
                         <>
-                          <Check className="w-3.5 h-3.5" />
-                          <span>Queued!</span>
+                          <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+                          <span>Added</span>
                         </>
                       ) : (
                         <>

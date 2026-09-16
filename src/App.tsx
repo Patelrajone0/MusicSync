@@ -821,7 +821,11 @@ export function App() {
         {/* TAB 2: 🔍 Search / Library (Universal Music Catalog & Local MP3s) */}
         {activeTab === 'search' && (
           <div className="flex-1 w-full h-full min-h-0 overflow-y-auto animate-fade-in pr-1">
-            <MusicSearchModal inline={true} />
+            <MusicSearchModal
+              inline={true}
+              queue={queue}
+              currentTrack={currentTrack}
+            />
           </div>
         )}
       </main>
@@ -891,6 +895,8 @@ export function App() {
         <MusicSearchModal
           isOpen={isSearchOpen}
           onClose={() => setIsSearchOpen(false)}
+          queue={queue}
+          currentTrack={currentTrack}
         />
       )}
 
@@ -900,6 +906,8 @@ export function App() {
       <PlaybackHistoryModal
         isOpen={isHistoryOpen}
         onClose={() => setIsHistoryOpen(false)}
+        queue={queue}
+        currentTrack={currentTrack}
       />
 
       {/* 7. Kicked From Room Notice Popup Modal */}
