@@ -501,10 +501,10 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
   const progressPercent = Math.min(100, Math.max(0, (currentPos / trackDuration) * 100));
 
   return (
-    <div className="fixed bottom-[58px] left-0 right-0 md:relative md:bottom-auto md:shrink-0 z-40 bg-dark-950/95 backdrop-blur-2xl border-t border-white/10 px-2.5 py-1.5 sm:px-4 sm:py-2 md:px-8 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))] sm:pb-[calc(0.65rem+env(safe-area-inset-bottom,0px))] select-none w-full max-w-full overflow-visible">
+    <div className="fixed bottom-[58px] left-0 right-0 md:relative md:bottom-auto md:shrink-0 z-40 bg-dark-950/95 backdrop-blur-2xl border-t border-white/10 px-3 sm:px-5 lg:px-6 py-2 sm:py-2.5 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))] sm:pb-[calc(0.65rem+env(safe-area-inset-bottom,0px))] select-none w-full max-w-full overflow-visible">
       {/* Audio Unlock Warning Banner if browser muted */}
       {!isAudioUnlocked && (
-        <div className="max-w-7xl mx-auto mb-2 sm:mb-2.5">
+        <div className="w-full mb-2 sm:mb-2.5">
           <div className="bg-gradient-to-r from-electric-purple/30 to-electric-cyan/30 border border-electric-cyan/40 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl flex items-center justify-between text-xs sm:text-sm gap-2 shadow-lg">
             <div className="flex items-center gap-2 min-w-0">
               <span className="flex h-2 w-2 sm:h-2.5 sm:w-2.5 relative shrink-0">
@@ -535,7 +535,7 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
 
       {/* Master Volume Notice HUD Toast (Floats cleanly above player bar, never clipped) */}
       {masterVolumeNotice && (
-        <div className="absolute -top-11 right-4 sm:right-6 md:right-8 pointer-events-none z-50 animate-spring-pop whitespace-nowrap bg-dark-900/95 backdrop-blur-md border border-amber-500/40 px-3 py-1 rounded-full shadow-2xl flex items-center gap-1.5 text-xs text-amber-300 font-medium">
+        <div className="absolute -top-11 right-3 sm:right-5 lg:right-6 pointer-events-none z-50 animate-spring-pop whitespace-nowrap bg-dark-900/95 backdrop-blur-md border border-amber-500/40 px-3 py-1 rounded-full shadow-2xl flex items-center gap-1.5 text-xs text-amber-300 font-medium">
           <Crown className="w-3.5 h-3.5 text-amber-400 fill-amber-400 shrink-0" />
           <span>
             {masterVolumeNotice.setBy}: {Math.round(masterVolumeNotice.volume * 100)}%
@@ -544,7 +544,7 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
       )}
 
       {/* Main 3-Column Dock Layout */}
-      <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-1.5 md:gap-3 w-full">
+      <div className="flex flex-col md:flex-row items-center justify-between gap-1.5 md:gap-3 w-full">
         
         {/* Mobile Mini Bar: Compact track info & quick volume (Visible on small screens) */}
         <div className="flex md:hidden items-center justify-between w-full mb-0.5">

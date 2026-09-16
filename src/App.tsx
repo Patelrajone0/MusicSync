@@ -645,7 +645,7 @@ export function App() {
       />
 
       {/* Desktop Tab Switcher: Neon Underline Rail (Spotify / Linear Style) */}
-      <div className="hidden md:flex items-center justify-center w-full px-4 pt-1.5 pb-0.5 shrink-0 z-30 select-none">
+      <div className="hidden md:flex items-center justify-center w-full px-3 sm:px-5 lg:px-6 pt-1.5 pb-0.5 shrink-0 z-30 select-none">
         <div className="flex items-center justify-center gap-6 sm:gap-8 py-1 relative">
           {/* Tab 1: Player & Queue */}
           <button
@@ -709,7 +709,7 @@ export function App() {
       </div>
 
       {/* 2. Active Tab Content */}
-      <main className="max-w-7xl mx-auto w-full p-3 sm:p-4 lg:p-5 flex-1 min-h-0 flex flex-col overflow-hidden pb-36 md:pb-4 lg:pb-5">
+      <main className="w-full px-3 sm:px-5 lg:px-6 py-2 sm:py-3 lg:py-4 flex-1 min-h-0 flex flex-col overflow-hidden pb-36 md:pb-4 lg:pb-5">
         {/* TAB 1: 🎵 Unified Player & Up Next Experience */}
         {(activeTab === 'player' || activeTab === 'queue') && (
           <div className="flex-1 w-full h-full min-h-0 animate-fade-in flex flex-col">
