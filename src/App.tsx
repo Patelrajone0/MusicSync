@@ -282,8 +282,8 @@ export function App() {
     };
 
     const handleQueueUpdated = (data: { queue: Track[] }) => {
-      setQueue(data.queue);
-      if (data.queue && data.queue.length > 0 && data.queue[0]) {
+      setQueue(Array.isArray(data?.queue) ? data.queue : []);
+      if (data?.queue && data.queue.length > 0 && data.queue[0]) {
         syncEngine.preloadNextTrack(data.queue[0]);
       }
     };
@@ -606,7 +606,14 @@ export function App() {
   }
 
   const isPlaying = playbackState.status === 'playing';
-  const myRole: UserRole = currentUser?.role || 'listener';
+  const isHost = Boolean(
+    currentUser && (
+      currentUser.role === 'host' ||
+      (hostId && (currentUser.id === hostId || socket.id === hostId)) ||
+      users.some((u) => (u.id === currentUser.id || u.id === socket.id) && u.role === 'host')
+    )
+  );
+  const myRole: UserRole = isHost ? 'host' : (currentUser?.role || 'listener');
 
   const handleOpenSearch = (e?: React.MouseEvent) => {
     if (e) {

@@ -2151,15 +2151,26 @@ io.on('connection', (socket) => {
     io.to(currentRoomCode).emit('queue_updated', { queue: room.queue });
   });
 
-  socket.on('queue_remove', ({ queueId }) => {
+  socket.on('queue_remove', ({ queueId, trackId }) => {
     if (!currentRoomCode) return;
     const room = rooms.get(currentRoomCode);
     if (!room) return;
 
     const user = room.users.get(socket.id);
-    if (!user || (user.role !== 'host' && user.role !== 'dj')) return;
+    const isHostOrDj = Boolean(
+      (user && (user.role === 'host' || user.role === 'dj')) ||
+      room.hostId === socket.id ||
+      (user && room.hostId === user.id)
+    );
+    if (!isHostOrDj) return;
 
-    room.queue = room.queue.filter(q => q.queueId !== queueId);
+    const targetId = queueId || trackId;
+    room.queue = room.queue.filter(q => {
+      if (queueId && q.queueId === queueId) return false;
+      if (trackId && q.id === trackId) return false;
+      if (targetId && (q.queueId === targetId || q.id === targetId)) return false;
+      return true;
+    });
     io.to(currentRoomCode).emit('queue_updated', { queue: room.queue });
   });
 
@@ -2169,7 +2180,12 @@ io.on('connection', (socket) => {
     if (!room) return;
 
     const user = room.users.get(socket.id);
-    if (!user || user.role !== 'host') return;
+    const isHostOrDj = Boolean(
+      (user && (user.role === 'host' || user.role === 'dj')) ||
+      room.hostId === socket.id ||
+      (user && room.hostId === user.id)
+    );
+    if (!isHostOrDj) return;
 
     room.queue = [];
     io.to(currentRoomCode).emit('queue_updated', { queue: [] });

@@ -36,9 +36,9 @@ export const QueueList: React.FC<QueueListProps> = ({
   const { favorites, favoriteCount, isFavorite, toggleFavorite } = useFavorites();
   const canControl = userRole === 'host' || userRole === 'dj';
 
-  const handleRemove = (queueId: string) => {
+  const handleRemove = (track: Track) => {
     if (!canControl) return;
-    socket.emit('queue_remove', { queueId });
+    socket.emit('queue_remove', { queueId: track.queueId, trackId: track.id });
   };
 
   const handleForcePlay = (track: Track) => {
@@ -48,7 +48,7 @@ export const QueueList: React.FC<QueueListProps> = ({
   };
 
   const handleClear = () => {
-    if (userRole !== 'host') return;
+    if (!canControl) return;
     socket.emit('queue_clear');
   };
 
@@ -64,8 +64,8 @@ export const QueueList: React.FC<QueueListProps> = ({
     }, 1800);
   };
 
-  // If queue is empty and user has favorites, ALWAYS display Favorite songs there instead of empty space!
-  const isShowingFavorites = activeView === 'favorites' || (queue.length === 0 && favorites.length > 0);
+  // Only show favorites view when explicitly toggled into favorites view
+  const isShowingFavorites = activeView === 'favorites';
 
   return (
     <div className="w-full h-full bg-[#080c14]/95 backdrop-blur-2xl border border-white/10 hover:border-cyan-400/30 rounded-[24px] sm:rounded-[28px] lg:rounded-[32px] p-3.5 sm:p-4 lg:p-5 flex flex-col shadow-[0_25px_60px_rgba(0,0,0,0.85)] relative overflow-hidden transition-all duration-300 min-h-0">
@@ -105,21 +105,16 @@ export const QueueList: React.FC<QueueListProps> = ({
               <span className="px-2 py-0.5 rounded-full bg-dark-950 text-[11px] sm:text-xs font-mono font-bold text-cyan-400 border border-white/10 shadow-sm">
                 {queue.length}
               </span>
-              {queue.length === 0 && favorites.length > 0 && (
-                <span className="text-[11px] font-semibold text-amber-300 bg-amber-500/15 border border-amber-500/30 px-2.5 py-0.5 rounded-full hidden sm:inline-flex items-center gap-1 shadow-sm">
-                  <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-                  <span>Showing Favorites ({favoriteCount})</span>
-                </span>
-              )}
             </>
           )}
         </div>
 
         <div className="flex items-center gap-1.5 sm:gap-2">
-          {activeView === 'queue' && userRole === 'host' && queue.length > 0 && (
+          {activeView === 'queue' && canControl && queue.length > 0 && (
             <button
               onClick={handleClear}
-              className="text-xs text-slate-400 hover:text-red-400 px-2.5 py-1 rounded-full hover:bg-red-500/10 border border-transparent hover:border-red-500/30 transition-all"
+              className="text-xs text-slate-400 hover:text-red-400 px-2.5 py-1 rounded-full hover:bg-red-500/10 border border-transparent hover:border-red-500/30 transition-all cursor-pointer font-medium active:scale-95"
+              title="Clear all songs from Up Next across all connected devices"
             >
               Clear All
             </button>
@@ -326,13 +321,22 @@ export const QueueList: React.FC<QueueListProps> = ({
             <p className="text-[11px] sm:text-xs text-slate-400 max-w-xs mt-1 mb-3 sm:mb-4">
               Add songs to the playlist to keep the music playing smoothly!
             </p>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap justify-center">
               <button
                 onClick={onOpenSearch}
-                className="px-4 py-2 rounded-full bg-cyan-400 text-black font-semibold text-xs hover:bg-white transition-all shadow-md active:scale-95"
+                className="px-4 py-2 rounded-full bg-cyan-400 text-black font-semibold text-xs hover:bg-white transition-all shadow-md active:scale-95 cursor-pointer"
               >
                 Browse & Add Songs
               </button>
+              {favoriteCount > 0 && (
+                <button
+                  onClick={() => setActiveView('favorites')}
+                  className="px-3.5 py-2 rounded-full bg-dark-900 hover:bg-dark-850 text-amber-300 hover:text-amber-200 border border-amber-500/30 text-xs font-semibold transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer shadow-sm"
+                >
+                  <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                  <span>My Favorites ({favoriteCount})</span>
+                </button>
+              )}
             </div>
           </div>
         ) : (
@@ -443,9 +447,9 @@ export const QueueList: React.FC<QueueListProps> = ({
                           <Play className="w-3.5 h-3.5 fill-current ml-0.5" />
                         </button>
                         <button
-                          onClick={() => track.queueId && handleRemove(track.queueId)}
-                          className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center bg-dark-900/90 text-slate-400 hover:text-rose-400 hover:bg-rose-500/15 border border-white/10 hover:border-rose-500/40 transition-all active:scale-90"
-                          title="Remove from queue"
+                          onClick={() => handleRemove(track)}
+                          className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center bg-dark-900/90 text-slate-400 hover:text-rose-400 hover:bg-rose-500/15 border border-white/10 hover:border-rose-500/40 transition-all active:scale-90 cursor-pointer"
+                          title="Remove from queue across all connected devices"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
