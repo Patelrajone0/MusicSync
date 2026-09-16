@@ -45,6 +45,15 @@ class SyncEngine {
       const savedDelay = localStorage.getItem('musicsync_hardware_delay');
       if (savedDelay !== null) {
         this.hardwareDelayOffset = parseInt(savedDelay, 10) || 0;
+      } else {
+        // Auto-detect iOS (iPhone, iPad, iPod, or iPadOS Safari on MacIntel)
+        const isIOS = typeof navigator !== 'undefined' && (
+          /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+          (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+        );
+        if (isIOS) {
+          this.hardwareDelayOffset = 90; // Default +90ms offset to compensate for iOS WebKit/AVPlayer hardware buffer
+        }
       }
       const savedCrossfade = localStorage.getItem('musicsync_crossfade_duration');
       if (savedCrossfade !== null) {
@@ -143,10 +152,19 @@ class SyncEngine {
     try {
       this.initAudio();
 
+      // Ensure AudioContext is resumed in direct response to user gesture
+      if (this.audioContext && this.audioContext.state === 'suspended') {
+        this.audioContext.resume().catch(() => {});
+      }
+
+      this.isAutoplayBlocked = false;
+      this.notifyAutoplayBlocked(false);
+
       const trackToUse = targetTrack || this.currentTrack;
       const isActivelyPlaying = shouldPlay || this.isPlaying;
 
       if (this.audio) {
+        this.clearScheduledTimers();
         this.audio.volume = this.masterVolume;
 
         // ONLY start audio playback if explicitly requested (shouldPlay) or actively playing
@@ -158,16 +176,50 @@ class SyncEngine {
             this.audio.load();
           }
 
-          const startPos = typeof position === 'number' ? position : this.startPosition;
+          let startPos = typeof position === 'number' ? position : this.startPosition;
+          // Calculate true live position if track was scheduled in the room
+          if (this.scheduledServerTime > 0) {
+            const serverNow = this.getServerTime();
+            const elapsedSec = (serverNow - this.scheduledServerTime + this.hardwareDelayOffset) / 1000;
+            if (elapsedSec > 0) {
+              startPos = Math.max(0, this.startPosition + elapsedSec);
+            }
+          }
+
           this.setTimeSafe(startPos);
           this.isPlaying = true;
           this.isAutoplayBlocked = false;
           this.notifyAutoplayBlocked(false);
-          await this.audio.play();
+
+          const playPromise = this.audio.play();
+          if (playPromise !== undefined) {
+            await playPromise.catch((err) => {
+              if (err?.name === 'NotAllowedError') {
+                this.isAutoplayBlocked = true;
+                this.isPlaying = false;
+                this.notifyAutoplayBlocked(true);
+                throw err;
+              }
+              // AbortError is normal when requests overlap or seek
+            });
+          }
           this.startDriftCorrectionLoop();
         } else {
-          // Prime audio element with brief silent buffer so browser marks element as user-activated WITHOUT playing song
-          if (!this.audio.src || this.audio.src === '' || this.audio.src.startsWith('data:audio/wav')) {
+          // If not actively playing, perform a silent play-and-pause on the element
+          // so Safari / WebKit and Chrome permanently bless this audio element as user-activated!
+          if (this.audio.src && !this.audio.src.startsWith('data:audio/wav')) {
+            const prevVol = this.audio.volume;
+            this.audio.volume = 0;
+            const p = this.audio.play();
+            if (p !== undefined) {
+              await p.then(() => {
+                if (this.audio) {
+                  this.audio.pause();
+                  this.audio.volume = prevVol;
+                }
+              }).catch(() => {});
+            }
+          } else {
             this.audio.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
             const p = this.audio.play();
             if (p !== undefined) {
@@ -216,7 +268,7 @@ class SyncEngine {
             this.notifyAutoplayBlocked(false);
           })
           .catch((err) => {
-            if (err?.name === 'NotAllowedError' || err?.name === 'AbortError') {
+            if (err?.name === 'NotAllowedError') {
               console.warn('[AudioEngine] Prime playback blocked by browser policy:', err.message);
               this.isAutoplayBlocked = true;
               this.isPlaying = false;
@@ -488,12 +540,15 @@ class SyncEngine {
           }
         })
         .catch((err: any) => {
-          if (err?.name === 'NotAllowedError' || err?.name === 'AbortError') {
+          if (err?.name === 'NotAllowedError') {
             console.warn('[AudioEngine] Autoplay blocked by browser policy:', err.message);
             this.isAutoplayBlocked = true;
             this.isPlaying = false;
             this.notifyAutoplayBlocked(true);
             this.notifyPlaybackError('Audio blocked by browser. Tap to enable speaker audio.');
+          } else if (err?.name === 'AbortError') {
+            // Normal when play requests overlap, seek occurs, or track changes
+            console.log('[AudioEngine] Play request superseded/aborted (normal).');
           } else {
             console.warn('[AudioEngine] Playback promise warning:', err);
             this.notifyPlaybackError(err?.message || 'Playback stream error');

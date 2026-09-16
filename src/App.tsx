@@ -377,9 +377,16 @@ export function App() {
   }, [roomCode, currentUser]);
 
   const handleUnlockAudio = async () => {
-    const shouldPlay = playbackState.status === 'playing';
-    const success = await syncEngine.unlockAudio(currentTrack, playbackState.scheduledPosition, shouldPlay);
-    setIsAudioUnlocked(success);
+    try {
+      // Optimistically update UI so the banner dismisses with 0ms lag
+      setIsAudioUnlocked(true);
+      const shouldPlay = playbackState.status === 'playing';
+      // Pass undefined for position so syncEngine computes authoritative live room position from clock
+      const success = await syncEngine.unlockAudio(currentTrack, undefined, shouldPlay);
+      setIsAudioUnlocked(success);
+    } catch (e) {
+      console.warn('[App] Audio unlock error:', e);
+    }
   };
 
   const handleRoomReady = (room: RoomState, user: User) => {
@@ -636,6 +643,9 @@ export function App() {
   return (
     <div
       onClick={() => {
+        if (!isAudioUnlocked) handleUnlockAudio();
+      }}
+      onTouchStart={() => {
         if (!isAudioUnlocked) handleUnlockAudio();
       }}
       className="h-screen h-[100dvh] max-h-screen overflow-hidden bg-dark-950 text-slate-100 flex flex-col relative w-full max-w-full overflow-x-clip"

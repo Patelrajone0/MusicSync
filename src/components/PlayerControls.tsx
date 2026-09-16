@@ -84,6 +84,22 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
   // Dynamic feedback HUD
   const [statusToast, setStatusToast] = useState<string | null>(null);
   const [animatingBtn, setAnimatingBtn] = useState<string | null>(null);
+  const [isActivatingAudio, setIsActivatingAudio] = useState<boolean>(false);
+
+  const handleBannerActivate = async (e?: React.MouseEvent | React.TouchEvent) => {
+    if (e) {
+      e.stopPropagation();
+    }
+    if (isActivatingAudio) return;
+    setIsActivatingAudio(true);
+    try {
+      await onUnlockAudio();
+    } catch (err) {
+      console.warn('[PlayerControls] Unlock error:', err);
+    } finally {
+      setTimeout(() => setIsActivatingAudio(false), 600);
+    }
+  };
 
   // History tracking for seamless rewind / previous
   const prevTrackIdRef = useRef<string | null>(null);
@@ -505,21 +521,39 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
       {/* Audio Unlock Warning Banner if browser muted */}
       {!isAudioUnlocked && (
         <div className="w-full mb-2 sm:mb-2.5">
-          <div className="bg-gradient-to-r from-electric-purple/30 to-electric-cyan/30 border border-electric-cyan/40 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl flex items-center justify-between text-xs sm:text-sm gap-2 shadow-lg">
-            <div className="flex items-center gap-2 min-w-0">
+          <div
+            onClick={handleBannerActivate}
+            role="button"
+            tabIndex={0}
+            className="cursor-pointer bg-gradient-to-r from-electric-purple/30 to-electric-cyan/30 hover:from-electric-purple/45 hover:to-electric-cyan/45 border border-electric-cyan/40 hover:border-electric-cyan/60 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl flex items-center justify-between text-xs sm:text-sm gap-2 shadow-lg active:scale-[0.99] transition-all select-none group"
+            title="Tap to synchronize speaker audio with room"
+          >
+            <div className="flex items-center gap-2 min-w-0 pointer-events-none">
               <span className="flex h-2 w-2 sm:h-2.5 sm:w-2.5 relative shrink-0">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-electric-cyan opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 sm:h-2.5 sm:w-2.5 bg-electric-cyan"></span>
               </span>
               <span className="text-white font-medium truncate text-[11px] sm:text-xs">
-                Tap to sync speaker audio
+                {isActivatingAudio ? 'Synchronizing speaker audio...' : 'Tap to sync speaker audio'}
               </span>
             </div>
             <button
-              onClick={onUnlockAudio}
-              className="bg-electric-cyan text-black px-2.5 py-1 sm:px-3.5 sm:py-1 rounded-lg font-semibold text-[11px] sm:text-xs hover:bg-white transition-all shadow-md active:scale-95 shrink-0"
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleBannerActivate(e);
+              }}
+              disabled={isActivatingAudio}
+              className="bg-electric-cyan text-black px-2.5 py-1 sm:px-3.5 sm:py-1 rounded-lg font-semibold text-[11px] sm:text-xs group-hover:bg-white hover:bg-white transition-all shadow-md active:scale-95 shrink-0 flex items-center gap-1.5 cursor-pointer"
             >
-              Activate
+              {isActivatingAudio ? (
+                <>
+                  <span className="w-3 h-3 border-2 border-black border-t-transparent rounded-full animate-spin"></span>
+                  <span>Syncing...</span>
+                </>
+              ) : (
+                'Activate'
+              )}
             </button>
           </div>
         </div>
