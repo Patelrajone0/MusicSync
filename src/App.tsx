@@ -638,7 +638,7 @@ export function App() {
       onClick={() => {
         if (!isAudioUnlocked) handleUnlockAudio();
       }}
-      className="min-h-screen lg:h-screen lg:max-h-screen lg:overflow-hidden bg-dark-950 text-slate-100 flex flex-col relative w-full max-w-full overflow-x-clip"
+      className="h-screen h-[100dvh] max-h-screen overflow-hidden bg-dark-950 text-slate-100 flex flex-col relative w-full max-w-full overflow-x-clip"
     >
       {/* 1. Sticky Room Navigation Header */}
       <RoomHeader
@@ -716,14 +716,14 @@ export function App() {
       </div>
 
       {/* 2. Active Tab Content */}
-      <main className="w-full px-3 sm:px-5 lg:px-6 py-2 sm:py-3 lg:py-4 flex-1 min-h-0 flex flex-col overflow-hidden pb-36 md:pb-4 lg:pb-5">
+      <main className="w-full px-3 sm:px-5 lg:px-6 py-2 sm:py-3 lg:py-4 flex-1 min-h-0 flex flex-col overflow-y-auto lg:overflow-hidden pb-44 md:pb-4 lg:pb-5 scroll-smooth">
         {/* TAB 1: 🎵 Unified Player & Up Next Experience */}
         {(activeTab === 'player' || activeTab === 'queue') && (
-          <div className="flex-1 w-full h-full min-h-0 animate-fade-in flex flex-col">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-4 lg:gap-5 items-stretch h-full min-h-0">
+          <div className="flex-1 w-full h-auto lg:h-full min-h-0 animate-fade-in flex flex-col">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-4 lg:gap-5 items-stretch h-auto lg:h-full min-h-0">
               {/* Left Column: Player Card (Perfect matching border alignment with Up Next) */}
-              <div className="lg:col-span-5 w-full h-full min-h-0 flex flex-col">
-                <div className="w-full h-full bg-[#080c14]/95 backdrop-blur-2xl border border-white/10 hover:border-cyan-400/30 rounded-[24px] sm:rounded-[28px] lg:rounded-[32px] p-3.5 sm:p-4 lg:p-5 flex flex-col justify-between items-center text-center shadow-[0_25px_60px_rgba(0,0,0,0.85)] relative overflow-hidden transition-all duration-300 min-h-0">
+              <div className="lg:col-span-5 w-full h-auto lg:h-full min-h-0 flex flex-col">
+                <div className="w-full h-auto lg:h-full bg-[#080c14]/95 backdrop-blur-2xl border border-white/10 hover:border-cyan-400/30 rounded-[24px] sm:rounded-[28px] lg:rounded-[32px] p-3.5 sm:p-4 lg:p-5 flex flex-col justify-between items-center text-center shadow-[0_25px_60px_rgba(0,0,0,0.85)] relative overflow-hidden transition-all duration-300 min-h-0">
                   {/* Ambient Top Radial Lighting */}
                   <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-80 h-80 bg-gradient-to-b from-cyan-500/15 via-sky-500/5 to-transparent rounded-full blur-3xl pointer-events-none" />
 
@@ -750,7 +750,7 @@ export function App() {
                   </div>
 
                   {/* The Visualizer Box */}
-                  <div className="w-full flex-1 min-h-[100px] max-h-[190px] rounded-xl sm:rounded-2xl lg:rounded-3xl overflow-hidden bg-black border border-white/10 shadow-inner relative my-0.5">
+                  <div className="w-full h-[140px] sm:h-[160px] lg:h-auto lg:flex-1 min-h-[100px] max-h-[190px] rounded-xl sm:rounded-2xl lg:rounded-3xl overflow-hidden bg-black border border-white/10 shadow-inner relative my-0.5">
                     <AudioVisualizer isPlaying={isPlaying} height={160} className="w-full h-full" />
                   </div>
 
@@ -805,7 +805,7 @@ export function App() {
               </div>
 
               {/* Right Column: Up Next (Collaborative Queue & Favorites) */}
-              <div id="upnext-queue-section" className="lg:col-span-7 w-full h-full min-h-0 flex flex-col">
+              <div id="upnext-queue-section" className="lg:col-span-7 w-full h-auto lg:h-full min-h-0 flex flex-col">
                 <QueueList
                   queue={queue}
                   currentTrack={currentTrack}

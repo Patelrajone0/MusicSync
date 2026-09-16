@@ -8,6 +8,7 @@ import {
   Star,
   Check,
   ArrowLeft,
+  ArrowUp,
   Sparkles
 } from 'lucide-react';
 import { Track, UserRole } from '../types';
@@ -68,7 +69,7 @@ export const QueueList: React.FC<QueueListProps> = ({
   const isShowingFavorites = activeView === 'favorites';
 
   return (
-    <div className="w-full h-full bg-[#080c14]/95 backdrop-blur-2xl border border-white/10 hover:border-cyan-400/30 rounded-[24px] sm:rounded-[28px] lg:rounded-[32px] p-3.5 sm:p-4 lg:p-5 flex flex-col shadow-[0_25px_60px_rgba(0,0,0,0.85)] relative overflow-hidden transition-all duration-300 min-h-0">
+    <div className="w-full h-auto lg:h-full bg-[#080c14]/95 backdrop-blur-2xl border border-white/10 hover:border-cyan-400/30 rounded-[24px] sm:rounded-[28px] lg:rounded-[32px] p-3.5 sm:p-4 lg:p-5 flex flex-col shadow-[0_25px_60px_rgba(0,0,0,0.85)] relative overflow-hidden transition-all duration-300 min-h-0">
       {/* Ambient Top Radial Lighting */}
       <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-80 h-80 bg-gradient-to-b from-cyan-500/10 via-sky-500/5 to-transparent rounded-full blur-3xl pointer-events-none" />
 
@@ -110,6 +111,24 @@ export const QueueList: React.FC<QueueListProps> = ({
         </div>
 
         <div className="flex items-center gap-1.5 sm:gap-2">
+          {/* Mobile Quick Jump back to Player */}
+          <button
+            type="button"
+            onClick={() => {
+              const mainEl = document.querySelector('main');
+              if (mainEl) {
+                mainEl.scrollTo({ top: 0, behavior: 'smooth' });
+              } else {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }
+            }}
+            className="lg:hidden flex items-center gap-1 text-[11px] font-semibold text-slate-300 hover:text-cyan-400 bg-white/5 hover:bg-white/10 border border-white/10 px-2.5 py-1 rounded-full transition-all active:scale-95 cursor-pointer"
+            title="Scroll up to Now Playing"
+          >
+            <ArrowUp className="w-3 h-3 text-cyan-400" />
+            <span>Player</span>
+          </button>
+
           {activeView === 'queue' && canControl && queue.length > 0 && (
             <button
               onClick={handleClear}
@@ -215,7 +234,7 @@ export const QueueList: React.FC<QueueListProps> = ({
               </div>
             )}
 
-            <div className="space-y-1.5 sm:space-y-2 overflow-y-auto flex-1 min-h-0 pr-1 relative z-10">
+            <div className="space-y-1.5 sm:space-y-2 overflow-visible lg:overflow-y-auto lg:flex-1 min-h-0 pr-1 relative z-10">
               {favorites.map((track, idx) => {
                 const isAdded = addedTrackIds.has(track.id);
                 return (
@@ -340,7 +359,7 @@ export const QueueList: React.FC<QueueListProps> = ({
             </div>
           </div>
         ) : (
-          <div className="space-y-1.5 sm:space-y-2 overflow-y-auto flex-1 min-h-0 pr-1 relative z-10">
+          <div className="space-y-1.5 sm:space-y-2 overflow-visible lg:overflow-y-auto lg:flex-1 min-h-0 pr-1 relative z-10">
             {queue.map((track, idx) => {
               const isCurrent = Boolean(
                 currentTrack &&
