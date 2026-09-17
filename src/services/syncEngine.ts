@@ -2,6 +2,12 @@ import { socket } from './socket';
 import { SyncStats, Track } from '../types';
 import { mediaSessionService } from './mediaSession';
 
+// Detect iOS devices (iPhone, iPad, iPod, or iPadOS on MacIntel)
+export const isIOSDevice = typeof navigator !== 'undefined' && (
+  /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+);
+
 class SyncEngine {
   private audio: HTMLAudioElement | null = null;
   private preloadAudio: HTMLAudioElement | null = null;
@@ -30,6 +36,7 @@ class SyncEngine {
   private lastDriftMs: number = 0;
   private lastSeekTime: number = 0;
   private isAutoplayBlocked: boolean = false;
+  private hasUserUnlocked: boolean = false;
   private networkMode: 'local' | 'online' = 'local';
 
   // Callbacks
@@ -46,13 +53,8 @@ class SyncEngine {
       if (savedDelay !== null) {
         this.hardwareDelayOffset = parseInt(savedDelay, 10) || 0;
       } else {
-        // Auto-detect iOS (iPhone, iPad, iPod, or iPadOS Safari on MacIntel)
-        const isIOS = typeof navigator !== 'undefined' && (
-          /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-          (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
-        );
-        if (isIOS) {
-          this.hardwareDelayOffset = 90; // Default +90ms offset to compensate for iOS WebKit/AVPlayer hardware buffer
+        if (isIOSDevice) {
+          this.hardwareDelayOffset = 25; // Balanced +25ms offset for iOS WebKit/AVPlayer DAC latency
         }
       }
       const savedCrossfade = localStorage.getItem('musicsync_crossfade_duration');
@@ -75,8 +77,14 @@ class SyncEngine {
     if (!this.audio) {
       const audio = new Audio();
       audio.preload = 'auto';
-      audio.crossOrigin = 'anonymous';
+      // Only set crossOrigin on non-iOS browsers.
+      // On iOS Safari, crossOrigin='anonymous' causes media elements to drop streams on redirects or CORS quirks
+      if (!isIOSDevice) {
+        audio.crossOrigin = 'anonymous';
+      }
       audio.preservesPitch = true;
+      audio.setAttribute('playsinline', 'true');
+      audio.setAttribute('webkit-playsinline', 'true');
       audio.volume = this.masterVolume;
 
       audio.addEventListener('error', () => {
@@ -151,6 +159,7 @@ class SyncEngine {
   public async unlockAudio(targetTrack?: Track | null, position?: number, shouldPlay: boolean = false): Promise<boolean> {
     try {
       this.initAudio();
+      this.hasUserUnlocked = true;
 
       // Ensure AudioContext is resumed in direct response to user gesture
       if (this.audioContext && this.audioContext.state === 'suspended') {
@@ -206,10 +215,10 @@ class SyncEngine {
           this.startDriftCorrectionLoop();
         } else {
           // If not actively playing, perform a silent play-and-pause on the element
-          // so Safari / WebKit and Chrome permanently bless this audio element as user-activated!
-          if (this.audio.src && !this.audio.src.startsWith('data:audio/wav')) {
+          // so Safari / WebKit permanently blesses this audio element as user-activated!
+          try {
             const prevVol = this.audio.volume;
-            this.audio.volume = 0;
+            this.audio.volume = 0.001;
             const p = this.audio.play();
             if (p !== undefined) {
               await p.then(() => {
@@ -219,13 +228,7 @@ class SyncEngine {
                 }
               }).catch(() => {});
             }
-          } else {
-            this.audio.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
-            const p = this.audio.play();
-            if (p !== undefined) {
-              await p.catch(() => {});
-            }
-          }
+          } catch (e) {}
         }
       }
 
@@ -245,6 +248,7 @@ class SyncEngine {
     this.initAudio();
     if (!this.audio) return false;
 
+    this.hasUserUnlocked = true;
     this.isAutoplayBlocked = false;
     this.notifyAutoplayBlocked(false);
 
@@ -279,13 +283,12 @@ class SyncEngine {
       socket.emit('set_audio_ready', { isReady: true });
       return true;
     } else {
-      if (!this.audio.src || this.audio.src === '') {
-        this.audio.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
-      }
-      const p = this.audio.play();
-      if (p !== undefined) {
-        p.catch(() => {});
-      }
+      try {
+        const p = this.audio.play();
+        if (p !== undefined) {
+          p.catch(() => {});
+        }
+      } catch (e) {}
       socket.emit('set_audio_ready', { isReady: true });
       return true;
     }
@@ -317,6 +320,12 @@ class SyncEngine {
   // 3. Preload Upcoming Song in background for Instant Playback
   public preloadNextTrack(track: Track | null) {
     if (!track || !track.audioUrl) return;
+    // CRITICAL FOR IOS:
+    // iOS AVPlayer only supports ONE active hardware audio decoding pipeline.
+    // Calling .load() on a secondary audio element while music is playing pauses or stutters the primary track!
+    if (isIOSDevice && this.isPlaying) {
+      return;
+    }
     this.initAudio();
     if (this.preloadAudio && this.preloadAudio.src !== track.audioUrl) {
       this.preloadAudio.src = track.audioUrl;
@@ -507,7 +516,7 @@ class SyncEngine {
   private executePlay(startSec: number) {
     if (!this.audio) return;
 
-    if (Math.abs(this.audio.currentTime - startSec) > 0.04) {
+    if (Math.abs(this.audio.currentTime - startSec) > 0.06) {
       this.setTimeSafe(startSec);
     }
 
@@ -521,23 +530,9 @@ class SyncEngine {
             this.isAutoplayBlocked = false;
             this.notifyAutoplayBlocked(false);
           }
-
-          // Crucial for iOS / Safari: Once playback actually starts after buffering,
-          // instantly snap to the room's authoritative timeline if buffering created a startup lag
-          if (this.isPlaying && this.scheduledServerTime > 0 && this.audio) {
-            const serverNow = this.getServerTime();
-            const elapsedSec = (serverNow - this.scheduledServerTime + this.hardwareDelayOffset) / 1000;
-            const expectedPos = Math.max(0, this.startPosition + elapsedSec);
-            const actualPos = this.audio.currentTime;
-            const startupLag = actualPos - expectedPos;
-
-            if (startupLag < -0.06 && !this.audio.seeking) {
-              this.lastSeekTime = Date.now();
-              try {
-                this.audio.currentTime = expectedPos;
-              } catch (e) {}
-            }
-          }
+          // Do NOT immediately seek right after playPromise resolves on iOS!
+          // Seeking right at startup interrupts the hardware decoder and causes playback stutter.
+          // The smooth drift correction loop will naturally and gently bring it into millisecond lock.
         })
         .catch((err: any) => {
           if (err?.name === 'NotAllowedError') {
@@ -582,9 +577,11 @@ class SyncEngine {
     }
   }
 
-  // 6. Continuous Drift Correction Loop (Runs every 250ms for near-zero latency multi-device lock)
+  // 6. Continuous Drift Correction Loop (Runs every 250ms on desktop, 400ms on iOS for smooth playback)
   private startDriftCorrectionLoop() {
     if (this.driftCheckIntervalId) clearInterval(this.driftCheckIntervalId);
+
+    const intervalMs = isIOSDevice ? 400 : (this.networkMode === 'local' ? 120 : 250);
 
     this.driftCheckIntervalId = setInterval(() => {
       if (!this.isPlaying || !this.audio || this.audio.paused) return;
@@ -598,31 +595,62 @@ class SyncEngine {
       const driftMs = (actualPos - expectedPos) * 1000;
       this.lastDriftMs = Math.round(driftMs);
 
-      // Micro-Rate Adjustment to keep all devices tightly locked within milliseconds
-      if (Math.abs(driftMs) < 15) {
-        if (this.audio.playbackRate !== 1.0) {
-          this.audio.playbackRate = 1.0;
+      if (isIOSDevice) {
+        // iOS Safari / AVPlayer Optimized Smoothing:
+        // AVPlayer on iOS is sensitive to rapid playbackRate changes and seek storms.
+        const absDrift = Math.abs(driftMs);
+        if (absDrift < 35) {
+          // Tight lock zone: 1.0x normal speed (no pitch/sample artifacts)
+          if (this.audio.playbackRate !== 1.0) {
+            this.audio.playbackRate = 1.0;
+          }
+        } else if (driftMs >= 35 && driftMs < 120) {
+          // Slightly ahead: gently slow down by 2%
+          this.audio.playbackRate = 0.98;
+        } else if (driftMs <= -35 && driftMs > -120) {
+          // Slightly behind: gently speed up by 2%
+          this.audio.playbackRate = 1.02;
+        } else if (driftMs >= 120 && driftMs < 450) {
+          // Moderately ahead: slow down by 5%
+          this.audio.playbackRate = 0.95;
+        } else if (driftMs <= -120 && driftMs > -450) {
+          // Moderately behind: speed up by 5%
+          this.audio.playbackRate = 1.05;
+        } else if (absDrift >= 450) {
+          // Major drift (>450ms): Hard seek throttled to 3s to prevent seek storms
+          const now = Date.now();
+          if (!this.audio.seeking && now - this.lastSeekTime > 3000) {
+            this.lastSeekTime = now;
+            this.setTimeSafe(expectedPos);
+            this.audio.playbackRate = 1.0;
+          }
         }
-      } else if (driftMs >= 15 && driftMs < 60) {
-        this.audio.playbackRate = 0.97;
-      } else if (driftMs <= -15 && driftMs > -60) {
-        this.audio.playbackRate = 1.03;
-      } else if (driftMs >= 60 && driftMs < 220) {
-        this.audio.playbackRate = 0.92;
-      } else if (driftMs <= -60 && driftMs > -220) {
-        this.audio.playbackRate = 1.08;
-      } else if (Math.abs(driftMs) >= 220) {
-        // Hard sync for larger drift, throttled to prevent seek storms on iOS WebKit
-        const now = Date.now();
-        if (!this.audio.seeking && now - this.lastSeekTime > 800) {
-          this.lastSeekTime = now;
-          this.setTimeSafe(expectedPos);
-          this.audio.playbackRate = 1.0;
+      } else {
+        // Desktop / Android Standard Drift Correction
+        if (Math.abs(driftMs) < 15) {
+          if (this.audio.playbackRate !== 1.0) {
+            this.audio.playbackRate = 1.0;
+          }
+        } else if (driftMs >= 15 && driftMs < 60) {
+          this.audio.playbackRate = 0.97;
+        } else if (driftMs <= -15 && driftMs > -60) {
+          this.audio.playbackRate = 1.03;
+        } else if (driftMs >= 60 && driftMs < 220) {
+          this.audio.playbackRate = 0.92;
+        } else if (driftMs <= -60 && driftMs > -220) {
+          this.audio.playbackRate = 1.08;
+        } else if (Math.abs(driftMs) >= 220) {
+          const now = Date.now();
+          if (!this.audio.seeking && now - this.lastSeekTime > 800) {
+            this.lastSeekTime = now;
+            this.setTimeSafe(expectedPos);
+            this.audio.playbackRate = 1.0;
+          }
         }
       }
 
       this.notifyStats();
-    }, this.networkMode === 'local' ? 120 : 250);
+    }, intervalMs);
   }
 
   private clearScheduledTimers() {
@@ -638,6 +666,13 @@ class SyncEngine {
 
   public setupAudioNodes() {
     if (typeof window === 'undefined' || !this.audio) return;
+    // CRITICAL FOR IOS SAFARI:
+    // Do NOT connect HTMLAudioElement to Web Audio API createMediaElementSource on iOS!
+    // WebKit frequently silences playback, blocks cross-origin streams, or mutes when AudioContext suspends.
+    // AudioVisualizer uses a synthetic beat visualizer when getAnalyser is null, keeping audio 100% audible and loud.
+    if (isIOSDevice) {
+      return;
+    }
     try {
       if (!this.audioContext) {
         const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
@@ -665,6 +700,9 @@ class SyncEngine {
   }
 
   public getAnalyser(): AnalyserNode | null {
+    if (isIOSDevice) {
+      return null;
+    }
     if (!this.analyserNode) {
       this.setupAudioNodes();
     }
@@ -787,6 +825,9 @@ class SyncEngine {
   }
 
   public isUnlocked(): boolean {
+    if (isIOSDevice && !this.hasUserUnlocked && !this.isPlaying) {
+      return false;
+    }
     return !this.isAutoplayBlocked;
   }
 
