@@ -2,18 +2,25 @@
 <html lang="en" class="dark" style="margin: 0; padding: 0; background-color: #06060a; width: 100%; height: 100%; overflow-x: hidden;">
   <head>
     <meta charset="UTF-8" />
-    <!-- Monetag Push Ad Tag -->
-    <script src="https://5gvci.com/act/files/tag.min.js?z=11821878" data-cfasync="false" async></script>
-    <!-- Monetag In-Page Push Ad Tag (Delayed by 25 seconds for clean user onboarding) -->
+    <!-- Monetag Ad Tags - Dynamically Scheduled (30s on Login / Lobby, 5m on Main / Room) -->
     <script>
-      window.addEventListener('load', function() {
-        setTimeout(function() {
-          var s = document.createElement('script');
-          s.dataset.zone = '11822158';
-          s.src = 'https://nap5k.com/tag.min.js';
-          document.body.appendChild(s);
-        }, 25000);
-      });
+      window.__MS_TRIGGER_MONETAG__ = function() {
+        // 1. In-Page Push (Zone 11822158)
+        if (!document.querySelector('script[data-zone="11822158"]')) {
+          var s1 = document.createElement('script');
+          s1.dataset.zone = '11822158';
+          s1.src = 'https://nap5k.com/tag.min.js';
+          document.body.appendChild(s1);
+        }
+        // 2. Web Push Notification Tag (Zone 11821878)
+        if (!document.querySelector('script[src*="5gvci.com"]')) {
+          var s2 = document.createElement('script');
+          s2.src = 'https://5gvci.com/act/files/tag.min.js?z=11821878';
+          s2.setAttribute('data-cfasync', 'false');
+          s2.async = true;
+          document.body.appendChild(s2);
+        }
+      };
     </script>
     <link rel="icon" type="image/png" sizes="512x512" href="/musicsync-icon.png" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
