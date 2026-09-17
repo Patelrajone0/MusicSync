@@ -1532,6 +1532,27 @@ app.get('/ads.txt', (req, res) => {
   res.type('text/plain').send('google.com, pub-7606917595989618, DIRECT, f08c47fec0942fa0\n');
 });
 
+// Monetag Service Worker verification route
+app.get(['/sw.js', '/service-worker.js'], (req, res) => {
+  const distSwPath = path.join(__dirname, '../dist/sw.js');
+  const publicSwPath = path.join(__dirname, '../public/sw.js');
+  res.setHeader('Service-Worker-Allowed', '/');
+  res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+  if (fs.existsSync(distSwPath)) {
+    return res.sendFile(distSwPath);
+  }
+  if (fs.existsSync(publicSwPath)) {
+    return res.sendFile(publicSwPath);
+  }
+  res.send(`self.options = {
+    "domain": "5gvci.com",
+    "zoneId": 11821781
+};
+self.lary = "";
+importScripts('https://5gvci.com/act/files/service-worker.min.js?r=sw');
+`);
+});
+
 // Serve frontend in production
 const distPath = path.join(__dirname, '../dist');
 app.use(express.static(distPath));
