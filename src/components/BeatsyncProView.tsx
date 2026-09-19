@@ -39,6 +39,13 @@ import { cleanTrackTitle, searchTracks } from '../services/musicApi';
 import { useFavorites } from '../services/favoritesService';
 import { localMusicService } from '../services/localMusicService';
 import { NetworkModeModal } from './NetworkModeModal';
+import {
+  HeaderBrandLogo,
+  LogoPickerModal,
+  LogoStyleId,
+  getSavedLogoStyle,
+  saveLogoStyle
+} from './HeaderBrandLogo';
 
 interface BeatsyncProViewProps {
   roomCode: string;
@@ -121,6 +128,15 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
 
   // Favorites
   const { isFavorite, toggleFavorite } = useFavorites();
+  // Brand Logo Style & Interactive Demo Picker
+  const [logoStyle, setLogoStyle] = useState<LogoStyleId>(() => getSavedLogoStyle());
+  const [isLogoPickerOpen, setIsLogoPickerOpen] = useState(false);
+
+  const handleSelectLogoStyle = (style: LogoStyleId) => {
+    setLogoStyle(style);
+    saveLogoStyle(style);
+  };
+
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // Direct Live Search state (matching screenshots 1-4)
@@ -329,11 +345,10 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
       <header className="shrink-0 h-9 bg-[#060608] border-b border-white/[0.08] px-3 sm:px-4 flex items-center justify-between text-[11px] font-mono text-slate-400 select-none z-30">
         {/* Left: Brand + Buffer + Room Code + User count */}
         <div className="flex items-center gap-2 sm:gap-3 overflow-hidden">
-          <div className="flex items-center gap-1.5 font-bold text-white tracking-tight">
-            <span className="text-[#10b981] font-black text-sm">👑</span>
-            <span className="font-sans font-black text-xs tracking-wider text-white">MUSICSYNC</span>
-            <span className="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-500/30 uppercase font-mono">PRO</span>
-          </div>
+          <HeaderBrandLogo
+            activeStyle={logoStyle}
+            onOpenPicker={() => setIsLogoPickerOpen(true)}
+          />
 
           <span className="text-white/20 hidden sm:inline">•</span>
 
@@ -371,8 +386,18 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
           </div>
         </div>
 
-        {/* Right: Room Controls */}
+        {/* Right: Room Controls & Logo Switcher */}
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setIsLogoPickerOpen(true)}
+            className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-[#10b981]/15 hover:bg-[#10b981]/25 border border-[#10b981]/40 text-[#10b981] transition-all cursor-pointer text-xs font-medium shadow-[0_0_8px_rgba(16,185,129,0.2)] active:scale-95"
+            title="Preview & choose between 5 MusicSync Pro logo styles"
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline text-[11px] font-semibold">Switch Logo</span>
+          </button>
+
           <button
             type="button"
             onClick={onLeaveRoom}
@@ -1209,6 +1234,14 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
           currentMode="local"
         />
       )}
+
+      {/* Interactive Brand Logo Style Picker Modal */}
+      <LogoPickerModal
+        isOpen={isLogoPickerOpen}
+        onClose={() => setIsLogoPickerOpen(false)}
+        activeStyle={logoStyle}
+        onSelectStyle={handleSelectLogoStyle}
+      />
     </div>
   );
 };
