@@ -1705,6 +1705,7 @@ io.on('connection', (socket) => {
       ],
       masterVolume: 0.9,
       repeatMode: 'off',
+      playbackPermission: 'admins',
       networkMode: data?.networkMode === 'online' ? 'online' : 'local',
       autoAdvanceTimer: null
     };
@@ -2387,12 +2388,38 @@ io.on('connection', (socket) => {
   socket.on('toggle_repeat', handleSetRepeatMode);
 
   // 6c. Room Playback Permission Synchronization (Everyone vs Admins)
-  socket.on('set_playback_permission', ({ permission }) => {
+  const handleSetPlaybackPermission = ({ permission }) => {
     if (!currentRoomCode) return;
     const room = rooms.get(currentRoomCode);
     if (!room) return;
+
+    const user = room.users.get(socket.id);
+    const isHostOrDj = Boolean(
+      room.playbackPermission === 'everyone' ||
+      (user && (user.role === 'host' || user.role === 'dj')) ||
+      room.hostId === socket.id ||
+      (user && room.hostId === user.id) ||
+      room.users.size <= 1
+    );
+    if (!isHostOrDj) {
+      return socket.emit('error_message', 'Only Room Host or DJ can modify playback permissions.');
+    }
+
     room.playbackPermission = permission === 'everyone' ? 'everyone' : 'admins';
     io.to(currentRoomCode).emit('playback_permission_updated', { permission: room.playbackPermission });
+  };
+
+  socket.on('set_playback_permission', handleSetPlaybackPermission);
+  socket.on('get_playback_permission', (callback) => {
+    if (!currentRoomCode) return;
+    const room = rooms.get(currentRoomCode);
+    if (!room) return;
+    const perm = room.playbackPermission || 'admins';
+    if (typeof callback === 'function') {
+      callback({ success: true, permission: perm });
+    } else {
+      socket.emit('playback_permission_updated', { permission: perm });
+    }
   });
 
   // 7. Make Host & Transfer Host Privileges (Host Only)
@@ -2539,6 +2566,42 @@ io.on('connection', (socket) => {
     }
   });
 
+  // 8.6. Real-Time Room Chat (Multi-Device Broadcast & History)
+  socket.on('send_chat', ({ text }) => {
+    if (!currentRoomCode || !text || typeof text !== 'string' || !text.trim()) return;
+    const room = rooms.get(currentRoomCode);
+    if (!room) return;
+
+    const user = room.users.get(socket.id);
+    const msg = {
+      id: `chat-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      user: user ? user.name : 'Guest',
+      userId: socket.id,
+      role: user ? user.role : 'listener',
+      text: text.trim(),
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      timestamp: Date.now()
+    };
+
+    if (!room.chatMessages) room.chatMessages = [];
+    room.chatMessages.push(msg);
+    if (room.chatMessages.length > 100) room.chatMessages.shift();
+
+    io.to(currentRoomCode).emit('new_chat_message', msg);
+  });
+
+  socket.on('get_chat_history', (callback) => {
+    if (!currentRoomCode) return;
+    const room = rooms.get(currentRoomCode);
+    if (!room) return;
+    const messages = room.chatMessages || [];
+    if (typeof callback === 'function') {
+      callback({ success: true, messages });
+    } else {
+      socket.emit('chat_history', { messages });
+    }
+  });
+
   // 8. Explicit Leave Room Handling
   socket.on('leave_room', ({ deviceId } = {}) => {
     if (!currentRoomCode) return;
@@ -2645,6 +2708,7 @@ function serializeRoom(room) {
     chatMessages: room.chatMessages,
     masterVolume: typeof room.masterVolume === 'number' ? room.masterVolume : 0.9,
     repeatMode: room.repeatMode || 'off',
+    playbackPermission: room.playbackPermission || 'admins',
     networkMode: room.networkMode || 'local'
   };
 }

@@ -947,7 +947,10 @@ class SyncEngine {
       if (!this.audioContext) {
         this.audioContext = new AudioContextClass();
       }
-      if (this.audioContext.createStereoPanner && !this.mediaSourceNode && !isIOSDevice) {
+      if (this.audioContext.state === 'suspended') {
+        this.audioContext.resume().catch(() => {});
+      }
+      if (this.audioContext.createStereoPanner && !this.mediaSourceNode) {
         this.mediaSourceNode = this.audioContext.createMediaElementSource(this.audio);
         this.stereoPanner = this.audioContext.createStereoPanner();
         this.spatialDistanceGain = this.audioContext.createGain();
@@ -960,8 +963,21 @@ class SyncEngine {
     }
   }
 
+  public disableSpatialAudio() {
+    this.stop8DRotation();
+    if (this.stereoPanner && this.stereoPanner.pan) {
+      this.stereoPanner.pan.setValueAtTime(0, this.audioContext?.currentTime || 0);
+    }
+    if (this.spatialDistanceGain && this.spatialDistanceGain.gain) {
+      this.spatialDistanceGain.gain.setValueAtTime(1.0, this.audioContext?.currentTime || 0);
+    }
+  }
+
   public setSpatialPosition(panX: number, distanceY: number) {
     this.setupSpatialAudioNodes();
+    if (this.audioContext && this.audioContext.state === 'suspended') {
+      this.audioContext.resume().catch(() => {});
+    }
     if (this.stereoPanner && this.stereoPanner.pan) {
       const clampedPan = Math.max(-1, Math.min(1, panX));
       this.stereoPanner.pan.setValueAtTime(clampedPan, this.audioContext?.currentTime || 0);

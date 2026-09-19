@@ -125,6 +125,7 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
     { id: '1', user: 'System', text: `Welcome to Room #${roomCode}! All devices are synced with microsecond clock alignment.`, time: 'Now' }
   ]);
   const [chatInput, setChatInput] = useState('');
+  const chatEndRef = useRef<HTMLDivElement | null>(null);
 
   // Favorites
   const { isFavorite, toggleFavorite } = useFavorites();
@@ -225,7 +226,60 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
     return unsub;
   }, [isDraggingScrubber, currentTrack]);
 
-  // Spatial audio drag handling
+  // Listen for real-time room chat messages and playback permission updates
+  useEffect(() => {
+    const handleNewChatMessage = (msg: { id: string; user: string; userId?: string; text: string; time: string }) => {
+      setChatMessages((prev) => {
+        if (prev.some((m) => m.id === msg.id)) return prev;
+        return [...prev, { ...msg, isYou: msg.userId === socket.id }];
+      });
+      setTimeout(() => {
+        chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, 50);
+    };
+
+    const handleChatHistory = (data: { messages: any[] }) => {
+      if (Array.isArray(data?.messages) && data.messages.length > 0) {
+        setChatMessages(
+          data.messages.map((m) => ({
+            ...m,
+            isYou: m.userId === socket.id
+          }))
+        );
+        setTimeout(() => {
+          chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+      }
+    };
+
+    const handlePlaybackPermissionUpdated = (data: { permission: 'everyone' | 'admins' }) => {
+      if (data?.permission) {
+        setPlaybackPermission(data.permission);
+      }
+    };
+
+    socket.on('new_chat_message', handleNewChatMessage);
+    socket.on('chat_history', handleChatHistory);
+    socket.on('playback_permission_updated', handlePlaybackPermissionUpdated);
+
+    socket.emit('get_chat_history');
+    socket.emit('get_playback_permission');
+
+    return () => {
+      socket.off('new_chat_message', handleNewChatMessage);
+      socket.off('chat_history', handleChatHistory);
+      socket.off('playback_permission_updated', handlePlaybackPermissionUpdated);
+    };
+  }, [roomCode]);
+
+  // Keep mobile tab and right tab in sync
+  useEffect(() => {
+    if (mobileTab === 'spatial' || mobileTab === 'chat') {
+      setRightTab(mobileTab);
+    }
+  }, [mobileTab]);
+
+  // Spatial audio drag handling (Desktop Mouse + Mobile Touch)
   const handleRadarMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!isSpatialEnabled) return;
     setIsDraggingNode(true);
@@ -239,6 +293,35 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
 
   const handleRadarMouseUp = () => {
     setIsDraggingNode(false);
+  };
+
+  const handleRadarTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (!isSpatialEnabled || e.touches.length === 0) return;
+    setIsDraggingNode(true);
+    updateNodePosition(e.touches[0].clientX, e.touches[0].clientY);
+  };
+
+  const handleRadarTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (!isDraggingNode || !isSpatialEnabled || e.touches.length === 0) return;
+    updateNodePosition(e.touches[0].clientX, e.touches[0].clientY);
+  };
+
+  const handleRadarTouchEnd = () => {
+    setIsDraggingNode(false);
+  };
+
+  const handleToggleSpatial = () => {
+    setIsSpatialEnabled((prev) => {
+      const next = !prev;
+      if (!next) {
+        syncEngine.disableSpatialAudio();
+        setIs8DRotating(false);
+      } else {
+        const dist = Math.sqrt(listenerPos.x * listenerPos.x + listenerPos.y * listenerPos.y);
+        syncEngine.setSpatialPosition(listenerPos.x, dist);
+      }
+      return next;
+    });
   };
 
   const updateNodePosition = (clientX: number, clientY: number) => {
@@ -264,6 +347,9 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
   };
 
   const handleToggle8D = () => {
+    if (!isSpatialEnabled) {
+      setIsSpatialEnabled(true);
+    }
     const active = syncEngine.toggle8DRotation();
     setIs8DRotating(active);
   };
@@ -289,14 +375,8 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
   const handleSendChat = (e: React.FormEvent) => {
     e.preventDefault();
     if (!chatInput.trim()) return;
-    const newMsg = {
-      id: Date.now().toString(),
-      user: currentUser?.name || 'Guest',
-      text: chatInput.trim(),
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      isYou: true
-    };
-    setChatMessages((prev) => [...prev, newMsg]);
+    const text = chatInput.trim();
+    socket.emit('send_chat', { text });
     setChatInput('');
   };
 
@@ -839,7 +919,7 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
                 </div>
                 <button
                   type="button"
-                  onClick={() => setIsSpatialEnabled((prev) => !prev)}
+                  onClick={handleToggleSpatial}
                   className={`w-9 h-5 rounded-full transition-colors relative cursor-pointer p-0.5 ${
                     isSpatialEnabled ? 'bg-[#10b981]' : 'bg-slate-700'
                   }`}
@@ -852,13 +932,16 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
                 </button>
               </div>
 
-              {/* 2D Interactive Soundstage Radar Canvas */}
+              {/* 2D Interactive Soundstage Radar Canvas (Touch & Mouse) */}
               <div
                 ref={radarRef}
                 onMouseDown={handleRadarMouseDown}
                 onMouseMove={handleRadarMouseMove}
                 onMouseUp={handleRadarMouseUp}
-                className="relative w-full aspect-square rounded-2xl bg-[#060608] border border-white/10 overflow-hidden flex items-center justify-center cursor-crosshair select-none"
+                onTouchStart={handleRadarTouchStart}
+                onTouchMove={handleRadarTouchMove}
+                onTouchEnd={handleRadarTouchEnd}
+                className="relative w-full aspect-square rounded-2xl bg-[#060608] border border-white/10 overflow-hidden flex items-center justify-center cursor-crosshair select-none touch-none"
               >
                 {/* Radar Grid Lines */}
                 <div className="absolute inset-2 border border-white/5 rounded-full pointer-events-none" />
@@ -965,8 +1048,10 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
                       m.isYou ? 'items-end' : 'items-start'
                     }`}
                   >
-                    <span className="text-[10px] text-slate-500 mb-0.5">{m.user} • {m.time}</span>
-                    <div className={`p-2 rounded-xl max-w-[85%] ${
+                    <span className="text-[10px] text-slate-500 mb-0.5 font-mono">
+                      {m.isYou ? 'You' : m.user} • {m.time}
+                    </span>
+                    <div className={`p-2 rounded-xl max-w-[85%] break-words ${
                       m.isYou
                         ? 'bg-[#10b981]/20 border border-[#10b981]/30 text-white'
                         : 'bg-white/5 border border-white/10 text-slate-200'
@@ -975,6 +1060,7 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
                     </div>
                   </div>
                 ))}
+                <div ref={chatEndRef} />
               </div>
 
               <form onSubmit={handleSendChat} className="p-2 border-t border-white/5 flex gap-1.5 shrink-0">
@@ -1165,29 +1251,31 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
             </button>
           </div>
 
-          {/* Scrubber Progress Bar */}
-          <div className="flex items-center gap-2 w-full text-[11px] font-mono text-slate-400">
-            <span>{formatTime(currentPos)}</span>
-            <div
-              className="flex-1 h-1 bg-slate-800 rounded-full cursor-pointer relative group overflow-hidden"
-              onClick={(e) => {
-                if (!canControl) return;
-                const rect = e.currentTarget.getBoundingClientRect();
-                const clickX = e.clientX - rect.left;
-                const pct = Math.max(0, Math.min(1, clickX / rect.width));
-                const targetTime = pct * trackDur;
-                syncEngine.seekPlayback(targetTime);
-                socket.emit('request_seek', { position: targetTime });
-                socket.emit('seek', { position: targetTime });
-              }}
-            >
+            {/* Scrubber Progress Bar */}
+            <div className="flex items-center gap-2 w-full text-[11px] font-mono text-slate-400">
+              <span>{formatTime(currentPos)}</span>
               <div
-                className="h-full bg-white group-hover:bg-[#10b981] transition-colors"
-                style={{ width: `${progressPercent}%` }}
-              />
+                className="flex-1 py-1.5 -my-1.5 flex items-center cursor-pointer relative group select-none"
+                onClick={(e) => {
+                  if (!canControl) return;
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const clickX = e.clientX - rect.left;
+                  const pct = Math.max(0, Math.min(1, clickX / rect.width));
+                  const targetTime = pct * trackDur;
+                  syncEngine.seekPlayback(targetTime);
+                  socket.emit('request_seek', { position: targetTime });
+                  socket.emit('seek', { position: targetTime });
+                }}
+              >
+                <div className="w-full h-1 bg-slate-800 rounded-full overflow-hidden relative">
+                  <div
+                    className="h-full bg-white group-hover:bg-[#10b981] transition-colors"
+                    style={{ width: `${progressPercent}%` }}
+                  />
+                </div>
+              </div>
+              <span>{formatTime(trackDur)}</span>
             </div>
-            <span>{formatTime(trackDur)}</span>
-          </div>
         </div>
 
         {/* Right: Master Volume Slider */}
