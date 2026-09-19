@@ -35,6 +35,8 @@ class SyncEngine {
   private driftCheckIntervalId: any = null;
   private lastDriftMs: number = 0;
   private lastSeekTime: number = 0;
+  private playbackStartTime: number = 0;
+  private seekCooldownUntil: number = 0;
   private isAutoplayBlocked: boolean = false;
   private hasUserUnlocked: boolean = false;
   private networkMode: 'local' | 'online' = 'local';
@@ -83,6 +85,8 @@ class SyncEngine {
         audio.crossOrigin = 'anonymous';
       }
       audio.preservesPitch = true;
+      (audio as any).webkitPreservesPitch = true;
+      (audio as any).mozPreservesPitch = true;
       audio.setAttribute('playsinline', 'true');
       audio.setAttribute('webkit-playsinline', 'true');
       audio.volume = this.masterVolume;
@@ -127,7 +131,7 @@ class SyncEngine {
       this.audio = audio;
     }
 
-    if (!this.preloadAudio) {
+    if (!this.preloadAudio && !isIOSDevice) {
       const preload = new Audio();
       preload.preload = 'auto';
       preload.volume = 0;
@@ -135,10 +139,13 @@ class SyncEngine {
     }
   }
 
-  // Safe time seeker that waits for metadata if audio is not yet loaded
+  // Safe time seeker that avoids redundant seeks and waits for metadata if audio is not yet loaded
   private setTimeSafe(timeSec: number) {
     if (!this.audio) return;
     const clamped = Math.max(0, timeSec);
+    if (Math.abs(this.audio.currentTime - clamped) < 0.05) {
+      return;
+    }
     if (this.audio.readyState >= 1) {
       try {
         this.audio.currentTime = clamped;
@@ -146,7 +153,9 @@ class SyncEngine {
     } else {
       const onLoaded = () => {
         try {
-          if (this.audio) this.audio.currentTime = clamped;
+          if (this.audio && Math.abs(this.audio.currentTime - clamped) >= 0.05) {
+            this.audio.currentTime = clamped;
+          }
         } catch (e) {}
       };
       this.audio.addEventListener('loadedmetadata', onLoaded, { once: true });
@@ -317,15 +326,9 @@ class SyncEngine {
     return this.crossfadeDuration;
   }
 
-  // 3. Preload Upcoming Song in background for Instant Playback
+  // 3. Preload Upcoming Song in background for Instant Playback (Disabled on iOS to prevent AVPlayer decoder stalls)
   public preloadNextTrack(track: Track | null) {
-    if (!track || !track.audioUrl) return;
-    // CRITICAL FOR IOS:
-    // iOS AVPlayer only supports ONE active hardware audio decoding pipeline.
-    // Calling .load() on a secondary audio element while music is playing pauses or stutters the primary track!
-    if (isIOSDevice && this.isPlaying) {
-      return;
-    }
+    if (!track || !track.audioUrl || isIOSDevice) return;
     this.initAudio();
     if (this.preloadAudio && this.preloadAudio.src !== track.audioUrl) {
       this.preloadAudio.src = track.audioUrl;
@@ -488,20 +491,19 @@ class SyncEngine {
     const currentServerTime = this.getServerTime();
     const delayMs = scheduledServerTime - currentServerTime - this.hardwareDelayOffset;
 
-    // If audio is already actively playing from user gesture priming and the delay is minimal (<160ms),
-    // align time directly without pausing or scheduling a redundant setTimeout!
-    if (this.audio && !this.audio.paused && delayMs < 160) {
-      const elapsedSec = (currentServerTime - scheduledServerTime + this.hardwareDelayOffset) / 1000;
-      const expectedPos = Math.max(0, startPosition + elapsedSec);
-      if (Math.abs(this.audio.currentTime - expectedPos) > 0.08) {
-        this.setTimeSafe(expectedPos);
-      }
+    // If audio is already actively playing (e.g. from user gesture primePlayback),
+    // NEVER pause or hard-seek it! Let it continue playing and let the smooth drift loop align it seamlessly.
+    if (this.audio && !this.audio.paused) {
+      this.playbackStartTime = Date.now();
       this.startDriftCorrectionLoop();
       return;
     }
 
+    this.playbackStartTime = Date.now();
     if (delayMs > 0) {
-      this.setTimeSafe(startPosition);
+      if (Math.abs(this.audio.currentTime - startPosition) >= 0.05) {
+        this.setTimeSafe(startPosition);
+      }
       this.scheduledTimerId = setTimeout(() => {
         this.executePlay(startPosition);
       }, delayMs);
@@ -515,8 +517,9 @@ class SyncEngine {
 
   private executePlay(startSec: number) {
     if (!this.audio) return;
+    this.playbackStartTime = Date.now();
 
-    if (Math.abs(this.audio.currentTime - startSec) > 0.06) {
+    if (Math.abs(this.audio.currentTime - startSec) > 0.08) {
       this.setTimeSafe(startSec);
     }
 
@@ -605,6 +608,8 @@ class SyncEngine {
 
   public seekPlayback(position: number) {
     if (this.audio) {
+      this.seekCooldownUntil = Date.now() + 4000;
+      this.lastSeekTime = Date.now();
       this.setTimeSafe(position);
     }
   }
@@ -618,62 +623,93 @@ class SyncEngine {
     this.driftCheckIntervalId = setInterval(() => {
       if (!this.isPlaying || !this.audio || this.audio.paused) return;
 
+      // Do NOT calculate drift or adjust rate while audio is actively buffering or seeking
+      if (this.audio.seeking || this.isBuffering || this.audio.readyState < 2) {
+        return;
+      }
+
       const serverNow = this.getServerTime();
       const elapsedSec = (serverNow - this.scheduledServerTime + this.hardwareDelayOffset) / 1000;
       const expectedPos = this.startPosition + elapsedSec;
       const actualPos = this.audio.currentTime;
 
-      // Drift in ms: positive = ahead, negative = behind
+      // Drift in ms: positive = ahead of room, negative = behind room
       const driftMs = (actualPos - expectedPos) * 1000;
       this.lastDriftMs = Math.round(driftMs);
 
+      const now = Date.now();
+      const isStartupWindow = now - this.playbackStartTime < 3000;
+      const isSeekCooldown = now < this.seekCooldownUntil;
+
       if (isIOSDevice) {
-        // iOS Safari / AVPlayer Optimized Smoothing:
-        // AVPlayer on iOS is sensitive to rapid playbackRate changes and seek storms.
+        // iOS AVPlayer Pure Smooth Rate-Based Drift Correction:
+        // NEVER hard-seek (audio.currentTime = ...) while playing on iOS!
+        // AVPlayer flushes its buffer on currentTime changes, causing an unavoidable 1s stutter.
+        // Instead, smoothly and seamlessly adjust playbackRate. Apple AVPlayer natively preserves pitch.
         const absDrift = Math.abs(driftMs);
-        if (absDrift < 35) {
-          // Tight lock zone: 1.0x normal speed (no pitch/sample artifacts)
+
+        if (absDrift < 40) {
+          // Tight lock zone: 1.0x normal speed
           if (this.audio.playbackRate !== 1.0) {
             this.audio.playbackRate = 1.0;
           }
-        } else if (driftMs >= 35 && driftMs < 120) {
+        } else if (driftMs >= 40 && driftMs < 180) {
           // Slightly ahead: gently slow down by 2%
           this.audio.playbackRate = 0.98;
-        } else if (driftMs <= -35 && driftMs > -120) {
+        } else if (driftMs <= -40 && driftMs > -180) {
           // Slightly behind: gently speed up by 2%
           this.audio.playbackRate = 1.02;
-        } else if (driftMs >= 120 && driftMs < 450) {
+        } else if (driftMs >= 180 && driftMs < 600) {
           // Moderately ahead: slow down by 5%
           this.audio.playbackRate = 0.95;
-        } else if (driftMs <= -120 && driftMs > -450) {
+        } else if (driftMs <= -180 && driftMs > -600) {
           // Moderately behind: speed up by 5%
           this.audio.playbackRate = 1.05;
-        } else if (absDrift >= 450) {
-          // Major drift (>450ms): Hard seek throttled to 3s to prevent seek storms
-          const now = Date.now();
-          if (!this.audio.seeking && now - this.lastSeekTime > 3000) {
+        } else if (driftMs >= 600 && driftMs < 1500) {
+          // Substantially ahead: slow down by 8%
+          this.audio.playbackRate = 0.92;
+        } else if (driftMs <= -600 && driftMs > -1500) {
+          // Substantially behind: speed up by 8%
+          this.audio.playbackRate = 1.08;
+        } else if (driftMs >= 1500 && driftMs < 4000) {
+          // Large drift: slow down by 12%
+          this.audio.playbackRate = 0.88;
+        } else if (driftMs <= -1500 && driftMs > -4000) {
+          // Large drift: speed up by 12%
+          this.audio.playbackRate = 1.12;
+        } else if (absDrift >= 4000) {
+          // Extreme catastrophic drift (>4.0 seconds, e.g. locked phone for minutes):
+          // Perform a ONE-TIME hard seek with a 10-second cooldown so it can NEVER loop!
+          if (!isStartupWindow && !isSeekCooldown && !this.audio.seeking) {
+            this.seekCooldownUntil = now + 10000;
             this.lastSeekTime = now;
             this.setTimeSafe(expectedPos);
             this.audio.playbackRate = 1.0;
           }
         }
       } else {
-        // Desktop / Android Standard Drift Correction
-        if (Math.abs(driftMs) < 15) {
+        // Desktop & Android Drift Correction
+        const absDrift = Math.abs(driftMs);
+        if (absDrift < 20) {
           if (this.audio.playbackRate !== 1.0) {
             this.audio.playbackRate = 1.0;
           }
-        } else if (driftMs >= 15 && driftMs < 60) {
+        } else if (driftMs >= 20 && driftMs < 80) {
           this.audio.playbackRate = 0.97;
-        } else if (driftMs <= -15 && driftMs > -60) {
+        } else if (driftMs <= -20 && driftMs > -80) {
           this.audio.playbackRate = 1.03;
-        } else if (driftMs >= 60 && driftMs < 220) {
+        } else if (driftMs >= 80 && driftMs < 300) {
           this.audio.playbackRate = 0.92;
-        } else if (driftMs <= -60 && driftMs > -220) {
+        } else if (driftMs <= -80 && driftMs > -300) {
           this.audio.playbackRate = 1.08;
-        } else if (Math.abs(driftMs) >= 220) {
-          const now = Date.now();
-          if (!this.audio.seeking && now - this.lastSeekTime > 800) {
+        } else if (driftMs >= 300 && driftMs < 1500) {
+          this.audio.playbackRate = 0.88;
+        } else if (driftMs <= -300 && driftMs > -1500) {
+          this.audio.playbackRate = 1.12;
+        } else if (absDrift >= 1500) {
+          // Only seek if drift is > 1.5s and not in cooldown
+          if (!isStartupWindow && !isSeekCooldown && !this.audio.seeking && now - this.lastSeekTime > 3000) {
+            this.seekCooldownUntil = now + 5000;
             this.lastSeekTime = now;
             this.setTimeSafe(expectedPos);
             this.audio.playbackRate = 1.0;
