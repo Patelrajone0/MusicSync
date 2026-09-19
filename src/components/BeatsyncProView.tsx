@@ -180,25 +180,17 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
     socket.emit('play_track_now', { track, position: 0 });
   };
 
-  const handleAddSearchResult = (track: Track, autoPlay: boolean = false) => {
+  const handleAddSearchResult = (track: Track) => {
     socket.emit('queue_add', { track });
     socket.emit('add_to_queue', { track });
     setAddedFeedbackId(track.id);
-
-    // If autoPlay requested or if queue is currently empty & nothing is playing:
-    if (autoPlay || (!currentTrack && queue.length === 0)) {
-      if (!isAudioUnlocked) onUnlockAudio();
-      syncEngine.primePlayback(track, 0);
-      socket.emit('request_play', { track, position: 0 });
-      socket.emit('play_track_now', { track, position: 0 });
-    }
 
     // Return to the queue list so the user immediately sees the added songs right here to play them!
     setTimeout(() => {
       setSearchQuery('');
       setSearchResults([]);
       setAddedFeedbackId(null);
-    }, 450);
+    }, 350);
   };
 
   const isPlaying = playbackState.status === 'playing';
@@ -302,11 +294,6 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
       if (tracks && tracks.length > 0) {
         socket.emit('queue_add', { track: tracks[0] });
         socket.emit('add_to_queue', { track: tracks[0] });
-        if (!currentTrack && queue.length === 0) {
-          if (!isAudioUnlocked) onUnlockAudio();
-          syncEngine.primePlayback(tracks[0], 0);
-          socket.emit('request_play', { track: tracks[0], position: 0 });
-        }
       }
     } catch (err) {
       console.error('Failed to upload track:', err);
@@ -624,7 +611,7 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
                     return (
                       <div
                         key={track.id}
-                        onClick={() => handleAddSearchResult(track, true)}
+                        onClick={() => handleAddSearchResult(track)}
                         className="flex items-center justify-between p-2 rounded-xl hover:bg-white/[0.06] active:bg-white/[0.08] transition-colors cursor-pointer group select-none"
                       >
                         {/* Left: Thumbnail & Info */}
@@ -661,7 +648,7 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleAddSearchResult(track, false);
+                              handleAddSearchResult(track);
                             }}
                             className={`p-1.5 rounded-lg transition-all cursor-pointer ${
                               isAdded
@@ -698,7 +685,7 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
                     currentTrack &&
                     ((track.queueId && currentTrack.queueId && track.queueId === currentTrack.queueId) ||
                       track.id === currentTrack.id)
-                  ) || idx === 0;
+                  );
 
                   const cleanTitle = cleanTrackTitle(track.title, track.artist);
                   const displayTitle = track.artist && !cleanTitle.toLowerCase().includes(track.artist.toLowerCase())
