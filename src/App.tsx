@@ -19,11 +19,9 @@ import { QueueList } from './components/QueueList';
 import { MusicSearchModal } from './components/MusicSearchModal';
 import { PlaybackHistoryModal } from './components/PlaybackHistoryModal';
 import { Logo } from './components/Logo';
-import { AudioVisualizer } from './components/AudioVisualizer';
-import { UserX, Disc3, ListMusic, Search } from 'lucide-react';
+import { UserX, Disc3, Search } from 'lucide-react';
 
 import { userTasteEngine } from './services/userTaste';
-import { cleanTrackTitle } from './services/musicApi';
 import { getDeviceId } from './utils/deviceId';
 import { triggerMonetagAds } from './services/adManager';
 
@@ -725,7 +723,7 @@ export function App() {
                   : 'text-slate-400 group-hover:text-slate-200'
               }`}
             >
-              Player & Queue
+              Up Next & Queue
             </span>
             {queue.length > 0 && (
               <span className="px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold bg-cyan-950 text-cyan-300 border border-cyan-500/30">
@@ -767,105 +765,17 @@ export function App() {
 
       {/* 2. Active Tab Content */}
       <main className="w-full px-3 sm:px-5 lg:px-6 py-2 sm:py-3 lg:py-4 flex-1 min-h-0 flex flex-col overflow-y-auto lg:overflow-hidden pb-44 md:pb-4 lg:pb-5 scroll-smooth">
-        {/* TAB 1: 🎵 Unified Player & Up Next Experience */}
+        {/* TAB 1: 🎵 Up Next (Collaborative Queue & Favorites) */}
         {(activeTab === 'player' || activeTab === 'queue') && (
-          <div className="flex-1 w-full h-auto lg:h-full min-h-0 animate-fade-in flex flex-col">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-4 lg:gap-5 items-stretch h-auto lg:h-full min-h-0">
-              {/* Left Column: Player Card (Perfect matching border alignment with Up Next) */}
-              <div className="lg:col-span-5 w-full h-auto lg:h-full min-h-0 flex flex-col">
-                <div className="w-full h-auto lg:h-full bg-[#080c14]/95 backdrop-blur-2xl border border-white/10 hover:border-cyan-400/30 rounded-[24px] sm:rounded-[28px] lg:rounded-[32px] p-3.5 sm:p-4 lg:p-5 flex flex-col justify-between items-center text-center shadow-[0_25px_60px_rgba(0,0,0,0.85)] relative overflow-hidden transition-all duration-300 min-h-0">
-                  {/* Ambient Top Radial Lighting */}
-                  <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-80 h-80 bg-gradient-to-b from-cyan-500/15 via-sky-500/5 to-transparent rounded-full blur-3xl pointer-events-none" />
-
-                  {/* Top Header Row: Centered Status Pill */}
-                  <div className="w-full flex items-center justify-center relative shrink-0 mb-1">
-                    <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#0c1420]/95 border border-white/10 shadow-[0_4px_16px_rgba(0,0,0,0.5)] select-none">
-                      <span
-                        className={`w-2 h-2 rounded-full ${
-                          isPlaying
-                            ? 'bg-cyan-400 shadow-[0_0_12px_#00f0ff] animate-pulse'
-                            : currentTrack
-                            ? 'bg-[#eab308] shadow-[0_0_12px_rgba(234,179,8,0.95)]'
-                            : 'bg-slate-500 shadow-none'
-                        }`}
-                      />
-                      <span className="text-[10px] sm:text-[11px] font-mono uppercase tracking-[0.22em] text-slate-200 font-bold">
-                        {isPlaying
-                          ? 'Playback Active'
-                          : currentTrack
-                          ? 'Playback Paused'
-                          : 'No Song Playing'}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* The Visualizer Box */}
-                  <div className="w-full h-[140px] sm:h-[160px] lg:h-auto lg:flex-1 min-h-[100px] max-h-[190px] rounded-xl sm:rounded-2xl lg:rounded-3xl overflow-hidden bg-black border border-white/10 shadow-inner relative my-0.5">
-                    <AudioVisualizer isPlaying={isPlaying} height={160} className="w-full h-full" />
-                  </div>
-
-                  {/* Track Typography */}
-                  <div className="w-full max-w-sm flex flex-col items-center shrink-0 my-0.5">
-                    <h2
-                      className="text-lg sm:text-xl lg:text-2xl font-black text-white tracking-tight leading-tight mb-0.5 text-center px-2 truncate w-full font-sans drop-shadow-md"
-                      title={currentTrack ? cleanTrackTitle(currentTrack.title, currentTrack.artist) : 'No Song Playing'}
-                    >
-                      {currentTrack ? cleanTrackTitle(currentTrack.title, currentTrack.artist) : 'No Song Playing'}
-                    </h2>
-                    <p className="text-xs sm:text-sm text-[#00f0ff] font-bold text-center mb-1 truncate w-full">
-                      {currentTrack ? currentTrack.artist : 'Add songs to Up Next to start listening'}
-                    </p>
-
-                    {/* Metadata Pill Row */}
-                    <div className="flex items-center justify-center gap-2 text-[10px] sm:text-[11px] text-slate-400 mb-0.5 flex-wrap">
-                      <span className="px-2.5 py-0.5 rounded-full bg-[#121926] border border-white/10 text-slate-200 font-medium tracking-wide">
-                        {currentTrack?.genre || 'MusicSync Room'}
-                      </span>
-                      {currentTrack?.addedBy && (
-                        <span className="text-slate-400">
-                          Added by <strong className="text-white font-bold">{currentTrack.addedBy}</strong>
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Glowing Cyan CTA Button */}
-                  <div className="w-full flex flex-col items-center shrink-0 mt-0.5">
-                    <button
-                      type="button"
-                      onClick={() => setActiveTab('search')}
-                      className="w-full max-w-[240px] sm:max-w-[260px] py-2 px-4 rounded-xl sm:rounded-full bg-cyan-400 hover:bg-white text-black font-extrabold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-[0_0_16px_rgba(0,240,255,0.4)] hover:shadow-[0_0_24px_rgba(0,240,255,0.75)] transition-all duration-200 active:scale-95 cursor-pointer select-none"
-                    >
-                      <Search className="w-3.5 h-3.5 stroke-[2.5] text-black" />
-                      <span>Browse & Add Songs</span>
-                    </button>
-                  </div>
-
-                  {/* Mobile Quick Jump */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const el = document.getElementById('upnext-queue-section');
-                      if (el) el.scrollIntoView({ behavior: 'smooth' });
-                    }}
-                    className="lg:hidden mt-2 text-xs text-slate-400 hover:text-white flex items-center gap-1.5 transition-colors"
-                  >
-                    <ListMusic className="w-3.5 h-3.5 text-cyan-400" />
-                    <span>Jump to Queue ({queue.length})</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Right Column: Up Next (Collaborative Queue & Favorites) */}
-              <div id="upnext-queue-section" className="lg:col-span-7 w-full h-auto lg:h-full min-h-0 flex flex-col">
-                <QueueList
-                  queue={queue}
-                  currentTrack={currentTrack}
-                  userRole={myRole}
-                  currentUserId={currentUser?.id}
-                  onOpenSearch={() => setActiveTab('search')}
-                />
-              </div>
+          <div className="flex-1 w-full h-auto lg:h-full min-h-0 animate-fade-in flex flex-col max-w-5xl mx-auto">
+            <div id="upnext-queue-section" className="w-full h-auto lg:h-full min-h-0 flex-1 flex flex-col">
+              <QueueList
+                queue={queue}
+                currentTrack={currentTrack}
+                userRole={myRole}
+                currentUserId={currentUser?.id}
+                onOpenSearch={() => setActiveTab('search')}
+              />
             </div>
           </div>
         )}
@@ -905,7 +815,7 @@ export function App() {
               </span>
             )}
           </div>
-          <span className="text-[10px] tracking-tight">Player & Queue</span>
+          <span className="text-[10px] tracking-tight">Up Next</span>
         </button>
 
         {/* Tab 2: Search / Library */}

@@ -8,7 +8,6 @@ import {
   Star,
   Check,
   ArrowLeft,
-  ArrowUp,
   Sparkles
 } from 'lucide-react';
 import { Track, UserRole } from '../types';
@@ -111,24 +110,6 @@ export const QueueList: React.FC<QueueListProps> = ({
         </div>
 
         <div className="flex items-center gap-1.5 sm:gap-2">
-          {/* Mobile Quick Jump back to Player */}
-          <button
-            type="button"
-            onClick={() => {
-              const mainEl = document.querySelector('main');
-              if (mainEl) {
-                mainEl.scrollTo({ top: 0, behavior: 'smooth' });
-              } else {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }
-            }}
-            className="lg:hidden flex items-center gap-1 text-[11px] font-semibold text-slate-300 hover:text-cyan-400 bg-white/5 hover:bg-white/10 border border-white/10 px-2.5 py-1 rounded-full transition-all active:scale-95 cursor-pointer"
-            title="Scroll up to Now Playing"
-          >
-            <ArrowUp className="w-3 h-3 text-cyan-400" />
-            <span>Player</span>
-          </button>
-
           {activeView === 'queue' && canControl && queue.length > 0 && (
             <button
               onClick={handleClear}
