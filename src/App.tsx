@@ -166,6 +166,12 @@ export function App() {
     });
     const unsubPlaybackError = syncEngine.onPlaybackError((msg) => {
       console.warn('[App] Playback notification:', msg);
+      setPlaybackState((prev) => {
+        if (prev.status === 'playing') {
+          return { ...prev, status: 'paused' };
+        }
+        return prev;
+      });
     });
     return () => {
       unsubStats();

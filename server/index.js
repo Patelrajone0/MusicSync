@@ -49,10 +49,10 @@ let soundcloudReady = false;
 let cachedClientId = null;
 let lastClientIdFetch = 0;
 
-async function getCachedClientId() {
+async function getCachedClientId(forceRefresh = false) {
   const now = Date.now();
-  // Reuse clientId for up to 3 hours to avoid hitting SoundCloud rate limits
-  if (cachedClientId && (now - lastClientIdFetch < 3 * 60 * 60 * 1000)) {
+  // Reuse clientId for up to 1 hour unless forced to refresh on 401/403
+  if (!forceRefresh && cachedClientId && (now - lastClientIdFetch < 60 * 60 * 1000)) {
     return cachedClientId;
   }
   try {
@@ -62,7 +62,7 @@ async function getCachedClientId() {
       lastClientIdFetch = now;
       await play.setToken({ soundcloud: { client_id: clientId } }).catch(() => {});
       soundcloudReady = true;
-      console.log('> SoundCloud Full-Track Engine Initialized (client_id cached)');
+      console.log('> SoundCloud Full-Track Engine Initialized (client_id cached):', clientId);
       return clientId;
     }
   } catch (e) {
@@ -410,22 +410,36 @@ app.delete('/api/favorites/:trackId', async (req, res) => {
 
 
 
-// Cache resolved SoundCloud media URLs to eliminate round-trip latency on Range requests (crucial for iOS Safari)
+// Cache resolved SoundCloud media URLs (CloudFront signed URLs expire in ~180s, so cache TTL is set to 90s)
 const soundcloudMediaUrlCache = new Map();
-const SOUNDCLOUD_CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
+const SOUNDCLOUD_CACHE_TTL_MS = 90 * 1000; // 90 seconds
 
-async function resolveSoundCloudStreamUrl(progUrl) {
-  const cached = soundcloudMediaUrlCache.get(progUrl);
-  if (cached && Date.now() < cached.expiresAt) {
-    return cached.url;
+async function resolveSoundCloudStreamUrl(progUrl, forceRefresh = false) {
+  if (!forceRefresh) {
+    const cached = soundcloudMediaUrlCache.get(progUrl);
+    if (cached && Date.now() < cached.expiresAt) {
+      return cached.url;
+    }
   }
 
-  const clientId = await getCachedClientId();
-  const mediaRes = await fetch(`${progUrl}?client_id=${clientId}`, {
+  let clientId = await getCachedClientId(forceRefresh);
+  let mediaRes = await fetch(`${progUrl}?client_id=${clientId}`, {
     headers: {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
     }
   });
+
+  // If client_id was expired or blocked by SoundCloud, force refresh client_id and retry immediately
+  if (mediaRes.status === 401 || mediaRes.status === 403) {
+    console.warn(`[SoundCloud] Token rejected (${mediaRes.status}), force-refreshing client_id...`);
+    clientId = await getCachedClientId(true);
+    mediaRes = await fetch(`${progUrl}?client_id=${clientId}`, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+      }
+    });
+  }
+
   if (!mediaRes.ok) throw new Error(`SoundCloud media fetch error: ${mediaRes.status}`);
   const data = await mediaRes.json();
   if (!data.url) throw new Error('Stream URL not found');
@@ -443,13 +457,13 @@ async function resolveSoundCloudStreamUrl(progUrl) {
   return data.url;
 }
 
-// Full Track Audio Stream Proxy Endpoint (SoundCloud Progressive MP3) with direct Byte-Range pipe
+// Full Track Audio Stream Proxy Endpoint (SoundCloud Progressive MP3) with direct Byte-Range pipe & automatic retry
 app.get('/api/stream/soundcloud', async (req, res) => {
   const progUrl = req.query.progUrl;
   if (!progUrl) return res.status(400).send('Missing progUrl');
 
   try {
-    const streamUrl = await resolveSoundCloudStreamUrl(progUrl);
+    let streamUrl = await resolveSoundCloudStreamUrl(progUrl);
 
     const rangeHeader = req.headers.range;
     const fetchHeaders = {
@@ -459,7 +473,20 @@ app.get('/api/stream/soundcloud', async (req, res) => {
       fetchHeaders['Range'] = rangeHeader;
     }
 
-    const audioRes = await fetch(streamUrl, { headers: fetchHeaders });
+    let audioRes = await fetch(streamUrl, { headers: fetchHeaders });
+
+    // If CloudFront URL expired (401/403/410) or failed, invalidate cache, resolve fresh stream URL, and retry
+    if (audioRes.status === 401 || audioRes.status === 403 || audioRes.status === 410 || !audioRes.ok) {
+      console.warn(`[SoundCloud] Stream fetch returned ${audioRes.status}, retrying with fresh resolved stream URL...`);
+      soundcloudMediaUrlCache.delete(progUrl);
+      streamUrl = await resolveSoundCloudStreamUrl(progUrl, true);
+      audioRes = await fetch(streamUrl, { headers: fetchHeaders });
+    }
+
+    if (!audioRes.ok) {
+      throw new Error(`Audio source returned ${audioRes.status} ${audioRes.statusText}`);
+    }
+
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Headers', '*');
     res.setHeader('Access-Control-Expose-Headers', 'Content-Range, Content-Length, Accept-Ranges');
@@ -477,7 +504,7 @@ app.get('/api/stream/soundcloud', async (req, res) => {
     Readable.fromWeb(audioRes.body).pipe(res);
   } catch (err) {
     console.error('SoundCloud stream error:', err.message);
-    if (!res.headersSent) res.status(500).send('Streaming error');
+    if (!res.headersSent) res.status(500).send('Streaming error: ' + err.message);
   }
 });
 

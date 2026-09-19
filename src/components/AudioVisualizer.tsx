@@ -134,23 +134,25 @@ export const AudioVisualizer: React.FC<AudioVisualizerProps> = ({
       }
 
       const audioEl = syncEngine.getAudioElement();
+      // Animate active beat pulses only if audio is genuinely producing time updates or has FFT signal
+      const isAudioActuallyPlaying = isPlaying && audioEl && !audioEl.paused && !audioEl.ended && (audioEl.currentTime > 0.05 || hasRealFft);
       const curTime = audioEl && !audioEl.paused ? audioEl.currentTime : Date.now() / 1000;
       const bpm = 126;
       const beatProgress = curTime * (bpm / 60);
       const barPos = beatProgress % 4;
 
       // Synthesized rhythmic pulses (kick, snare, hi-hat)
-      const kick = isPlaying ? Math.pow(Math.max(0, 1 - (barPos % 2) * 2.8), 2.2) : 0;
+      const kick = isAudioActuallyPlaying ? Math.pow(Math.max(0, 1 - (barPos % 2) * 2.8), 2.2) : 0;
       const isSnare = (barPos >= 1 && barPos < 2) || (barPos >= 3 && barPos < 4);
-      const snare = isPlaying && isSnare ? Math.pow(Math.max(0, 1 - (barPos % 1) * 2.8), 2.0) : 0;
-      const hihat = isPlaying ? Math.pow(Math.max(0, 1 - ((beatProgress * 2) % 1) * 2.6), 1.6) * 0.6 : 0;
+      const snare = isAudioActuallyPlaying && isSnare ? Math.pow(Math.max(0, 1 - (barPos % 1) * 2.8), 2.0) : 0;
+      const hihat = isAudioActuallyPlaying ? Math.pow(Math.max(0, 1 - ((beatProgress * 2) % 1) * 2.6), 1.6) * 0.6 : 0;
 
       // 4. Calculate and Animate Each Frequency Bar
       for (let i = 0; i < barCount; i++) {
         const ratio = i / (barCount - 1);
         let targetRatio = 0.05; // Idle floor level
 
-        if (isPlaying) {
+        if (isAudioActuallyPlaying) {
           if (hasRealFft) {
             // Perceptual logarithmic mapping across FFT bins
             const binIndex = Math.min(
@@ -179,6 +181,10 @@ export const AudioVisualizer: React.FC<AudioVisualizerProps> = ({
             const noise = Math.sin(curTime * 14 + i * 1.3) * 0.08 + Math.cos(curTime * 8 + i * 2.1) * 0.06;
             targetRatio = Math.min(0.96, Math.max(0.08, freqWeight * 0.75 + naturalEnvelope * 0.22 + noise));
           }
+        } else if (isPlaying) {
+          // Buffering / stream loading standby: calm subtle glowing wave
+          const loadingWave = Math.sin(Date.now() / 450 + i * 0.3) * 0.03 + 0.06;
+          targetRatio = loadingWave;
         } else {
           // Paused / Standby: Gentle resting ripple
           const idleWave = Math.sin(curTime * 2 + i * 0.28) * 0.02 + 0.05;

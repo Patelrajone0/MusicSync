@@ -97,8 +97,11 @@ class SyncEngine {
       audio.addEventListener('error', () => {
         const errMsg = audio.error?.message || (audio.error?.code === 4 ? 'Audio source not supported or stream offline' : 'Media stream error');
         console.error('[AudioEngine] Media error:', errMsg, 'code:', audio.error?.code, 'src:', audio.src);
+        this.clearScheduledTimers();
+        this.isPlaying = false;
         this.isBuffering = false;
         this.notifyBuffering(false);
+        this.notifyStats();
         this.notifyPlaybackError(errMsg);
       });
 
@@ -494,9 +497,9 @@ class SyncEngine {
     const currentServerTime = this.getServerTime();
     const delayMs = scheduledServerTime - currentServerTime - this.hardwareDelayOffset;
 
-    // If audio is already actively playing (e.g. from user gesture primePlayback),
+    // If audio is already actively playing or loading from user gesture prime,
     // NEVER pause or hard-seek it! Let it continue playing and let the smooth drift loop align it seamlessly.
-    if (this.audio && !this.audio.paused) {
+    if (this.audio && (!this.audio.paused || (this.isPlaying && this.loadedAudioUrl === track.audioUrl && Date.now() - this.playbackStartTime < 2500))) {
       this.playbackStartTime = Date.now();
       this.startDriftCorrectionLoop();
       return;
@@ -550,12 +553,13 @@ class SyncEngine {
             this.isAutoplayBlocked = true;
             this.isPlaying = false;
             this.notifyAutoplayBlocked(true);
-            this.notifyPlaybackError('Audio blocked by browser. Tap to enable speaker audio.');
+            this.notifyPlaybackError('Audio blocked by browser. Tap anywhere to activate speaker audio.');
           } else if (err?.name === 'AbortError') {
             // Normal when play requests overlap, seek occurs, or track changes
             console.log('[AudioEngine] Play request superseded/aborted (normal).');
           } else {
             console.warn('[AudioEngine] Playback promise warning:', err);
+            this.isPlaying = false;
             this.notifyPlaybackError(err?.message || 'Playback stream error');
           }
         });

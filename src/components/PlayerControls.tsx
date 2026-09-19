@@ -126,18 +126,20 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
     return unsubBuffering;
   }, []);
 
-  // Listen for server error messages to display HUD toast & revert optimistic state
+  // Listen for server error messages & syncEngine errors to display HUD toast & revert optimistic state
   useEffect(() => {
     const handleErrorMessage = (msg: string) => {
       setStatusToast(msg);
-      setOptimisticPlaying(null);
+      setOptimisticPlaying(false);
       setTimeout(() => {
         setStatusToast((prev) => (prev === msg ? null : prev));
       }, 3200);
     };
     socket.on('error_message', handleErrorMessage);
+    const unsubEngineError = syncEngine.onPlaybackError(handleErrorMessage);
     return () => {
       socket.off('error_message', handleErrorMessage);
+      unsubEngineError();
     };
   }, []);
 
