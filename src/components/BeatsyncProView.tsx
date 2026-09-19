@@ -50,8 +50,6 @@ interface BeatsyncProViewProps {
   onOpenSearch: () => void;
   onLeaveRoom: () => void;
   masterVolume?: number;
-  onToggleTheme: () => void;
-  themeMode: 'beatsync' | 'classic';
 }
 
 export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
@@ -67,9 +65,7 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
   onUnlockAudio,
   onOpenSearch,
   onLeaveRoom,
-  masterVolume = 0.9,
-  onToggleTheme,
-  themeMode
+  masterVolume = 0.9
 }) => {
   const isHost = Boolean(
     currentUser && (
@@ -256,13 +252,13 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
         onChange={handleFileSelected}
       />
 
-      {/* 1. TOP TELEMETRY HUD BAR (Beatsync style) */}
+      {/* 1. TOP TELEMETRY HUD BAR (MusicSync Pro Studio) */}
       <header className="shrink-0 h-9 bg-[#060608] border-b border-white/[0.08] px-3 sm:px-4 flex items-center justify-between text-[11px] font-mono text-slate-400 select-none z-30">
         {/* Left: Brand + Buffer + Room Code + User count */}
         <div className="flex items-center gap-2 sm:gap-3 overflow-hidden">
           <div className="flex items-center gap-1.5 font-bold text-white tracking-tight">
             <span className="text-[#10b981] font-black text-sm">👑</span>
-            <span className="font-sans font-black text-xs tracking-wider text-white">BEATSYNC</span>
+            <span className="font-sans font-black text-xs tracking-wider text-white">MUSICSYNC</span>
             <span className="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-500/30 uppercase font-mono">PRO</span>
           </div>
 
@@ -302,25 +298,16 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
           </div>
         </div>
 
-        {/* Right: Theme Toggle & Controls */}
+        {/* Right: Room Controls */}
         <div className="flex items-center gap-2">
-          {/* Theme switcher button */}
-          <button
-            type="button"
-            onClick={onToggleTheme}
-            className="flex items-center gap-1 px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 border border-white/15 text-slate-300 hover:text-white transition-all cursor-pointer text-[10px] font-sans font-semibold"
-            title="Switch back to MusicSync Classic Theme"
-          >
-            <span>💎 Classic Theme</span>
-          </button>
-
           <button
             type="button"
             onClick={onLeaveRoom}
-            className="p-1 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded transition-colors"
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 hover:bg-rose-500/15 border border-white/10 hover:border-rose-500/30 text-slate-400 hover:text-rose-400 transition-all cursor-pointer text-xs font-medium"
             title="Leave Room"
           >
             <LogOut className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline text-[11px]">Leave</span>
           </button>
         </div>
       </header>
@@ -1031,3 +1018,5 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
     </div>
   );
 };
+
+export const MusicSyncProView = BeatsyncProView;

@@ -12,15 +12,11 @@ import {
   RoomState
 } from './types';
 import { Lobby } from './components/Lobby';
-import { RoomHeader } from './components/RoomHeader';
 import { NetworkMode } from './components/NetworkModeModal';
-import { PlayerControls } from './components/PlayerControls';
-import { QueueList } from './components/QueueList';
 import { MusicSearchModal } from './components/MusicSearchModal';
 import { PlaybackHistoryModal } from './components/PlaybackHistoryModal';
-import { Logo } from './components/Logo';
 import { BeatsyncProView } from './components/BeatsyncProView';
-import { UserX, Disc3, Search } from 'lucide-react';
+import { UserX } from 'lucide-react';
 
 import { userTasteEngine } from './services/userTaste';
 import { getDeviceId } from './utils/deviceId';
@@ -111,28 +107,6 @@ export function App() {
   const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState<boolean>(false);
   const [kickedNotice, setKickedNotice] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'player' | 'queue' | 'search'>('player');
-
-  // Competitor-inspired Theme Mode: 'beatsync' (Pro Studio) vs 'classic' (Neo-Glass)
-  const [themeMode, setThemeMode] = useState<'beatsync' | 'classic'>(() => {
-    try {
-      const urlTheme = new URLSearchParams(window.location.search).get('theme');
-      if (urlTheme === 'classic' || urlTheme === 'beatsync') return urlTheme;
-      const saved = localStorage.getItem('musicsync_theme_mode');
-      if (saved === 'classic' || saved === 'beatsync') return saved;
-    } catch (e) {}
-    return 'beatsync'; // Defaults to Beatsync Pro Studio theme demo
-  });
-
-  const handleToggleTheme = () => {
-    setThemeMode((prev) => {
-      const next = prev === 'beatsync' ? 'classic' : 'beatsync';
-      try {
-        localStorage.setItem('musicsync_theme_mode', next);
-      } catch (e) {}
-      return next;
-    });
-  };
 
   // Auto-reconnect state on page refresh
   const [isReconnecting, setIsReconnecting] = useState<boolean>(() => {
@@ -672,86 +646,13 @@ export function App() {
     );
   }
 
-  const isPlaying = playbackState.status === 'playing';
-  const isHost = Boolean(
-    currentUser && (
-      currentUser.role === 'host' ||
-      (hostId && (currentUser.id === hostId || socket.id === hostId)) ||
-      users.some((u) => (u.id === currentUser.id || u.id === socket.id) && u.role === 'host')
-    )
-  );
-  const myRole: UserRole = isHost ? 'host' : (currentUser?.role || 'listener');
-
   const handleOpenSearch = (e?: React.MouseEvent) => {
     if (e) {
       e.preventDefault();
       e.stopPropagation();
     }
-    setActiveTab('search');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    setTimeout(() => {
-      const el = document.getElementById('universal-music-library');
-      if (el) {
-        const input = el.querySelector<HTMLInputElement>('input[type="text"]');
-        if (input) {
-          input.focus({ preventScroll: true });
-        }
-      }
-    }, 150);
+    setIsSearchOpen(true);
   };
-
-  if (themeMode === 'beatsync') {
-    return (
-      <div
-        onClick={() => {
-          if (!isAudioUnlocked) handleUnlockAudio();
-        }}
-        onTouchStart={() => {
-          if (!isAudioUnlocked) handleUnlockAudio();
-        }}
-        className="h-screen h-[100dvh] max-h-screen overflow-hidden bg-[#08080a] text-slate-100 flex flex-col relative w-full max-w-full"
-      >
-        <BeatsyncProView
-          roomCode={roomCode}
-          users={users}
-          currentUser={currentUser}
-          hostId={hostId}
-          currentTrack={currentTrack}
-          playbackState={playbackState}
-          queue={queue}
-          syncStats={syncStats}
-          isAudioUnlocked={isAudioUnlocked}
-          onUnlockAudio={handleUnlockAudio}
-          onOpenSearch={handleOpenSearch}
-          onLeaveRoom={handleLeaveRoom}
-          masterVolume={masterVolume}
-          onToggleTheme={handleToggleTheme}
-          themeMode={themeMode}
-        />
-
-        {/* Fallback Search Modal if opened standalone */}
-        {isSearchOpen && (
-          <MusicSearchModal
-            isOpen={isSearchOpen}
-            onClose={() => setIsSearchOpen(false)}
-            queue={queue}
-            currentTrack={currentTrack}
-          />
-        )}
-
-        {/* Playback History Modal */}
-        <PlaybackHistoryModal
-          isOpen={isHistoryOpen}
-          onClose={() => setIsHistoryOpen(false)}
-          queue={queue}
-          currentTrack={currentTrack}
-        />
-
-        {/* Kicked Notice */}
-        {kickedPopupModal}
-      </div>
-    );
-  }
 
   return (
     <div
@@ -761,183 +662,25 @@ export function App() {
       onTouchStart={() => {
         if (!isAudioUnlocked) handleUnlockAudio();
       }}
-      className="h-screen h-[100dvh] max-h-screen overflow-hidden bg-dark-950 text-slate-100 flex flex-col relative w-full max-w-full overflow-x-clip"
+      className="h-screen h-[100dvh] max-h-screen overflow-hidden bg-[#08080a] text-slate-100 flex flex-col relative w-full max-w-full"
     >
-      {/* 1. Sticky Room Navigation Header */}
-      <RoomHeader
+      <BeatsyncProView
         roomCode={roomCode}
         users={users}
         currentUser={currentUser}
         hostId={hostId}
-        onLeaveRoom={handleLeaveRoom}
-        masterVolume={masterVolume}
-        currentNetworkMode={networkMode}
-        onToggleTheme={handleToggleTheme}
-        themeMode={themeMode}
-      />
-
-      {/* Desktop Tab Switcher: Neon Underline Rail (Spotify / Linear Style) */}
-      <div className="hidden md:flex items-center justify-center w-full px-3 sm:px-5 lg:px-6 pt-1.5 pb-0.5 shrink-0 z-30 select-none">
-        <div className="flex items-center justify-center gap-6 sm:gap-8 py-1 relative">
-          {/* Tab 1: Player & Queue */}
-          <button
-            type="button"
-            onClick={() => setActiveTab('player')}
-            className="group relative flex items-center gap-2 py-1.5 text-xs tracking-wider uppercase transition-colors cursor-pointer select-none"
-          >
-            <Disc3
-              className={`w-4 h-4 ${
-                activeTab === 'player' || activeTab === 'queue'
-                  ? 'text-cyan-400 animate-spin'
-                  : 'text-slate-500 group-hover:text-slate-300'
-              }`}
-              style={{ animationDuration: '3s' }}
-            />
-            <span
-              className={`font-black tracking-wide ${
-                activeTab === 'player' || activeTab === 'queue'
-                  ? 'text-white'
-                  : 'text-slate-400 group-hover:text-slate-200'
-              }`}
-            >
-              Up Next & Queue
-            </span>
-            {queue.length > 0 && (
-              <span className="px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold bg-cyan-950 text-cyan-300 border border-cyan-500/30">
-                {queue.length}
-              </span>
-            )}
-            {(activeTab === 'player' || activeTab === 'queue') && (
-              <span className="absolute -bottom-1 left-0 right-0 h-[2.5px] bg-gradient-to-r from-cyan-400 via-sky-300 to-cyan-400 rounded-full shadow-[0_0_10px_#00f0ff]" />
-            )}
-          </button>
-
-          {/* Small horizontal divider line in the middle gap */}
-          <span className="w-5 sm:w-6 h-[2px] bg-slate-700/80 rounded-full select-none" />
-
-          {/* Tab 2: Search / Library */}
-          <button
-            type="button"
-            onClick={() => setActiveTab('search')}
-            className="group relative flex items-center gap-2 py-1.5 text-xs tracking-wider uppercase transition-colors cursor-pointer select-none"
-          >
-            <Search
-              className={`w-4 h-4 ${
-                activeTab === 'search' ? 'text-cyan-400' : 'text-slate-500 group-hover:text-slate-300'
-              }`}
-            />
-            <span
-              className={`font-black tracking-wide ${
-                activeTab === 'search' ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'
-              }`}
-            >
-              Search / Library
-            </span>
-            {activeTab === 'search' && (
-              <span className="absolute -bottom-1 left-0 right-0 h-[2.5px] bg-gradient-to-r from-cyan-400 via-sky-300 to-cyan-400 rounded-full shadow-[0_0_10px_#00f0ff]" />
-            )}
-          </button>
-
-          {/* Beatsync Pro Theme Switcher Button */}
-          <button
-            type="button"
-            onClick={handleToggleTheme}
-            className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-500/40 text-emerald-300 text-xs font-bold transition-all cursor-pointer shadow-[0_0_12px_rgba(16,185,129,0.25)] active:scale-95 ml-3"
-            title="Switch to Beatsync Pro Studio Theme"
-          >
-            <span>👑 Beatsync Pro</span>
-          </button>
-        </div>
-      </div>
-
-      {/* 2. Active Tab Content */}
-      <main className="w-full px-2.5 sm:px-5 lg:px-6 py-1.5 sm:py-2.5 md:py-3 lg:py-4 flex-1 min-h-0 flex flex-col overflow-hidden">
-        {/* TAB 1: 🎵 Up Next (Collaborative Queue & Favorites) */}
-        {(activeTab === 'player' || activeTab === 'queue') && (
-          <div className="flex-1 w-full h-full min-h-0 animate-fade-in flex flex-col max-w-5xl mx-auto">
-            <div id="upnext-queue-section" className="w-full h-full min-h-0 flex-1 flex flex-col">
-              <QueueList
-                queue={queue}
-                currentTrack={currentTrack}
-                userRole={myRole}
-                currentUserId={currentUser?.id}
-                onOpenSearch={() => setActiveTab('search')}
-              />
-            </div>
-          </div>
-        )}
-
-        {/* TAB 2: 🔍 Search / Library (Universal Music Catalog & Local MP3s) */}
-        {activeTab === 'search' && (
-          <div className="flex-1 w-full h-full min-h-0 overflow-y-auto overscroll-contain touch-pan-y animate-fade-in pr-1">
-            <MusicSearchModal
-              inline={true}
-              queue={queue}
-              currentTrack={currentTrack}
-            />
-          </div>
-        )}
-      </main>
-
-      {/* 3. Bottom Master Playback Dock */}
-      <PlayerControls
         currentTrack={currentTrack}
         playbackState={playbackState}
-        userRole={myRole}
+        queue={queue}
         syncStats={syncStats}
         isAudioUnlocked={isAudioUnlocked}
         onUnlockAudio={handleUnlockAudio}
         onOpenSearch={handleOpenSearch}
+        onLeaveRoom={handleLeaveRoom}
         masterVolume={masterVolume}
-        masterVolumeNotice={masterVolumeNotice}
-        queue={queue}
       />
 
-      {/* 4. Sleek Mobile Bottom Tab Bar */}
-      <nav className="md:hidden shrink-0 z-50 h-[calc(56px+env(safe-area-inset-bottom,0px))] pb-[env(safe-area-inset-bottom,0px)] bg-dark-950/98 backdrop-blur-2xl border-t border-white/10 px-6 flex items-center justify-around shadow-[0_-10px_35px_rgba(0,0,0,0.85)] select-none">
-        {/* Tab 1: Player & Queue */}
-        <button
-          type="button"
-          onClick={() => {
-            setActiveTab('player');
-          }}
-          className={`flex flex-col items-center gap-0.5 py-1 px-4 rounded-xl transition-all active:scale-90 cursor-pointer ${
-            activeTab === 'player' || activeTab === 'queue'
-              ? 'text-cyan-400 font-bold'
-              : 'text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          <div className={`relative p-1 rounded-full ${(activeTab === 'player' || activeTab === 'queue') ? 'bg-cyan-500/15 shadow-[0_0_10px_rgba(0,240,255,0.35)]' : ''}`}>
-            <Disc3 className={`w-5 h-5 ${(activeTab === 'player' || activeTab === 'queue') && isPlaying ? 'animate-spin' : ''}`} style={{ animationDuration: '3s' }} />
-            {queue.length > 0 && (
-              <span className="absolute -top-1 -right-1 px-1 py-0.2 rounded-full bg-cyan-400 text-black font-mono font-black text-[9px] shadow-sm">
-                {queue.length}
-              </span>
-            )}
-          </div>
-          <span className="text-[10px] tracking-tight">Up Next</span>
-        </button>
-
-        {/* Tab 2: Search / Library */}
-        <button
-          type="button"
-          onClick={() => {
-            setActiveTab('search');
-          }}
-          className={`flex flex-col items-center gap-0.5 py-1 px-4 rounded-xl transition-all active:scale-90 cursor-pointer ${
-            activeTab === 'search'
-              ? 'text-cyan-400 font-bold'
-              : 'text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          <div className={`p-1 rounded-full ${activeTab === 'search' ? 'bg-cyan-500/15 shadow-[0_0_10px_rgba(0,240,255,0.35)]' : ''}`}>
-            <Search className="w-5 h-5" />
-          </div>
-          <span className="text-[10px] tracking-tight">Search & Library</span>
-        </button>
-      </nav>
-
-      {/* 5. Fallback Modal if opened standalone */}
+      {/* Universal Music Catalog Search Modal */}
       {isSearchOpen && (
         <MusicSearchModal
           isOpen={isSearchOpen}
@@ -947,9 +690,7 @@ export function App() {
         />
       )}
 
-
-
-      {/* 6. Playback History Modal */}
+      {/* Playback History Modal */}
       <PlaybackHistoryModal
         isOpen={isHistoryOpen}
         onClose={() => setIsHistoryOpen(false)}
@@ -957,7 +698,7 @@ export function App() {
         currentTrack={currentTrack}
       />
 
-      {/* 7. Kicked From Room Notice Popup Modal */}
+      {/* Kicked Notice */}
       {kickedPopupModal}
     </div>
   );
