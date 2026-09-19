@@ -68,7 +68,7 @@ export const QueueList: React.FC<QueueListProps> = ({
   const isShowingFavorites = activeView === 'favorites';
 
   return (
-    <div className="w-full h-auto lg:h-full bg-[#080c14]/95 backdrop-blur-2xl border border-white/10 hover:border-cyan-400/30 rounded-[24px] sm:rounded-[28px] lg:rounded-[32px] p-3.5 sm:p-4 lg:p-5 flex flex-col shadow-[0_25px_60px_rgba(0,0,0,0.85)] relative overflow-hidden transition-all duration-300 min-h-0">
+    <div className="w-full h-full flex-1 min-h-0 bg-[#080c14]/95 backdrop-blur-2xl border border-white/10 hover:border-cyan-400/30 rounded-[22px] sm:rounded-[28px] lg:rounded-[32px] p-3 sm:p-4 lg:p-5 flex flex-col shadow-[0_25px_60px_rgba(0,0,0,0.85)] relative overflow-hidden transition-all duration-300">
       {/* Ambient Top Radial Lighting */}
       <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-80 h-80 bg-gradient-to-b from-cyan-500/10 via-sky-500/5 to-transparent rounded-full blur-3xl pointer-events-none" />
 
@@ -215,7 +215,7 @@ export const QueueList: React.FC<QueueListProps> = ({
               </div>
             )}
 
-            <div className="space-y-1.5 sm:space-y-2 overflow-visible lg:overflow-y-auto lg:flex-1 min-h-0 pr-1 relative z-10">
+            <div className="space-y-1.5 sm:space-y-2 overflow-y-auto flex-1 min-h-0 overscroll-contain touch-pan-y pr-1 relative z-10">
               {favorites.map((track, idx) => {
                 const isAdded = addedTrackIds.has(track.id);
                 return (
@@ -340,7 +340,7 @@ export const QueueList: React.FC<QueueListProps> = ({
             </div>
           </div>
         ) : (
-          <div className="space-y-1.5 sm:space-y-2 overflow-visible lg:overflow-y-auto lg:flex-1 min-h-0 pr-1 relative z-10">
+          <div className="space-y-1.5 sm:space-y-2 overflow-y-auto flex-1 min-h-0 overscroll-contain touch-pan-y pr-1 relative z-10">
             {queue.map((track, idx) => {
               const isCurrent = Boolean(
                 currentTrack &&

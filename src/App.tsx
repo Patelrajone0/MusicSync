@@ -764,11 +764,11 @@ export function App() {
       </div>
 
       {/* 2. Active Tab Content */}
-      <main className="w-full px-3 sm:px-5 lg:px-6 py-2 sm:py-3 lg:py-4 flex-1 min-h-0 flex flex-col overflow-y-auto lg:overflow-hidden pb-44 md:pb-4 lg:pb-5 scroll-smooth">
+      <main className="w-full px-2.5 sm:px-5 lg:px-6 py-1.5 sm:py-2.5 md:py-3 lg:py-4 flex-1 min-h-0 flex flex-col overflow-hidden">
         {/* TAB 1: 🎵 Up Next (Collaborative Queue & Favorites) */}
         {(activeTab === 'player' || activeTab === 'queue') && (
-          <div className="flex-1 w-full h-auto lg:h-full min-h-0 animate-fade-in flex flex-col max-w-5xl mx-auto">
-            <div id="upnext-queue-section" className="w-full h-auto lg:h-full min-h-0 flex-1 flex flex-col">
+          <div className="flex-1 w-full h-full min-h-0 animate-fade-in flex flex-col max-w-5xl mx-auto">
+            <div id="upnext-queue-section" className="w-full h-full min-h-0 flex-1 flex flex-col">
               <QueueList
                 queue={queue}
                 currentTrack={currentTrack}
@@ -782,7 +782,7 @@ export function App() {
 
         {/* TAB 2: 🔍 Search / Library (Universal Music Catalog & Local MP3s) */}
         {activeTab === 'search' && (
-          <div className="flex-1 w-full h-full min-h-0 overflow-y-auto animate-fade-in pr-1">
+          <div className="flex-1 w-full h-full min-h-0 overflow-y-auto overscroll-contain touch-pan-y animate-fade-in pr-1">
             <MusicSearchModal
               inline={true}
               queue={queue}
@@ -792,14 +792,27 @@ export function App() {
         )}
       </main>
 
-      {/* Sleek Mobile Bottom Tab Bar */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 h-[58px] bg-dark-950/98 backdrop-blur-2xl border-t border-white/10 px-6 flex items-center justify-around shadow-[0_-10px_35px_rgba(0,0,0,0.85)] select-none">
+      {/* 3. Bottom Master Playback Dock */}
+      <PlayerControls
+        currentTrack={currentTrack}
+        playbackState={playbackState}
+        userRole={myRole}
+        syncStats={syncStats}
+        isAudioUnlocked={isAudioUnlocked}
+        onUnlockAudio={handleUnlockAudio}
+        onOpenSearch={handleOpenSearch}
+        masterVolume={masterVolume}
+        masterVolumeNotice={masterVolumeNotice}
+        queue={queue}
+      />
+
+      {/* 4. Sleek Mobile Bottom Tab Bar */}
+      <nav className="md:hidden shrink-0 z-50 h-[calc(56px+env(safe-area-inset-bottom,0px))] pb-[env(safe-area-inset-bottom,0px)] bg-dark-950/98 backdrop-blur-2xl border-t border-white/10 px-6 flex items-center justify-around shadow-[0_-10px_35px_rgba(0,0,0,0.85)] select-none">
         {/* Tab 1: Player & Queue */}
         <button
           type="button"
           onClick={() => {
             setActiveTab('player');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
           className={`flex flex-col items-center gap-0.5 py-1 px-4 rounded-xl transition-all active:scale-90 cursor-pointer ${
             activeTab === 'player' || activeTab === 'queue'
@@ -823,7 +836,6 @@ export function App() {
           type="button"
           onClick={() => {
             setActiveTab('search');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
           className={`flex flex-col items-center gap-0.5 py-1 px-4 rounded-xl transition-all active:scale-90 cursor-pointer ${
             activeTab === 'search'
@@ -837,20 +849,6 @@ export function App() {
           <span className="text-[10px] tracking-tight">Search & Library</span>
         </button>
       </nav>
-
-      {/* 4. Bottom Master Playback Dock */}
-      <PlayerControls
-        currentTrack={currentTrack}
-        playbackState={playbackState}
-        userRole={myRole}
-        syncStats={syncStats}
-        isAudioUnlocked={isAudioUnlocked}
-        onUnlockAudio={handleUnlockAudio}
-        onOpenSearch={handleOpenSearch}
-        masterVolume={masterVolume}
-        masterVolumeNotice={masterVolumeNotice}
-        queue={queue}
-      />
 
       {/* 5. Fallback Modal if opened standalone */}
       {isSearchOpen && (

@@ -532,7 +532,7 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
   const progressPercent = Math.min(100, Math.max(0, (currentPos / trackDuration) * 100));
 
   return (
-    <div className="fixed bottom-[58px] left-0 right-0 md:relative md:bottom-auto md:shrink-0 z-40 bg-dark-950/95 backdrop-blur-2xl border-t border-white/10 px-3 sm:px-5 lg:px-6 py-2 sm:py-2.5 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))] sm:pb-[calc(0.65rem+env(safe-area-inset-bottom,0px))] select-none w-full max-w-full overflow-visible">
+    <div className="relative shrink-0 z-40 bg-dark-950/95 backdrop-blur-2xl border-t border-white/10 px-3 sm:px-5 lg:px-6 py-1.5 sm:py-2 md:pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))] select-none w-full max-w-full overflow-visible">
       {/* Audio Unlock Warning Banner if browser muted */}
       {!isAudioUnlocked && (
         <div className="w-full mb-2 sm:mb-2.5">
