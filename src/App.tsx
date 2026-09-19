@@ -19,6 +19,7 @@ import { QueueList } from './components/QueueList';
 import { MusicSearchModal } from './components/MusicSearchModal';
 import { PlaybackHistoryModal } from './components/PlaybackHistoryModal';
 import { Logo } from './components/Logo';
+import { BeatsyncProView } from './components/BeatsyncProView';
 import { UserX, Disc3, Search } from 'lucide-react';
 
 import { userTasteEngine } from './services/userTaste';
@@ -111,6 +112,27 @@ export function App() {
   const [isHistoryOpen, setIsHistoryOpen] = useState<boolean>(false);
   const [kickedNotice, setKickedNotice] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'player' | 'queue' | 'search'>('player');
+
+  // Competitor-inspired Theme Mode: 'beatsync' (Pro Studio) vs 'classic' (Neo-Glass)
+  const [themeMode, setThemeMode] = useState<'beatsync' | 'classic'>(() => {
+    try {
+      const urlTheme = new URLSearchParams(window.location.search).get('theme');
+      if (urlTheme === 'classic' || urlTheme === 'beatsync') return urlTheme;
+      const saved = localStorage.getItem('musicsync_theme_mode');
+      if (saved === 'classic' || saved === 'beatsync') return saved;
+    } catch (e) {}
+    return 'beatsync'; // Defaults to Beatsync Pro Studio theme demo
+  });
+
+  const handleToggleTheme = () => {
+    setThemeMode((prev) => {
+      const next = prev === 'beatsync' ? 'classic' : 'beatsync';
+      try {
+        localStorage.setItem('musicsync_theme_mode', next);
+      } catch (e) {}
+      return next;
+    });
+  };
 
   // Auto-reconnect state on page refresh
   const [isReconnecting, setIsReconnecting] = useState<boolean>(() => {
@@ -678,6 +700,59 @@ export function App() {
     }, 150);
   };
 
+  if (themeMode === 'beatsync') {
+    return (
+      <div
+        onClick={() => {
+          if (!isAudioUnlocked) handleUnlockAudio();
+        }}
+        onTouchStart={() => {
+          if (!isAudioUnlocked) handleUnlockAudio();
+        }}
+        className="h-screen h-[100dvh] max-h-screen overflow-hidden bg-[#08080a] text-slate-100 flex flex-col relative w-full max-w-full"
+      >
+        <BeatsyncProView
+          roomCode={roomCode}
+          users={users}
+          currentUser={currentUser}
+          hostId={hostId}
+          currentTrack={currentTrack}
+          playbackState={playbackState}
+          queue={queue}
+          syncStats={syncStats}
+          isAudioUnlocked={isAudioUnlocked}
+          onUnlockAudio={handleUnlockAudio}
+          onOpenSearch={handleOpenSearch}
+          onLeaveRoom={handleLeaveRoom}
+          masterVolume={masterVolume}
+          onToggleTheme={handleToggleTheme}
+          themeMode={themeMode}
+        />
+
+        {/* Fallback Search Modal if opened standalone */}
+        {isSearchOpen && (
+          <MusicSearchModal
+            isOpen={isSearchOpen}
+            onClose={() => setIsSearchOpen(false)}
+            queue={queue}
+            currentTrack={currentTrack}
+          />
+        )}
+
+        {/* Playback History Modal */}
+        <PlaybackHistoryModal
+          isOpen={isHistoryOpen}
+          onClose={() => setIsHistoryOpen(false)}
+          queue={queue}
+          currentTrack={currentTrack}
+        />
+
+        {/* Kicked Notice */}
+        {kickedPopupModal}
+      </div>
+    );
+  }
+
   return (
     <div
       onClick={() => {
@@ -697,6 +772,8 @@ export function App() {
         onLeaveRoom={handleLeaveRoom}
         masterVolume={masterVolume}
         currentNetworkMode={networkMode}
+        onToggleTheme={handleToggleTheme}
+        themeMode={themeMode}
       />
 
       {/* Desktop Tab Switcher: Neon Underline Rail (Spotify / Linear Style) */}
@@ -759,6 +836,16 @@ export function App() {
             {activeTab === 'search' && (
               <span className="absolute -bottom-1 left-0 right-0 h-[2.5px] bg-gradient-to-r from-cyan-400 via-sky-300 to-cyan-400 rounded-full shadow-[0_0_10px_#00f0ff]" />
             )}
+          </button>
+
+          {/* Beatsync Pro Theme Switcher Button */}
+          <button
+            type="button"
+            onClick={handleToggleTheme}
+            className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-500/40 text-emerald-300 text-xs font-bold transition-all cursor-pointer shadow-[0_0_12px_rgba(16,185,129,0.25)] active:scale-95 ml-3"
+            title="Switch to Beatsync Pro Studio Theme"
+          >
+            <span>👑 Beatsync Pro</span>
           </button>
         </div>
       </div>

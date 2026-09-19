@@ -33,6 +33,8 @@ interface RoomHeaderProps {
   masterVolume?: number;
   currentNetworkMode?: NetworkMode;
   centerContent?: React.ReactNode;
+  onToggleTheme?: () => void;
+  themeMode?: 'beatsync' | 'classic';
 }
 
 export const RoomHeader: React.FC<RoomHeaderProps> = ({
@@ -44,6 +46,8 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
   masterVolume,
   currentNetworkMode,
   centerContent,
+  onToggleTheme,
+  themeMode = 'beatsync',
 }) => {
   const isHost = Boolean(
     currentUser && (
@@ -283,6 +287,19 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
               </>
             )}
           </button>
+
+          {/* Theme Toggle Button (Beatsync Pro Studio vs Classic) */}
+          {onToggleTheme && (
+            <button
+              type="button"
+              onClick={onToggleTheme}
+              className="flex items-center gap-1 sm:gap-1.5 px-2.5 py-1 rounded-full bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-500/40 text-emerald-300 hover:text-emerald-200 text-xs font-bold transition-all shadow-[0_0_10px_rgba(16,185,129,0.25)] active:scale-95 cursor-pointer"
+              title={themeMode === 'beatsync' ? 'Switch to Classic Neo-Glass Theme' : 'Switch to Beatsync Pro Studio Theme'}
+            >
+              <span className="text-xs">👑</span>
+              <span className="hidden sm:inline">{themeMode === 'beatsync' ? 'Classic' : 'Beatsync Pro'}</span>
+            </button>
+          )}
 
           {/* Exit Room Button - Always completely in view on phones */}
           {onLeaveRoom && (

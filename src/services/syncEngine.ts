@@ -861,6 +861,165 @@ class SyncEngine {
     return this.isBuffering;
   }
 
+  // Synchronized Metronome Audio Click (NTP-aligned across all devices)
+  private metronomeTimerId: any = null;
+  private metronomeBpm: number = 50;
+  private isMetronomeActive: boolean = false;
+
+  public getMetronomeState(): { active: boolean; bpm: number } {
+    return { active: this.isMetronomeActive, bpm: this.metronomeBpm };
+  }
+
+  public toggleMetronome(bpm?: number): boolean {
+    if (bpm) this.metronomeBpm = bpm;
+    if (this.isMetronomeActive) {
+      this.stopMetronome();
+      return false;
+    } else {
+      this.startMetronome(this.metronomeBpm);
+      return true;
+    }
+  }
+
+  public startMetronome(bpm: number = 50) {
+    this.stopMetronome();
+    this.metronomeBpm = Math.max(30, Math.min(240, bpm));
+    this.isMetronomeActive = true;
+
+    const intervalMs = (60 / this.metronomeBpm) * 1000;
+    const syncTick = () => {
+      if (!this.isMetronomeActive) return;
+      this.playMetronomeTick();
+      const serverNow = this.getServerTime();
+      const nextBeat = Math.ceil(serverNow / intervalMs) * intervalMs;
+      const delay = Math.max(10, nextBeat - serverNow);
+      this.metronomeTimerId = setTimeout(syncTick, delay);
+    };
+
+    const serverNow = this.getServerTime();
+    const nextBeat = Math.ceil(serverNow / intervalMs) * intervalMs;
+    const initialDelay = Math.max(10, nextBeat - serverNow);
+    this.metronomeTimerId = setTimeout(syncTick, initialDelay);
+  }
+
+  public stopMetronome() {
+    this.isMetronomeActive = false;
+    if (this.metronomeTimerId) {
+      clearTimeout(this.metronomeTimerId);
+      this.metronomeTimerId = null;
+    }
+  }
+
+  public playMetronomeTick(isAccent: boolean = false) {
+    try {
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioContextClass) return;
+      if (!this.audioContext) {
+        this.audioContext = new AudioContextClass();
+      }
+      if (this.audioContext.state === 'suspended') {
+        this.audioContext.resume().catch(() => {});
+      }
+      const osc = this.audioContext.createOscillator();
+      const gain = this.audioContext.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(isAccent ? 1400 : 900, this.audioContext.currentTime);
+      gain.gain.setValueAtTime(0.25, this.audioContext.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.04);
+      osc.connect(gain);
+      gain.connect(this.audioContext.destination);
+      osc.start();
+      osc.stop(this.audioContext.currentTime + 0.04);
+    } catch (e) {}
+  }
+
+  // Spatial Audio & 8D Sound Rotation
+  private stereoPanner: any = null;
+  private spatialDistanceGain: GainNode | null = null;
+  private is8DRotationActive: boolean = false;
+  private rotationAnimFrameId: any = null;
+
+  private setupSpatialAudioNodes() {
+    if (this.stereoPanner || !this.audio) return;
+    try {
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioContextClass) return;
+      if (!this.audioContext) {
+        this.audioContext = new AudioContextClass();
+      }
+      if (this.audioContext.createStereoPanner && !this.mediaSourceNode && !isIOSDevice) {
+        this.mediaSourceNode = this.audioContext.createMediaElementSource(this.audio);
+        this.stereoPanner = this.audioContext.createStereoPanner();
+        this.spatialDistanceGain = this.audioContext.createGain();
+        this.mediaSourceNode.connect(this.stereoPanner);
+        this.stereoPanner.connect(this.spatialDistanceGain);
+        this.spatialDistanceGain.connect(this.audioContext.destination);
+      }
+    } catch (e) {
+      console.warn('[AudioEngine] Spatial audio node setup notice:', e);
+    }
+  }
+
+  public setSpatialPosition(panX: number, distanceY: number) {
+    this.setupSpatialAudioNodes();
+    if (this.stereoPanner && this.stereoPanner.pan) {
+      const clampedPan = Math.max(-1, Math.min(1, panX));
+      this.stereoPanner.pan.setValueAtTime(clampedPan, this.audioContext?.currentTime || 0);
+    }
+    if (this.spatialDistanceGain && this.spatialDistanceGain.gain) {
+      const clampedGain = Math.max(0.15, Math.min(1.0, 1.0 - distanceY * 0.7));
+      this.spatialDistanceGain.gain.setValueAtTime(clampedGain, this.audioContext?.currentTime || 0);
+    }
+  }
+
+  public toggle8DRotation(): boolean {
+    if (this.is8DRotationActive) {
+      this.stop8DRotation();
+      return false;
+    } else {
+      this.start8DRotation();
+      return true;
+    }
+  }
+
+  public start8DRotation() {
+    this.setupSpatialAudioNodes();
+    this.is8DRotationActive = true;
+    let angle = 0;
+    const rotateLoop = () => {
+      if (!this.is8DRotationActive) return;
+      angle += 0.035;
+      const pan = Math.sin(angle);
+      const distGain = 0.65 + Math.cos(angle) * 0.35;
+      if (this.stereoPanner && this.stereoPanner.pan) {
+        this.stereoPanner.pan.setValueAtTime(pan, this.audioContext?.currentTime || 0);
+      }
+      if (this.spatialDistanceGain && this.spatialDistanceGain.gain) {
+        this.spatialDistanceGain.gain.setValueAtTime(distGain, this.audioContext?.currentTime || 0);
+      }
+      this.rotationAnimFrameId = requestAnimationFrame(rotateLoop);
+    };
+    rotateLoop();
+  }
+
+  public stop8DRotation() {
+    this.is8DRotationActive = false;
+    if (this.rotationAnimFrameId) {
+      cancelAnimationFrame(this.rotationAnimFrameId);
+      this.rotationAnimFrameId = null;
+    }
+    if (this.stereoPanner && this.stereoPanner.pan) {
+      this.stereoPanner.pan.setValueAtTime(0, this.audioContext?.currentTime || 0);
+    }
+    if (this.spatialDistanceGain && this.spatialDistanceGain.gain) {
+      this.spatialDistanceGain.gain.setValueAtTime(1.0, this.audioContext?.currentTime || 0);
+    }
+  }
+
+  public getIs8DRotating(): boolean {
+    return this.is8DRotationActive;
+  }
+
   public isUnlocked(): boolean {
     if (isIOSDevice && !this.hasUserUnlocked && !this.isPlaying) {
       return false;
