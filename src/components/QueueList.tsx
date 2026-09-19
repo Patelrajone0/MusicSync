@@ -134,17 +134,19 @@ export const QueueList: React.FC<QueueListProps> = ({
             <span className="text-white group-hover:text-cyan-300 transition-colors tracking-tight">Add Song</span>
           </button>
 
-          {/* Favorites Button (Immediately beside Add Song) */}
+          {/* Favorites Button (Compact icon-only to fit seamlessly on small mobile screens) */}
           <button
+            type="button"
             onClick={() => setActiveView(activeView === 'favorites' ? 'queue' : 'favorites')}
-            className={`group flex items-center gap-1.5 p-1 pl-1.5 pr-3 rounded-full text-xs font-bold transition-all duration-200 active:scale-95 shadow-lg shrink-0 cursor-pointer select-none ${
+            className={`group relative w-8 h-8 sm:w-[34px] sm:h-[34px] rounded-full flex items-center justify-center transition-all duration-200 active:scale-90 shadow-md shrink-0 cursor-pointer select-none ${
               isShowingFavorites
-                ? 'bg-amber-400 text-black shadow-[0_0_16px_rgba(251,191,36,0.4)]'
-                : 'bg-dark-900/90 hover:bg-dark-850 border border-amber-400/30 hover:border-amber-400/60 text-amber-300'
+                ? 'bg-amber-400 text-black shadow-[0_0_16px_rgba(251,191,36,0.45)]'
+                : 'bg-dark-900/90 hover:bg-dark-850 border border-amber-400/30 hover:border-amber-400/60 text-amber-300 hover:shadow-[0_0_12px_rgba(251,191,36,0.3)]'
             }`}
-            title={activeView === 'favorites' ? 'Return to Queue' : 'View Your Saved Favorites'}
+            title={activeView === 'favorites' ? 'Return to Queue' : `View Your Saved Favorites (${favoriteCount})`}
+            aria-label="Favorites"
           >
-            <div className={`relative w-[20px] h-[20px] sm:w-[22px] sm:h-[22px] rounded-full p-[1.5px] ${
+            <div className={`relative w-[22px] h-[22px] sm:w-[24px] sm:h-[24px] rounded-full p-[1.5px] ${
               isShowingFavorites
                 ? 'bg-black/30'
                 : 'bg-gradient-to-tr from-amber-400 via-yellow-300 to-rose-400 shadow-[0_0_6px_rgba(251,191,36,0.5)]'
@@ -152,16 +154,16 @@ export const QueueList: React.FC<QueueListProps> = ({
               <div className={`w-full h-full rounded-full flex items-center justify-center ${
                 isShowingFavorites ? 'bg-black text-amber-400' : 'bg-dark-950 text-amber-400'
               }`}>
-                <Star className="w-2.5 h-2.5 fill-current" />
+                <Star className="w-3 h-3 fill-current" />
               </div>
             </div>
-            <span>Favorites</span>
+
             {favoriteCount > 0 && (
               <span
-                className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold ${
+                className={`absolute -top-1 -right-1 min-w-[16px] h-[16px] px-1 rounded-full text-[9px] font-mono font-black flex items-center justify-center shadow-sm ${
                   isShowingFavorites
-                    ? 'bg-black/20 text-black'
-                    : 'bg-amber-400/20 text-amber-300 border border-amber-400/30'
+                    ? 'bg-black text-amber-300 border border-amber-400/40'
+                    : 'bg-amber-400 text-black border border-dark-950'
                 }`}
               >
                 {favoriteCount}
