@@ -182,11 +182,67 @@ function scheduleServerAutoAdvance(roomCode) {
   }, delayMs);
 }
 
+// Helper to stop playback completely across a room and clear currentTrack
+function stopPlaybackInRoom(room, roomCode) {
+  if (!room || !roomCode) return;
+  clearServerAutoAdvance(room);
+  room.currentTrack = null;
+  room.playbackState = {
+    status: 'stopped',
+    scheduledServerTime: 0,
+    scheduledPosition: 0,
+    lastPausedPosition: 0,
+    duration: 0
+  };
+  io.to(roomCode).emit('playback_stopped', { serverTime: Date.now() });
+  io.to(roomCode).emit('playback_paused', { position: 0, serverTime: Date.now() });
+}
+
+// Helper to start playback of a track across all devices in a room
+function playTrackInRoom(room, roomCode, track, startPos = 0) {
+  if (!room || !roomCode) return;
+  if (!track) {
+    stopPlaybackInRoom(room, roomCode);
+    return;
+  }
+
+  clearServerAutoAdvance(room);
+  room.currentTrack = track;
+  const scheduledTime = Date.now() + getBufferLead(room);
+
+  room.playbackState = {
+    status: 'playing',
+    scheduledServerTime: scheduledTime,
+    scheduledPosition: startPos,
+    lastPausedPosition: startPos,
+    duration: track.duration || 0
+  };
+
+  io.to(roomCode).emit('playback_scheduled', {
+    track,
+    status: 'playing',
+    scheduledServerTime: scheduledTime,
+    startPosition: startPos,
+    serverTime: Date.now()
+  });
+
+  scheduleServerAutoAdvance(roomCode);
+}
+
 // Helper to determine next track without removing anything from Up Next queue
 function getNextTrack(room) {
   if (!room.queue || room.queue.length === 0) return null;
-  const currentId = room.currentTrack?.queueId || room.currentTrack?.id;
-  const currentIdx = room.queue.findIndex(q => (currentId && q.queueId === currentId) || q.id === currentId);
+  if (!room.currentTrack) return room.queue[0];
+
+  const currentQueueId = room.currentTrack.queueId;
+  const currentTrackId = room.currentTrack.id;
+
+  const currentIdx = room.queue.findIndex(q =>
+    (currentQueueId && q.queueId && q.queueId === currentQueueId) ||
+    (!currentQueueId && q.id === currentTrackId) ||
+    (q.queueId === currentQueueId || q.id === currentTrackId)
+  );
+
   if (currentIdx === -1) {
     return room.queue[0];
   }
@@ -204,8 +260,17 @@ function getNextTrack(room) {
 // Helper to determine previous track without removing anything from Up Next queue
 function getPreviousTrack(room) {
   if (!room.queue || room.queue.length === 0) return null;
-  const currentId = room.currentTrack?.queueId || room.currentTrack?.id;
-  const currentIdx = room.queue.findIndex(q => (currentId && q.queueId === currentId) || q.id === currentId);
+  if (!room.currentTrack) return room.queue[0];
+
+  const currentQueueId = room.currentTrack.queueId;
+  const currentTrackId = room.currentTrack.id;
+
+  const currentIdx = room.queue.findIndex(q =>
+    (currentQueueId && q.queueId && q.queueId === currentQueueId) ||
+    (!currentQueueId && q.id === currentTrackId) ||
+    (q.queueId === currentQueueId || q.id === currentTrackId)
+  );
+
   if (currentIdx === -1) {
     return room.queue[0];
   }
@@ -225,63 +290,19 @@ function executeAutoAdvance(roomCode) {
 
   // 1. Repeat Single Track Mode
   if (room.repeatMode === 'one') {
-    const scheduledTime = Date.now() + getBufferLead(room);
-    room.playbackState = {
-      status: 'playing',
-      scheduledServerTime: scheduledTime,
-      scheduledPosition: 0,
-      lastPausedPosition: 0,
-      duration: room.currentTrack.duration || 0
-    };
-
-    io.to(roomCode).emit('playback_scheduled', {
-      track: room.currentTrack,
-      status: 'playing',
-      scheduledServerTime: scheduledTime,
-      startPosition: 0,
-      serverTime: Date.now()
-    });
-
-    scheduleServerAutoAdvance(roomCode);
+    playTrackInRoom(room, roomCode, room.currentTrack, 0);
     return;
   }
 
   // 2. Advance to next track in queue (WITHOUT removing previous songs)
   const nextTrack = getNextTrack(room);
   if (nextTrack) {
-    room.currentTrack = nextTrack;
-    const scheduledTime = Date.now() + getBufferLead(room);
-
-    room.playbackState = {
-      status: 'playing',
-      scheduledServerTime: scheduledTime,
-      scheduledPosition: 0,
-      lastPausedPosition: 0,
-      duration: nextTrack.duration || 0
-    };
-
-    io.to(roomCode).emit('playback_scheduled', {
-      track: nextTrack,
-      status: 'playing',
-      scheduledServerTime: scheduledTime,
-      startPosition: 0,
-      serverTime: Date.now()
-    });
-
-    scheduleServerAutoAdvance(roomCode);
+    playTrackInRoom(room, roomCode, nextTrack, 0);
     return;
   }
 
   // Otherwise, stop playback gracefully
-  room.playbackState.status = 'stopped';
-  room.playbackState.lastPausedPosition = 0;
-  room.playbackState.scheduledPosition = 0;
-  room.playbackState.scheduledServerTime = 0;
-
-  io.to(roomCode).emit('playback_paused', {
-    position: 0,
-    serverTime: Date.now()
-  });
+  stopPlaybackInRoom(room, roomCode);
 }
 
 // ----------------------------------------------------
@@ -1962,34 +1983,9 @@ io.on('connection', (socket) => {
       if (!nextTrack) {
         nextTrack = room.queue[0];
       }
-      room.currentTrack = nextTrack;
-      const scheduledTime = Date.now() + getBufferLead(room);
-
-      room.playbackState = {
-        status: 'playing',
-        scheduledServerTime: scheduledTime,
-        scheduledPosition: 0,
-        lastPausedPosition: 0,
-        duration: nextTrack.duration || 0
-      };
-
-      io.to(currentRoomCode).emit('playback_scheduled', {
-        track: nextTrack,
-        status: 'playing',
-        scheduledServerTime: scheduledTime,
-        startPosition: 0,
-        serverTime: Date.now()
-      });
-
-      scheduleServerAutoAdvance(currentRoomCode);
+      playTrackInRoom(room, currentRoomCode, nextTrack, 0);
     } else {
-      room.playbackState.status = 'stopped';
-      room.playbackState.lastPausedPosition = 0;
-      room.playbackState.scheduledPosition = 0;
-      io.to(currentRoomCode).emit('playback_paused', {
-        position: 0,
-        serverTime: Date.now()
-      });
+      stopPlaybackInRoom(room, currentRoomCode);
     }
   });
 
@@ -2006,26 +2002,9 @@ io.on('connection', (socket) => {
 
     if (room.queue.length > 0) {
       const prevTrack = getPreviousTrack(room) || room.queue[0];
-      room.currentTrack = prevTrack;
-      const scheduledTime = Date.now() + getBufferLead(room);
-
-      room.playbackState = {
-        status: 'playing',
-        scheduledServerTime: scheduledTime,
-        scheduledPosition: 0,
-        lastPausedPosition: 0,
-        duration: prevTrack.duration || 0
-      };
-
-      io.to(currentRoomCode).emit('playback_scheduled', {
-        track: prevTrack,
-        status: 'playing',
-        scheduledServerTime: scheduledTime,
-        startPosition: 0,
-        serverTime: Date.now()
-      });
-
-      scheduleServerAutoAdvance(currentRoomCode);
+      playTrackInRoom(room, currentRoomCode, prevTrack, 0);
+    } else {
+      stopPlaybackInRoom(room, currentRoomCode);
     }
   });
 
@@ -2186,13 +2165,67 @@ io.on('connection', (socket) => {
     if (!isHostOrDj) return;
 
     const targetId = queueId || trackId;
-    room.queue = room.queue.filter(q => {
-      if (queueId && q.queueId === queueId) return false;
-      if (trackId && q.id === trackId) return false;
-      if (targetId && (q.queueId === targetId || q.id === targetId)) return false;
-      return true;
+    const removedIndex = room.queue.findIndex(q => {
+      if (queueId && q.queueId === queueId) return true;
+      if (!queueId && trackId && q.id === trackId) return true;
+      if (!queueId && !trackId && targetId && (q.queueId === targetId || q.id === targetId)) return true;
+      return false;
     });
+
+    const removedItem = removedIndex !== -1 ? room.queue[removedIndex] : null;
+
+    // Determine if the track being removed is the currently playing/active track
+    const isCurrentTrackRemoved = Boolean(
+      room.currentTrack && (
+        (queueId && room.currentTrack.queueId && room.currentTrack.queueId === queueId) ||
+        (!queueId && trackId && room.currentTrack.id === trackId) ||
+        (removedItem && (
+          (room.currentTrack.queueId && removedItem.queueId && room.currentTrack.queueId === removedItem.queueId) ||
+          (!room.currentTrack.queueId && !removedItem.queueId && room.currentTrack.id === removedItem.id) ||
+          (room.currentTrack.id === removedItem.id && (!room.currentTrack.queueId || room.currentTrack.queueId === removedItem.queueId))
+        ))
+      )
+    );
+
+    // Remove the track from queue
+    if (removedIndex !== -1) {
+      room.queue.splice(removedIndex, 1);
+    } else {
+      room.queue = room.queue.filter(q => {
+        if (queueId && q.queueId === queueId) return false;
+        if (!queueId && trackId && q.id === trackId) return false;
+        if (!queueId && !trackId && targetId && (q.queueId === targetId || q.id === targetId)) return false;
+        return true;
+      });
+    }
+
+    // Broadcast updated queue to all room members
     io.to(currentRoomCode).emit('queue_updated', { queue: room.queue });
+
+    // If the removed song was the currently playing (or loaded) track:
+    if (isCurrentTrackRemoved) {
+      if (room.queue.length === 0) {
+        // No songs left in Up Next -> Stop playing completely across all connected devices
+        stopPlaybackInRoom(room, currentRoomCode);
+      } else {
+        // Play the next song from Up Next
+        // Since we spliced at removedIndex, the track that was directly after it is now at removedIndex!
+        let nextTrack = null;
+        if (removedIndex !== -1 && removedIndex < room.queue.length) {
+          nextTrack = room.queue[removedIndex];
+        } else if (room.repeatMode === 'all' && room.queue.length > 0) {
+          nextTrack = room.queue[0];
+        }
+
+        if (nextTrack) {
+          // Immediately play next song from Up Next
+          playTrackInRoom(room, currentRoomCode, nextTrack, 0);
+        } else {
+          // Reached end of Up Next with repeat mode off -> Stop playing
+          stopPlaybackInRoom(room, currentRoomCode);
+        }
+      }
+    }
   });
 
   socket.on('queue_clear', () => {
@@ -2208,8 +2241,10 @@ io.on('connection', (socket) => {
     );
     if (!isHostOrDj) return;
 
+    // Clear all songs and immediately stop playing across all connected devices
     room.queue = [];
     io.to(currentRoomCode).emit('queue_updated', { queue: [] });
+    stopPlaybackInRoom(room, currentRoomCode);
   });
 
   socket.on('queue_shuffle', () => {

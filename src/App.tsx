@@ -326,12 +326,29 @@ export function App() {
     };
 
     const handlePlaybackPaused = (data: { position: number }) => {
-      setPlaybackState((prev) => ({
-        ...prev,
-        status: 'paused',
-        lastPausedPosition: data.position,
-      }));
+      setPlaybackState((prev) => {
+        if (prev.status === 'stopped') {
+          return prev;
+        }
+        return {
+          ...prev,
+          status: 'paused',
+          lastPausedPosition: data.position,
+        };
+      });
       syncEngine.pausePlayback(data.position);
+    };
+
+    const handlePlaybackStopped = () => {
+      setCurrentTrack(null);
+      setPlaybackState({
+        status: 'stopped',
+        scheduledServerTime: 0,
+        scheduledPosition: 0,
+        lastPausedPosition: 0,
+        duration: 0,
+      });
+      syncEngine.stopPlayback();
     };
 
     const handlePlaybackSeeked = (data: { position: number }) => {
@@ -374,6 +391,7 @@ export function App() {
     socket.on('queue_updated', handleQueueUpdated);
     socket.on('playback_scheduled', handlePlaybackScheduled);
     socket.on('playback_paused', handlePlaybackPaused);
+    socket.on('playback_stopped', handlePlaybackStopped);
     socket.on('playback_seeked', handlePlaybackSeeked);
     socket.on('master_volume_updated', handleMasterVolumeUpdated);
     socket.on('kicked_from_room', handleKickedFromRoom);
@@ -384,6 +402,7 @@ export function App() {
       socket.off('queue_updated', handleQueueUpdated);
       socket.off('playback_scheduled', handlePlaybackScheduled);
       socket.off('playback_paused', handlePlaybackPaused);
+      socket.off('playback_stopped', handlePlaybackStopped);
       socket.off('playback_seeked', handlePlaybackSeeked);
       socket.off('master_volume_updated', handleMasterVolumeUpdated);
       socket.off('kicked_from_room', handleKickedFromRoom);
@@ -761,7 +780,7 @@ export function App() {
                             ? 'bg-cyan-400 shadow-[0_0_12px_#00f0ff] animate-pulse'
                             : currentTrack
                             ? 'bg-[#eab308] shadow-[0_0_12px_rgba(234,179,8,0.95)]'
-                            : 'bg-[#eab308] shadow-[0_0_12px_rgba(234,179,8,0.95)]'
+                            : 'bg-slate-500 shadow-none'
                         }`}
                       />
                       <span className="text-[10px] sm:text-[11px] font-mono uppercase tracking-[0.22em] text-slate-200 font-bold">
@@ -769,7 +788,7 @@ export function App() {
                           ? 'Playback Active'
                           : currentTrack
                           ? 'Playback Paused'
-                          : 'Playback Paused'}
+                          : 'No Song Playing'}
                       </span>
                     </div>
                   </div>
@@ -783,22 +802,24 @@ export function App() {
                   <div className="w-full max-w-sm flex flex-col items-center shrink-0 my-0.5">
                     <h2
                       className="text-lg sm:text-xl lg:text-2xl font-black text-white tracking-tight leading-tight mb-0.5 text-center px-2 truncate w-full font-sans drop-shadow-md"
-                      title={currentTrack ? cleanTrackTitle(currentTrack.title, currentTrack.artist) : 'Starboy'}
+                      title={currentTrack ? cleanTrackTitle(currentTrack.title, currentTrack.artist) : 'No Song Playing'}
                     >
-                      {currentTrack ? cleanTrackTitle(currentTrack.title, currentTrack.artist) : 'Starboy'}
+                      {currentTrack ? cleanTrackTitle(currentTrack.title, currentTrack.artist) : 'No Song Playing'}
                     </h2>
                     <p className="text-xs sm:text-sm text-[#00f0ff] font-bold text-center mb-1 truncate w-full">
-                      {currentTrack ? currentTrack.artist : 'The Weeknd feat. Daft Punk'}
+                      {currentTrack ? currentTrack.artist : 'Add songs to Up Next to start listening'}
                     </p>
 
                     {/* Metadata Pill Row */}
                     <div className="flex items-center justify-center gap-2 text-[10px] sm:text-[11px] text-slate-400 mb-0.5 flex-wrap">
                       <span className="px-2.5 py-0.5 rounded-full bg-[#121926] border border-white/10 text-slate-200 font-medium tracking-wide">
-                        {currentTrack?.genre || 'Synced Audio'}
+                        {currentTrack?.genre || 'MusicSync Room'}
                       </span>
-                      <span className="text-slate-400">
-                        Added by <strong className="text-white font-bold">{currentTrack?.addedBy || 'Host'}</strong>
-                      </span>
+                      {currentTrack?.addedBy && (
+                        <span className="text-slate-400">
+                          Added by <strong className="text-white font-bold">{currentTrack.addedBy}</strong>
+                        </span>
+                      )}
                     </div>
                   </div>
 

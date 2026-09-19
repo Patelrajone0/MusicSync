@@ -571,6 +571,38 @@ class SyncEngine {
     this.notifyStats();
   }
 
+  public stopPlayback() {
+    this.clearScheduledTimers();
+    this.isPlaying = false;
+    this.isBuffering = false;
+    this.notifyBuffering(false);
+    mediaSessionService.updateMetadata(null);
+    mediaSessionService.setPlaybackState('none');
+
+    if (this.audio) {
+      this.audio.pause();
+      this.setTimeSafe(0);
+      try {
+        this.audio.removeAttribute('src');
+        this.audio.load();
+      } catch (e) {
+        console.warn('[AudioEngine] stopPlayback audio reset warning:', e);
+      }
+      this.audio.playbackRate = 1.0;
+    }
+
+    if (this.preloadAudio) {
+      this.preloadAudio.pause();
+      try {
+        this.preloadAudio.removeAttribute('src');
+        this.preloadAudio.load();
+      } catch (e) {}
+    }
+
+    this.lastDriftMs = 0;
+    this.notifyStats();
+  }
+
   public seekPlayback(position: number) {
     if (this.audio) {
       this.setTimeSafe(position);

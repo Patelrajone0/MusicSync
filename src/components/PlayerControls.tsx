@@ -141,12 +141,25 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
     };
   }, []);
 
-  // Keep track of active song
+  // Keep track of active song & reset position when cleared
   useEffect(() => {
     if (currentTrack) {
       prevTrackIdRef.current = currentTrack.id;
+    } else {
+      setCurrentPosition(0);
+      setDuration(0);
+      setOptimisticPlaying(null);
     }
   }, [currentTrack]);
+
+  // Reset position and playback if stopped
+  useEffect(() => {
+    if (playbackState.status === 'stopped') {
+      setCurrentPosition(0);
+      setDuration(0);
+      setOptimisticPlaying(null);
+    }
+  }, [playbackState.status]);
 
   // Listen to position updates from syncEngine smoothly
   useEffect(() => {
