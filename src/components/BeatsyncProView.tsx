@@ -128,8 +128,11 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
 
   // Favorites
   const { isFavorite, toggleFavorite } = useFavorites();
-  // Brand Logo Style & Interactive Demo Picker
-  const [logoStyle, setLogoStyle] = useState<LogoStyleId>(() => getSavedLogoStyle());
+  // Brand Logo Style: Dynamic Pulse Equalizer
+  const [logoStyle, setLogoStyle] = useState<LogoStyleId>(() => {
+    saveLogoStyle('pulse-equalizer');
+    return 'pulse-equalizer';
+  });
   const [isLogoPickerOpen, setIsLogoPickerOpen] = useState(false);
 
   const handleSelectLogoStyle = (style: LogoStyleId) => {
@@ -386,18 +389,8 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
           </div>
         </div>
 
-        {/* Right: Room Controls & Logo Switcher */}
+        {/* Right: Room Controls */}
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setIsLogoPickerOpen(true)}
-            className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-[#10b981]/15 hover:bg-[#10b981]/25 border border-[#10b981]/40 text-[#10b981] transition-all cursor-pointer text-xs font-medium shadow-[0_0_8px_rgba(16,185,129,0.2)] active:scale-95"
-            title="Preview & choose between 5 MusicSync Pro logo styles"
-          >
-            <Sparkles className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline text-[11px] font-semibold">Switch Logo</span>
-          </button>
-
           <button
             type="button"
             onClick={onLeaveRoom}

@@ -57,7 +57,7 @@ export function getSavedLogoStyle(): LogoStyleId {
       return saved;
     }
   } catch (e) {}
-  return 'waveform-crown';
+  return 'pulse-equalizer';
 }
 
 export function saveLogoStyle(style: LogoStyleId) {
@@ -229,18 +229,15 @@ export const RenderLogoVisual: React.FC<{ styleId: LogoStyleId; isHovered?: bool
 
 export const HeaderBrandLogo: React.FC<{
   activeStyle: LogoStyleId;
-  onOpenPicker: () => void;
+  onOpenPicker?: () => void;
 }> = ({ activeStyle, onOpenPicker }) => {
   return (
     <div
       onClick={onOpenPicker}
       className="flex items-center gap-1.5 cursor-pointer group px-1 py-0.5 rounded-lg hover:bg-white/5 transition-all"
-      title="Click to preview & change MusicSync Pro logo style"
+      title="MusicSync Pro Studio"
     >
       <RenderLogoVisual styleId={activeStyle} />
-      <span className="text-[10px] text-slate-500 group-hover:text-emerald-400 transition-colors flex items-center ml-0.5">
-        <ChevronDown className="w-3 h-3 group-hover:translate-y-0.5 transition-transform" />
-      </span>
     </div>
   );
 };
