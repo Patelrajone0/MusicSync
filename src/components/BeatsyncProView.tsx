@@ -26,12 +26,16 @@ import {
   Check,
   Disc3,
   LogOut,
-  ExternalLink
+  ExternalLink,
+  Plus,
+  Loader2,
+  Music,
+  X
 } from 'lucide-react';
 import { Track, PlaybackState, UserRole, SyncStats, User } from '../types';
 import { syncEngine } from '../services/syncEngine';
 import { socket } from '../services/socket';
-import { cleanTrackTitle } from '../services/musicApi';
+import { cleanTrackTitle, searchTracks } from '../services/musicApi';
 import { useFavorites } from '../services/favoritesService';
 import { localMusicService } from '../services/localMusicService';
 import { NetworkModeModal } from './NetworkModeModal';
@@ -47,7 +51,6 @@ interface BeatsyncProViewProps {
   syncStats: SyncStats;
   isAudioUnlocked: boolean;
   onUnlockAudio: () => void;
-  onOpenSearch: () => void;
   onLeaveRoom: () => void;
   masterVolume?: number;
 }
@@ -63,7 +66,6 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
   syncStats,
   isAudioUnlocked,
   onUnlockAudio,
-  onOpenSearch,
   onLeaveRoom,
   masterVolume = 0.9
 }) => {
@@ -120,6 +122,64 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
   // Favorites
   const { isFavorite, toggleFavorite } = useFavorites();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Direct Live Search state (matching screenshots 1-4)
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<Track[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [addedFeedbackId, setAddedFeedbackId] = useState<string | null>(null);
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // ⌘K Keyboard Shortcut
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Debounced search query handler
+  useEffect(() => {
+    const q = searchQuery.trim();
+    if (!q) {
+      setSearchResults([]);
+      setIsSearching(false);
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+      return;
+    }
+
+    setIsSearching(true);
+    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+
+    debounceTimerRef.current = setTimeout(async () => {
+      try {
+        const res = await searchTracks(q, 'all', 0);
+        setSearchResults(res.tracks || []);
+      } catch (err) {
+        console.error('Search error:', err);
+        setSearchResults([]);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 250);
+
+    return () => {
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    };
+  }, [searchQuery]);
+
+  const handleAddSearchResult = (track: Track) => {
+    socket.emit('add_to_queue', { track });
+    setAddedFeedbackId(track.id);
+    setTimeout(() => {
+      setAddedFeedbackId((prev) => (prev === track.id ? null : prev));
+    }, 1500);
+  };
 
   const isPlaying = playbackState.status === 'playing';
 
@@ -446,75 +506,147 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
         </aside>
 
         {/* ========================================================= */}
-        {/* COLUMN 2: CENTER (Search Bar, Queue, Playback Details)     */}
+        {/* COLUMN 2: CENTER (Direct Search & Live Results / Added Songs) */}
         {/* ========================================================= */}
-        <main className={`flex-1 min-w-0 flex flex-col p-3 sm:p-4 gap-3 bg-[#08080a] overflow-hidden ${
+        <main className={`flex-1 min-w-0 flex flex-col p-3 sm:p-4 gap-2.5 bg-[#08080a] overflow-hidden ${
           mobileTab === 'queue' ? 'flex' : 'hidden md:flex'
         }`}>
-          {/* Universal Search Bar with Beta tag (Beatsync style) */}
+          {/* Universal Search Bar with Live Input (Matches Competitor Screenshots 1-4) */}
           <div className="w-full shrink-0">
-            <div
-              onClick={onOpenSearch}
-              className="w-full h-11 px-3.5 rounded-xl bg-[#0e0e12] border border-white/10 hover:border-[#10b981]/50 flex items-center justify-between text-slate-400 text-xs cursor-pointer transition-all shadow-sm group"
-            >
-              <div className="flex items-center gap-2.5 min-w-0">
-                <Search className="w-4 h-4 text-slate-400 group-hover:text-[#10b981] transition-colors" />
-                <span className="truncate">What do you want to play?</span>
+            <div className="relative w-full h-11 px-3.5 rounded-xl bg-[#141418] border border-white/15 focus-within:border-white/30 focus-within:ring-1 focus-within:ring-white/20 flex items-center justify-between transition-all shadow-sm">
+              <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                <Search className="w-4 h-4 text-slate-400 shrink-0" />
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Escape') {
+                      setSearchQuery('');
+                      setSearchResults([]);
+                    }
+                  }}
+                  placeholder="What do you want to play?"
+                  className="w-full bg-transparent text-white text-xs sm:text-sm font-sans placeholder:text-slate-500 outline-none caret-[#10b981]"
+                />
               </div>
-              <div className="flex items-center gap-1.5 shrink-0">
+              <div className="flex items-center gap-1.5 shrink-0 select-none">
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearchQuery('');
+                      setSearchResults([]);
+                      searchInputRef.current?.focus();
+                    }}
+                    className="p-1 text-slate-400 hover:text-white rounded transition-colors text-xs cursor-pointer mr-1"
+                    title="Clear search"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
                 <kbd className="px-2 py-0.5 rounded bg-white/5 border border-white/10 text-[10px] font-mono text-slate-400">
                   ⌘K
                 </kbd>
               </div>
             </div>
-            <div className="flex items-center justify-between px-1 mt-1 text-[10px] font-mono text-slate-500">
-              <span>⚡ [EXPERIMENTAL FREE BETA - 50M+ SONGS]</span>
-              <button
-                type="button"
-                onClick={onOpenSearch}
-                className="text-[#10b981] hover:underline cursor-pointer font-sans"
-              >
-                + Browse Library
-              </button>
+
+            <div className="flex items-center px-1 mt-1.5 text-[10px] font-mono text-slate-500 select-none">
+              <span>⚡ [EXPERIMENTAL FREE BETA]</span>
             </div>
           </div>
 
-          {/* Up Next Section / Queue List */}
-          <div className="flex-1 min-h-0 flex flex-col rounded-2xl bg-[#0b0b0e] border border-white/[0.08] p-3 overflow-hidden">
-            {/* Header */}
-            <div className="flex items-center justify-between pb-2 mb-2 border-b border-white/5 shrink-0">
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-xs text-white">Up Next</span>
-                <span className="px-1.5 py-0.2 rounded bg-white/5 text-[10px] font-mono text-slate-400">
-                  {queue.length}
-                </span>
-              </div>
+          {/* MAIN CENTER CONTENT AREA: SEARCH RESULTS OR ADDED SONGS (QUEUE) */}
+          {searchQuery.trim() ? (
+            /* STATE 1: SEARCH RESULTS (Screenshots 1 & 2) */
+            <div className="flex-1 min-h-0 flex flex-col rounded-2xl bg-[#111115] border border-white/[0.08] p-2 sm:p-2.5 overflow-hidden animate-fade-in shadow-lg">
+              {isSearching && searchResults.length === 0 ? (
+                <div className="h-64 flex flex-col items-center justify-center text-slate-400 gap-2.5">
+                  <Loader2 className="w-6 h-6 animate-spin text-[#10b981]" />
+                  <span className="text-xs font-mono text-slate-400">Searching 50M+ songs...</span>
+                </div>
+              ) : !isSearching && searchResults.length === 0 ? (
+                <div className="h-64 flex flex-col items-center justify-center text-slate-500">
+                  <p className="text-xs">No songs found for "{searchQuery}"</p>
+                  <p className="text-[11px] text-slate-600 mt-1">Try another title, artist name, or genre</p>
+                </div>
+              ) : (
+                <div className="flex-1 min-h-0 overflow-y-auto space-y-1 pr-1 select-none">
+                  {searchResults.map((track) => {
+                    const isAdded = addedFeedbackId === track.id;
+                    const cleanTitle = cleanTrackTitle(track.title, track.artist);
 
-              {canControl && queue.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => socket.emit('clear_queue')}
-                  className="text-[11px] text-slate-500 hover:text-rose-400 transition-colors cursor-pointer"
-                >
-                  Clear All
-                </button>
+                    return (
+                      <div
+                        key={track.id}
+                        onClick={() => handleAddSearchResult(track)}
+                        className="flex items-center justify-between p-2 rounded-xl hover:bg-white/[0.06] active:bg-white/[0.08] transition-colors cursor-pointer group select-none"
+                      >
+                        {/* Left: Thumbnail & Info */}
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                          {track.artwork ? (
+                            <img
+                              src={track.artwork}
+                              alt={track.title}
+                              className="w-10 h-10 sm:w-11 sm:h-11 rounded-lg object-cover bg-black/50 shrink-0 shadow-sm"
+                              loading="lazy"
+                            />
+                          ) : (
+                            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+                              <Music className="w-5 h-5 text-slate-400" />
+                            </div>
+                          )}
+                          <div className="min-w-0 flex-1">
+                            <h4 className="text-xs sm:text-sm font-semibold text-white truncate leading-tight group-hover:text-emerald-400 transition-colors">
+                              {cleanTitle}
+                            </h4>
+                            <p className="text-[11px] text-slate-400 truncate leading-tight mt-0.5">
+                              {track.artist || 'Unknown Artist'}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Right: Duration & Add '+' button */}
+                        <div className="flex items-center gap-3 shrink-0 ml-3">
+                          <span className="text-xs font-mono text-slate-400">
+                            {track.duration > 0 ? formatTime(track.duration) : '--:--'}
+                          </span>
+
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleAddSearchResult(track);
+                            }}
+                            className={`p-1.5 rounded-lg transition-all cursor-pointer ${
+                              isAdded
+                                ? 'bg-emerald-500/20 text-[#10b981]'
+                                : 'text-slate-400 hover:text-white hover:bg-white/10'
+                            }`}
+                            title={isAdded ? 'Added to queue' : 'Add to queue'}
+                          >
+                            {isAdded ? (
+                              <Check className="w-4 h-4 text-[#10b981]" />
+                            ) : (
+                              <Plus className="w-4 h-4" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               )}
             </div>
-
-            {/* Track List */}
-            <div className="flex-1 min-h-0 overflow-y-auto space-y-1.5 pr-1 select-none">
+          ) : (
+            /* STATE 2: ADDED SONGS / QUEUE (Screenshots 3 & 4) */
+            <div className="flex-1 min-h-0 overflow-y-auto space-y-1.5 pr-1 select-none pt-1">
               {queue.length === 0 ? (
-                <div className="h-full flex flex-col items-center justify-center text-center p-6 text-slate-500">
-                  <Disc3 className="w-10 h-10 mb-2 opacity-30 text-slate-400" />
-                  <p className="text-xs font-medium text-slate-300">No songs lined up next</p>
-                  <p className="text-[11px] text-slate-500 mt-0.5 mb-3">Add songs to keep the music playing across the room</p>
-                  <button
-                    type="button"
-                    onClick={onOpenSearch}
-                    className="px-3.5 py-1.5 rounded-full bg-[#10b981] text-black font-bold text-xs hover:bg-emerald-400 transition-all cursor-pointer"
-                  >
-                    + Add Songs
-                  </button>
+                <div className="h-64 flex flex-col items-center justify-center text-center p-6 text-slate-500">
+                  <Disc3 className="w-8 h-8 mb-2 opacity-25 text-slate-400" />
+                  <p className="text-xs font-medium text-slate-400">No songs in queue</p>
+                  <p className="text-[11px] text-slate-600 mt-1">Type in the search bar above to add music</p>
                 </div>
               ) : (
                 queue.map((track, idx) => {
@@ -522,73 +654,63 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
                     currentTrack &&
                     ((track.queueId && currentTrack.queueId && track.queueId === currentTrack.queueId) ||
                       track.id === currentTrack.id)
-                  );
-                  const starred = isFavorite(track.id);
+                  ) || idx === 0;
+
+                  const cleanTitle = cleanTrackTitle(track.title, track.artist);
+                  const displayTitle = track.artist && !cleanTitle.toLowerCase().includes(track.artist.toLowerCase())
+                    ? `${track.artist} - ${cleanTitle}`
+                    : cleanTitle;
 
                   return (
                     <div
                       key={track.queueId || `${track.id}-${idx}`}
-                      className={`flex items-center justify-between p-2 rounded-xl border transition-all group ${
-                        isCurrent
-                          ? 'bg-[#10b981]/10 border-[#10b981]/40 shadow-[0_0_20px_rgba(16,185,129,0.08)]'
-                          : 'bg-black/40 border-white/5 hover:border-white/15'
-                      }`}
+                      className="flex items-center justify-between py-2 px-1.5 sm:px-2 rounded-lg hover:bg-white/[0.03] transition-colors group"
                     >
-                      {/* Left: Drag Handle + Index + Details */}
-                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                        <span className="text-slate-600 group-hover:text-slate-400 cursor-grab text-xs shrink-0 select-none">
-                          :::
+                      {/* Left: Grip dots + Number + Title */}
+                      <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
+                        <span className="text-slate-600 group-hover:text-slate-400 text-xs shrink-0 select-none opacity-40 font-mono tracking-tighter">
+                          ⠿
                         </span>
 
-                        <span className={`text-xs font-mono font-bold w-4 text-right shrink-0 ${isCurrent ? 'text-[#10b981]' : 'text-slate-500'}`}>
+                        <span className={`text-xs font-mono font-bold w-4 text-center shrink-0 ${
+                          isCurrent ? 'text-[#10b981]' : 'text-slate-400'
+                        }`}>
                           {idx + 1}
                         </span>
 
                         <div className="min-w-0 flex-1">
-                          <h4 className={`text-xs font-semibold truncate leading-tight ${isCurrent ? 'text-[#10b981] font-bold' : 'text-slate-200 group-hover:text-white'}`}>
-                            {cleanTrackTitle(track.title, track.artist)}
-                          </h4>
-                          <p className="text-[10px] text-slate-400 truncate leading-tight mt-0.5">
-                            {track.artist}
-                          </p>
+                          <span
+                            onClick={() => {
+                              if (canControl) {
+                                socket.emit('play_track_now', { track, position: 0 });
+                              }
+                            }}
+                            className={`text-xs sm:text-[13px] truncate block transition-colors ${
+                              canControl ? 'cursor-pointer hover:underline' : ''
+                            } ${
+                              isCurrent
+                                ? 'text-[#10b981] font-semibold'
+                                : 'text-slate-200 group-hover:text-white font-normal'
+                            }`}
+                            title={canControl ? 'Click to play now' : undefined}
+                          >
+                            {displayTitle}
+                          </span>
                         </div>
                       </div>
 
-                      {/* Right: Duration & Actions */}
-                      <div className="flex items-center gap-2 shrink-0 ml-2">
-                        <span className="text-[11px] font-mono text-slate-500">
-                          {Math.floor(track.duration / 60)}:{(track.duration % 60).toString().padStart(2, '0')}
+                      {/* Right: Duration & Remove action */}
+                      <div className="flex items-center gap-3 shrink-0 ml-3">
+                        <span className="text-xs font-mono text-slate-400">
+                          {track.duration > 0 ? formatTime(track.duration) : '--:--'}
                         </span>
 
-                        {/* Star Favorite */}
-                        <button
-                          type="button"
-                          onClick={() => toggleFavorite(track)}
-                          className={`p-1 text-slate-500 hover:text-amber-400 transition-colors ${starred ? 'text-amber-400' : ''}`}
-                          title="Favorite"
-                        >
-                          <Star className={`w-3.5 h-3.5 ${starred ? 'fill-amber-400' : ''}`} />
-                        </button>
-
-                        {/* Force Play */}
-                        {canControl && (
-                          <button
-                            type="button"
-                            onClick={() => socket.emit('play_track_now', { track, position: 0 })}
-                            className="p-1 text-slate-400 hover:text-[#10b981] transition-colors"
-                            title="Play Track Now"
-                          >
-                            <Play className="w-3.5 h-3.5 fill-current" />
-                          </button>
-                        )}
-
-                        {/* Remove Track */}
                         {canControl && (
                           <button
                             type="button"
                             onClick={() => socket.emit('remove_from_queue', { queueId: track.queueId, trackId: track.id })}
-                            className="p-1 text-slate-500 hover:text-rose-400 transition-colors"
-                            title="Remove"
+                            className="text-slate-500 hover:text-rose-400 transition-colors p-1 text-xs cursor-pointer"
+                            title="Remove from queue"
                           >
                             <span className="text-sm leading-none">—</span>
                           </button>
@@ -599,7 +721,7 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
                 })
               )}
             </div>
-          </div>
+          )}
         </main>
 
         {/* ========================================================= */}

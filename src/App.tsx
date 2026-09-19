@@ -13,7 +13,6 @@ import {
 } from './types';
 import { Lobby } from './components/Lobby';
 import { NetworkMode } from './components/NetworkModeModal';
-import { MusicSearchModal } from './components/MusicSearchModal';
 import { PlaybackHistoryModal } from './components/PlaybackHistoryModal';
 import { BeatsyncProView } from './components/BeatsyncProView';
 import { UserX } from 'lucide-react';
@@ -104,7 +103,6 @@ export function App() {
   const [isAudioUnlocked, setIsAudioUnlocked] = useState<boolean>(false);
 
   // Modals state
-  const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState<boolean>(false);
   const [kickedNotice, setKickedNotice] = useState<string | null>(null);
 
@@ -646,14 +644,6 @@ export function App() {
     );
   }
 
-  const handleOpenSearch = (e?: React.MouseEvent) => {
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-    setIsSearchOpen(true);
-  };
-
   return (
     <div
       onClick={() => {
@@ -675,20 +665,9 @@ export function App() {
         syncStats={syncStats}
         isAudioUnlocked={isAudioUnlocked}
         onUnlockAudio={handleUnlockAudio}
-        onOpenSearch={handleOpenSearch}
         onLeaveRoom={handleLeaveRoom}
         masterVolume={masterVolume}
       />
-
-      {/* Universal Music Catalog Search Modal */}
-      {isSearchOpen && (
-        <MusicSearchModal
-          isOpen={isSearchOpen}
-          onClose={() => setIsSearchOpen(false)}
-          queue={queue}
-          currentTrack={currentTrack}
-        />
-      )}
 
       {/* Playback History Modal */}
       <PlaybackHistoryModal
