@@ -2,10 +2,13 @@ import { socket } from './socket';
 import { SyncStats, Track } from '../types';
 import { mediaSessionService } from './mediaSession';
 
-// Detect iOS devices (iPhone, iPad, iPod, or iPadOS on MacIntel)
+// Detect iOS devices (iPhone, iPad, iPod, iPadOS on MacIntel, and WebKit touch browsers)
 export const isIOSDevice = typeof navigator !== 'undefined' && (
   /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+  (typeof (navigator as any).platform === 'string' && /iPad|iPhone|iPod/.test((navigator as any).platform)) ||
+  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) ||
+  (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1) ||
+  (typeof window !== 'undefined' && typeof document !== 'undefined' && Boolean((window as any).indexedDB && ('ontouchend' in document || (navigator.maxTouchPoints && navigator.maxTouchPoints > 0)) && /AppleWebKit/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent)))
 );
 
 class SyncEngine {
@@ -519,11 +522,15 @@ class SyncEngine {
     if (!this.audio) return;
     this.playbackStartTime = Date.now();
 
-    if (Math.abs(this.audio.currentTime - startSec) > 0.08) {
+    // Only set initial time if meaningfully different (>0.25s) to avoid AVPlayer pipeline buffer flushes
+    if (Math.abs(this.audio.currentTime - startSec) > 0.25) {
       this.setTimeSafe(startSec);
     }
 
     this.audio.volume = this.masterVolume;
+    if (isIOSDevice) {
+      this.audio.playbackRate = 1.0;
+    }
 
     const playPromise = this.audio.play();
     if (playPromise !== undefined) {
@@ -614,11 +621,11 @@ class SyncEngine {
     }
   }
 
-  // 6. Continuous Drift Correction Loop (Runs every 250ms on desktop, 400ms on iOS for smooth playback)
+  // 6. Continuous Drift Correction Loop (Runs every 250ms on desktop, 500ms on iOS for smooth playback)
   private startDriftCorrectionLoop() {
     if (this.driftCheckIntervalId) clearInterval(this.driftCheckIntervalId);
 
-    const intervalMs = isIOSDevice ? 400 : (this.networkMode === 'local' ? 120 : 250);
+    const intervalMs = isIOSDevice ? 500 : (this.networkMode === 'local' ? 120 : 250);
 
     this.driftCheckIntervalId = setInterval(() => {
       if (!this.isPlaying || !this.audio || this.audio.paused) return;
@@ -637,83 +644,41 @@ class SyncEngine {
       const driftMs = (actualPos - expectedPos) * 1000;
       this.lastDriftMs = Math.round(driftMs);
 
-      const now = Date.now();
-      const isStartupWindow = now - this.playbackStartTime < 3000;
-      const isSeekCooldown = now < this.seekCooldownUntil;
-
       if (isIOSDevice) {
-        // iOS AVPlayer Pure Smooth Rate-Based Drift Correction:
-        // NEVER hard-seek (audio.currentTime = ...) while playing on iOS!
-        // AVPlayer flushes its buffer on currentTime changes, causing an unavoidable 1s stutter.
-        // Instead, smoothly and seamlessly adjust playbackRate. Apple AVPlayer natively preserves pitch.
-        const absDrift = Math.abs(driftMs);
-
-        if (absDrift < 40) {
-          // Tight lock zone: 1.0x normal speed
-          if (this.audio.playbackRate !== 1.0) {
-            this.audio.playbackRate = 1.0;
-          }
-        } else if (driftMs >= 40 && driftMs < 180) {
-          // Slightly ahead: gently slow down by 2%
-          this.audio.playbackRate = 0.98;
-        } else if (driftMs <= -40 && driftMs > -180) {
-          // Slightly behind: gently speed up by 2%
-          this.audio.playbackRate = 1.02;
-        } else if (driftMs >= 180 && driftMs < 600) {
-          // Moderately ahead: slow down by 5%
-          this.audio.playbackRate = 0.95;
-        } else if (driftMs <= -180 && driftMs > -600) {
-          // Moderately behind: speed up by 5%
-          this.audio.playbackRate = 1.05;
-        } else if (driftMs >= 600 && driftMs < 1500) {
-          // Substantially ahead: slow down by 8%
-          this.audio.playbackRate = 0.92;
-        } else if (driftMs <= -600 && driftMs > -1500) {
-          // Substantially behind: speed up by 8%
-          this.audio.playbackRate = 1.08;
-        } else if (driftMs >= 1500 && driftMs < 4000) {
-          // Large drift: slow down by 12%
-          this.audio.playbackRate = 0.88;
-        } else if (driftMs <= -1500 && driftMs > -4000) {
-          // Large drift: speed up by 12%
-          this.audio.playbackRate = 1.12;
-        } else if (absDrift >= 4000) {
-          // Extreme catastrophic drift (>4.0 seconds, e.g. locked phone for minutes):
-          // Perform a ONE-TIME hard seek with a 10-second cooldown so it can NEVER loop!
-          if (!isStartupWindow && !isSeekCooldown && !this.audio.seeking) {
-            this.seekCooldownUntil = now + 10000;
-            this.lastSeekTime = now;
-            this.setTimeSafe(expectedPos);
-            this.audio.playbackRate = 1.0;
-          }
+        // CRITICAL FOR IPHONE / IPAD (iOS Safari & WebKit):
+        // AVPlayer on iOS maintains an internal progressive download stream.
+        // Changing playbackRate or setting currentTime during playback drains or flushes the buffer,
+        // causing repeated 1-second audio pauses every 3-4 seconds.
+        // To ensure music NEVER stops until the user pauses, lock playbackRate strictly to 1.0x
+        // and NEVER perform in-flight seeks during active playback.
+        if (this.audio.playbackRate !== 1.0) {
+          this.audio.playbackRate = 1.0;
         }
       } else {
-        // Desktop & Android Drift Correction
+        // Desktop & Android Smooth Dynamic Rate-Based Nudging:
+        // Desktop browsers (Chrome/Firefox/Edge) cleanly resample audio pitch in memory.
+        // Nudge playbackRate gently without hard seeks so music never cuts out or stutters.
         const absDrift = Math.abs(driftMs);
-        if (absDrift < 20) {
+        if (absDrift < 25) {
           if (this.audio.playbackRate !== 1.0) {
             this.audio.playbackRate = 1.0;
           }
-        } else if (driftMs >= 20 && driftMs < 80) {
-          this.audio.playbackRate = 0.97;
-        } else if (driftMs <= -20 && driftMs > -80) {
-          this.audio.playbackRate = 1.03;
-        } else if (driftMs >= 80 && driftMs < 300) {
+        } else if (driftMs >= 25 && driftMs < 100) {
+          this.audio.playbackRate = 0.98;
+        } else if (driftMs <= -25 && driftMs > -100) {
+          this.audio.playbackRate = 1.02;
+        } else if (driftMs >= 100 && driftMs < 300) {
+          this.audio.playbackRate = 0.95;
+        } else if (driftMs <= -100 && driftMs > -300) {
+          this.audio.playbackRate = 1.05;
+        } else if (driftMs >= 300 && driftMs < 800) {
           this.audio.playbackRate = 0.92;
-        } else if (driftMs <= -80 && driftMs > -300) {
+        } else if (driftMs <= -300 && driftMs > -800) {
           this.audio.playbackRate = 1.08;
-        } else if (driftMs >= 300 && driftMs < 1500) {
-          this.audio.playbackRate = 0.88;
-        } else if (driftMs <= -300 && driftMs > -1500) {
-          this.audio.playbackRate = 1.12;
-        } else if (absDrift >= 1500) {
-          // Only seek if drift is > 1.5s and not in cooldown
-          if (!isStartupWindow && !isSeekCooldown && !this.audio.seeking && now - this.lastSeekTime > 3000) {
-            this.seekCooldownUntil = now + 5000;
-            this.lastSeekTime = now;
-            this.setTimeSafe(expectedPos);
-            this.audio.playbackRate = 1.0;
-          }
+        } else if (driftMs >= 800) {
+          this.audio.playbackRate = 0.90;
+        } else if (driftMs <= -800) {
+          this.audio.playbackRate = 1.10;
         }
       }
 
