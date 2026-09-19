@@ -1867,14 +1867,21 @@ io.on('connection', (socket) => {
   });
 
   // 5. Host / DJ Playback Scheduling Controls
-  socket.on('request_play', ({ track, position }) => {
+  const handleRequestPlay = ({ track, position }) => {
     if (!currentRoomCode) return;
     const room = rooms.get(currentRoomCode);
     if (!room) return;
 
-    // Verify role (Host or DJ)
+    // Verify role (Host, DJ, single user, or everyone permission)
     const user = room.users.get(socket.id);
-    if (!user || (user.role !== 'host' && user.role !== 'dj')) {
+    const isHostOrDj = Boolean(
+      room.playbackPermission === 'everyone' ||
+      (user && (user.role === 'host' || user.role === 'dj')) ||
+      room.hostId === socket.id ||
+      (user && room.hostId === user.id) ||
+      room.users.size <= 1
+    );
+    if (!isHostOrDj) {
       return socket.emit('error_message', 'Only Host or DJ can control playback.');
     }
 
@@ -1932,15 +1939,26 @@ io.on('connection', (socket) => {
     });
 
     scheduleServerAutoAdvance(currentRoomCode);
-  });
+  };
 
-  socket.on('request_pause', (data) => {
+  socket.on('request_play', handleRequestPlay);
+  socket.on('play_track_now', handleRequestPlay);
+  socket.on('resume', handleRequestPlay);
+
+  const handleRequestPause = (data) => {
     if (!currentRoomCode) return;
     const room = rooms.get(currentRoomCode);
     if (!room) return;
 
     const user = room.users.get(socket.id);
-    if (!user || (user.role !== 'host' && user.role !== 'dj')) return;
+    const isHostOrDj = Boolean(
+      room.playbackPermission === 'everyone' ||
+      (user && (user.role === 'host' || user.role === 'dj')) ||
+      room.hostId === socket.id ||
+      (user && room.hostId === user.id) ||
+      room.users.size <= 1
+    );
+    if (!isHostOrDj) return;
 
     // Use host authoritative pause position if passed, otherwise compute from elapsed server time
     const currentPos = (data && typeof data.position === 'number' && data.position >= 0)
@@ -1956,15 +1974,25 @@ io.on('connection', (socket) => {
       position: currentPos,
       serverTime: Date.now()
     });
-  });
+  };
 
-  socket.on('request_seek', ({ position }) => {
+  socket.on('request_pause', handleRequestPause);
+  socket.on('pause', handleRequestPause);
+
+  const handleRequestSeek = ({ position }) => {
     if (!currentRoomCode) return;
     const room = rooms.get(currentRoomCode);
     if (!room || !room.currentTrack) return;
 
     const user = room.users.get(socket.id);
-    if (!user || (user.role !== 'host' && user.role !== 'dj')) return;
+    const isHostOrDj = Boolean(
+      room.playbackPermission === 'everyone' ||
+      (user && (user.role === 'host' || user.role === 'dj')) ||
+      room.hostId === socket.id ||
+      (user && room.hostId === user.id) ||
+      room.users.size <= 1
+    );
+    if (!isHostOrDj) return;
 
     const seekPos = Math.max(0, position);
     const isPlaying = room.playbackState.status === 'playing';
@@ -1992,15 +2020,25 @@ io.on('connection', (socket) => {
         serverTime: Date.now()
       });
     }
-  });
+  };
 
-  socket.on('request_skip', () => {
+  socket.on('request_seek', handleRequestSeek);
+  socket.on('seek', handleRequestSeek);
+
+  const handleRequestSkip = () => {
     if (!currentRoomCode) return;
     const room = rooms.get(currentRoomCode);
     if (!room) return;
 
     const user = room.users.get(socket.id);
-    if (!user || (user.role !== 'host' && user.role !== 'dj')) return;
+    const isHostOrDj = Boolean(
+      room.playbackPermission === 'everyone' ||
+      (user && (user.role === 'host' || user.role === 'dj')) ||
+      room.hostId === socket.id ||
+      (user && room.hostId === user.id) ||
+      room.users.size <= 1
+    );
+    if (!isHostOrDj) return;
 
     clearServerAutoAdvance(room);
 
@@ -2014,16 +2052,26 @@ io.on('connection', (socket) => {
     } else {
       stopPlaybackInRoom(room, currentRoomCode);
     }
-  });
+  };
+
+  socket.on('request_skip', handleRequestSkip);
+  socket.on('play_next', handleRequestSkip);
 
   // 5. Request Previous Track (Host or DJ only)
-  socket.on('request_previous', () => {
+  const handleRequestPrevious = () => {
     if (!currentRoomCode) return;
     const room = rooms.get(currentRoomCode);
     if (!room) return;
 
     const user = room.users.get(socket.id);
-    if (!user || (user.role !== 'host' && user.role !== 'dj')) return;
+    const isHostOrDj = Boolean(
+      room.playbackPermission === 'everyone' ||
+      (user && (user.role === 'host' || user.role === 'dj')) ||
+      room.hostId === socket.id ||
+      (user && room.hostId === user.id) ||
+      room.users.size <= 1
+    );
+    if (!isHostOrDj) return;
 
     clearServerAutoAdvance(room);
 
@@ -2033,7 +2081,10 @@ io.on('connection', (socket) => {
     } else {
       stopPlaybackInRoom(room, currentRoomCode);
     }
-  });
+  };
+
+  socket.on('request_previous', handleRequestPrevious);
+  socket.on('play_prev', handleRequestPrevious);
 
   // 5b. Master Volume Control across all connected devices (Host only)
   socket.on('set_master_volume', ({ volume }) => {
@@ -2114,7 +2165,7 @@ io.on('connection', (socket) => {
   });
 
   // 6. Collaborative Queue & Democratic Voting
-  socket.on('queue_add', ({ track }) => {
+  const handleQueueAdd = ({ track }) => {
     if (!currentRoomCode) return;
     const room = rooms.get(currentRoomCode);
     if (!room || !track) return;
@@ -2129,7 +2180,7 @@ io.on('connection', (socket) => {
       downvotes: []
     };
 
-    // Always add track to room.queue so it stays in Up Next (never automatically start playing)
+    // Always add track to room.queue so it stays in Up Next
     room.queue.push(queueItem);
     room.queue = sortQueue(room.queue);
     io.to(currentRoomCode).emit('queue_updated', { queue: room.queue });
@@ -2138,9 +2189,10 @@ io.on('connection', (socket) => {
     if (room.playbackState.status === 'playing') {
       scheduleServerAutoAdvance(currentRoomCode);
     }
+  };
 
-
-  });
+  socket.on('queue_add', handleQueueAdd);
+  socket.on('add_to_queue', handleQueueAdd);
 
   socket.on('queue_vote', ({ queueId, type }) => {
     if (!currentRoomCode) return;
@@ -2178,16 +2230,18 @@ io.on('connection', (socket) => {
     io.to(currentRoomCode).emit('queue_updated', { queue: room.queue });
   });
 
-  socket.on('queue_remove', ({ queueId, trackId }) => {
+  const handleQueueRemove = ({ queueId, trackId }) => {
     if (!currentRoomCode) return;
     const room = rooms.get(currentRoomCode);
     if (!room) return;
 
     const user = room.users.get(socket.id);
     const isHostOrDj = Boolean(
+      room.playbackPermission === 'everyone' ||
       (user && (user.role === 'host' || user.role === 'dj')) ||
       room.hostId === socket.id ||
-      (user && room.hostId === user.id)
+      (user && room.hostId === user.id) ||
+      room.users.size <= 1
     );
     if (!isHostOrDj) return;
 
@@ -2253,18 +2307,23 @@ io.on('connection', (socket) => {
         }
       }
     }
-  });
+  };
 
-  socket.on('queue_clear', () => {
+  socket.on('queue_remove', handleQueueRemove);
+  socket.on('remove_from_queue', handleQueueRemove);
+
+  const handleQueueClear = () => {
     if (!currentRoomCode) return;
     const room = rooms.get(currentRoomCode);
     if (!room) return;
 
     const user = room.users.get(socket.id);
     const isHostOrDj = Boolean(
+      room.playbackPermission === 'everyone' ||
       (user && (user.role === 'host' || user.role === 'dj')) ||
       room.hostId === socket.id ||
-      (user && room.hostId === user.id)
+      (user && room.hostId === user.id) ||
+      room.users.size <= 1
     );
     if (!isHostOrDj) return;
 
@@ -2272,15 +2331,25 @@ io.on('connection', (socket) => {
     room.queue = [];
     io.to(currentRoomCode).emit('queue_updated', { queue: [] });
     stopPlaybackInRoom(room, currentRoomCode);
-  });
+  };
 
-  socket.on('queue_shuffle', () => {
+  socket.on('queue_clear', handleQueueClear);
+  socket.on('clear_queue', handleQueueClear);
+
+  const handleQueueShuffle = () => {
     if (!currentRoomCode) return;
     const room = rooms.get(currentRoomCode);
     if (!room) return;
 
     const user = room.users.get(socket.id);
-    if (!user || (user.role !== 'host' && user.role !== 'dj')) return;
+    const isHostOrDj = Boolean(
+      room.playbackPermission === 'everyone' ||
+      (user && (user.role === 'host' || user.role === 'dj')) ||
+      room.hostId === socket.id ||
+      (user && room.hostId === user.id) ||
+      room.users.size <= 1
+    );
+    if (!isHostOrDj) return;
 
     if (room.queue.length > 1) {
       for (let i = room.queue.length - 1; i > 0; i--) {
@@ -2288,22 +2357,42 @@ io.on('connection', (socket) => {
         [room.queue[i], room.queue[j]] = [room.queue[j], room.queue[i]];
       }
       io.to(currentRoomCode).emit('queue_updated', { queue: room.queue });
-
     }
-  });
+  };
+
+  socket.on('queue_shuffle', handleQueueShuffle);
+  socket.on('toggle_shuffle', handleQueueShuffle);
 
   // 6b. Room Repeat Mode Synchronization
-  socket.on('set_repeat_mode', ({ mode }) => {
+  const handleSetRepeatMode = ({ mode }) => {
     if (!currentRoomCode) return;
     const room = rooms.get(currentRoomCode);
     if (!room) return;
 
     const user = room.users.get(socket.id);
-    if (!user || (user.role !== 'host' && user.role !== 'dj')) return;
+    const isHostOrDj = Boolean(
+      room.playbackPermission === 'everyone' ||
+      (user && (user.role === 'host' || user.role === 'dj')) ||
+      room.hostId === socket.id ||
+      (user && room.hostId === user.id) ||
+      room.users.size <= 1
+    );
+    if (!isHostOrDj) return;
 
     room.repeatMode = ['off', 'all', 'one'].includes(mode) ? mode : 'off';
     io.to(currentRoomCode).emit('repeat_mode_updated', { repeatMode: room.repeatMode });
-    scheduleServerAutoAdvance(currentRoomCode);
+  };
+
+  socket.on('set_repeat_mode', handleSetRepeatMode);
+  socket.on('toggle_repeat', handleSetRepeatMode);
+
+  // 6c. Room Playback Permission Synchronization (Everyone vs Admins)
+  socket.on('set_playback_permission', ({ permission }) => {
+    if (!currentRoomCode) return;
+    const room = rooms.get(currentRoomCode);
+    if (!room) return;
+    room.playbackPermission = permission === 'everyone' ? 'everyone' : 'admins';
+    io.to(currentRoomCode).emit('playback_permission_updated', { permission: room.playbackPermission });
   });
 
   // 7. Make Host & Transfer Host Privileges (Host Only)

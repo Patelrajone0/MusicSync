@@ -173,12 +173,32 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
     };
   }, [searchQuery]);
 
-  const handleAddSearchResult = (track: Track) => {
+  const handlePlayTrack = (track: Track) => {
+    if (!isAudioUnlocked) onUnlockAudio();
+    syncEngine.primePlayback(track, 0);
+    socket.emit('request_play', { track, position: 0 });
+    socket.emit('play_track_now', { track, position: 0 });
+  };
+
+  const handleAddSearchResult = (track: Track, autoPlay: boolean = false) => {
+    socket.emit('queue_add', { track });
     socket.emit('add_to_queue', { track });
     setAddedFeedbackId(track.id);
+
+    // If autoPlay requested or if queue is currently empty & nothing is playing:
+    if (autoPlay || (!currentTrack && queue.length === 0)) {
+      if (!isAudioUnlocked) onUnlockAudio();
+      syncEngine.primePlayback(track, 0);
+      socket.emit('request_play', { track, position: 0 });
+      socket.emit('play_track_now', { track, position: 0 });
+    }
+
+    // Return to the queue list so the user immediately sees the added songs right here to play them!
     setTimeout(() => {
-      setAddedFeedbackId((prev) => (prev === track.id ? null : prev));
-    }, 1500);
+      setSearchQuery('');
+      setSearchResults([]);
+      setAddedFeedbackId(null);
+    }, 450);
   };
 
   const isPlaying = playbackState.status === 'playing';
@@ -280,7 +300,13 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
       const file = files[0];
       const tracks = await localMusicService.importFiles([file]);
       if (tracks && tracks.length > 0) {
+        socket.emit('queue_add', { track: tracks[0] });
         socket.emit('add_to_queue', { track: tracks[0] });
+        if (!currentTrack && queue.length === 0) {
+          if (!isAudioUnlocked) onUnlockAudio();
+          syncEngine.primePlayback(tracks[0], 0);
+          socket.emit('request_play', { track: tracks[0], position: 0 });
+        }
       }
     } catch (err) {
       console.error('Failed to upload track:', err);
@@ -405,7 +431,10 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
             <div className="grid grid-cols-2 p-0.5 rounded-lg bg-black/60 border border-white/10 text-xs">
               <button
                 type="button"
-                onClick={() => isHost && setPlaybackPermission('everyone')}
+                onClick={() => {
+                  setPlaybackPermission('everyone');
+                  socket.emit('set_playback_permission', { permission: 'everyone' });
+                }}
                 className={`py-1.5 rounded-md font-semibold transition-all flex items-center justify-center gap-1 cursor-pointer ${
                   playbackPermission === 'everyone'
                     ? 'bg-white/15 text-white shadow-sm font-bold'
@@ -417,7 +446,10 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
               </button>
               <button
                 type="button"
-                onClick={() => isHost && setPlaybackPermission('admins')}
+                onClick={() => {
+                  setPlaybackPermission('admins');
+                  socket.emit('set_playback_permission', { permission: 'admins' });
+                }}
                 className={`py-1.5 rounded-md font-semibold transition-all flex items-center justify-center gap-1 cursor-pointer ${
                   playbackPermission === 'admins'
                     ? 'bg-gradient-to-r from-amber-500/30 to-amber-600/30 border border-amber-500/50 text-amber-300 font-bold shadow-[0_0_12px_rgba(245,158,11,0.25)]'
@@ -552,8 +584,20 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
               </div>
             </div>
 
-            <div className="flex items-center px-1 mt-1.5 text-[10px] font-mono text-slate-500 select-none">
+            <div className="flex items-center justify-between px-1 mt-1.5 text-[10px] font-mono text-slate-500 select-none">
               <span>⚡ [EXPERIMENTAL FREE BETA]</span>
+              {queue.length > 0 && searchQuery.trim() && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchQuery('');
+                    setSearchResults([]);
+                  }}
+                  className="text-[#10b981] hover:underline font-mono text-[10px] cursor-pointer"
+                >
+                  View Queue ({queue.length}) →
+                </button>
+              )}
             </div>
           </div>
 
@@ -580,7 +624,7 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
                     return (
                       <div
                         key={track.id}
-                        onClick={() => handleAddSearchResult(track)}
+                        onClick={() => handleAddSearchResult(track, true)}
                         className="flex items-center justify-between p-2 rounded-xl hover:bg-white/[0.06] active:bg-white/[0.08] transition-colors cursor-pointer group select-none"
                       >
                         {/* Left: Thumbnail & Info */}
@@ -617,7 +661,7 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleAddSearchResult(track);
+                              handleAddSearchResult(track, false);
                             }}
                             className={`p-1.5 rounded-lg transition-all cursor-pointer ${
                               isAdded
@@ -664,9 +708,12 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
                   return (
                     <div
                       key={track.queueId || `${track.id}-${idx}`}
-                      className="flex items-center justify-between py-2 px-1.5 sm:px-2 rounded-lg hover:bg-white/[0.03] transition-colors group"
+                      className={`flex items-center justify-between py-2 px-2 rounded-lg hover:bg-white/[0.04] transition-colors group cursor-pointer ${
+                        isCurrent ? 'bg-[#10b981]/5 border border-[#10b981]/20' : ''
+                      }`}
+                      onClick={() => handlePlayTrack(track)}
                     >
-                      {/* Left: Grip dots + Number + Title */}
+                      {/* Left: Grip dots + Number + Play Button + Title */}
                       <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
                         <span className="text-slate-600 group-hover:text-slate-400 text-xs shrink-0 select-none opacity-40 font-mono tracking-tighter">
                           ⠿
@@ -678,21 +725,35 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
                           {idx + 1}
                         </span>
 
+                        {/* Play / Active Volume Icon Button */}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handlePlayTrack(track);
+                          }}
+                          className={`w-6 h-6 rounded-full flex items-center justify-center transition-all cursor-pointer shrink-0 ${
+                            isCurrent && isPlaying
+                              ? 'text-[#10b981] bg-[#10b981]/20 shadow-[0_0_8px_rgba(16,185,129,0.3)]'
+                              : 'text-slate-400 hover:text-white hover:bg-white/10'
+                          }`}
+                          title={isCurrent && isPlaying ? 'Playing' : 'Play now'}
+                        >
+                          {isCurrent && isPlaying ? (
+                            <Volume2 className="w-3.5 h-3.5 animate-pulse" />
+                          ) : (
+                            <Play className="w-3 h-3 fill-current ml-0.5" />
+                          )}
+                        </button>
+
                         <div className="min-w-0 flex-1">
                           <span
-                            onClick={() => {
-                              if (canControl) {
-                                socket.emit('play_track_now', { track, position: 0 });
-                              }
-                            }}
                             className={`text-xs sm:text-[13px] truncate block transition-colors ${
-                              canControl ? 'cursor-pointer hover:underline' : ''
-                            } ${
                               isCurrent
                                 ? 'text-[#10b981] font-semibold'
                                 : 'text-slate-200 group-hover:text-white font-normal'
                             }`}
-                            title={canControl ? 'Click to play now' : undefined}
+                            title="Click to play now"
                           >
                             {displayTitle}
                           </span>
@@ -708,7 +769,11 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
                         {canControl && (
                           <button
                             type="button"
-                            onClick={() => socket.emit('remove_from_queue', { queueId: track.queueId, trackId: track.id })}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              socket.emit('queue_remove', { queueId: track.queueId, trackId: track.id });
+                              socket.emit('remove_from_queue', { queueId: track.queueId, trackId: track.id });
+                            }}
                             className="text-slate-500 hover:text-rose-400 transition-colors p-1 text-xs cursor-pointer"
                             title="Remove from queue"
                           >
@@ -1017,7 +1082,10 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
           <div className="flex items-center gap-4">
             <button
               type="button"
-              onClick={() => socket.emit('toggle_shuffle')}
+              onClick={() => {
+                socket.emit('queue_shuffle');
+                socket.emit('toggle_shuffle');
+              }}
               className="p-1 text-slate-400 hover:text-white transition-colors cursor-pointer"
               title="Shuffle"
             >
@@ -1026,7 +1094,10 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
 
             <button
               type="button"
-              onClick={() => socket.emit('play_prev')}
+              onClick={() => {
+                socket.emit('request_previous');
+                socket.emit('play_prev');
+              }}
               className="p-1 text-slate-300 hover:text-white transition-colors cursor-pointer"
               title="Previous"
             >
@@ -1039,12 +1110,18 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
               onClick={() => {
                 if (!isAudioUnlocked) {
                   onUnlockAudio();
-                  return;
                 }
                 if (isPlaying) {
-                  socket.emit('pause');
+                  syncEngine.pausePlayback(currentPosition);
+                  socket.emit('request_pause', { position: currentPosition });
+                  socket.emit('pause', { position: currentPosition });
                 } else {
-                  socket.emit('resume');
+                  const target = currentTrack || (queue.length > 0 ? queue[0] : null);
+                  if (target) {
+                    syncEngine.primePlayback(target, currentPosition);
+                    socket.emit('request_play', { track: target, position: currentPosition });
+                    socket.emit('resume');
+                  }
                 }
               }}
               className="w-9 h-9 rounded-full bg-white hover:bg-slate-200 text-black flex items-center justify-center transition-all active:scale-95 shadow-lg cursor-pointer"
@@ -1059,7 +1136,10 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
 
             <button
               type="button"
-              onClick={() => socket.emit('play_next')}
+              onClick={() => {
+                socket.emit('request_skip');
+                socket.emit('play_next');
+              }}
               className="p-1 text-slate-300 hover:text-white transition-colors cursor-pointer"
               title="Next"
             >
@@ -1068,7 +1148,10 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
 
             <button
               type="button"
-              onClick={() => socket.emit('toggle_repeat')}
+              onClick={() => {
+                socket.emit('set_repeat_mode', { mode: 'all' });
+                socket.emit('toggle_repeat');
+              }}
               className="p-1 text-[#10b981] transition-colors cursor-pointer relative"
               title="Repeat"
             >
@@ -1088,6 +1171,8 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
                 const clickX = e.clientX - rect.left;
                 const pct = Math.max(0, Math.min(1, clickX / rect.width));
                 const targetTime = pct * trackDur;
+                syncEngine.seekPlayback(targetTime);
+                socket.emit('request_seek', { position: targetTime });
                 socket.emit('seek', { position: targetTime });
               }}
             >
