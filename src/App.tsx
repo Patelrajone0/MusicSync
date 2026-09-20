@@ -21,6 +21,7 @@ import { UserX } from 'lucide-react';
 import { userTasteEngine } from './services/userTaste';
 import { getDeviceId } from './utils/deviceId';
 import { triggerMonetagAds, ADS_ENABLED } from './services/adManager';
+import { analytics } from './services/analytics';
 
 const SESSION_STORAGE_KEY = 'musicsync_user_session';
 const USER_NAME_STORAGE_KEY = 'musicsync_user_name';
@@ -429,6 +430,13 @@ export function App() {
     setQueue(room.queue || []);
     setCurrentTrack(room.currentTrack || null);
     setPlaybackState(room.playbackState);
+
+    // Track analytics event for room session
+    if (user.role === 'host') {
+      analytics.trackRoomCreated(room.code, room.networkMode);
+    } else {
+      analytics.trackRoomJoined(room.code, user.role);
+    }
     if (typeof room.masterVolume === 'number') {
       setMasterVolume(room.masterVolume);
       syncEngine.setVolume(room.masterVolume);

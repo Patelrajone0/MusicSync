@@ -41,6 +41,7 @@ import { useFavorites } from '../services/favoritesService';
 import { localMusicService } from '../services/localMusicService';
 import { NetworkModeModal, NetworkMode } from './NetworkModeModal';
 import { HeaderBrandLogo } from './HeaderBrandLogo';
+import { analytics } from '../services/analytics';
 
 interface BeatsyncProViewProps {
   roomCode: string;
@@ -293,6 +294,7 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
       try {
         const res = await searchTracks(q, 'all', 0);
         setSearchResults(res.tracks || []);
+        analytics.trackSearch(q);
       } catch (err) {
         console.error('Search error:', err);
         setSearchResults([]);
@@ -310,6 +312,7 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
     if (!isAudioUnlocked) onUnlockAudio();
     syncEngine.primePlayback(track, 0);
     socket.emit('request_play', { track, position: 0 });
+    analytics.trackPlay(track.title, track.artist);
   };
 
   const handleAddSearchResult = (track: Track) => {
@@ -338,6 +341,7 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
     }
     if (isPlaying) {
       syncEngine.pausePlayback(currentPosition);
+      analytics.trackPause(currentTrack?.title);
       if (canControl) {
         socket.emit('request_pause', { position: currentPosition });
         socket.emit('pause', { position: currentPosition });
@@ -347,6 +351,7 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
       if (target) {
         const startPos = currentTrack ? currentPosition : 0;
         syncEngine.primePlayback(target, startPos);
+        analytics.trackPlay(target.title, target.artist);
         if (canControl) {
           socket.emit('request_play', { track: target, position: startPos });
           socket.emit('resume');
