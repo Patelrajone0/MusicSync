@@ -2,9 +2,11 @@
 <html lang="en" class="dark" style="margin: 0; padding: 0; background-color: #06060a; width: 100%; height: 100%; overflow-x: hidden;">
   <head>
     <meta charset="UTF-8" />
-    <!-- Monetag Ad Tags - Dynamically Scheduled (30s on Login / Lobby, 5m on Main / Room) -->
+    <!-- Monetag Ad Tags (Currently Paused - Set __MS_ADS_ENABLED__ = true to re-enable) -->
     <script>
+      window.__MS_ADS_ENABLED__ = false;
       window.__MS_TRIGGER_MONETAG__ = function() {
+        if (!window.__MS_ADS_ENABLED__) return;
         // 1. In-Page Push (Zone 11822158)
         if (!document.querySelector('script[data-zone="11822158"]')) {
           var s1 = document.createElement('script');
@@ -33,8 +35,8 @@
     <meta name="apple-mobile-web-app-title" content="MusicSync" />
     <title>MusicSync | Multi-Device Synchronized Music System</title>
     <meta name="description" content="Turn any group of phones, laptops, and speakers into a perfectly synchronized sound system with zero-delay real-time audio playback." />
-    <!-- Google AdSense Verification -->
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7606917595989618" crossorigin="anonymous"></script>
+    <!-- Google AdSense Verification (Currently Paused - Uncomment when re-enabling) -->
+    <!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7606917595989618" crossorigin="anonymous"></script> -->
     <!-- Critical reset styles to prevent any initial browser white margins/borders -->
     <style>
       *, *::before, *::after {

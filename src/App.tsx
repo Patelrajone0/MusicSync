@@ -19,7 +19,7 @@ import { UserX } from 'lucide-react';
 
 import { userTasteEngine } from './services/userTaste';
 import { getDeviceId } from './utils/deviceId';
-import { triggerMonetagAds } from './services/adManager';
+import { triggerMonetagAds, ADS_ENABLED } from './services/adManager';
 
 const SESSION_STORAGE_KEY = 'musicsync_user_session';
 const USER_NAME_STORAGE_KEY = 'musicsync_user_name';
@@ -229,10 +229,9 @@ export function App() {
     });
   }, [currentUser, currentTrack, isAudioUnlocked]);
 
-  // Ad Timing Controller:
-  // - 30 seconds delay on Login page (Lobby)
-  // - At least 5 minutes (300 seconds) delay on Main page (inside Room)
+  // Ad Timing Controller (Master controlled via ADS_ENABLED in adManager.ts)
   useEffect(() => {
+    if (!ADS_ENABLED) return;
     const delayMs = roomCode ? 5 * 60 * 1000 : 30 * 1000;
     const timer = setTimeout(() => {
       triggerMonetagAds();

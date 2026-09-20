@@ -1,16 +1,25 @@
 /**
- * MusicSync Dynamic Ad Scheduler
- * - 30 seconds delay on Login page (Lobby)
- * - At least 5 minutes (300 seconds) delay on Main page (Inside Room)
+ * MusicSync Dynamic Ad Scheduler & Master Controller
+ * 
+ * MASTER TOGGLE:
+ * Set ADS_ENABLED = true whenever you want to re-enable ads in the future.
+ * Set ADS_ENABLED = false to pause all ads completely across the application.
  */
+export const ADS_ENABLED = false;
 
 declare global {
   interface Window {
     __MS_TRIGGER_MONETAG__?: () => void;
+    __MS_ADS_ENABLED__?: boolean;
   }
 }
 
 export function triggerMonetagAds() {
+  if (!ADS_ENABLED) {
+    // Ads are completely paused
+    return;
+  }
+
   try {
     if (typeof window !== 'undefined') {
       if (typeof window.__MS_TRIGGER_MONETAG__ === 'function') {
