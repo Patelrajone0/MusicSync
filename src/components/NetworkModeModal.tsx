@@ -10,6 +10,8 @@ interface NetworkModeModalProps {
   onClose: () => void;
   roomCode: string | null;
   currentMode: NetworkMode;
+  isHost?: boolean;
+  onToggleMode?: () => void;
 }
 
 export const NetworkModeModal: React.FC<NetworkModeModalProps> = ({
@@ -17,6 +19,8 @@ export const NetworkModeModal: React.FC<NetworkModeModalProps> = ({
   onClose,
   roomCode,
   currentMode,
+  isHost = false,
+  onToggleMode,
 }) => {
   const [localIp, setLocalIp] = useState<string>('');
   const [localUrl, setLocalUrl] = useState<string>('');
@@ -236,7 +240,34 @@ export const NetworkModeModal: React.FC<NetworkModeModalProps> = ({
           </div>
         </div>
 
-        {/* Modal Footer: Simple Close Button (No mode switching) */}
+        {/* Host Mode Switcher (Allows Room Host to switch between Private Wi-Fi and Public Cloud) */}
+        {isHost && onToggleMode && (
+          <div className="pt-3 border-t border-white/10 mb-2">
+            <button
+              type="button"
+              onClick={onToggleMode}
+              className={`w-full py-2.5 px-4 rounded-xl text-xs font-bold transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer shadow-md active:scale-95 ${
+                isLocalMode
+                  ? 'bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-500/40 shadow-[0_0_12px_rgba(0,240,255,0.2)]'
+                  : 'bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 shadow-[0_0_12px_rgba(52,211,153,0.2)]'
+              }`}
+            >
+              {isLocalMode ? (
+                <>
+                  <Globe className="w-4 h-4 text-cyan-400 shrink-0" />
+                  <span>Switch to Public Online Cloud (Allow Anyone Worldwide)</span>
+                </>
+              ) : (
+                <>
+                  <Lock className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <span>Switch to Private Local Wi-Fi (Same Network Only)</span>
+                </>
+              )}
+            </button>
+          </div>
+        )}
+
+        {/* Modal Footer: Simple Close Button */}
         <div className="pt-2 border-t border-white/10">
           <button
             type="button"

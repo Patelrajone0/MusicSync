@@ -2218,6 +2218,8 @@ io.on('connection', (socket) => {
           hostId: room.hostId
         });
       }
+    } else if (mode === 'online') {
+      room.hostNetworkIp = null;
     }
 
     io.to(currentRoomCode).emit('room_network_mode_updated', {

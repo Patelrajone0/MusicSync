@@ -1458,6 +1458,11 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
           onClose={() => setIsQRModalOpen(false)}
           roomCode={roomCode}
           currentMode={networkMode}
+          isHost={isHost}
+          onToggleMode={() => {
+            const nextMode = networkMode === 'local' ? 'online' : 'local';
+            socket.emit('set_room_network_mode', { mode: nextMode });
+          }}
         />
       )}
 
