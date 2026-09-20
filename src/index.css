@@ -409,3 +409,16 @@ button,
   }
 }
 
+/* 5. Cyber Wave Pulse for dynamic audio bars */
+@keyframes cyberWavePulse {
+  0% {
+    transform: scaleY(0.25);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+
