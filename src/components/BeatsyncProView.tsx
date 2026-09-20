@@ -114,8 +114,21 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
   const [volume, setVolume] = useState<number>(masterVolume);
   const [isMuted, setIsMuted] = useState(false);
 
-  // QR Modal
+  // QR Modal & Leave Room Confirmation Modal
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+
+  // Dismiss leave confirmation modal on Escape key press
+  useEffect(() => {
+    if (!showLeaveConfirm) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setShowLeaveConfirm(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showLeaveConfirm]);
 
   // Chat state
   interface SafeChatMessage {
@@ -564,8 +577,8 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
           {/* Leave Room Button */}
           <button
             type="button"
-            onClick={onLeaveRoom}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 hover:bg-rose-500/15 border border-white/10 hover:border-rose-500/30 text-slate-400 hover:text-rose-400 transition-all cursor-pointer text-xs font-medium"
+            onClick={() => setShowLeaveConfirm(true)}
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 hover:bg-rose-500/15 border border-white/10 hover:border-rose-500/30 text-slate-400 hover:text-rose-400 transition-all cursor-pointer text-xs font-medium active:scale-95"
             title="Leave Room"
           >
             <LogOut className="w-3.5 h-3.5" />
@@ -1483,6 +1496,61 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
             socket.emit('set_room_network_mode', { mode: nextMode });
           }}
         />
+      )}
+
+      {/* Exit Room Confirmation Modal */}
+      {showLeaveConfirm && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in select-none"
+          onClick={() => setShowLeaveConfirm(false)}
+        >
+          <div
+            className="relative w-full max-w-sm rounded-2xl bg-[#121217] border border-white/10 p-5 sm:p-6 shadow-[0_16px_50px_rgba(0,0,0,0.85)] overflow-hidden animate-scale-up"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Ambient background glow */}
+            <div className="absolute -top-10 -right-10 w-32 h-32 bg-rose-500/20 rounded-full blur-2xl pointer-events-none" />
+            <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-rose-500/10 rounded-full blur-2xl pointer-events-none" />
+
+            {/* Modal Content */}
+            <div className="flex flex-col items-center text-center relative z-10">
+              <div className="w-12 h-12 rounded-2xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center text-rose-400 mb-3.5 shadow-[0_0_20px_rgba(244,63,94,0.25)]">
+                <LogOut className="w-6 h-6 stroke-[2.2]" />
+              </div>
+
+              <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
+                Exit Room?
+              </h3>
+
+              <p className="text-xs sm:text-sm text-slate-400 mt-2 leading-relaxed">
+                Are you sure you want to exit <span className="font-semibold text-white"># Room {roomCode}</span>? You will be disconnected from the synchronized music session.
+              </p>
+
+              {/* Action Buttons */}
+              <div className="flex items-center gap-3 w-full mt-6">
+                <button
+                  type="button"
+                  onClick={() => setShowLeaveConfirm(false)}
+                  className="flex-1 py-2.5 px-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white text-xs sm:text-sm font-semibold transition-all cursor-pointer active:scale-95"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowLeaveConfirm(false);
+                    onLeaveRoom();
+                  }}
+                  className="flex-1 py-2.5 px-4 rounded-xl bg-gradient-to-r from-rose-500 to-red-600 hover:from-rose-600 hover:to-red-700 text-white text-xs sm:text-sm font-semibold transition-all shadow-[0_0_16px_rgba(244,63,94,0.35)] cursor-pointer flex items-center justify-center gap-1.5 active:scale-95"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>Exit Room</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
