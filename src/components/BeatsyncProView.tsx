@@ -31,10 +31,7 @@ import {
   Plus,
   Loader2,
   Music,
-  X,
-  Wifi,
-  Globe,
-  Lock
+  X
 } from 'lucide-react';
 import { Track, PlaybackState, UserRole, SyncStats, User } from '../types';
 import { syncEngine } from '../services/syncEngine';
@@ -564,36 +561,6 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
 
         {/* Right: Room Controls */}
         <div className="flex items-center gap-1.5 sm:gap-2">
-          {/* Network Mode Status Indicator (Just beside Leave Room button) */}
-          <button
-            type="button"
-            onClick={() => setIsQRModalOpen(true)}
-            className={`group/netmode flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 rounded-lg border text-xs font-semibold transition-all duration-200 active:scale-95 cursor-pointer select-none ${
-              networkMode === 'online'
-                ? 'bg-cyan-500/15 hover:bg-cyan-500/25 border-cyan-400/40 text-cyan-300 shadow-[0_0_10px_rgba(0,240,255,0.2)]'
-                : 'bg-emerald-500/15 hover:bg-emerald-500/25 border-emerald-400/40 text-emerald-300 shadow-[0_0_10px_rgba(52,211,153,0.2)]'
-            }`}
-            title={
-              networkMode === 'online'
-                ? 'Public Room (Online Cloud) · Anyone can join worldwide. Click for QR code & invite link'
-                : 'Private Room (Local Wi-Fi) · Devices on same Wi-Fi/hotspot only. Click for QR code & invite link'
-            }
-          >
-            {networkMode === 'online' ? (
-              <>
-                <Globe className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-                <span className="hidden sm:inline text-[11px] font-bold text-cyan-300">Public Cloud</span>
-                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_6px_rgba(0,240,255,0.9)] shrink-0" />
-              </>
-            ) : (
-              <>
-                <Wifi className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                <span className="hidden sm:inline text-[11px] font-bold text-emerald-300">Private Wi-Fi</span>
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.9)] animate-pulse shrink-0" />
-              </>
-            )}
-          </button>
-
           {/* Leave Room Button */}
           <button
             type="button"
@@ -795,9 +762,8 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
               </div>
             </div>
 
-            <div className="flex items-center justify-between px-1 mt-1.5 text-[10px] font-mono text-slate-500 select-none">
-              <span>⚡ [EXPERIMENTAL FREE BETA]</span>
-              {queue.length > 0 && searchQuery.trim() && (
+            {queue.length > 0 && searchQuery.trim() && (
+              <div className="flex items-center justify-end px-1 mt-1.5 text-[10px] font-mono select-none">
                 <button
                   type="button"
                   onClick={() => {
@@ -808,8 +774,8 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
                 >
                   View Queue ({queue.length}) →
                 </button>
-              )}
-            </div>
+              </div>
+            )}
           </div>
 
           {/* MAIN CENTER CONTENT AREA: SEARCH RESULTS OR ADDED SONGS (QUEUE) */}
