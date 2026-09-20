@@ -86,8 +86,8 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
   const [playbackPermission, setPlaybackPermission] = useState<'everyone' | 'admins'>('admins');
   const canControl = playbackPermission === 'everyone' || myRole === 'host' || myRole === 'dj';
 
-  // Right column tab: 'spatial' vs 'chat'
-  const [rightTab, setRightTab] = useState<'spatial' | 'chat'>('spatial');
+  // Right column tab: 'chat' vs 'spatial' (Chat default)
+  const [rightTab, setRightTab] = useState<'spatial' | 'chat'>('chat');
 
   // Mobile bottom tab: 'queue' | 'spatial' | 'chat' | 'room'
   const [mobileTab, setMobileTab] = useState<'queue' | 'spatial' | 'chat' | 'room'>('queue');
