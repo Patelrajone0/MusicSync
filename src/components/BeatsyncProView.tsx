@@ -43,13 +43,7 @@ import { cleanTrackTitle, searchTracks } from '../services/musicApi';
 import { useFavorites } from '../services/favoritesService';
 import { localMusicService } from '../services/localMusicService';
 import { NetworkModeModal, NetworkMode } from './NetworkModeModal';
-import {
-  HeaderBrandLogo,
-  LogoPickerModal,
-  LogoStyleId,
-  getSavedLogoStyle,
-  saveLogoStyle
-} from './HeaderBrandLogo';
+import { HeaderBrandLogo } from './HeaderBrandLogo';
 
 interface BeatsyncProViewProps {
   roomCode: string;
@@ -177,17 +171,6 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
 
   // Favorites
   const { isFavorite, toggleFavorite } = useFavorites();
-  // Brand Logo Style: Dynamic Pulse Equalizer
-  const [logoStyle, setLogoStyle] = useState<LogoStyleId>(() => {
-    saveLogoStyle('pulse-equalizer');
-    return 'pulse-equalizer';
-  });
-  const [isLogoPickerOpen, setIsLogoPickerOpen] = useState(false);
-
-  const handleSelectLogoStyle = (style: LogoStyleId) => {
-    setLogoStyle(style);
-    saveLogoStyle(style);
-  };
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -483,10 +466,7 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
       <header className="shrink-0 h-9 bg-[#060608] border-b border-white/[0.08] px-3 sm:px-4 flex items-center justify-between text-[11px] font-mono text-slate-400 select-none z-30">
         {/* Left: Brand + Buffer + Room Code + User count */}
         <div className="flex items-center gap-2 sm:gap-3 overflow-hidden">
-          <HeaderBrandLogo
-            activeStyle={logoStyle}
-            onOpenPicker={() => setIsLogoPickerOpen(true)}
-          />
+          <HeaderBrandLogo />
 
           <span className="text-white/20 hidden sm:inline">•</span>
 
@@ -1462,14 +1442,6 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
           }}
         />
       )}
-
-      {/* Interactive Brand Logo Style Picker Modal */}
-      <LogoPickerModal
-        isOpen={isLogoPickerOpen}
-        onClose={() => setIsLogoPickerOpen(false)}
-        activeStyle={logoStyle}
-        onSelectStyle={handleSelectLogoStyle}
-      />
     </div>
   );
 };
