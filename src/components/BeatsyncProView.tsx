@@ -481,13 +481,6 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
           <span className="text-slate-300 font-semibold truncate">
             # {roomCode}
           </span>
-
-          <span className="text-white/20 hidden sm:inline">•</span>
-
-          <div className="flex items-center gap-1 text-slate-400">
-            <Users className="w-3 h-3 text-slate-500" />
-            <span>{users.length} {users.length === 1 ? 'user' : 'users'}</span>
-          </div>
         </div>
 
         {/* Center: Real-time Audio Latency Telemetry */}
@@ -564,15 +557,6 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
               <h2 className="text-sm font-bold text-white tracking-tight flex items-center gap-1.5 truncate">
                 <span># Room {roomCode}</span>
               </h2>
-              <span
-                className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-md border uppercase shrink-0 ${
-                  networkMode === 'online'
-                    ? 'bg-cyan-500/15 border-cyan-400/30 text-cyan-300'
-                    : 'bg-emerald-500/15 border-emerald-400/30 text-emerald-300'
-                }`}
-              >
-                {networkMode === 'online' ? 'Public' : 'Private'}
-              </span>
             </div>
             <button
               type="button"
