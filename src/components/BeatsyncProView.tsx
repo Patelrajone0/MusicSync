@@ -331,6 +331,103 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
 
   const isPlaying = playbackState.status === 'playing';
 
+  // Toggle Play / Pause Handler
+  const handleTogglePlay = () => {
+    if (!isAudioUnlocked) {
+      onUnlockAudio();
+    }
+    if (isPlaying) {
+      syncEngine.pausePlayback(currentPosition);
+      if (canControl) {
+        socket.emit('request_pause', { position: currentPosition });
+        socket.emit('pause', { position: currentPosition });
+      }
+    } else {
+      const target = currentTrack || (queue.length > 0 ? queue[0] : null);
+      if (target) {
+        const startPos = currentTrack ? currentPosition : 0;
+        syncEngine.primePlayback(target, startPos);
+        if (canControl) {
+          socket.emit('request_play', { track: target, position: startPos });
+          socket.emit('resume');
+        } else {
+          syncEngine.resumeLocalAudio();
+        }
+      }
+    }
+  };
+
+  const handleTogglePlayRef = useRef(handleTogglePlay);
+  useEffect(() => {
+    handleTogglePlayRef.current = handleTogglePlay;
+  });
+
+  // Global Keyboard Shortcut: Spacebar for Instant Play / Pause on Windows, Mac & Linux
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore key repeat when holding down the key
+      if (e.repeat) return;
+
+      // Detect Spacebar across all Windows, Mac, and Linux browsers
+      if (e.code === 'Space' || e.key === ' ' || e.key === 'Spacebar' || e.keyCode === 32) {
+        const target = e.target as HTMLElement | null;
+        const activeEl = document.activeElement as HTMLElement | null;
+
+        const isTextInput = (el: HTMLElement | null): boolean => {
+          if (!el) return false;
+          if (el.tagName === 'TEXTAREA' || el.isContentEditable || el.getAttribute('contenteditable') === 'true') {
+            return true;
+          }
+          if (el.tagName === 'INPUT') {
+            const type = (el as HTMLInputElement).type?.toLowerCase() || 'text';
+            const nonTextTypes = [
+              'button',
+              'submit',
+              'reset',
+              'checkbox',
+              'radio',
+              'range',
+              'file',
+              'color',
+              'image',
+            ];
+            return !nonTextTypes.includes(type);
+          }
+          return Boolean(
+            el.closest(
+              'textarea, [contenteditable="true"], input:not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="color"]):not([type="image"])'
+            )
+          );
+        };
+
+        // If currently focused on any text input or textarea, allow normal space typing
+        if (isTextInput(target) || isTextInput(activeEl)) {
+          return;
+        }
+
+        // Prevent page scroll down and prevent accidental trigger of whatever button/link had focus
+        e.preventDefault();
+        e.stopPropagation();
+
+        // Blur any active button, slider, or interactive element so spacebar doesn't trigger its click event
+        if (target && typeof target.blur === 'function') {
+          target.blur();
+        }
+        if (activeEl && typeof activeEl.blur === 'function') {
+          activeEl.blur();
+        }
+
+        // Efficiently execute play/pause toggle with zero delay
+        handleTogglePlayRef.current();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown, { capture: true });
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown, { capture: true });
+    };
+  }, []);
+
   // Listen for sync engine position updates
   useEffect(() => {
     const unsub = syncEngine.onPositionUpdate((pos, dur) => {
@@ -1431,25 +1528,9 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
             {/* Play/Pause Button (Matching Lobby Primary Cyan Glow Button) */}
             <button
               type="button"
-              onClick={() => {
-                if (!isAudioUnlocked) {
-                  onUnlockAudio();
-                }
-                if (isPlaying) {
-                  syncEngine.pausePlayback(currentPosition);
-                  socket.emit('request_pause', { position: currentPosition });
-                  socket.emit('pause', { position: currentPosition });
-                } else {
-                  const target = currentTrack || (queue.length > 0 ? queue[0] : null);
-                  if (target) {
-                    syncEngine.primePlayback(target, currentPosition);
-                    socket.emit('request_play', { track: target, position: currentPosition });
-                    socket.emit('resume');
-                  }
-                }
-              }}
+              onClick={handleTogglePlay}
               className="w-10 h-10 rounded-full bg-gradient-to-r from-cyan-400 via-sky-400 to-cyan-300 hover:brightness-110 text-black font-extrabold flex items-center justify-center transition-all active:scale-95 shadow-[0_0_20px_rgba(0,240,255,0.45)] cursor-pointer"
-              title={isPlaying ? 'Pause' : 'Play'}
+              title={isPlaying ? 'Pause (Space)' : 'Play (Space)'}
             >
               {isPlaying ? (
                 <Pause className="w-4 h-4 fill-current" />
