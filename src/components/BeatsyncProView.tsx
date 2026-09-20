@@ -155,7 +155,9 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
 
     const isSystem = Boolean(m?.isSystem || name.toLowerCase() === 'system');
     const isYou = Boolean(m?.userId && (m.userId === socket.id || (currentUser && m.userId === currentUser.id)));
-    const timeStr = m?.time || (m?.timestamp ? new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Now');
+    const timeStr = m?.timestamp
+      ? new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      : (m?.time || 'Now');
 
     return {
       id: String(m?.id || `${Date.now()}-${Math.random()}`),
@@ -287,10 +289,17 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
 
     const handleChatHistory = (data: { messages: any[] }) => {
       if (Array.isArray(data?.messages)) {
-        // Exclude generic system join notices so users see clean chat history or "No messages yet" when conversation hasn't started
-        const userMessages = data.messages
-          .filter((m) => !m.isSystem && m.userName !== 'System' && m.user?.name !== 'System')
-          .map(normalizeChatMessage);
+        // Exclude system notices and deduplicate by message ID
+        const seenIds = new Set<string>();
+        const userMessages: SafeChatMessage[] = [];
+        for (const rawMsg of data.messages) {
+          if (rawMsg.isSystem || rawMsg.userName === 'System' || rawMsg.user?.name === 'System') continue;
+          const normalized = normalizeChatMessage(rawMsg);
+          if (!seenIds.has(normalized.id)) {
+            seenIds.add(normalized.id);
+            userMessages.push(normalized);
+          }
+        }
         setChatMessages(userMessages);
         setTimeout(() => {
           chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -422,20 +431,8 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
     e.preventDefault();
     if (!chatInput.trim()) return;
     const text = chatInput.trim();
-    const optimisticMsg: SafeChatMessage = {
-      id: `chat-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-      userName: currentUser?.name || 'You',
-      avatarColor: currentUser?.avatarColor || '#10b981',
-      text,
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      isYou: true
-    };
-    setChatMessages((prev) => [...prev, optimisticMsg]);
     socket.emit('send_chat', { text });
     setChatInput('');
-    setTimeout(() => {
-      chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, 50);
   };
 
   const handleUploadClick = () => {

@@ -2630,14 +2630,15 @@ io.on('connection', (socket) => {
   });
 
   // 8.6. Real-Time Room Chat (Multi-Device Broadcast & History)
-  socket.on('send_chat', ({ text }) => {
+  socket.on('send_chat', ({ text, id }) => {
     if (!currentRoomCode || !text || typeof text !== 'string' || !text.trim()) return;
     const room = rooms.get(currentRoomCode);
     if (!room) return;
 
     const user = room.users.get(socket.id);
+    const now = Date.now();
     const msg = {
-      id: `chat-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      id: (id && typeof id === 'string') ? id : `chat-${now}-${Math.random().toString(36).substring(2, 6)}`,
       userName: user ? user.name : 'Guest',
       user: {
         id: socket.id,
@@ -2648,8 +2649,7 @@ io.on('connection', (socket) => {
       userId: socket.id,
       role: user ? user.role : 'listener',
       text: text.trim(),
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      timestamp: Date.now()
+      timestamp: now
     };
 
     if (!room.chatMessages) room.chatMessages = [];
