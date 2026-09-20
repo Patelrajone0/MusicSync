@@ -544,12 +544,23 @@ export function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [kickedNotice]);
 
-  // Prevent browser from automatically scrolling down on entering room or reloading
+  // Lock window scroll strictly at (0, 0) to prevent browser from shifting layout
   useEffect(() => {
     if ('scrollRestoration' in window.history) {
       window.history.scrollRestoration = 'manual';
     }
-    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    const resetScroll = () => {
+      if (window.scrollY !== 0 || window.scrollX !== 0) {
+        window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      }
+    };
+    resetScroll();
+    window.addEventListener('scroll', resetScroll, { passive: true });
+    window.addEventListener('resize', resetScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', resetScroll);
+      window.removeEventListener('resize', resetScroll);
+    };
   }, [roomCode]);
 
   // Reconnecting splash screen during page refresh
@@ -651,7 +662,7 @@ export function App() {
       onTouchStart={() => {
         if (!isAudioUnlocked) handleUnlockAudio();
       }}
-      className="h-screen h-[100dvh] max-h-screen overflow-hidden bg-dark-950 text-slate-100 flex flex-col relative w-full max-w-full font-sans"
+      className="fixed inset-0 w-full h-full h-[100dvh] max-h-[100dvh] overflow-hidden bg-dark-950 text-slate-100 flex flex-col font-sans select-none"
     >
       <BeatsyncProView
         roomCode={roomCode}

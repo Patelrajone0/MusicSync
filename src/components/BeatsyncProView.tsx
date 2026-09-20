@@ -177,7 +177,16 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
 
   const [chatMessages, setChatMessages] = useState<SafeChatMessage[]>([]);
   const [chatInput, setChatInput] = useState('');
-  const chatEndRef = useRef<HTMLDivElement | null>(null);
+  const chatScrollContainerRef = useRef<HTMLDivElement | null>(null);
+
+  const scrollToChatBottom = (behavior: ScrollBehavior = 'smooth') => {
+    if (chatScrollContainerRef.current) {
+      chatScrollContainerRef.current.scrollTo({
+        top: chatScrollContainerRef.current.scrollHeight,
+        behavior,
+      });
+    }
+  };
 
   // Favorites
   const { isFavorite, toggleFavorite } = useFavorites();
@@ -333,6 +342,15 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
     return unsub;
   }, [isDraggingScrubber, currentTrack]);
 
+  // Auto-scroll chat container to bottom when rightTab or mobileTab changes to 'chat'
+  useEffect(() => {
+    if (rightTab === 'chat' || mobileTab === 'chat') {
+      requestAnimationFrame(() => {
+        scrollToChatBottom('auto');
+      });
+    }
+  }, [rightTab, mobileTab]);
+
   // Listen for real-time room chat messages and playback permission updates
   useEffect(() => {
     const handleNewChatMessage = (msg: any) => {
@@ -341,9 +359,9 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
         if (prev.some((m) => m.id === normalized.id)) return prev;
         return [...prev, normalized];
       });
-      setTimeout(() => {
-        chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-      }, 50);
+      requestAnimationFrame(() => {
+        scrollToChatBottom('smooth');
+      });
     };
 
     const handleChatHistory = (data: { messages: any[] }) => {
@@ -360,9 +378,9 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
           }
         }
         setChatMessages(userMessages);
-        setTimeout(() => {
-          chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-        }, 100);
+        requestAnimationFrame(() => {
+          scrollToChatBottom('auto');
+        });
       }
     };
 
@@ -492,6 +510,9 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
     const text = chatInput.trim();
     socket.emit('send_chat', { text });
     setChatInput('');
+    if (window.scrollY !== 0 || window.scrollX !== 0) {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    }
   };
 
   const handleUploadClick = () => {
@@ -1203,7 +1224,10 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
               <div className="absolute top-0 left-1/2 -translate-x-1/2 w-36 h-[1px] bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent pointer-events-none" />
 
               {/* Message scroll container or empty state */}
-              <div className="flex-1 min-h-0 overflow-y-auto p-3 flex flex-col">
+              <div
+                ref={chatScrollContainerRef}
+                className="flex-1 min-h-0 overflow-y-auto p-3 flex flex-col overscroll-contain"
+              >
                 {chatMessages.length === 0 ? (
                   <div className="flex-1 flex flex-col items-center justify-center text-center p-4 select-none my-auto">
                     <div className="w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center text-slate-500 mb-3">
@@ -1248,7 +1272,6 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
                         </div>
                       </div>
                     ))}
-                    <div ref={chatEndRef} />
                   </div>
                 )}
               </div>
@@ -1260,6 +1283,11 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
                     type="text"
                     value={chatInput}
                     onChange={(e) => setChatInput(e.target.value)}
+                    onBlur={() => {
+                      if (window.scrollY !== 0 || window.scrollX !== 0) {
+                        window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+                      }
+                    }}
                     placeholder="Message"
                     className="w-full bg-dark-900/90 border border-white/10 hover:border-cyan-400/30 focus:border-cyan-400 focus:shadow-[0_0_16px_rgba(0,240,255,0.2)] rounded-full px-4 py-2.5 sm:py-3 text-xs sm:text-sm text-white placeholder:text-slate-500 focus:outline-none transition-all pr-10"
                   />

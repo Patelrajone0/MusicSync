@@ -209,7 +209,7 @@ export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' 
   };
 
   return (
-    <div className="min-h-screen bg-[#09090b] text-zinc-200 flex flex-col justify-center items-center px-4 py-8 relative overflow-hidden font-sans select-none antialiased">
+    <div className="h-full w-full min-h-screen bg-[#09090b] text-zinc-200 flex flex-col justify-center items-center px-4 py-8 relative overflow-y-auto font-sans select-none antialiased">
       {/* Subtle, dark, atmospheric ambient vignette */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_-15%,rgba(120,119,198,0.07),rgba(0,0,0,0))] pointer-events-none" />
 
