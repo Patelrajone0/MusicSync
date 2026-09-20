@@ -10,7 +10,7 @@ import {
 import { RoomState, User } from '../types';
 import { socket } from '../services/socket';
 import { syncEngine } from '../services/syncEngine';
-import { Logo, LogoVariant } from './Logo';
+import { Logo } from './Logo';
 import { getDeviceId } from '../utils/deviceId';
 import { NetworkMode } from './NetworkModeModal';
 
@@ -20,27 +20,10 @@ interface LobbyProps {
 }
 
 const USER_NAME_STORAGE_KEY = 'musicsync_user_name';
-const LOGO_VARIANT_STORAGE_KEY = 'musicsync_logo_variant';
 
 export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' }) => {
   // Mode: 'create' | 'join'
   const [activeTab, setActiveTab] = useState<'create' | 'join'>(initialRoomCode ? 'join' : 'create');
-
-  // Logo Style Variant Demo: 'titanium' | 'vector' | 'wordmark' | 'neon'
-  const [logoVariant, setLogoVariant] = useState<LogoVariant>(() => {
-    try {
-      return (localStorage.getItem(LOGO_VARIANT_STORAGE_KEY) as LogoVariant) || 'titanium';
-    } catch {
-      return 'titanium';
-    }
-  });
-
-  const handleSelectLogo = (v: LogoVariant) => {
-    setLogoVariant(v);
-    try {
-      localStorage.setItem(LOGO_VARIANT_STORAGE_KEY, v);
-    } catch {}
-  };
 
   const [userName, setUserName] = useState<string>(() => {
     try {
@@ -236,7 +219,7 @@ export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' 
         style={isEntering ? { animation: 'cyberBlurWarp 0.45s cubic-bezier(0.4, 0, 0.2, 1) forwards' } : {}}
       >
         {/* Brand Header */}
-        <div className="text-center mb-5 flex flex-col items-center">
+        <div className="text-center mb-6 flex flex-col items-center">
           <a
             href="/"
             onClick={(e) => {
@@ -244,42 +227,10 @@ export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' 
               handleRefresh();
             }}
             title="Refresh MusicSync"
-            className="inline-flex flex-col items-center group cursor-pointer focus:outline-none transition-transform active:scale-98 mb-2"
+            className="inline-flex flex-col items-center group cursor-pointer focus:outline-none transition-transform active:scale-98"
           >
-            <Logo size="lg" layout="vertical" variant={logoVariant} showTagline={false} />
+            <Logo size="lg" layout="vertical" variant="titanium" showTagline={false} />
           </a>
-          <p className="text-xs text-zinc-400 max-w-xs mx-auto mt-1 leading-relaxed">
-            Zero-latency synchronized audio streaming across phones and laptops.
-          </p>
-
-          {/* Logo Style Live Demo Selector */}
-          <div className="mt-3.5 p-1 rounded-xl bg-zinc-900/90 border border-white/[0.08] inline-flex items-center gap-1 shadow-lg select-none">
-            <span className="text-[10px] font-mono text-zinc-500 uppercase px-2 tracking-wider font-semibold">
-              Logo:
-            </span>
-            {[
-              { id: 'titanium', label: 'Titanium' },
-              { id: 'vector', label: 'Vector Wave' },
-              { id: 'wordmark', label: 'Wordmark' },
-              { id: 'neon', label: 'Original' },
-            ].map((item) => {
-              const isActive = logoVariant === item.id;
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => handleSelectLogo(item.id as LogoVariant)}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer ${
-                    isActive
-                      ? 'bg-zinc-800 text-white shadow-sm font-semibold'
-                      : 'text-zinc-400 hover:text-zinc-200'
-                  }`}
-                >
-                  {item.label}
-                </button>
-              );
-            })}
-          </div>
         </div>
 
         {/* Modern Classic Dark Card */}

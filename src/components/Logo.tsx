@@ -39,13 +39,17 @@ export const Logo: React.FC<LogoProps> = ({
         <div className={`flex flex-col items-center text-center group select-none ${className}`}>
           <div className="relative flex flex-col items-center">
             {/* Subtle, dark ambient halo */}
-            <div className="absolute -inset-4 bg-white/[0.03] rounded-full blur-2xl pointer-events-none" />
+            <div className="absolute -inset-4 bg-white/[0.02] rounded-full blur-2xl pointer-events-none" />
 
-            {/* Dark Brushed Titanium Emblem */}
+            {/* Dark Brushed Titanium Emblem & Wordmark (Seamlessly blended into background) */}
             <img
-              src="/musicsync-dark-logo.jpg"
+              src="/musicsync-dark-logo.png"
               alt="MusicSync Titanium"
-              className="w-full max-w-[260px] sm:max-w-[320px] h-auto object-contain rounded-2xl relative z-10 shadow-2xl transition-transform duration-300 group-hover:scale-[1.01]"
+              className="w-full max-w-[280px] sm:max-w-[320px] h-auto object-contain relative z-10 transition-transform duration-300 group-hover:scale-[1.01]"
+              style={{
+                WebkitMaskImage: 'radial-gradient(ellipse 92% 82% at 50% 50%, black 60%, transparent 100%)',
+                maskImage: 'radial-gradient(ellipse 92% 82% at 50% 50%, black 60%, transparent 100%)',
+              }}
             />
 
             {showTagline && (
