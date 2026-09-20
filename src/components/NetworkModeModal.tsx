@@ -96,7 +96,7 @@ export const NetworkModeModal: React.FC<NetworkModeModalProps> = ({
       role="dialog"
       aria-modal="true"
       onClick={onClose}
-      className="fixed inset-0 z-[9999] bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 animate-fade-in"
+      className="fixed inset-0 z-[9999] bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 pt-[calc(0.75rem+env(safe-area-inset-top,0px))] pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] animate-fade-in"
     >
       <div
         onClick={(e) => e.stopPropagation()}

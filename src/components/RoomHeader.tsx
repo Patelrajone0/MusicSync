@@ -129,7 +129,7 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-dark-950/90 backdrop-blur-xl px-3 sm:px-5 lg:px-6 py-2 sm:py-2.5 w-full select-none border-b border-white/5">
+    <header className="sticky top-0 z-40 bg-dark-950/90 backdrop-blur-xl px-3 sm:px-5 lg:px-6 pt-[calc(0.5rem+env(safe-area-inset-top,0px))] pb-2 sm:pb-2.5 w-full select-none border-b border-white/5">
       <div className="flex items-center justify-between gap-2 sm:gap-3 w-full">
         {/* Dynamic Island Unified Cyber Capsule (Variation 1A) */}
         <div className="inline-flex items-center bg-dark-900/90 hover:bg-dark-850 border border-white/10 hover:border-cyan-400/40 rounded-full p-0.5 sm:p-1 pl-1 sm:pl-1.5 pr-1 shadow-lg transition-all duration-200 gap-1 sm:gap-2.5 shrink-0 select-none">

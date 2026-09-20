@@ -563,12 +563,13 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
       />
 
       {/* 1. TOP TELEMETRY HUD BAR (MusicSync Pro Studio) */}
-      <header className="shrink-0 h-11 bg-dark-900/80 backdrop-blur-2xl border-b border-white/10 px-3 sm:px-5 flex items-center justify-between text-[11px] font-mono text-slate-400 select-none z-30 relative shadow-[0_4px_24px_rgba(0,0,0,0.6),0_1px_12px_rgba(0,240,255,0.03)]">
+      <header className="shrink-0 bg-dark-900/85 backdrop-blur-2xl border-b border-white/10 px-3 sm:px-5 pt-[env(safe-area-inset-top,0px)] select-none z-30 relative shadow-[0_4px_24px_rgba(0,0,0,0.6),0_1px_12px_rgba(0,240,255,0.03)]">
         {/* Ambient cyber accent line matching Lobby */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 sm:w-72 h-[1.5px] bg-gradient-to-r from-transparent via-cyan-400/60 to-transparent pointer-events-none" />
+        <div className="absolute top-[env(safe-area-inset-top,0px)] left-1/2 -translate-x-1/2 w-48 sm:w-72 h-[1.5px] bg-gradient-to-r from-transparent via-cyan-400/60 to-transparent pointer-events-none" />
 
-        {/* Left: Brand + Buffer + Room Code */}
-        <div className="flex items-center gap-2 sm:gap-3 overflow-hidden">
+        <div className="h-11 flex items-center justify-between text-[11px] font-mono text-slate-400 w-full">
+          {/* Left: Brand + Buffer + Room Code */}
+          <div className="flex items-center gap-2 sm:gap-3 overflow-hidden">
           <HeaderBrandLogo />
 
           <span className="text-white/20 hidden sm:inline">•</span>
@@ -613,6 +614,7 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
             <LogOut className="w-3.5 h-3.5" />
             <span className="hidden sm:inline text-[11px]">Leave</span>
           </button>
+        </div>
         </div>
       </header>
 
@@ -1349,7 +1351,7 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
       </nav>
 
       {/* 4. BOTTOM MASTER PLAYBACK BAR */}
-      <footer className="shrink-0 bg-dark-900/90 backdrop-blur-2xl border-t border-white/10 px-3 sm:px-6 py-2.5 flex flex-col md:flex-row items-center justify-between gap-3 z-40 select-none relative shadow-[0_-4px_30px_rgba(0,0,0,0.8),0_-1px_15px_rgba(0,240,255,0.04)]">
+      <footer className="shrink-0 bg-dark-900/90 backdrop-blur-2xl border-t border-white/10 px-3 sm:px-6 pt-2 sm:pt-2.5 pb-[calc(0.625rem+env(safe-area-inset-bottom,0px))] flex flex-col md:flex-row items-center justify-between gap-2.5 sm:gap-3 z-40 select-none relative shadow-[0_-4px_30px_rgba(0,0,0,0.8),0_-1px_15px_rgba(0,240,255,0.04)]">
         {/* Top ambient cyber hairline */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 sm:w-96 h-[1.5px] bg-gradient-to-r from-transparent via-cyan-400/60 to-transparent pointer-events-none" />
 

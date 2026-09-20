@@ -664,7 +664,7 @@ export function App() {
       onTouchStart={() => {
         if (!isAudioUnlocked) handleUnlockAudio();
       }}
-      className="fixed inset-0 w-full h-full h-[100dvh] max-h-[100dvh] overflow-hidden bg-dark-950 text-slate-100 flex flex-col font-sans select-none"
+      className="fixed inset-0 w-full h-full overflow-hidden bg-dark-950 text-slate-100 flex flex-col font-sans select-none pl-[env(safe-area-inset-left,0px)] pr-[env(safe-area-inset-right,0px)]"
     >
       <BeatsyncProView
         roomCode={roomCode}

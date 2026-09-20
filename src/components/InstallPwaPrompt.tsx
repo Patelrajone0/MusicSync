@@ -114,7 +114,7 @@ export const InstallPwaPrompt: React.FC = () => {
       role="dialog"
       aria-modal="true"
       aria-labelledby="pwa-install-title"
-      className="fixed inset-0 z-[99999] flex items-end sm:items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md transition-all duration-300 animate-in fade-in"
+      className="fixed inset-0 z-[99999] flex items-end sm:items-center justify-center p-3 sm:p-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] bg-black/80 backdrop-blur-md transition-all duration-300 animate-in fade-in"
     >
       {/* Modal Container */}
       <div
