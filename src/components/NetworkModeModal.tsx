@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Wifi, Globe, Zap, Check, Copy, X, QrCode, Smartphone, Info } from 'lucide-react';
+import { Wifi, Globe, Zap, Check, Copy, X, QrCode, Smartphone, Info, Lock } from 'lucide-react';
 import QRCode from 'qrcode';
 
 export type NetworkMode = 'local' | 'online';
@@ -108,11 +108,11 @@ export const NetworkModeModal: React.FC<NetworkModeModalProps> = ({
                   : 'bg-cyan-500/15 border-cyan-500/30 text-cyan-400 shadow-[0_0_12px_rgba(0,240,255,0.3)]'
               }`}
             >
-              {isLocalMode ? <Wifi className="w-5 h-5" /> : <Globe className="w-5 h-5" />}
+              {isLocalMode ? <Lock className="w-5 h-5" /> : <Globe className="w-5 h-5" />}
             </div>
             <div>
               <h3 className="text-base sm:text-lg font-black text-white tracking-tight flex items-center gap-2">
-                {isLocalMode ? 'Local Wi-Fi Room' : 'Online Cloud Room'}
+                {isLocalMode ? 'Private Local Room' : 'Public Online Room'}
                 <span
                   className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full uppercase border ${
                     isLocalMode
@@ -120,13 +120,13 @@ export const NetworkModeModal: React.FC<NetworkModeModalProps> = ({
                       : 'bg-cyan-950/80 border-cyan-400/40 text-cyan-300'
                   }`}
                 >
-                  {isLocalMode ? '0ms Delay' : 'Worldwide'}
+                  {isLocalMode ? '🔒 Same Wi-Fi Only' : '🌐 Open to Anyone'}
                 </span>
               </h3>
               <p className="text-xs text-slate-400">
                 {isLocalMode
-                  ? 'Strict same-network mode for zero-latency playback'
-                  : 'Open for all devices on any network (4G/5G/Wi-Fi)'}
+                  ? 'Private: Only devices connected to the host\'s Wi-Fi or mobile hotspot can join.'
+                  : 'Public: Open to everyone from any network worldwide (4G/5G/Wi-Fi).'}
               </p>
             </div>
           </div>

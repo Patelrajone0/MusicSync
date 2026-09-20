@@ -16,6 +16,7 @@ import {
   QrCode,
   Users,
   MessageSquare,
+  MessageCircle,
   Compass,
   ArrowUp,
   RotateCw,
@@ -30,7 +31,10 @@ import {
   Plus,
   Loader2,
   Music,
-  X
+  X,
+  Wifi,
+  Globe,
+  Lock
 } from 'lucide-react';
 import { Track, PlaybackState, UserRole, SyncStats, User } from '../types';
 import { syncEngine } from '../services/syncEngine';
@@ -38,7 +42,7 @@ import { socket } from '../services/socket';
 import { cleanTrackTitle, searchTracks } from '../services/musicApi';
 import { useFavorites } from '../services/favoritesService';
 import { localMusicService } from '../services/localMusicService';
-import { NetworkModeModal } from './NetworkModeModal';
+import { NetworkModeModal, NetworkMode } from './NetworkModeModal';
 import {
   HeaderBrandLogo,
   LogoPickerModal,
@@ -60,6 +64,7 @@ interface BeatsyncProViewProps {
   onUnlockAudio: () => void;
   onLeaveRoom: () => void;
   masterVolume?: number;
+  networkMode?: NetworkMode;
 }
 
 export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
@@ -74,7 +79,8 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
   isAudioUnlocked,
   onUnlockAudio,
   onLeaveRoom,
-  masterVolume = 0.9
+  masterVolume = 0.9,
+  networkMode = 'local',
 }) => {
   const isHost = Boolean(
     currentUser && (
@@ -121,9 +127,49 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
 
   // Chat state
-  const [chatMessages, setChatMessages] = useState<Array<{ id: string; user: string; text: string; time: string; isYou?: boolean }>>([
-    { id: '1', user: 'System', text: `Welcome to Room #${roomCode}! All devices are synced with microsecond clock alignment.`, time: 'Now' }
-  ]);
+  interface SafeChatMessage {
+    id: string;
+    userName: string;
+    userRole?: string;
+    avatarColor?: string;
+    text: string;
+    time: string;
+    isYou?: boolean;
+    isSystem?: boolean;
+  }
+
+  const normalizeChatMessage = (m: any): SafeChatMessage => {
+    let name = 'Guest';
+    let color = '#38bdf8';
+    let role = 'listener';
+
+    if (m?.user && typeof m.user === 'object') {
+      name = m.user.name || 'Guest';
+      color = m.user.avatarColor || color;
+      role = m.user.role || role;
+    } else if (typeof m?.userName === 'string' && m.userName.trim()) {
+      name = m.userName.trim();
+    } else if (typeof m?.user === 'string' && m.user.trim()) {
+      name = m.user.trim();
+    }
+
+    const isSystem = Boolean(m?.isSystem || name.toLowerCase() === 'system');
+    const isYou = Boolean(m?.userId && (m.userId === socket.id || (currentUser && m.userId === currentUser.id)));
+    const timeStr = m?.time || (m?.timestamp ? new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Now');
+
+    return {
+      id: String(m?.id || `${Date.now()}-${Math.random()}`),
+      userName: name,
+      userRole: role,
+      avatarColor: color,
+      text: String(m?.text || ''),
+      time: timeStr,
+      isYou,
+      isSystem
+    };
+  };
+
+  const [chatMessages, setChatMessages] = useState<SafeChatMessage[]>([]);
   const [chatInput, setChatInput] = useState('');
   const chatEndRef = useRef<HTMLDivElement | null>(null);
 
@@ -228,10 +274,11 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
 
   // Listen for real-time room chat messages and playback permission updates
   useEffect(() => {
-    const handleNewChatMessage = (msg: { id: string; user: string; userId?: string; text: string; time: string }) => {
+    const handleNewChatMessage = (msg: any) => {
+      const normalized = normalizeChatMessage(msg);
       setChatMessages((prev) => {
-        if (prev.some((m) => m.id === msg.id)) return prev;
-        return [...prev, { ...msg, isYou: msg.userId === socket.id }];
+        if (prev.some((m) => m.id === normalized.id)) return prev;
+        return [...prev, normalized];
       });
       setTimeout(() => {
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -239,13 +286,12 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
     };
 
     const handleChatHistory = (data: { messages: any[] }) => {
-      if (Array.isArray(data?.messages) && data.messages.length > 0) {
-        setChatMessages(
-          data.messages.map((m) => ({
-            ...m,
-            isYou: m.userId === socket.id
-          }))
-        );
+      if (Array.isArray(data?.messages)) {
+        // Exclude generic system join notices so users see clean chat history or "No messages yet" when conversation hasn't started
+        const userMessages = data.messages
+          .filter((m) => !m.isSystem && m.userName !== 'System' && m.user?.name !== 'System')
+          .map(normalizeChatMessage);
+        setChatMessages(userMessages);
         setTimeout(() => {
           chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
         }, 100);
@@ -376,8 +422,20 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
     e.preventDefault();
     if (!chatInput.trim()) return;
     const text = chatInput.trim();
+    const optimisticMsg: SafeChatMessage = {
+      id: `chat-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      userName: currentUser?.name || 'You',
+      avatarColor: currentUser?.avatarColor || '#10b981',
+      text,
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      isYou: true
+    };
+    setChatMessages((prev) => [...prev, optimisticMsg]);
     socket.emit('send_chat', { text });
     setChatInput('');
+    setTimeout(() => {
+      chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, 50);
   };
 
   const handleUploadClick = () => {
@@ -470,7 +528,38 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
         </div>
 
         {/* Right: Room Controls */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          {/* Network Mode Status Indicator (Just beside Leave Room button) */}
+          <button
+            type="button"
+            onClick={() => setIsQRModalOpen(true)}
+            className={`group/netmode flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 rounded-lg border text-xs font-semibold transition-all duration-200 active:scale-95 cursor-pointer select-none ${
+              networkMode === 'online'
+                ? 'bg-cyan-500/15 hover:bg-cyan-500/25 border-cyan-400/40 text-cyan-300 shadow-[0_0_10px_rgba(0,240,255,0.2)]'
+                : 'bg-emerald-500/15 hover:bg-emerald-500/25 border-emerald-400/40 text-emerald-300 shadow-[0_0_10px_rgba(52,211,153,0.2)]'
+            }`}
+            title={
+              networkMode === 'online'
+                ? 'Public Room (Online Cloud) · Anyone can join worldwide. Click for QR code & invite link'
+                : 'Private Room (Local Wi-Fi) · Devices on same Wi-Fi/hotspot only. Click for QR code & invite link'
+            }
+          >
+            {networkMode === 'online' ? (
+              <>
+                <Globe className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                <span className="hidden sm:inline text-[11px] font-bold text-cyan-300">Public Cloud</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_6px_rgba(0,240,255,0.9)] shrink-0" />
+              </>
+            ) : (
+              <>
+                <Wifi className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                <span className="hidden sm:inline text-[11px] font-bold text-emerald-300">Private Wi-Fi</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.9)] animate-pulse shrink-0" />
+              </>
+            )}
+          </button>
+
+          {/* Leave Room Button */}
           <button
             type="button"
             onClick={onLeaveRoom}
@@ -494,14 +583,25 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
         }`}>
           {/* Room Header & QR Trigger */}
           <div className="flex items-center justify-between shrink-0">
-            <h2 className="text-sm font-bold text-white tracking-tight flex items-center gap-1.5">
-              <span># Room {roomCode}</span>
-            </h2>
+            <div className="flex items-center gap-2 min-w-0">
+              <h2 className="text-sm font-bold text-white tracking-tight flex items-center gap-1.5 truncate">
+                <span># Room {roomCode}</span>
+              </h2>
+              <span
+                className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-md border uppercase shrink-0 ${
+                  networkMode === 'online'
+                    ? 'bg-cyan-500/15 border-cyan-400/30 text-cyan-300'
+                    : 'bg-emerald-500/15 border-emerald-400/30 text-emerald-300'
+                }`}
+              >
+                {networkMode === 'online' ? 'Public' : 'Private'}
+              </span>
+            </div>
             <button
               type="button"
               onClick={() => setIsQRModalOpen(true)}
-              className="flex items-center gap-1 px-2 py-1 rounded bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white text-xs font-semibold cursor-pointer transition-all"
-              title="View Room QR Code"
+              className="flex items-center gap-1 px-2 py-1 rounded bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white text-xs font-semibold cursor-pointer transition-all shrink-0"
+              title="View Room QR Code & Info"
             >
               <QrCode className="w-3 h-3" />
               <span>QR</span>
@@ -877,33 +977,39 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
         {/* ========================================================= */}
         {/* COLUMN 3: RIGHT (Spatial Audio, 8D Effects & Live Chat)   */}
         {/* ========================================================= */}
-        <aside className={`w-full md:w-72 lg:w-80 shrink-0 bg-[#0a0a0d] border-l border-white/[0.08] flex-col p-3.5 gap-3 overflow-y-auto ${
+        <aside className={`w-full md:w-72 lg:w-80 shrink-0 bg-[#0a0a0d] border-l border-white/[0.08] flex flex-col p-3 sm:p-3.5 gap-3 h-full overflow-hidden ${
           mobileTab === 'spatial' || mobileTab === 'chat' ? 'flex' : 'hidden md:flex'
         }`}>
           {/* Segmented Top Tab Switcher: Chat vs Spatial */}
-          <div className="grid grid-cols-2 p-0.5 rounded-lg bg-black/60 border border-white/10 text-xs shrink-0">
+          <div className="grid grid-cols-2 p-1 rounded-xl bg-[#121216] border border-white/10 text-xs shrink-0">
             <button
               type="button"
-              onClick={() => setRightTab('chat')}
-              className={`py-1.5 rounded-md font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+              onClick={() => {
+                setRightTab('chat');
+                setMobileTab('chat');
+              }}
+              className={`py-2 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer ${
                 rightTab === 'chat'
-                  ? 'bg-white/15 text-white shadow-sm font-bold'
+                  ? 'bg-[#1e1e24] text-white shadow-sm border border-white/10 font-bold'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
-              <MessageSquare className="w-3.5 h-3.5" />
+              <MessageCircle className="w-4 h-4" />
               <span>Chat</span>
             </button>
             <button
               type="button"
-              onClick={() => setRightTab('spatial')}
-              className={`py-1.5 rounded-md font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+              onClick={() => {
+                setRightTab('spatial');
+                setMobileTab('spatial');
+              }}
+              className={`py-2 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer ${
                 rightTab === 'spatial'
-                  ? 'bg-[#10b981]/20 border border-[#10b981]/40 text-[#10b981] font-bold shadow-[0_0_12px_rgba(16,185,129,0.2)]'
+                  ? 'bg-[#1e1e24] text-white shadow-sm border border-white/10 font-bold'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
-              <Compass className="w-3.5 h-3.5" />
+              <Compass className="w-4 h-4" />
               <span>Spatial</span>
             </button>
           </div>
@@ -1039,45 +1145,78 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
 
           {/* CHAT TAB VIEW */}
           {rightTab === 'chat' && (
-            <div className="flex-1 flex flex-col min-h-0 bg-[#060608] rounded-xl border border-white/5 overflow-hidden">
-              <div className="flex-1 min-h-0 overflow-y-auto p-2.5 space-y-2">
-                {chatMessages.map((m) => (
-                  <div
-                    key={m.id}
-                    className={`flex flex-col text-xs leading-snug ${
-                      m.isYou ? 'items-end' : 'items-start'
-                    }`}
-                  >
-                    <span className="text-[10px] text-slate-500 mb-0.5 font-mono">
-                      {m.isYou ? 'You' : m.user} • {m.time}
-                    </span>
-                    <div className={`p-2 rounded-xl max-w-[85%] break-words ${
-                      m.isYou
-                        ? 'bg-[#10b981]/20 border border-[#10b981]/30 text-white'
-                        : 'bg-white/5 border border-white/10 text-slate-200'
-                    }`}>
-                      {m.text}
+            <div className="flex-1 flex flex-col min-h-0 bg-[#060608] rounded-2xl border border-white/[0.06] overflow-hidden">
+              {/* Message scroll container or empty state */}
+              <div className="flex-1 min-h-0 overflow-y-auto p-3 flex flex-col">
+                {chatMessages.length === 0 ? (
+                  <div className="flex-1 flex flex-col items-center justify-center text-center p-4 select-none my-auto">
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center text-slate-500 mb-3">
+                      <MessageCircle className="w-14 h-14 sm:w-16 sm:h-16 stroke-[1.2]" />
                     </div>
+                    <h3 className="text-base sm:text-lg font-bold text-slate-200 tracking-tight">
+                      No messages yet
+                    </h3>
+                    <p className="text-xs sm:text-sm text-slate-500 mt-1 font-normal">
+                      Start the conversation
+                    </p>
                   </div>
-                ))}
-                <div ref={chatEndRef} />
+                ) : (
+                  <div className="space-y-3">
+                    {chatMessages.map((m) => (
+                      <div
+                        key={m.id}
+                        className={`flex flex-col text-xs leading-snug ${
+                          m.isYou ? 'items-end' : 'items-start'
+                        }`}
+                      >
+                        <div className="flex items-center gap-1.5 mb-1 px-1">
+                          <span
+                            className="w-1.5 h-1.5 rounded-full shrink-0"
+                            style={{ backgroundColor: m.avatarColor || '#38bdf8' }}
+                          />
+                          <span className="text-[10px] text-slate-400 font-medium font-mono">
+                            {m.isYou ? 'You' : m.userName}
+                          </span>
+                          <span className="text-[10px] text-slate-600 font-mono">
+                            {m.time}
+                          </span>
+                        </div>
+                        <div
+                          className={`px-3 py-2 rounded-2xl max-w-[85%] break-words text-xs ${
+                            m.isYou
+                              ? 'bg-emerald-500/20 border border-emerald-500/30 text-emerald-100 rounded-br-sm'
+                              : 'bg-white/5 border border-white/10 text-slate-200 rounded-bl-sm'
+                          }`}
+                        >
+                          {m.text}
+                        </div>
+                      </div>
+                    ))}
+                    <div ref={chatEndRef} />
+                  </div>
+                )}
               </div>
 
-              <form onSubmit={handleSendChat} className="p-2 border-t border-white/5 flex gap-1.5 shrink-0">
-                <input
-                  type="text"
-                  value={chatInput}
-                  onChange={(e) => setChatInput(e.target.value)}
-                  placeholder="Chat with room..."
-                  className="flex-1 bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-[#10b981]"
-                />
-                <button
-                  type="submit"
-                  className="px-3 py-1.5 rounded-lg bg-[#10b981] text-black font-bold text-xs hover:bg-emerald-400 cursor-pointer"
-                >
-                  <Send className="w-3.5 h-3.5" />
-                </button>
-              </form>
+              {/* Bottom Message Input Bar */}
+              <div className="p-2.5 sm:p-3 border-t border-white/[0.08] bg-[#0d0d11]/90 backdrop-blur-sm shrink-0">
+                <form onSubmit={handleSendChat} className="relative flex items-center w-full">
+                  <input
+                    type="text"
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    placeholder="Message"
+                    className="w-full bg-[#141418] border border-white/[0.08] hover:border-white/15 focus:border-white/25 rounded-2xl px-4 py-2.5 sm:py-3 text-xs sm:text-sm text-white placeholder:text-slate-500 focus:outline-none transition-all pr-10"
+                  />
+                  <button
+                    type="submit"
+                    disabled={!chatInput.trim()}
+                    className="absolute right-2 p-1.5 rounded-xl text-slate-400 hover:text-white disabled:opacity-20 disabled:hover:text-slate-400 transition-all cursor-pointer disabled:cursor-default"
+                    title="Send Message"
+                  >
+                    <Send className="w-4 h-4" />
+                  </button>
+                </form>
+              </div>
             </div>
           )}
         </aside>
@@ -1095,7 +1234,10 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
         </button>
         <button
           type="button"
-          onClick={() => setMobileTab('spatial')}
+          onClick={() => {
+            setMobileTab('spatial');
+            setRightTab('spatial');
+          }}
           className={`flex flex-col items-center gap-0.5 ${mobileTab === 'spatial' ? 'text-[#10b981] font-bold' : 'text-slate-400'}`}
         >
           <Compass className="w-4 h-4" />
@@ -1103,10 +1245,13 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
         </button>
         <button
           type="button"
-          onClick={() => setMobileTab('chat')}
+          onClick={() => {
+            setMobileTab('chat');
+            setRightTab('chat');
+          }}
           className={`flex flex-col items-center gap-0.5 ${mobileTab === 'chat' ? 'text-[#10b981] font-bold' : 'text-slate-400'}`}
         >
-          <MessageSquare className="w-4 h-4" />
+          <MessageCircle className="w-4 h-4" />
           <span>Chat</span>
         </button>
         <button
@@ -1312,7 +1457,7 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
           isOpen={isQRModalOpen}
           onClose={() => setIsQRModalOpen(false)}
           roomCode={roomCode}
-          currentMode="local"
+          currentMode={networkMode}
         />
       )}
 

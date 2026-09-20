@@ -1643,6 +1643,59 @@ function normalizeIp(ip) {
   return str;
 }
 
+function isPrivateOrLocalIp(ip) {
+  if (!ip) return false;
+  const normalized = normalizeIp(ip);
+  if (normalized === '127.0.0.1' || normalized === 'localhost') return true;
+  // 10.0.0.0 - 10.255.255.255
+  if (/^10\./.test(normalized)) return true;
+  // 172.16.0.0 - 172.31.255.255
+  if (/^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(normalized)) return true;
+  // 192.168.0.0 - 192.168.255.255 (Standard home Wi-Fi & mobile hotspot)
+  if (/^192\.168\./.test(normalized)) return true;
+  // Link-local 169.254.x.x
+  if (/^169\.254\./.test(normalized)) return true;
+  // IPv6 local
+  if (normalized.startsWith('fe80:') || normalized.startsWith('fc00:') || normalized.startsWith('fd00:')) return true;
+  return false;
+}
+
+function isSameNetwork(ip1, ip2) {
+  if (!ip1 || !ip2) return false;
+  const norm1 = normalizeIp(ip1);
+  const norm2 = normalizeIp(ip2);
+
+  // 1. Direct match: Exact same WAN public IP (same Wi-Fi router / mobile hotspot NAT in cloud)
+  if (norm1 === norm2) return true;
+
+  // 2. Localhost & Private LAN / Hotspot pairing
+  // When running server locally on a laptop/PC:
+  // Host on localhost (127.0.0.1) and client connected via Wi-Fi/Hotspot (192.168.x.x, 10.x.x.x)
+  if (
+    (norm1 === '127.0.0.1' && isPrivateOrLocalIp(norm2)) ||
+    (norm2 === '127.0.0.1' && isPrivateOrLocalIp(norm1))
+  ) {
+    return true;
+  }
+
+  // 3. Both on private LAN / Hotspot subnets
+  if (isPrivateOrLocalIp(norm1) && isPrivateOrLocalIp(norm2)) {
+    const parts1 = norm1.split('.');
+    const parts2 = norm2.split('.');
+    if (parts1.length === 4 && parts2.length === 4) {
+      if (parts1[0] === parts2[0] && parts1[1] === parts2[1] && parts1[2] === parts2[2]) {
+        return true; // same /24 subnet (standard Wi-Fi router / Android hotspot)
+      }
+      if (parts1[0] === '10' && parts2[0] === '10' && parts1[1] === parts2[1]) {
+        return true; // same 10.x.x subnet
+      }
+    }
+  }
+
+  return false;
+}
+
+
 io.on('connection', (socket) => {
   let currentRoomCode = null;
   let currentUser = null;
@@ -1679,11 +1732,27 @@ io.on('connection', (socket) => {
       ip: clientIp
     };
 
+    const isOnline = data?.networkMode === 'online';
+    const roomNetworkMode = isOnline ? 'online' : 'local';
+    const hostIp = isOnline ? null : clientIp;
+
+    const initialSystemMessage = {
+      id: `msg-${Date.now()}`,
+      userName: 'System',
+      user: { name: 'System', role: 'system', avatarColor: '#00f0ff' },
+      text: roomNetworkMode === 'local'
+        ? `Room ${code} created (Private · Same Wi-Fi/Hotspot only).`
+        : `Room ${code} created (Public · Open to Everyone worldwide).`,
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      timestamp: Date.now(),
+      isSystem: true
+    };
+
     const newRoom = {
       code,
       createdAt: Date.now(),
       hostId: socket.id,
-      hostNetworkIp: clientIp,
+      hostNetworkIp: hostIp,
       users: new Map([[socket.id, user]]),
       queue: [],
       currentTrack: null,
@@ -1694,19 +1763,11 @@ io.on('connection', (socket) => {
         lastPausedPosition: 0,
         duration: 0
       },
-      chatMessages: [
-        {
-          id: `msg-${Date.now()}`,
-          user: { name: 'System', role: 'system', avatarColor: '#00f0ff' },
-          text: `Room ${code} created! Turn your devices into synchronized speakers.`,
-          timestamp: Date.now(),
-          isSystem: true
-        }
-      ],
+      chatMessages: [initialSystemMessage],
       masterVolume: 0.9,
       repeatMode: 'off',
       playbackPermission: 'admins',
-      networkMode: data?.networkMode === 'online' ? 'online' : 'local',
+      networkMode: roomNetworkMode,
       autoAdvanceTimer: null
     };
 
@@ -1763,14 +1824,14 @@ io.on('connection', (socket) => {
     }
 
     // STRICT SAME-NETWORK CHECK FOR LOCAL WI-FI MODE:
-    // If the room is in Local Wi-Fi Mode, only devices sharing the exact same network IP as the host can join!
+    // If the room is in Local Wi-Fi Mode, only devices sharing the exact same network / local Wi-Fi as the host can join!
     const isReconnectingHost = existingUser && (existingUser.role === 'host' || room.hostId === existingSocketId);
     if (room.networkMode === 'local' && room.hostNetworkIp && !isReconnectingHost) {
-      if (clientIp !== room.hostNetworkIp) {
+      if (!isSameNetwork(clientIp, room.hostNetworkIp)) {
         if (typeof callback === 'function') {
           return callback({
             success: false,
-            error: 'Local Wi-Fi Only: This room is in Local Wi-Fi mode and only allows devices connected to the same Wi-Fi or mobile hotspot as the host. Please connect to the host\'s Wi-Fi network, or ask the host to switch to Online Cloud Mode.',
+            error: 'Private Room (Local Wi-Fi Only): This room is private and only allows devices connected to the host\'s Wi-Fi network or mobile hotspot. Please connect to the same Wi-Fi/Hotspot to join, or ask the host to switch to Public Online Cloud mode.',
             code: 'DIFFERENT_NETWORK'
           });
         }
@@ -2132,7 +2193,7 @@ io.on('connection', (socket) => {
       const kickedSocketIds = [];
       for (const [sId, member] of room.users.entries()) {
         if (member.role !== 'host' && sId !== socket.id) {
-          if (member.ip && hostIp && member.ip !== hostIp) {
+          if (member.ip && hostIp && !isSameNetwork(member.ip, hostIp)) {
             kickedSocketIds.push(sId);
           }
         }
@@ -2575,7 +2636,13 @@ io.on('connection', (socket) => {
     const user = room.users.get(socket.id);
     const msg = {
       id: `chat-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-      user: user ? user.name : 'Guest',
+      userName: user ? user.name : 'Guest',
+      user: {
+        id: socket.id,
+        name: user ? user.name : 'Guest',
+        role: user ? user.role : 'listener',
+        avatarColor: user ? user.avatarColor : '#38bdf8'
+      },
       userId: socket.id,
       role: user ? user.role : 'listener',
       text: text.trim(),

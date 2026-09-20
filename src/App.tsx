@@ -667,6 +667,7 @@ export function App() {
         onUnlockAudio={handleUnlockAudio}
         onLeaveRoom={handleLeaveRoom}
         masterVolume={masterVolume}
+        networkMode={networkMode}
       />
 
       {/* Playback History Modal */}

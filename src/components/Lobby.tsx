@@ -6,6 +6,7 @@ import {
   Globe,
   Zap,
   Radio,
+  Lock,
 } from 'lucide-react';
 import { RoomState, User } from '../types';
 import { socket } from '../services/socket';
@@ -275,13 +276,13 @@ export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' 
                 </label>
               </div>
               <span className={`text-[10px] font-mono font-bold ${networkMode === 'local' ? 'text-emerald-400' : 'text-cyan-400'}`}>
-                {networkMode === 'local' ? '⚡ Same Wi-Fi (0ms Lag)' : '🌐 Open to Anyone'}
+                {networkMode === 'local' ? '🔒 Private · Same Wi-Fi Only' : '🌐 Public · Open to Everyone'}
               </span>
             </div>
 
             {/* 2 Selectable Mode Cards */}
             <div className="grid grid-cols-2 gap-2 w-full">
-              {/* Option A: Local Wi-Fi */}
+              {/* Option A: Local Wi-Fi (Private) */}
               <button
                 type="button"
                 onClick={() => handleNetworkModeChange('local')}
@@ -297,8 +298,9 @@ export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' 
                     <span>Local Wi-Fi</span>
                   </span>
                   {networkMode === 'local' && (
-                    <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
-                      SELECTED
+                    <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-0.5">
+                      <Lock className="w-2 h-2 text-emerald-400" />
+                      PRIVATE
                     </span>
                   )}
                 </div>
@@ -307,11 +309,11 @@ export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' 
                   <span>0ms Delay · Same Wi-Fi</span>
                 </div>
                 <p className="text-[10px] sm:text-[11px] text-slate-400 leading-tight">
-                  Acoustic unison on same Wi-Fi / hotspot only.
+                  Private room. Only devices on the same Wi-Fi or hotspot can join.
                 </p>
               </button>
 
-              {/* Option B: Online Cloud */}
+              {/* Option B: Online Cloud (Public) */}
               <button
                 type="button"
                 onClick={() => handleNetworkModeChange('online')}
@@ -327,8 +329,9 @@ export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' 
                     <span>Online Cloud</span>
                   </span>
                   {networkMode === 'online' && (
-                    <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">
-                      SELECTED
+                    <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 flex items-center gap-0.5">
+                      <Globe className="w-2 h-2 text-cyan-300" />
+                      PUBLIC
                     </span>
                   )}
                 </div>
@@ -337,7 +340,7 @@ export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' 
                   <span>Open for All</span>
                 </div>
                 <p className="text-[10px] sm:text-[11px] text-slate-400 leading-tight">
-                  Anyone on cellular (4G/5G) or outside networks.
+                  Public room. Anyone can join from cellular data (4G/5G) worldwide.
                 </p>
               </button>
             </div>
@@ -357,16 +360,16 @@ export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' 
               {(isCreating || isEntering) ? (
                 <div className="w-3.5 h-3.5 sm:w-4 sm:h-4 border-2 border-black border-t-transparent rounded-full animate-spin shrink-0" />
               ) : networkMode === 'local' ? (
-                <Zap className="w-4 h-4 fill-black shrink-0" />
+                <Lock className="w-4 h-4 text-black shrink-0" />
               ) : (
-                <Globe className="w-4 h-4 shrink-0" />
+                <Globe className="w-4 h-4 text-black shrink-0" />
               )}
               <span className="font-black tracking-tight text-xs sm:text-sm text-black truncate">
                 {isEntering
                   ? 'Entering Music Room...'
                   : isCreating
-                  ? `Creating ${networkMode === 'local' ? 'Local Wi-Fi' : 'Online Cloud'} Room...`
-                  : `Create ${networkMode === 'local' ? 'Local Wi-Fi Room (0ms Delay)' : 'Online Cloud Room (Worldwide)'}`}
+                  ? `Creating ${networkMode === 'local' ? 'Private Local Wi-Fi' : 'Public Online Cloud'} Room...`
+                  : `Create ${networkMode === 'local' ? 'Private Room (Same Wi-Fi · 0ms Lag)' : 'Public Room (Worldwide · Open for All)'}`}
               </span>
             </button>
           </div>

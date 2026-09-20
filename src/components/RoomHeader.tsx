@@ -270,14 +270,14 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
             {networkMode === 'local' ? (
               <>
                 <Wifi className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                <span className="font-bold hidden sm:inline">Local</span>
+                <span className="font-bold hidden sm:inline">Private</span>
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.9)] animate-pulse hidden sm:inline-block" />
                 <QrCode className="w-3 h-3 text-emerald-400/80 group-hover/network:text-emerald-300 transition-colors shrink-0" />
               </>
             ) : (
               <>
                 <Globe className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-                <span className="font-bold hidden sm:inline">Online</span>
+                <span className="font-bold hidden sm:inline">Public</span>
                 <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_6px_rgba(0,240,255,0.9)] hidden sm:inline-block" />
                 <QrCode className="w-3 h-3 text-cyan-400/80 group-hover/network:text-cyan-300 transition-colors shrink-0" />
               </>
