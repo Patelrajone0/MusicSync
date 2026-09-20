@@ -1,0 +1,62 @@
+{
+  "name": "MusicSync - Multi-Device Synchronized Audio",
+  "short_name": "MusicSync",
+  "description": "Turn any group of phones, laptops, and speakers into a perfectly synchronized sound system with zero-delay real-time audio playback.",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "orientation": "any",
+  "background_color": "#06060a",
+  "theme_color": "#06060a",
+  "categories": ["music", "entertainment", "utilities"],
+  "icons": [
+    {
+      "src": "/musicsync-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/musicsync-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/musicsync-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/musicsync-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/musicsync-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Join Room",
+      "short_name": "Join",
+      "description": "Quickly join an existing MusicSync party",
+      "url": "/",
+      "icons": [{ "src": "/musicsync-icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Create Room",
+      "short_name": "Host",
+      "description": "Host a new synchronized audio room",
+      "url": "/",
+      "icons": [{ "src": "/musicsync-icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

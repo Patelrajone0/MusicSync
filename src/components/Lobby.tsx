@@ -13,6 +13,7 @@ import { syncEngine } from '../services/syncEngine';
 import { Logo } from './Logo';
 import { getDeviceId } from '../utils/deviceId';
 import { NetworkMode } from './NetworkModeModal';
+import { InstallAppButton } from './InstallAppButton';
 
 interface LobbyProps {
   onRoomReady: (room: RoomState, user: User) => void;
@@ -219,7 +220,7 @@ export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' 
         style={isEntering ? { animation: 'cyberBlurWarp 0.45s cubic-bezier(0.4, 0, 0.2, 1) forwards' } : {}}
       >
         {/* Brand Header */}
-        <div className="text-center mb-6 flex flex-col items-center">
+        <div className="text-center mb-6 flex flex-col items-center gap-2.5">
           <a
             href="/"
             onClick={(e) => {
@@ -231,6 +232,9 @@ export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' 
           >
             <Logo size="lg" layout="vertical" variant="titanium" showTagline={false} />
           </a>
+
+          {/* Quick Install App Trigger */}
+          <InstallAppButton variant="lobby" />
         </div>
 
         {/* Modern Classic Dark Card */}

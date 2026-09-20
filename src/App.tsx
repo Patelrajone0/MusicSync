@@ -15,6 +15,7 @@ import { Lobby } from './components/Lobby';
 import { NetworkMode } from './components/NetworkModeModal';
 import { PlaybackHistoryModal } from './components/PlaybackHistoryModal';
 import { BeatsyncProView } from './components/BeatsyncProView';
+import { InstallPwaPrompt } from './components/InstallPwaPrompt';
 import { UserX } from 'lucide-react';
 
 import { userTasteEngine } from './services/userTaste';
@@ -650,6 +651,7 @@ export function App() {
       <>
         <Lobby onRoomReady={handleRoomReady} initialRoomCode={initialRoomCode} />
         {kickedPopupModal}
+        <InstallPwaPrompt />
       </>
     );
   }
@@ -690,6 +692,9 @@ export function App() {
 
       {/* Kicked Notice */}
       {kickedPopupModal}
+
+      {/* Progressive Web App Install Modal */}
+      <InstallPwaPrompt />
     </div>
   );
 }

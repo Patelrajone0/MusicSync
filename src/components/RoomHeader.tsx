@@ -22,6 +22,7 @@ import {
 import { User, UserRole } from '../types';
 import { socket } from '../services/socket';
 import { NetworkModeModal, NetworkMode } from './NetworkModeModal';
+import { InstallAppButton } from './InstallAppButton';
 
 interface RoomHeaderProps {
   roomCode: string;
@@ -284,7 +285,8 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
             )}
           </button>
 
-
+          {/* Install App Quick Action (hidden when already standalone) */}
+          <InstallAppButton variant="compact" />
 
           {/* Exit Room Button - Always completely in view on phones */}
           {onLeaveRoom && (
