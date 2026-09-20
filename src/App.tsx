@@ -652,7 +652,7 @@ export function App() {
       onTouchStart={() => {
         if (!isAudioUnlocked) handleUnlockAudio();
       }}
-      className="h-screen h-[100dvh] max-h-screen overflow-hidden bg-[#08080a] text-slate-100 flex flex-col relative w-full max-w-full"
+      className="h-screen h-[100dvh] max-h-screen overflow-hidden bg-dark-950 text-slate-100 flex flex-col relative w-full max-w-full font-sans"
     >
       <BeatsyncProView
         roomCode={roomCode}

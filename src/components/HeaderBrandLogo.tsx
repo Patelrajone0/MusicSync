@@ -23,23 +23,23 @@ export const HeaderBrandLogo: React.FC<{
       {/* Dynamic 4-Bar Equalizer */}
       <div className="flex items-center gap-[2.5px] h-4 px-0.5 shrink-0">
         <span
-          className="w-1 h-2.5 rounded-full bg-gradient-to-t from-cyan-400 to-[#10b981] animate-pulse shadow-[0_0_6px_rgba(56,189,248,0.5)]"
+          className="w-1 h-2.5 rounded-full bg-gradient-to-t from-cyan-400 to-fuchsia-500 animate-pulse shadow-[0_0_6px_rgba(0,240,255,0.6)]"
           style={{ animationDuration: '1.2s' }}
         />
         <span
-          className="w-1 h-4 rounded-full bg-gradient-to-t from-cyan-400 to-[#10b981] animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.6)]"
+          className="w-1 h-4 rounded-full bg-gradient-to-t from-cyan-400 via-sky-400 to-fuchsia-500 animate-pulse shadow-[0_0_8px_rgba(157,78,221,0.7)]"
           style={{ animationDuration: '0.8s', animationDelay: '0.2s' }}
         />
         <span
-          className="w-1 h-3 rounded-full bg-gradient-to-t from-cyan-400 to-[#10b981] animate-pulse shadow-[0_0_7px_rgba(16,185,129,0.5)]"
+          className="w-1 h-3 rounded-full bg-gradient-to-t from-cyan-400 via-sky-400 to-fuchsia-500 animate-pulse shadow-[0_0_7px_rgba(157,78,221,0.6)]"
           style={{ animationDuration: '1.0s', animationDelay: '0.4s' }}
         />
         <span
-          className="w-1 h-2 rounded-full bg-gradient-to-t from-cyan-400 to-[#10b981] animate-pulse shadow-[0_0_5px_rgba(56,189,248,0.4)]"
+          className="w-1 h-2 rounded-full bg-gradient-to-t from-cyan-400 to-fuchsia-500 animate-pulse shadow-[0_0_5px_rgba(0,240,255,0.5)]"
           style={{ animationDuration: '1.3s', animationDelay: '0.15s' }}
         />
       </div>
-      <span className="font-sans font-bold text-xs tracking-tight text-white hover:text-cyan-300 transition-colors">
+      <span className="font-sans font-extrabold text-xs tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-sky-300 to-fuchsia-400 hover:brightness-125 transition-all">
         MusicSync
       </span>
     </button>

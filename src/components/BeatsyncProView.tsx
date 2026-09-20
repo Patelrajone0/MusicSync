@@ -528,7 +528,11 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
   const distanceMetric = Math.round((1 - Math.min(1, Math.sqrt(listenerPos.x * listenerPos.x + listenerPos.y * listenerPos.y) * 0.7)) * 100);
 
   return (
-    <div className="h-full w-full bg-[#08080a] text-slate-200 flex flex-col font-sans select-none overflow-hidden text-[13px]">
+    <div className="h-full w-full bg-dark-950 text-slate-200 flex flex-col font-sans select-none overflow-hidden text-[13px] relative">
+      {/* Background ambient lighting matching Lobby */}
+      <div className="absolute top-1/4 left-1/3 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-electric-cyan/[0.07] rounded-full blur-3xl pointer-events-none z-0" />
+      <div className="absolute bottom-1/4 right-1/4 -translate-x-1/2 translate-y-1/2 w-96 h-96 bg-electric-purple/[0.07] rounded-full blur-3xl pointer-events-none z-0" />
+
       <input
         ref={fileInputRef}
         type="file"
@@ -538,35 +542,39 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
       />
 
       {/* 1. TOP TELEMETRY HUD BAR (MusicSync Pro Studio) */}
-      <header className="shrink-0 h-9 bg-[#060608] border-b border-white/[0.08] px-3 sm:px-4 flex items-center justify-between text-[11px] font-mono text-slate-400 select-none z-30">
-        {/* Left: Brand + Buffer + Room Code + User count */}
+      <header className="shrink-0 h-11 bg-dark-900/80 backdrop-blur-2xl border-b border-white/10 px-3 sm:px-5 flex items-center justify-between text-[11px] font-mono text-slate-400 select-none z-30 relative shadow-[0_4px_24px_rgba(0,0,0,0.6),0_1px_12px_rgba(0,240,255,0.03)]">
+        {/* Ambient cyber accent line matching Lobby */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 sm:w-72 h-[1.5px] bg-gradient-to-r from-transparent via-cyan-400/60 to-transparent pointer-events-none" />
+
+        {/* Left: Brand + Buffer + Room Code */}
         <div className="flex items-center gap-2 sm:gap-3 overflow-hidden">
           <HeaderBrandLogo />
 
           <span className="text-white/20 hidden sm:inline">•</span>
 
           {/* Sync Buffer Indicator */}
-          <div className="flex items-center gap-1 text-emerald-400 font-semibold" title="NTP Clock Sync Buffer (16/16)">
-            <span className="w-2 h-2 rounded-full bg-[#10b981] animate-pulse" />
+          <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-dark-950/80 border border-emerald-500/30 text-emerald-400 font-semibold shadow-[0_0_10px_rgba(16,185,129,0.15)]" title="NTP Clock Sync Buffer (16/16)">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.9)]" />
             <span>16/16</span>
           </div>
 
           <span className="text-white/20 hidden sm:inline">•</span>
 
-          <span className="text-slate-300 font-semibold truncate">
-            # {roomCode}
+          <span className="px-2.5 py-0.5 rounded-full bg-dark-950/80 border border-white/10 text-cyan-300 font-semibold truncate shadow-[0_0_10px_rgba(0,240,255,0.12)] flex items-center gap-1">
+            <span># {roomCode}</span>
           </span>
         </div>
 
         {/* Center: Real-time Audio Latency Telemetry */}
-        <div className="hidden md:flex items-center gap-4 text-slate-400">
-          <span className="text-white/20">|</span>
+        <div className="hidden md:flex items-center gap-4 text-slate-400 bg-dark-950/60 border border-white/5 rounded-full px-3.5 py-1 shadow-inner">
           <div>
-            Offset: <span className="text-emerald-400 font-bold font-mono">{(syncStats.clockOffset ?? -16.39).toFixed(2)}ms</span>
+            Offset: <span className="text-cyan-400 font-bold font-mono">{(syncStats.clockOffset ?? -16.39).toFixed(2)}ms</span>
           </div>
+          <span className="text-white/10">|</span>
           <div>
             RTT: <span className="text-slate-300 font-bold font-mono">{(syncStats.rtt ?? 285.57).toFixed(2)}ms</span>
           </div>
+          <span className="text-white/10">|</span>
           <div>
             Drift: <span className="text-slate-300 font-bold font-mono">{(syncStats.drift ?? 0).toFixed(0)}ms</span>
           </div>
@@ -578,7 +586,7 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
           <button
             type="button"
             onClick={() => setShowLeaveConfirm(true)}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 hover:bg-rose-500/15 border border-white/10 hover:border-rose-500/30 text-slate-400 hover:text-rose-400 transition-all cursor-pointer text-xs font-medium active:scale-95"
+            className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-dark-950/80 hover:bg-rose-500/20 border border-white/10 hover:border-rose-500/40 text-slate-400 hover:text-rose-300 transition-all cursor-pointer text-xs font-semibold active:scale-95 shadow-sm"
             title="Leave Room"
           >
             <LogOut className="w-3.5 h-3.5" />
@@ -593,7 +601,7 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
         {/* ========================================================= */}
         {/* COLUMN 1: LEFT SIDEBAR (Room Info, Permissions, Users, Tips) */}
         {/* ========================================================= */}
-        <aside className={`w-full md:w-60 lg:w-64 shrink-0 bg-[#0a0a0d] border-r border-white/[0.08] flex-col p-3.5 gap-4 overflow-y-auto ${
+        <aside className={`w-full md:w-60 lg:w-64 shrink-0 bg-dark-900/80 backdrop-blur-2xl border-r border-white/10 flex-col p-3.5 gap-4 overflow-y-auto relative z-10 ${
           mobileTab === 'room' ? 'flex' : 'hidden md:flex'
         }`}>
           {/* Room Header & QR Trigger */}
@@ -606,29 +614,36 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
             <button
               type="button"
               onClick={() => setIsQRModalOpen(true)}
-              className="flex items-center gap-1 px-2 py-1 rounded bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white text-xs font-semibold cursor-pointer transition-all shrink-0"
+              className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-dark-950/80 hover:bg-cyan-500/20 border border-white/10 hover:border-cyan-400/40 text-slate-300 hover:text-cyan-300 text-xs font-semibold cursor-pointer transition-all shrink-0 shadow-sm"
               title="View Room QR Code & Info"
             >
-              <QrCode className="w-3 h-3" />
+              <QrCode className="w-3 h-3 text-cyan-400" />
               <span>QR</span>
             </button>
           </div>
 
           {/* PLAYBACK PERMISSIONS (Everyone vs Admins) */}
-          <div className="space-y-1.5 shrink-0">
-            <div className="text-[10px] font-mono tracking-wider text-slate-500 uppercase flex items-center gap-1">
-              <span>▷ PLAYBACK PERMISSIONS</span>
+          <div className="space-y-2 shrink-0">
+            <div className="flex items-center gap-1.5">
+              <div className="relative w-3.5 h-3.5 rounded-full p-[1px] bg-gradient-to-tr from-cyan-400 via-sky-400 to-fuchsia-500 shadow-[0_0_6px_rgba(0,240,255,0.4)] shrink-0 flex items-center justify-center">
+                <div className="w-full h-full rounded-full bg-dark-950 flex items-center justify-center">
+                  <Radio className="w-2 h-2 text-cyan-400" />
+                </div>
+              </div>
+              <label className="text-[11px] font-bold text-slate-300 uppercase tracking-wider font-mono">
+                Playback Permissions
+              </label>
             </div>
-            <div className="grid grid-cols-2 p-0.5 rounded-lg bg-black/60 border border-white/10 text-xs">
+            <div className="grid grid-cols-2 p-1 rounded-2xl bg-dark-950/90 border border-white/10 text-xs">
               <button
                 type="button"
                 onClick={() => {
                   setPlaybackPermission('everyone');
                   socket.emit('set_playback_permission', { permission: 'everyone' });
                 }}
-                className={`py-1.5 rounded-md font-semibold transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                className={`py-1.5 rounded-xl font-semibold transition-all flex items-center justify-center gap-1 cursor-pointer ${
                   playbackPermission === 'everyone'
-                    ? 'bg-white/15 text-white shadow-sm font-bold'
+                    ? 'bg-cyan-500/20 border border-cyan-400/40 text-cyan-300 font-bold shadow-[0_0_12px_rgba(0,240,255,0.25)]'
                     : 'text-slate-400 hover:text-white'
                 }`}
               >
@@ -641,7 +656,7 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
                   setPlaybackPermission('admins');
                   socket.emit('set_playback_permission', { permission: 'admins' });
                 }}
-                className={`py-1.5 rounded-md font-semibold transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                className={`py-1.5 rounded-xl font-semibold transition-all flex items-center justify-center gap-1 cursor-pointer ${
                   playbackPermission === 'admins'
                     ? 'bg-gradient-to-r from-amber-500/30 to-amber-600/30 border border-amber-500/50 text-amber-300 font-bold shadow-[0_0_12px_rgba(245,158,11,0.25)]'
                     : 'text-slate-400 hover:text-white'
@@ -654,17 +669,24 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
           </div>
 
           {/* CONNECTED USERS LIST */}
-          <div className="space-y-1.5 flex-1 min-h-[140px] flex flex-col">
-            <div className="text-[10px] font-mono tracking-wider text-slate-500 uppercase flex items-center justify-between">
-              <span className="flex items-center gap-1">
-                <Users className="w-3 h-3" /> CONNECTED USERS
-              </span>
-              <span className="px-1.5 py-0.2 rounded bg-white/5 text-slate-400 font-mono text-[10px]">
+          <div className="space-y-2 flex-1 min-h-[140px] flex flex-col">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                <div className="relative w-3.5 h-3.5 rounded-full p-[1px] bg-gradient-to-tr from-cyan-400 via-sky-400 to-fuchsia-500 shadow-[0_0_6px_rgba(0,240,255,0.4)] shrink-0 flex items-center justify-center">
+                  <div className="w-full h-full rounded-full bg-dark-950 flex items-center justify-center">
+                    <Users className="w-2 h-2 text-cyan-400" />
+                  </div>
+                </div>
+                <label className="text-[11px] font-bold text-slate-300 uppercase tracking-wider font-mono">
+                  Connected Users
+                </label>
+              </div>
+              <span className="px-2 py-0.5 rounded-full bg-dark-950 border border-white/10 text-cyan-400 font-mono text-[10px] font-bold shadow-[0_0_8px_rgba(0,240,255,0.2)]">
                 {users.length}
               </span>
             </div>
 
-            <div className="space-y-1 overflow-y-auto flex-1 pr-1">
+            <div className="space-y-1.5 overflow-y-auto flex-1 pr-1">
               {users.map((u) => {
                 const isUserHost = u.role === 'host' || u.id === hostId;
                 const isYou = u.id === currentUser?.id || u.id === socket.id;
@@ -672,15 +694,14 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
                 return (
                   <div
                     key={u.id}
-                    className={`flex items-center justify-between p-2 rounded-lg border transition-all ${
+                    className={`flex items-center justify-between p-2 sm:p-2.5 rounded-xl border transition-all ${
                       isYou
-                        ? 'bg-[#10b981]/10 border-[#10b981]/30 text-white'
-                        : 'bg-black/30 border-white/5 text-slate-300'
+                        ? 'bg-cyan-950/40 border-cyan-400/40 text-white shadow-[0_0_12px_rgba(0,240,255,0.15)] ring-1 ring-cyan-400/30'
+                        : 'bg-dark-950/70 border-white/5 hover:border-white/10 text-slate-300'
                     }`}
                   >
                     <div className="flex items-center gap-2 min-w-0">
-                      {/* Country Flag / User Avatar */}
-                      <div className="relative w-6 h-6 rounded-full bg-slate-800 border border-white/10 flex items-center justify-center text-xs shrink-0">
+                      <div className="relative w-6 h-6 rounded-full bg-dark-900 border border-white/10 flex items-center justify-center text-xs shrink-0">
                         <span>🇮🇳</span>
                         {isUserHost && (
                           <span className="absolute -top-1 -right-1 text-amber-400">
@@ -688,11 +709,11 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
                           </span>
                         )}
                       </div>
-                      <span className="text-xs font-medium truncate">{u.name}</span>
+                      <span className="text-xs font-semibold truncate">{u.name}</span>
                     </div>
 
                     {isYou && (
-                      <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-[#10b981] text-black shrink-0">
+                      <span className="text-[9px] font-mono font-bold px-2 py-0.5 rounded-full bg-gradient-to-r from-cyan-400 to-sky-400 text-black shadow-[0_0_8px_rgba(0,240,255,0.6)] shrink-0">
                         You
                       </span>
                     )}
@@ -702,23 +723,13 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
             </div>
           </div>
 
-          {/* Tips Section */}
-          <div className="p-2.5 rounded-lg bg-black/40 border border-white/5 text-[11px] text-slate-400 space-y-1 shrink-0">
-            <div className="font-semibold text-slate-300 flex items-center gap-1 text-[10px] font-mono uppercase">
-              <span>Tips</span>
-            </div>
-            <p className="leading-relaxed">
-              • Play on speaker directly. Don't use Bluetooth.
-            </p>
-          </div>
-
           {/* Quick Upload Button */}
           <button
             type="button"
             onClick={handleUploadClick}
-            className="w-full p-2.5 rounded-xl border border-white/10 bg-black/40 hover:bg-white/5 flex items-center gap-2.5 text-left transition-all cursor-pointer group active:scale-[0.98] shrink-0"
+            className="w-full p-2.5 rounded-2xl border border-white/10 hover:border-cyan-400/30 bg-dark-950/80 hover:bg-dark-900 flex items-center gap-2.5 text-left transition-all cursor-pointer group active:scale-[0.98] shrink-0 shadow-sm"
           >
-            <div className="w-7 h-7 rounded-lg bg-[#10b981]/20 border border-[#10b981]/40 flex items-center justify-center text-[#10b981] shrink-0 group-hover:bg-[#10b981] group-hover:text-black transition-colors">
+            <div className="w-7 h-7 rounded-xl bg-cyan-500/15 border border-cyan-400/30 flex items-center justify-center text-cyan-300 shrink-0 group-hover:bg-cyan-400 group-hover:text-black transition-colors shadow-[0_0_8px_rgba(0,240,255,0.2)]">
               <Upload className="w-3.5 h-3.5" />
             </div>
             <div className="min-w-0">
@@ -731,14 +742,14 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
         {/* ========================================================= */}
         {/* COLUMN 2: CENTER (Direct Search & Live Results / Added Songs) */}
         {/* ========================================================= */}
-        <main className={`flex-1 min-w-0 flex flex-col p-3 sm:p-4 gap-2.5 bg-[#08080a] overflow-hidden ${
+        <main className={`flex-1 min-w-0 flex flex-col p-3 sm:p-4 gap-3 bg-dark-950/40 overflow-hidden relative z-10 ${
           mobileTab === 'queue' ? 'flex' : 'hidden md:flex'
         }`}>
-          {/* Universal Search Bar with Live Input (Matches Competitor Screenshots 1-4) */}
+          {/* Universal Search Bar with Lobby Pill Look */}
           <div className="w-full shrink-0">
-            <div className="relative w-full h-11 px-3.5 rounded-xl bg-[#141418] border border-white/15 focus-within:border-white/30 focus-within:ring-1 focus-within:ring-white/20 flex items-center justify-between transition-all shadow-sm">
+            <div className="relative w-full h-11 sm:h-12 px-4 rounded-full bg-dark-900/85 backdrop-blur-2xl border border-white/10 hover:border-cyan-400/30 focus-within:border-cyan-400 focus-within:shadow-[0_0_20px_rgba(0,240,255,0.25)] flex items-center justify-between transition-all duration-200">
               <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                <Search className="w-4 h-4 text-slate-400 shrink-0" />
+                <Search className="w-4 h-4 text-cyan-400 shrink-0" />
                 <input
                   ref={searchInputRef}
                   type="text"
@@ -751,7 +762,7 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
                     }
                   }}
                   placeholder="What do you want to play?"
-                  className="w-full bg-transparent text-white text-xs sm:text-sm font-sans placeholder:text-slate-500 outline-none caret-[#10b981]"
+                  className="w-full bg-transparent text-white text-xs sm:text-sm font-semibold placeholder:text-slate-500 outline-none caret-cyan-400"
                 />
               </div>
               <div className="flex items-center gap-1.5 shrink-0 select-none">
@@ -763,27 +774,27 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
                       setSearchResults([]);
                       searchInputRef.current?.focus();
                     }}
-                    className="p-1 text-slate-400 hover:text-white rounded transition-colors text-xs cursor-pointer mr-1"
+                    className="p-1 text-slate-400 hover:text-white rounded-full hover:bg-white/10 transition-colors text-xs cursor-pointer mr-1"
                     title="Clear search"
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
                 )}
-                <kbd className="px-2 py-0.5 rounded bg-white/5 border border-white/10 text-[10px] font-mono text-slate-400">
+                <kbd className="px-2 py-0.5 rounded-full bg-dark-950 border border-white/10 text-[10px] font-mono text-slate-400">
                   ⌘K
                 </kbd>
               </div>
             </div>
 
             {queue.length > 0 && searchQuery.trim() && (
-              <div className="flex items-center justify-end px-1 mt-1.5 text-[10px] font-mono select-none">
+              <div className="flex items-center justify-end px-2 mt-1.5 text-[10px] font-mono select-none">
                 <button
                   type="button"
                   onClick={() => {
                     setSearchQuery('');
                     setSearchResults([]);
                   }}
-                  className="text-[#10b981] hover:underline font-mono text-[10px] cursor-pointer"
+                  className="text-cyan-400 hover:underline font-mono text-[10px] cursor-pointer"
                 >
                   View Queue ({queue.length}) →
                 </button>
@@ -793,11 +804,14 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
 
           {/* MAIN CENTER CONTENT AREA: SEARCH RESULTS OR ADDED SONGS (QUEUE) */}
           {searchQuery.trim() ? (
-            /* STATE 1: SEARCH RESULTS (Screenshots 1 & 2) */
-            <div className="flex-1 min-h-0 flex flex-col rounded-2xl bg-[#111115] border border-white/[0.08] p-2 sm:p-2.5 overflow-hidden animate-fade-in shadow-lg">
+            /* STATE 1: SEARCH RESULTS in Lobby Card */
+            <div className="flex-1 min-h-0 flex flex-col rounded-3xl bg-dark-900/85 backdrop-blur-2xl border border-white/10 hover:border-cyan-400/20 p-3 sm:p-4 overflow-hidden animate-fade-in shadow-[0_0_50px_rgba(0,0,0,0.8),0_0_25px_rgba(0,240,255,0.04)] relative">
+              {/* Top ambient cyber hairline */}
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-[1.5px] bg-gradient-to-r from-transparent via-cyan-400/60 to-transparent pointer-events-none" />
+
               {isSearching && searchResults.length === 0 ? (
                 <div className="h-64 flex flex-col items-center justify-center text-slate-400 gap-2.5">
-                  <Loader2 className="w-6 h-6 animate-spin text-[#10b981]" />
+                  <Loader2 className="w-6 h-6 animate-spin text-cyan-400" />
                   <span className="text-xs font-mono text-slate-400">Searching 50M+ songs...</span>
                 </div>
               ) : !isSearching && searchResults.length === 0 ? (
@@ -806,7 +820,7 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
                   <p className="text-[11px] text-slate-600 mt-1">Try another title, artist name, or genre</p>
                 </div>
               ) : (
-                <div className="flex-1 min-h-0 overflow-y-auto space-y-1 pr-1 select-none">
+                <div className="flex-1 min-h-0 overflow-y-auto space-y-1.5 pr-1 select-none">
                   {searchResults.map((track) => {
                     const isAdded = isTrackAlreadyAdded(track);
                     const cleanTitle = cleanTrackTitle(track.title, track.artist);
@@ -819,10 +833,10 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
                             handleAddSearchResult(track);
                           }
                         }}
-                        className={`flex items-center justify-between p-2 sm:p-2.5 rounded-xl border transition-all select-none ${
+                        className={`flex items-center justify-between p-2 sm:p-2.5 rounded-2xl border transition-all select-none ${
                           isAdded
-                            ? 'bg-emerald-500/[0.05] border-emerald-500/20 shadow-sm'
-                            : 'hover:bg-white/[0.06] active:bg-white/[0.08] border-transparent cursor-pointer group'
+                            ? 'bg-emerald-500/[0.08] border-emerald-500/30 shadow-[0_0_12px_rgba(16,185,129,0.1)]'
+                            : 'bg-dark-950/60 hover:bg-dark-950/90 border-white/5 hover:border-cyan-400/30 cursor-pointer group'
                         }`}
                       >
                         {/* Left: Thumbnail & Info */}
@@ -831,11 +845,11 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
                             <img
                               src={track.artwork}
                               alt={track.title}
-                              className="w-10 h-10 sm:w-11 sm:h-11 rounded-lg object-cover bg-black/50 shrink-0 shadow-sm"
+                              className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl object-cover bg-black/50 shrink-0 shadow-sm border border-white/5"
                               loading="lazy"
                             />
                           ) : (
-                            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+                            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-dark-900 border border-white/10 flex items-center justify-center shrink-0">
                               <Music className="w-5 h-5 text-slate-400" />
                             </div>
                           )}
@@ -843,13 +857,13 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
                             <div className="flex items-center gap-2">
                               <h4
                                 className={`text-xs sm:text-sm font-semibold truncate leading-tight transition-colors ${
-                                  isAdded ? 'text-emerald-300' : 'text-white group-hover:text-emerald-400'
+                                  isAdded ? 'text-emerald-300' : 'text-white group-hover:text-cyan-300'
                                 }`}
                               >
                                 {cleanTitle}
                               </h4>
                               {isAdded && (
-                                <span className="hidden sm:inline-flex items-center gap-1 text-[9px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                                <span className="hidden sm:inline-flex items-center gap-1 text-[9px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold">
                                   In List
                                 </span>
                               )}
@@ -873,7 +887,7 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
                                 e.stopPropagation();
                               }}
                               disabled
-                              className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 text-xs font-semibold shadow-[0_0_10px_rgba(16,185,129,0.25)] cursor-default select-none"
+                              className="flex items-center gap-1 sm:gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 text-xs font-semibold shadow-[0_0_12px_rgba(16,185,129,0.25)] cursor-default select-none"
                               title="Already added to your list"
                             >
                               <Check className="w-3.5 h-3.5 stroke-[2.5]" />
@@ -886,7 +900,7 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
                                 e.stopPropagation();
                                 handleAddSearchResult(track);
                               }}
-                              className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-white/5 hover:bg-emerald-500/20 active:scale-95 text-slate-300 hover:text-emerald-300 border border-white/10 hover:border-emerald-500/40 text-xs font-medium cursor-pointer transition-all shadow-sm"
+                              className="flex items-center gap-1 sm:gap-1.5 px-3 py-1.5 rounded-full bg-dark-900 hover:bg-cyan-500/20 active:scale-95 text-cyan-300 hover:text-cyan-200 border border-cyan-400/30 hover:border-cyan-400 text-xs font-semibold cursor-pointer transition-all shadow-[0_0_8px_rgba(0,240,255,0.15)]"
                               title="Add to queue"
                             >
                               <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
@@ -901,107 +915,114 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
               )}
             </div>
           ) : (
-            /* STATE 2: ADDED SONGS / QUEUE (Screenshots 3 & 4) */
-            <div className="flex-1 min-h-0 overflow-y-auto space-y-1.5 pr-1 select-none pt-1">
-              {queue.length === 0 ? (
-                <div className="h-64 flex flex-col items-center justify-center text-center p-6 text-slate-500">
-                  <Disc3 className="w-8 h-8 mb-2 opacity-25 text-slate-400" />
-                  <p className="text-xs font-medium text-slate-400">No songs in queue</p>
-                  <p className="text-[11px] text-slate-600 mt-1">Type in the search bar above to add music</p>
-                </div>
-              ) : (
-                queue.map((track, idx) => {
-                  const isCurrent = Boolean(
-                    currentTrack &&
-                    ((track.queueId && currentTrack.queueId && track.queueId === currentTrack.queueId) ||
-                      track.id === currentTrack.id)
-                  );
+            /* STATE 2: ADDED SONGS / QUEUE in Lobby Card */
+            <div className="flex-1 min-h-0 flex flex-col rounded-3xl bg-dark-900/85 backdrop-blur-2xl border border-white/10 hover:border-cyan-400/20 p-3 sm:p-4 overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.8),0_0_25px_rgba(0,240,255,0.04)] relative">
+              {/* Top ambient cyber hairline */}
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-[1.5px] bg-gradient-to-r from-transparent via-cyan-400/60 to-transparent pointer-events-none" />
 
-                  const cleanTitle = cleanTrackTitle(track.title, track.artist);
-                  const displayTitle = track.artist && !cleanTitle.toLowerCase().includes(track.artist.toLowerCase())
-                    ? `${track.artist} - ${cleanTitle}`
-                    : cleanTitle;
+              <div className="flex-1 min-h-0 overflow-y-auto space-y-1.5 pr-1 select-none pt-1">
+                {queue.length === 0 ? (
+                  <div className="h-64 flex flex-col items-center justify-center text-center p-6 text-slate-500">
+                    <Disc3 className="w-10 h-10 mb-2 opacity-30 text-cyan-400 animate-spin-slow" />
+                    <p className="text-sm font-semibold text-slate-300">No songs in queue</p>
+                    <p className="text-xs text-slate-500 mt-1">Type in the search bar above to add music</p>
+                  </div>
+                ) : (
+                  queue.map((track, idx) => {
+                    const isCurrent = Boolean(
+                      currentTrack &&
+                      ((track.queueId && currentTrack.queueId && track.queueId === currentTrack.queueId) ||
+                        track.id === currentTrack.id)
+                    );
 
-                  return (
-                    <div
-                      key={track.queueId || `${track.id}-${idx}`}
-                      className={`flex items-center justify-between py-2 px-2 rounded-lg hover:bg-white/[0.04] transition-colors group cursor-pointer ${
-                        isCurrent ? 'bg-[#10b981]/5 border border-[#10b981]/20' : ''
-                      }`}
-                      onClick={() => handlePlayTrack(track)}
-                    >
-                      {/* Left: Grip dots + Number + Play Button + Title */}
-                      <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
-                        <span className="text-slate-600 group-hover:text-slate-400 text-xs shrink-0 select-none opacity-40 font-mono tracking-tighter">
-                          ⠿
-                        </span>
+                    const cleanTitle = cleanTrackTitle(track.title, track.artist);
+                    const displayTitle = track.artist && !cleanTitle.toLowerCase().includes(track.artist.toLowerCase())
+                      ? `${track.artist} - ${cleanTitle}`
+                      : cleanTitle;
 
-                        <span className={`text-xs font-mono font-bold w-4 text-center shrink-0 ${
-                          isCurrent ? 'text-[#10b981]' : 'text-slate-400'
-                        }`}>
-                          {idx + 1}
-                        </span>
-
-                        {/* Play / Active Volume Icon Button */}
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handlePlayTrack(track);
-                          }}
-                          className={`w-6 h-6 rounded-full flex items-center justify-center transition-all cursor-pointer shrink-0 ${
-                            isCurrent && isPlaying
-                              ? 'text-[#10b981] bg-[#10b981]/20 shadow-[0_0_8px_rgba(16,185,129,0.3)]'
-                              : 'text-slate-400 hover:text-white hover:bg-white/10'
-                          }`}
-                          title={isCurrent && isPlaying ? 'Playing' : 'Play now'}
-                        >
-                          {isCurrent && isPlaying ? (
-                            <Volume2 className="w-3.5 h-3.5 animate-pulse" />
-                          ) : (
-                            <Play className="w-3 h-3 fill-current ml-0.5" />
-                          )}
-                        </button>
-
-                        <div className="min-w-0 flex-1">
-                          <span
-                            className={`text-xs sm:text-[13px] truncate block transition-colors ${
-                              isCurrent
-                                ? 'text-[#10b981] font-semibold'
-                                : 'text-slate-200 group-hover:text-white font-normal'
-                            }`}
-                            title="Click to play now"
-                          >
-                            {displayTitle}
+                    return (
+                      <div
+                        key={track.queueId || `${track.id}-${idx}`}
+                        className={`flex items-center justify-between py-2 px-3 rounded-2xl border transition-all cursor-pointer group ${
+                          isCurrent
+                            ? 'bg-gradient-to-r from-cyan-950/60 via-dark-900/90 to-purple-950/40 border-cyan-400/50 shadow-[0_0_20px_rgba(0,240,255,0.2)] ring-1 ring-cyan-400/40'
+                            : 'bg-dark-950/50 hover:bg-dark-900/80 border-white/5 hover:border-cyan-400/20'
+                        }`}
+                        onClick={() => handlePlayTrack(track)}
+                      >
+                        {/* Left: Grip dots + Number + Play Button + Title */}
+                        <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
+                          <span className="text-slate-600 group-hover:text-slate-400 text-xs shrink-0 select-none opacity-40 font-mono tracking-tighter">
+                            ⠿
                           </span>
-                        </div>
-                      </div>
 
-                      {/* Right: Duration & Remove action */}
-                      <div className="flex items-center gap-3 shrink-0 ml-3">
-                        <span className="text-xs font-mono text-slate-400">
-                          {track.duration > 0 ? formatTime(track.duration) : '--:--'}
-                        </span>
+                          <span className={`text-xs font-mono font-bold w-4 text-center shrink-0 ${
+                            isCurrent ? 'text-cyan-400' : 'text-slate-500'
+                          }`}>
+                            {idx + 1}
+                          </span>
 
-                        {canControl && (
+                          {/* Play / Active Volume Icon Button */}
                           <button
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
-                              socket.emit('queue_remove', { queueId: track.queueId, trackId: track.id });
-                              socket.emit('remove_from_queue', { queueId: track.queueId, trackId: track.id });
+                              handlePlayTrack(track);
                             }}
-                            className="text-slate-500 hover:text-rose-400 transition-colors p-1 text-xs cursor-pointer"
-                            title="Remove from queue"
+                            className={`w-7 h-7 rounded-full flex items-center justify-center transition-all cursor-pointer shrink-0 ${
+                              isCurrent && isPlaying
+                                ? 'text-cyan-300 bg-cyan-500/20 border border-cyan-400/50 shadow-[0_0_12px_rgba(0,240,255,0.4)]'
+                                : 'text-slate-400 hover:text-white hover:bg-white/10'
+                            }`}
+                            title={isCurrent && isPlaying ? 'Playing' : 'Play now'}
                           >
-                            <span className="text-sm leading-none">—</span>
+                            {isCurrent && isPlaying ? (
+                              <Volume2 className="w-3.5 h-3.5 animate-pulse text-cyan-400" />
+                            ) : (
+                              <Play className="w-3.5 h-3.5 fill-current ml-0.5" />
+                            )}
                           </button>
-                        )}
+
+                          <div className="min-w-0 flex-1">
+                            <span
+                              className={`text-xs sm:text-[13px] truncate block transition-colors ${
+                                isCurrent
+                                  ? 'text-cyan-300 font-bold drop-shadow-[0_0_8px_rgba(0,240,255,0.3)]'
+                                  : 'text-slate-200 group-hover:text-white font-medium'
+                              }`}
+                              title="Click to play now"
+                            >
+                              {displayTitle}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Right: Duration & Remove action */}
+                        <div className="flex items-center gap-3 shrink-0 ml-3">
+                          <span className="text-xs font-mono text-slate-400">
+                            {track.duration > 0 ? formatTime(track.duration) : '--:--'}
+                          </span>
+
+                          {canControl && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                socket.emit('queue_remove', { queueId: track.queueId, trackId: track.id });
+                                socket.emit('remove_from_queue', { queueId: track.queueId, trackId: track.id });
+                              }}
+                              className="text-slate-500 hover:text-rose-400 transition-colors p-1 text-xs cursor-pointer"
+                              title="Remove from queue"
+                            >
+                              <span className="text-sm leading-none">—</span>
+                            </button>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })
-              )}
+                    );
+                  })
+                )}
+              </div>
             </div>
           )}
         </main>
@@ -1009,24 +1030,24 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
         {/* ========================================================= */}
         {/* COLUMN 3: RIGHT (Spatial Audio, 8D Effects & Live Chat)   */}
         {/* ========================================================= */}
-        <aside className={`w-full md:w-72 lg:w-80 shrink-0 bg-[#0a0a0d] border-l border-white/[0.08] flex flex-col p-3 sm:p-3.5 gap-3 h-full overflow-hidden ${
+        <aside className={`w-full md:w-72 lg:w-80 shrink-0 bg-dark-900/80 backdrop-blur-2xl border-l border-white/10 flex flex-col p-3 sm:p-3.5 gap-3 h-full overflow-hidden relative z-10 ${
           mobileTab === 'spatial' || mobileTab === 'chat' ? 'flex' : 'hidden md:flex'
         }`}>
           {/* Segmented Top Tab Switcher: Chat vs Spatial */}
-          <div className="grid grid-cols-2 p-1 rounded-xl bg-[#121216] border border-white/10 text-xs shrink-0">
+          <div className="grid grid-cols-2 p-1 rounded-full bg-dark-950/90 border border-white/10 text-xs shrink-0">
             <button
               type="button"
               onClick={() => {
                 setRightTab('chat');
                 setMobileTab('chat');
               }}
-              className={`py-2 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+              className={`py-1.5 rounded-full font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                 rightTab === 'chat'
-                  ? 'bg-[#1e1e24] text-white shadow-sm border border-white/10 font-bold'
+                  ? 'bg-cyan-950/60 border border-cyan-400/50 text-cyan-300 font-bold shadow-[0_0_12px_rgba(0,240,255,0.25)]'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
-              <MessageCircle className="w-4 h-4" />
+              <MessageCircle className="w-3.5 h-3.5" />
               <span>Chat</span>
             </button>
             <button
@@ -1035,13 +1056,13 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
                 setRightTab('spatial');
                 setMobileTab('spatial');
               }}
-              className={`py-2 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+              className={`py-1.5 rounded-full font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                 rightTab === 'spatial'
-                  ? 'bg-[#1e1e24] text-white shadow-sm border border-white/10 font-bold'
+                  ? 'bg-cyan-950/60 border border-cyan-400/50 text-cyan-300 font-bold shadow-[0_0_12px_rgba(0,240,255,0.25)]'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
-              <Compass className="w-4 h-4" />
+              <Compass className="w-3.5 h-3.5" />
               <span>Spatial</span>
             </button>
           </div>
@@ -1052,14 +1073,14 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
               {/* Spatial Audio Header with ON/OFF switch */}
               <div className="flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-1.5 font-bold text-xs text-white">
-                  <Compass className="w-3.5 h-3.5 text-[#10b981]" />
+                  <Compass className="w-3.5 h-3.5 text-cyan-400" />
                   <span>Spatial Audio</span>
                 </div>
                 <button
                   type="button"
                   onClick={handleToggleSpatial}
                   className={`w-9 h-5 rounded-full transition-colors relative cursor-pointer p-0.5 ${
-                    isSpatialEnabled ? 'bg-[#10b981]' : 'bg-slate-700'
+                    isSpatialEnabled ? 'bg-gradient-to-r from-cyan-400 to-sky-400 shadow-[0_0_10px_rgba(0,240,255,0.4)]' : 'bg-slate-800'
                   }`}
                 >
                   <span
@@ -1079,7 +1100,7 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
                 onTouchStart={handleRadarTouchStart}
                 onTouchMove={handleRadarTouchMove}
                 onTouchEnd={handleRadarTouchEnd}
-                className="relative w-full aspect-square rounded-2xl bg-[#060608] border border-white/10 overflow-hidden flex items-center justify-center cursor-crosshair select-none touch-none"
+                className="relative w-full aspect-square rounded-3xl bg-dark-950/90 border border-white/10 overflow-hidden flex items-center justify-center cursor-crosshair select-none touch-none shadow-inner"
               >
                 {/* Radar Grid Lines */}
                 <div className="absolute inset-2 border border-white/5 rounded-full pointer-events-none" />
@@ -1090,7 +1111,7 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
 
                 {/* Center Host Speaker Node */}
                 <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center pointer-events-none z-10">
-                  <div className="relative w-8 h-8 rounded-full bg-slate-900 border border-emerald-500/50 flex items-center justify-center text-xs font-bold text-emerald-300 shadow-[0_0_12px_rgba(16,185,129,0.3)]">
+                  <div className="relative w-8 h-8 rounded-full bg-dark-900 border border-cyan-400/40 flex items-center justify-center text-xs font-bold text-cyan-300 shadow-[0_0_12px_rgba(0,240,255,0.25)]">
                     <span>PR</span>
                     <span className="absolute -top-1 -right-1 text-amber-400">
                       <Crown className="w-2.5 h-2.5 fill-amber-400" />
@@ -1105,7 +1126,7 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
                     left: `${((listenerPos.x + 1) / 2) * 100}%`,
                     top: `${((listenerPos.y + 1) / 2) * 100}%`
                   }}
-                  className={`absolute -translate-x-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-[#10b981] text-black flex items-center justify-center shadow-[0_0_16px_rgba(16,185,129,0.6)] cursor-grab active:cursor-grabbing transition-transform ${
+                  className={`absolute -translate-x-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-gradient-to-tr from-cyan-400 via-sky-400 to-cyan-300 text-black flex items-center justify-center shadow-[0_0_16px_rgba(0,240,255,0.7)] cursor-grab active:cursor-grabbing transition-transform ${
                     isDraggingNode ? 'scale-110' : ''
                   }`}
                   title="Drag to position your speaker in 3D room soundstage"
@@ -1117,16 +1138,16 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
               {/* Distance Slider & Reset Button */}
               <div className="flex items-center justify-between text-xs text-slate-400 shrink-0">
                 <div className="flex items-center gap-1.5">
-                  <span className="font-mono text-emerald-400 font-bold">{distanceMetric}%</span>
-                  <div className="w-20 sm:w-24 h-1.5 rounded-full bg-slate-800 overflow-hidden">
-                    <div className="h-full bg-[#10b981]" style={{ width: `${distanceMetric}%` }} />
+                  <span className="font-mono text-cyan-400 font-bold">{distanceMetric}%</span>
+                  <div className="w-20 sm:w-24 h-1.5 rounded-full bg-dark-950 border border-white/10 overflow-hidden shadow-inner">
+                    <div className="h-full bg-gradient-to-r from-cyan-400 to-sky-400 shadow-[0_0_8px_rgba(0,240,255,0.5)]" style={{ width: `${distanceMetric}%` }} />
                   </div>
                 </div>
 
                 <button
                   type="button"
                   onClick={handleResetNode}
-                  className="flex items-center gap-1 px-2.5 py-1 rounded bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold text-slate-300 hover:text-white transition-all cursor-pointer"
+                  className="flex items-center gap-1 px-3 py-1 rounded-full bg-dark-950/80 hover:bg-dark-900 border border-white/10 hover:border-cyan-400/30 text-xs font-semibold text-slate-300 hover:text-cyan-300 transition-all cursor-pointer shadow-sm"
                 >
                   <ArrowUp className="w-3 h-3" />
                   <span>Move to Top</span>
@@ -1134,15 +1155,15 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
               </div>
 
               {/* Audio Effects Section (8D Rotation) */}
-              <div className="p-3 rounded-xl bg-black/40 border border-white/5 space-y-2 shrink-0">
+              <div className="p-3 rounded-2xl bg-dark-950/80 border border-white/10 space-y-2 shrink-0">
                 <div className="text-[10px] font-mono uppercase text-slate-400 flex items-center gap-1 font-bold">
-                  <Sparkles className="w-3 h-3 text-[#10b981]" />
+                  <Sparkles className="w-3 h-3 text-cyan-400" />
                   <span>Audio Effects</span>
                 </div>
 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5 text-xs">
-                    <RotateCw className={`w-3.5 h-3.5 text-[#10b981] ${is8DRotating ? 'animate-spin' : ''}`} />
+                    <RotateCw className={`w-3.5 h-3.5 text-cyan-400 ${is8DRotating ? 'animate-spin' : ''}`} />
                     <span className="font-medium text-white">8D Rotation</span>
                   </div>
 
@@ -1150,9 +1171,9 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
                     <button
                       type="button"
                       onClick={() => !is8DRotating && handleToggle8D()}
-                      className={`px-2.5 py-1 rounded text-xs font-bold transition-all cursor-pointer ${
+                      className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
                         is8DRotating
-                          ? 'bg-[#10b981] text-black shadow-[0_0_10px_rgba(16,185,129,0.4)]'
+                          ? 'bg-gradient-to-r from-cyan-400 to-sky-400 text-black font-extrabold shadow-[0_0_12px_rgba(0,240,255,0.4)]'
                           : 'bg-white/5 hover:bg-white/10 text-slate-300'
                       }`}
                     >
@@ -1161,7 +1182,7 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
                     <button
                       type="button"
                       onClick={() => is8DRotating && handleToggle8D()}
-                      className={`px-2.5 py-1 rounded text-xs font-bold transition-all cursor-pointer ${
+                      className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
                         !is8DRotating
                           ? 'bg-white/20 text-white'
                           : 'bg-white/5 hover:bg-white/10 text-slate-400'
@@ -1177,7 +1198,10 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
 
           {/* CHAT TAB VIEW */}
           {rightTab === 'chat' && (
-            <div className="flex-1 flex flex-col min-h-0 bg-[#060608] rounded-2xl border border-white/[0.06] overflow-hidden">
+            <div className="flex-1 flex flex-col min-h-0 bg-dark-950/80 rounded-3xl border border-white/10 overflow-hidden relative shadow-inner">
+              {/* Top ambient hairline */}
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-36 h-[1px] bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent pointer-events-none" />
+
               {/* Message scroll container or empty state */}
               <div className="flex-1 min-h-0 overflow-y-auto p-3 flex flex-col">
                 {chatMessages.length === 0 ? (
@@ -1214,10 +1238,10 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
                           </span>
                         </div>
                         <div
-                          className={`px-3 py-2 rounded-2xl max-w-[85%] break-words text-xs ${
+                          className={`px-3.5 py-2 rounded-2xl max-w-[85%] break-words text-xs ${
                             m.isYou
-                              ? 'bg-emerald-500/20 border border-emerald-500/30 text-emerald-100 rounded-br-sm'
-                              : 'bg-white/5 border border-white/10 text-slate-200 rounded-bl-sm'
+                              ? 'bg-cyan-500/20 border border-cyan-400/40 text-cyan-50 shadow-[0_0_12px_rgba(0,240,255,0.15)] rounded-br-sm'
+                              : 'bg-dark-900/90 border border-white/10 text-slate-200 rounded-bl-sm'
                           }`}
                         >
                           {m.text}
@@ -1230,19 +1254,19 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
               </div>
 
               {/* Bottom Message Input Bar */}
-              <div className="p-2.5 sm:p-3 border-t border-white/[0.08] bg-[#0d0d11]/90 backdrop-blur-sm shrink-0">
+              <div className="p-2.5 sm:p-3 border-t border-white/10 bg-dark-950/90 backdrop-blur-md shrink-0">
                 <form onSubmit={handleSendChat} className="relative flex items-center w-full">
                   <input
                     type="text"
                     value={chatInput}
                     onChange={(e) => setChatInput(e.target.value)}
                     placeholder="Message"
-                    className="w-full bg-[#141418] border border-white/[0.08] hover:border-white/15 focus:border-white/25 rounded-2xl px-4 py-2.5 sm:py-3 text-xs sm:text-sm text-white placeholder:text-slate-500 focus:outline-none transition-all pr-10"
+                    className="w-full bg-dark-900/90 border border-white/10 hover:border-cyan-400/30 focus:border-cyan-400 focus:shadow-[0_0_16px_rgba(0,240,255,0.2)] rounded-full px-4 py-2.5 sm:py-3 text-xs sm:text-sm text-white placeholder:text-slate-500 focus:outline-none transition-all pr-10"
                   />
                   <button
                     type="submit"
                     disabled={!chatInput.trim()}
-                    className="absolute right-2 p-1.5 rounded-xl text-slate-400 hover:text-white disabled:opacity-20 disabled:hover:text-slate-400 transition-all cursor-pointer disabled:cursor-default"
+                    className="absolute right-2.5 p-1.5 rounded-full text-slate-400 hover:text-cyan-300 disabled:opacity-20 disabled:hover:text-slate-400 transition-all cursor-pointer disabled:cursor-default"
                     title="Send Message"
                   >
                     <Send className="w-4 h-4" />
@@ -1255,11 +1279,11 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
       </div>
 
       {/* 3. SLEEK MOBILE BOTTOM NAVIGATION TABS (Mobile only) */}
-      <nav className="md:hidden shrink-0 h-12 bg-[#060608] border-t border-white/[0.08] px-4 flex items-center justify-around text-[11px] select-none z-30">
+      <nav className="md:hidden shrink-0 h-12 bg-dark-900/90 backdrop-blur-xl border-t border-white/10 px-4 flex items-center justify-around text-[11px] select-none z-30">
         <button
           type="button"
           onClick={() => setMobileTab('queue')}
-          className={`flex flex-col items-center gap-0.5 ${mobileTab === 'queue' ? 'text-[#10b981] font-bold' : 'text-slate-400'}`}
+          className={`flex flex-col items-center gap-0.5 ${mobileTab === 'queue' ? 'text-cyan-400 font-bold drop-shadow-[0_0_8px_rgba(0,240,255,0.6)]' : 'text-slate-400'}`}
         >
           <Disc3 className="w-4 h-4" />
           <span>Queue</span>
@@ -1270,7 +1294,7 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
             setMobileTab('spatial');
             setRightTab('spatial');
           }}
-          className={`flex flex-col items-center gap-0.5 ${mobileTab === 'spatial' ? 'text-[#10b981] font-bold' : 'text-slate-400'}`}
+          className={`flex flex-col items-center gap-0.5 ${mobileTab === 'spatial' ? 'text-cyan-400 font-bold drop-shadow-[0_0_8px_rgba(0,240,255,0.6)]' : 'text-slate-400'}`}
         >
           <Compass className="w-4 h-4" />
           <span>Spatial</span>
@@ -1281,7 +1305,7 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
             setMobileTab('chat');
             setRightTab('chat');
           }}
-          className={`flex flex-col items-center gap-0.5 ${mobileTab === 'chat' ? 'text-[#10b981] font-bold' : 'text-slate-400'}`}
+          className={`flex flex-col items-center gap-0.5 ${mobileTab === 'chat' ? 'text-cyan-400 font-bold drop-shadow-[0_0_8px_rgba(0,240,255,0.6)]' : 'text-slate-400'}`}
         >
           <MessageCircle className="w-4 h-4" />
           <span>Chat</span>
@@ -1289,35 +1313,37 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
         <button
           type="button"
           onClick={() => setMobileTab('room')}
-          className={`flex flex-col items-center gap-0.5 ${mobileTab === 'room' ? 'text-[#10b981] font-bold' : 'text-slate-400'}`}
+          className={`flex flex-col items-center gap-0.5 ${mobileTab === 'room' ? 'text-cyan-400 font-bold drop-shadow-[0_0_8px_rgba(0,240,255,0.6)]' : 'text-slate-400'}`}
         >
           <Users className="w-4 h-4" />
           <span>Room</span>
         </button>
       </nav>
 
-      {/* 4. BOTTOM MASTER PLAYBACK BAR (Beatsync style) */}
-      <footer className="shrink-0 bg-[#060608] border-t border-white/[0.08] px-3 sm:px-5 py-2 flex flex-col md:flex-row items-center justify-between gap-2 z-40 select-none">
-        
+      {/* 4. BOTTOM MASTER PLAYBACK BAR */}
+      <footer className="shrink-0 bg-dark-900/90 backdrop-blur-2xl border-t border-white/10 px-3 sm:px-6 py-2.5 flex flex-col md:flex-row items-center justify-between gap-3 z-40 select-none relative shadow-[0_-4px_30px_rgba(0,0,0,0.8),0_-1px_15px_rgba(0,240,255,0.04)]">
+        {/* Top ambient cyber hairline */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 sm:w-96 h-[1.5px] bg-gradient-to-r from-transparent via-cyan-400/60 to-transparent pointer-events-none" />
+
         {/* Left: Latency Fine-Tuning & Metronome Tools */}
         <div className="flex items-center gap-2 text-xs text-slate-400 w-full md:w-auto justify-between md:justify-start">
           {/* Millisecond Nudge */}
-          <div className="flex items-center gap-1 bg-white/5 border border-white/10 rounded-lg p-0.5 px-2 font-mono">
+          <div className="flex items-center gap-1 bg-dark-950/80 border border-white/10 rounded-full p-0.5 px-3 font-mono shadow-inner">
             <button
               type="button"
               onClick={() => handleNudge(-10)}
-              className="hover:text-white font-bold cursor-pointer px-1"
+              className="hover:text-cyan-300 font-bold cursor-pointer px-1 transition-colors"
               title="Nudge audio -10ms earlier"
             >
               &lt;&lt;
             </button>
-            <span className="text-emerald-400 font-bold px-1 min-w-[36px] text-center">
+            <span className="text-cyan-400 font-bold px-1 min-w-[36px] text-center">
               {hardwareDelay >= 0 ? `+${hardwareDelay}` : hardwareDelay}ms
             </span>
             <button
               type="button"
               onClick={() => handleNudge(10)}
-              className="hover:text-white font-bold cursor-pointer px-1"
+              className="hover:text-cyan-300 font-bold cursor-pointer px-1 transition-colors"
               title="Nudge audio +10ms later"
             >
               &gt;&gt;
@@ -1325,17 +1351,17 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
           </div>
 
           {/* Metronome Tool */}
-          <div className="flex items-center gap-1">
-            <span className="px-2 py-0.5 rounded bg-white/5 border border-white/10 font-mono text-[10px] text-slate-400">
+          <div className="flex items-center gap-1.5">
+            <span className="px-2 py-0.5 rounded-full bg-dark-950/80 border border-white/10 font-mono text-[10px] text-slate-400">
               {metronomeBpm}
             </span>
             <button
               type="button"
               onClick={handleToggleMetronome}
-              className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer ${
                 metronomeActive
-                  ? 'bg-[#10b981] text-black font-bold shadow-[0_0_12px_rgba(16,185,129,0.5)]'
-                  : 'bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300'
+                  ? 'bg-gradient-to-r from-cyan-400 to-sky-400 text-black font-bold shadow-[0_0_12px_rgba(0,240,255,0.5)]'
+                  : 'bg-dark-950/80 hover:bg-white/10 border border-white/10 text-slate-300'
               }`}
               title="Toggle synchronized audible metronome tick"
             >
@@ -1345,7 +1371,7 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
         </div>
 
         {/* Center: Controls & Scrubber */}
-        <div className="flex flex-col items-center justify-center gap-1 w-full md:max-w-xl">
+        <div className="flex flex-col items-center justify-center gap-1.5 w-full md:max-w-xl">
           {/* Control Buttons */}
           <div className="flex items-center gap-4">
             <button
@@ -1372,7 +1398,7 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
               <SkipBack className="w-4 h-4 fill-current" />
             </button>
 
-            {/* Play/Pause Button (Solid white circle with black icon) */}
+            {/* Play/Pause Button (Matching Lobby Primary Cyan Glow Button) */}
             <button
               type="button"
               onClick={() => {
@@ -1392,7 +1418,7 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
                   }
                 }
               }}
-              className="w-9 h-9 rounded-full bg-white hover:bg-slate-200 text-black flex items-center justify-center transition-all active:scale-95 shadow-lg cursor-pointer"
+              className="w-10 h-10 rounded-full bg-gradient-to-r from-cyan-400 via-sky-400 to-cyan-300 hover:brightness-110 text-black font-extrabold flex items-center justify-center transition-all active:scale-95 shadow-[0_0_20px_rgba(0,240,255,0.45)] cursor-pointer"
               title={isPlaying ? 'Pause' : 'Play'}
             >
               {isPlaying ? (
@@ -1420,43 +1446,43 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
                 socket.emit('set_repeat_mode', { mode: 'all' });
                 socket.emit('toggle_repeat');
               }}
-              className="p-1 text-[#10b981] transition-colors cursor-pointer relative"
+              className="p-1 text-cyan-400 transition-colors cursor-pointer relative"
               title="Repeat"
             >
               <Repeat className="w-4 h-4" />
-              <span className="w-1 h-1 rounded-full bg-[#10b981] absolute bottom-0 left-1/2 -translate-x-1/2" />
+              <span className="w-1 h-1 rounded-full bg-cyan-400 shadow-[0_0_6px_rgba(0,240,255,0.8)] absolute bottom-0 left-1/2 -translate-x-1/2" />
             </button>
           </div>
 
-            {/* Scrubber Progress Bar */}
-            <div className="flex items-center gap-2 w-full text-[11px] font-mono text-slate-400">
-              <span>{formatTime(currentPos)}</span>
-              <div
-                className="flex-1 py-1.5 -my-1.5 flex items-center cursor-pointer relative group select-none"
-                onClick={(e) => {
-                  if (!canControl) return;
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  const clickX = e.clientX - rect.left;
-                  const pct = Math.max(0, Math.min(1, clickX / rect.width));
-                  const targetTime = pct * trackDur;
-                  syncEngine.seekPlayback(targetTime);
-                  socket.emit('request_seek', { position: targetTime });
-                  socket.emit('seek', { position: targetTime });
-                }}
-              >
-                <div className="w-full h-1 bg-slate-800 rounded-full overflow-hidden relative">
-                  <div
-                    className="h-full bg-white group-hover:bg-[#10b981] transition-colors"
-                    style={{ width: `${progressPercent}%` }}
-                  />
-                </div>
+          {/* Scrubber Progress Bar */}
+          <div className="flex items-center gap-2.5 w-full text-[11px] font-mono text-slate-400">
+            <span>{formatTime(currentPos)}</span>
+            <div
+              className="flex-1 py-1.5 -my-1.5 flex items-center cursor-pointer relative group select-none"
+              onClick={(e) => {
+                if (!canControl) return;
+                const rect = e.currentTarget.getBoundingClientRect();
+                const clickX = e.clientX - rect.left;
+                const pct = Math.max(0, Math.min(1, clickX / rect.width));
+                const targetTime = pct * trackDur;
+                syncEngine.seekPlayback(targetTime);
+                socket.emit('request_seek', { position: targetTime });
+                socket.emit('seek', { position: targetTime });
+              }}
+            >
+              <div className="w-full h-1.5 bg-dark-950 border border-white/10 rounded-full overflow-hidden relative shadow-inner">
+                <div
+                  className="h-full bg-gradient-to-r from-cyan-400 to-fuchsia-500 shadow-[0_0_10px_rgba(0,240,255,0.6)] transition-all"
+                  style={{ width: `${progressPercent}%` }}
+                />
               </div>
-              <span>{formatTime(trackDur)}</span>
             </div>
+            <span>{formatTime(trackDur)}</span>
+          </div>
         </div>
 
         {/* Right: Master Volume Slider */}
-        <div className="hidden md:flex items-center gap-2 w-44 justify-end">
+        <div className="hidden md:flex items-center gap-2.5 w-44 justify-end">
           <button
             type="button"
             onClick={() => {
@@ -1464,9 +1490,9 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
               setIsMuted(newMuted);
               syncEngine.setVolume(newMuted ? 0 : volume);
             }}
-            className="text-slate-400 hover:text-white"
+            className="text-slate-400 hover:text-cyan-300 transition-colors"
           >
-            {isMuted || volume === 0 ? <VolumeX className="w-4 h-4 text-rose-400" /> : <Volume2 className="w-4 h-4" />}
+            {isMuted || volume === 0 ? <VolumeX className="w-4 h-4 text-rose-400" /> : <Volume2 className="w-4 h-4 text-cyan-400" />}
           </button>
           <input
             type="range"
@@ -1475,9 +1501,9 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
             step="0.01"
             value={isMuted ? 0 : volume}
             onChange={handleVolumeChange}
-            className="w-24 h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-[#10b981]"
+            className="w-24 h-1.5 bg-dark-950 border border-white/10 rounded-lg appearance-none cursor-pointer accent-cyan-400 shadow-inner"
           />
-          <span className="text-[11px] font-mono text-slate-400 w-8 text-right">
+          <span className="text-[11px] font-mono text-cyan-400 font-bold w-8 text-right">
             {Math.round((isMuted ? 0 : volume) * 100)}%
           </span>
         </div>
@@ -1505,9 +1531,12 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
           onClick={() => setShowLeaveConfirm(false)}
         >
           <div
-            className="relative w-full max-w-sm rounded-2xl bg-[#121217] border border-white/10 p-5 sm:p-6 shadow-[0_16px_50px_rgba(0,0,0,0.85)] overflow-hidden animate-scale-up"
+            className="relative w-full max-w-sm rounded-3xl bg-dark-900/95 backdrop-blur-2xl border border-white/10 p-6 sm:p-7 shadow-[0_0_50px_rgba(0,0,0,0.85),0_0_30px_rgba(244,63,94,0.15)] overflow-hidden animate-scale-up"
             onClick={(e) => e.stopPropagation()}
           >
+            {/* Ambient top hairline accent */}
+            <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-rose-500/60 to-transparent" />
+
             {/* Ambient background glow */}
             <div className="absolute -top-10 -right-10 w-32 h-32 bg-rose-500/20 rounded-full blur-2xl pointer-events-none" />
             <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-rose-500/10 rounded-full blur-2xl pointer-events-none" />
