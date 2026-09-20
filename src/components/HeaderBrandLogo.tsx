@@ -1,13 +1,27 @@
 import React from 'react';
 
-export const HeaderBrandLogo: React.FC<{ className?: string }> = ({ className = '' }) => {
+export const HeaderBrandLogo: React.FC<{
+  className?: string;
+  onClick?: () => void;
+}> = ({ className = '', onClick }) => {
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (onClick) {
+      onClick();
+    } else if (typeof window !== 'undefined') {
+      window.location.reload();
+    }
+  };
+
   return (
-    <div
-      className={`flex items-center gap-2 select-none px-1 py-0.5 rounded-lg ${className}`}
-      title="MusicSync Pro Studio"
+    <button
+      type="button"
+      onClick={handleClick}
+      className={`flex items-center gap-2 select-none px-1.5 py-0.5 rounded-lg hover:bg-white/10 active:scale-95 transition-all duration-150 cursor-pointer border-0 bg-transparent text-left focus:outline-none ${className}`}
+      title="MusicSync · Click to refresh"
     >
       {/* Dynamic 4-Bar Equalizer */}
-      <div className="flex items-center gap-[2.5px] h-4 px-0.5">
+      <div className="flex items-center gap-[2.5px] h-4 px-0.5 shrink-0">
         <span
           className="w-1 h-2.5 rounded-full bg-gradient-to-t from-cyan-400 to-[#10b981] animate-pulse shadow-[0_0_6px_rgba(56,189,248,0.5)]"
           style={{ animationDuration: '1.2s' }}
@@ -25,12 +39,9 @@ export const HeaderBrandLogo: React.FC<{ className?: string }> = ({ className = 
           style={{ animationDuration: '1.3s', animationDelay: '0.15s' }}
         />
       </div>
-      <span className="font-sans font-bold text-xs tracking-tight text-white">
+      <span className="font-sans font-bold text-xs tracking-tight text-white hover:text-cyan-300 transition-colors">
         MusicSync
       </span>
-      <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-[#10b981]/15 text-[#10b981] border border-[#10b981]/40 font-mono font-bold uppercase shadow-[0_0_10px_rgba(16,185,129,0.25)]">
-        PRO
-      </span>
-    </div>
+    </button>
   );
 };
