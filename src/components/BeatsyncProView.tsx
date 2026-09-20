@@ -549,7 +549,7 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
   const distanceMetric = Math.round((1 - Math.min(1, Math.sqrt(listenerPos.x * listenerPos.x + listenerPos.y * listenerPos.y) * 0.7)) * 100);
 
   return (
-    <div className="h-full w-full bg-dark-950 text-slate-200 flex flex-col font-sans select-none overflow-hidden text-[13px] relative">
+    <div className="flex-1 w-full h-full min-h-0 bg-dark-950 text-slate-200 flex flex-col font-sans select-none overflow-hidden text-[13px] relative">
       {/* Background ambient lighting matching Lobby */}
       <div className="absolute top-1/4 left-1/3 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-electric-cyan/[0.07] rounded-full blur-3xl pointer-events-none z-0" />
       <div className="absolute bottom-1/4 right-1/4 -translate-x-1/2 translate-y-1/2 w-96 h-96 bg-electric-purple/[0.07] rounded-full blur-3xl pointer-events-none z-0" />
@@ -765,7 +765,7 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
         {/* ========================================================= */}
         {/* COLUMN 2: CENTER (Direct Search & Live Results / Added Songs) */}
         {/* ========================================================= */}
-        <main className={`flex-1 min-w-0 flex flex-col p-3 sm:p-4 gap-3 bg-dark-950/40 overflow-hidden relative z-10 ${
+        <main className={`flex-1 min-w-0 flex flex-col p-2 sm:p-4 gap-2 sm:gap-3 bg-dark-950/40 overflow-hidden relative z-10 ${
           mobileTab === 'queue' ? 'flex' : 'hidden md:flex'
         }`}>
           {/* Universal Search Bar with Lobby Pill Look */}
@@ -833,12 +833,12 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
               <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-[1.5px] bg-gradient-to-r from-transparent via-cyan-400/60 to-transparent pointer-events-none" />
 
               {isSearching && searchResults.length === 0 ? (
-                <div className="h-64 flex flex-col items-center justify-center text-slate-400 gap-2.5">
+                <div className="flex-1 min-h-[220px] flex flex-col items-center justify-center text-slate-400 gap-2.5">
                   <Loader2 className="w-6 h-6 animate-spin text-cyan-400" />
                   <span className="text-xs font-mono text-slate-400">Searching 50M+ songs...</span>
                 </div>
               ) : !isSearching && searchResults.length === 0 ? (
-                <div className="h-64 flex flex-col items-center justify-center text-slate-500">
+                <div className="flex-1 min-h-[220px] flex flex-col items-center justify-center text-slate-500">
                   <p className="text-xs">No songs found for "{searchQuery}"</p>
                   <p className="text-[11px] text-slate-600 mt-1">Try another title, artist name, or genre</p>
                 </div>
@@ -945,7 +945,7 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
 
               <div className="flex-1 min-h-0 overflow-y-auto space-y-1.5 pr-1 select-none pt-1">
                 {queue.length === 0 ? (
-                  <div className="h-64 flex flex-col items-center justify-center text-center p-6 text-slate-500">
+                  <div className="flex-1 min-h-[220px] py-12 flex flex-col items-center justify-center text-center p-6 text-slate-500">
                     <Disc3 className="w-10 h-10 mb-2 opacity-30 text-cyan-400 animate-spin-slow" />
                     <p className="text-sm font-semibold text-slate-300">No songs in queue</p>
                     <p className="text-xs text-slate-500 mt-1">Type in the search bar above to add music</p>
@@ -1053,7 +1053,7 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
         {/* ========================================================= */}
         {/* COLUMN 3: RIGHT (Spatial Audio, 8D Effects & Live Chat)   */}
         {/* ========================================================= */}
-        <aside className={`w-full md:w-72 lg:w-80 shrink-0 bg-dark-900/80 backdrop-blur-2xl border-l border-white/10 flex flex-col p-3 sm:p-3.5 gap-3 h-full overflow-hidden relative z-10 ${
+        <aside className={`w-full md:w-72 lg:w-80 shrink-0 bg-dark-900/80 backdrop-blur-2xl border-l border-white/10 flex flex-col p-2.5 sm:p-3.5 gap-2.5 sm:gap-3 h-full overflow-hidden relative z-10 ${
           mobileTab === 'spatial' || mobileTab === 'chat' ? 'flex' : 'hidden md:flex'
         }`}>
           {/* Segmented Top Tab Switcher: Chat vs Spatial */}
@@ -1351,7 +1351,7 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
       </nav>
 
       {/* 4. BOTTOM MASTER PLAYBACK BAR */}
-      <footer className="shrink-0 bg-dark-900/90 backdrop-blur-2xl border-t border-white/10 px-3 sm:px-6 pt-2 sm:pt-2.5 pb-[calc(0.625rem+env(safe-area-inset-bottom,0px))] flex flex-col md:flex-row items-center justify-between gap-2.5 sm:gap-3 z-40 select-none relative shadow-[0_-4px_30px_rgba(0,0,0,0.8),0_-1px_15px_rgba(0,240,255,0.04)]">
+      <footer className="shrink-0 bg-dark-900/90 backdrop-blur-2xl border-t border-white/10 px-3 sm:px-6 pt-1.5 sm:pt-2.5 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))] flex flex-col md:flex-row items-center justify-between gap-2 sm:gap-3 z-40 select-none relative shadow-[0_-4px_30px_rgba(0,0,0,0.8),0_-1px_15px_rgba(0,240,255,0.04)]">
         {/* Top ambient cyber hairline */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 sm:w-96 h-[1.5px] bg-gradient-to-r from-transparent via-cyan-400/60 to-transparent pointer-events-none" />
 
