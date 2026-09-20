@@ -178,7 +178,70 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Track[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [addedFeedbackId, setAddedFeedbackId] = useState<string | null>(null);
+  const [addedTrackIds, setAddedTrackIds] = useState<Set<string>>(new Set());
+  const addingTrackIdsRef = useRef<Set<string>>(new Set());
+
+  // Keep addedTrackIds synchronized with active queue and playback state
+  useEffect(() => {
+    setAddedTrackIds((prev) => {
+      if (prev.size === 0) return prev;
+      const next = new Set<string>();
+      for (const id of prev) {
+        const inQueue = queue.some((q) => q.id === id || q.queueId === id);
+        const isCurrent = currentTrack?.id === id || currentTrack?.queueId === id;
+        if (inQueue || isCurrent) {
+          next.add(id);
+        }
+      }
+      return next;
+    });
+  }, [queue, currentTrack]);
+
+  // Helper to check if a track is already in the player or queue
+  const isTrackAlreadyAdded = (track: Track): boolean => {
+    if (!track) return false;
+    if (addedTrackIds.has(track.id)) return true;
+
+    const tId = track.id;
+    const tTitle = track.title ? track.title.trim().toLowerCase() : '';
+    const tArtist = track.artist ? track.artist.trim().toLowerCase() : '';
+    const tAudio = track.audioUrl || '';
+
+    if (currentTrack) {
+      if (tId && (currentTrack.id === tId || currentTrack.queueId === tId)) return true;
+      if (tAudio && currentTrack.audioUrl && currentTrack.audioUrl === tAudio) return true;
+      if (
+        tTitle &&
+        tArtist &&
+        currentTrack.title &&
+        currentTrack.artist &&
+        currentTrack.title.trim().toLowerCase() === tTitle &&
+        currentTrack.artist.trim().toLowerCase() === tArtist
+      ) {
+        return true;
+      }
+    }
+
+    if (queue && queue.length > 0) {
+      return queue.some((q) => {
+        if (tId && (q.id === tId || q.queueId === tId)) return true;
+        if (tAudio && q.audioUrl && q.audioUrl === tAudio) return true;
+        if (
+          tTitle &&
+          tArtist &&
+          q.title &&
+          q.artist &&
+          q.title.trim().toLowerCase() === tTitle &&
+          q.artist.trim().toLowerCase() === tArtist
+        ) {
+          return true;
+        }
+        return false;
+      });
+    }
+
+    return false;
+  };
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -228,20 +291,23 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
     if (!isAudioUnlocked) onUnlockAudio();
     syncEngine.primePlayback(track, 0);
     socket.emit('request_play', { track, position: 0 });
-    socket.emit('play_track_now', { track, position: 0 });
   };
 
   const handleAddSearchResult = (track: Track) => {
-    socket.emit('queue_add', { track });
-    socket.emit('add_to_queue', { track });
-    setAddedFeedbackId(track.id);
+    if (!track) return;
+    if (isTrackAlreadyAdded(track) || addingTrackIdsRef.current.has(track.id)) {
+      return;
+    }
 
-    // Return to the queue list so the user immediately sees the added songs right here to play them!
+    addingTrackIdsRef.current.add(track.id);
+    setAddedTrackIds((prev) => new Set(prev).add(track.id));
+
+    // Emit only once to prevent duplicate addition
+    socket.emit('queue_add', { track });
+
     setTimeout(() => {
-      setSearchQuery('');
-      setSearchResults([]);
-      setAddedFeedbackId(null);
-    }, 350);
+      addingTrackIdsRef.current.delete(track.id);
+    }, 1000);
   };
 
   const isPlaying = playbackState.status === 'playing';
@@ -430,7 +496,6 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
       const tracks = await localMusicService.importFiles([file]);
       if (tracks && tracks.length > 0) {
         socket.emit('queue_add', { track: tracks[0] });
-        socket.emit('add_to_queue', { track: tracks[0] });
       }
     } catch (err) {
       console.error('Failed to upload track:', err);
@@ -764,14 +829,22 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
               ) : (
                 <div className="flex-1 min-h-0 overflow-y-auto space-y-1 pr-1 select-none">
                   {searchResults.map((track) => {
-                    const isAdded = addedFeedbackId === track.id;
+                    const isAdded = isTrackAlreadyAdded(track);
                     const cleanTitle = cleanTrackTitle(track.title, track.artist);
 
                     return (
                       <div
                         key={track.id}
-                        onClick={() => handleAddSearchResult(track)}
-                        className="flex items-center justify-between p-2 rounded-xl hover:bg-white/[0.06] active:bg-white/[0.08] transition-colors cursor-pointer group select-none"
+                        onClick={() => {
+                          if (!isAdded) {
+                            handleAddSearchResult(track);
+                          }
+                        }}
+                        className={`flex items-center justify-between p-2 sm:p-2.5 rounded-xl border transition-all select-none ${
+                          isAdded
+                            ? 'bg-emerald-500/[0.05] border-emerald-500/20 shadow-sm'
+                            : 'hover:bg-white/[0.06] active:bg-white/[0.08] border-transparent cursor-pointer group'
+                        }`}
                       >
                         {/* Left: Thumbnail & Info */}
                         <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -788,40 +861,59 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
                             </div>
                           )}
                           <div className="min-w-0 flex-1">
-                            <h4 className="text-xs sm:text-sm font-semibold text-white truncate leading-tight group-hover:text-emerald-400 transition-colors">
-                              {cleanTitle}
-                            </h4>
+                            <div className="flex items-center gap-2">
+                              <h4
+                                className={`text-xs sm:text-sm font-semibold truncate leading-tight transition-colors ${
+                                  isAdded ? 'text-emerald-300' : 'text-white group-hover:text-emerald-400'
+                                }`}
+                              >
+                                {cleanTitle}
+                              </h4>
+                              {isAdded && (
+                                <span className="hidden sm:inline-flex items-center gap-1 text-[9px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                                  In List
+                                </span>
+                              )}
+                            </div>
                             <p className="text-[11px] text-slate-400 truncate leading-tight mt-0.5">
                               {track.artist || 'Unknown Artist'}
                             </p>
                           </div>
                         </div>
 
-                        {/* Right: Duration & Add '+' button */}
-                        <div className="flex items-center gap-3 shrink-0 ml-3">
+                        {/* Right: Duration & Add button */}
+                        <div className="flex items-center gap-2.5 sm:gap-3 shrink-0 ml-3">
                           <span className="text-xs font-mono text-slate-400">
                             {track.duration > 0 ? formatTime(track.duration) : '--:--'}
                           </span>
 
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleAddSearchResult(track);
-                            }}
-                            className={`p-1.5 rounded-lg transition-all cursor-pointer ${
-                              isAdded
-                                ? 'bg-emerald-500/20 text-[#10b981]'
-                                : 'text-slate-400 hover:text-white hover:bg-white/10'
-                            }`}
-                            title={isAdded ? 'Added to queue' : 'Add to queue'}
-                          >
-                            {isAdded ? (
-                              <Check className="w-4 h-4 text-[#10b981]" />
-                            ) : (
-                              <Plus className="w-4 h-4" />
-                            )}
-                          </button>
+                          {isAdded ? (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                              }}
+                              disabled
+                              className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 text-xs font-semibold shadow-[0_0_10px_rgba(16,185,129,0.25)] cursor-default select-none"
+                              title="Already added to your list"
+                            >
+                              <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+                              <span>Added</span>
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleAddSearchResult(track);
+                              }}
+                              className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-white/5 hover:bg-emerald-500/20 active:scale-95 text-slate-300 hover:text-emerald-300 border border-white/10 hover:border-emerald-500/40 text-xs font-medium cursor-pointer transition-all shadow-sm"
+                              title="Add to queue"
+                            >
+                              <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+                              <span>Add</span>
+                            </button>
+                          )}
                         </div>
                       </div>
                     );

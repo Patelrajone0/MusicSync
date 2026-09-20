@@ -2234,6 +2234,19 @@ io.on('connection', (socket) => {
     const room = rooms.get(currentRoomCode);
     if (!room || !track) return;
 
+    // Deduplication check: prevent adding duplicate track if already in queue
+    const isDuplicate = room.queue.some(item => 
+      (item.id && track.id && item.id === track.id) ||
+      (item.audioUrl && track.audioUrl && item.audioUrl === track.audioUrl) ||
+      (item.title && track.title && item.artist && track.artist &&
+       item.title.toLowerCase().trim() === track.title.toLowerCase().trim() &&
+       item.artist.toLowerCase().trim() === track.artist.toLowerCase().trim())
+    );
+    if (isDuplicate) {
+      console.log(`[Queue] Track already in queue for room ${currentRoomCode}: ${track.title}`);
+      return;
+    }
+
     const user = room.users.get(socket.id);
     const queueItem = {
       ...track,
