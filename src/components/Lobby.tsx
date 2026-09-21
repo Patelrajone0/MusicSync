@@ -6,7 +6,6 @@ import {
   Sparkles,
   Plus,
   LogIn,
-  Sliders,
 } from 'lucide-react';
 import { RoomState, User } from '../types';
 import { socket } from '../services/socket';
@@ -15,9 +14,7 @@ import { Logo } from './Logo';
 import { getDeviceId } from '../utils/deviceId';
 import { NetworkMode } from './NetworkModeModal';
 import { InstallAppButton } from './InstallAppButton';
-import { RoomCreationOverlay, RoomCreationLoadingDemo } from './RoomCreationLoading';
-import { TitaniumHeaderShowcase } from './TitaniumHeaderShowcase';
-import { TitaniumSidebarShowcase } from './TitaniumSidebarShowcase';
+import { RoomCreationOverlay } from './RoomCreationLoading';
 
 interface LobbyProps {
   onRoomReady: (room: RoomState, user: User) => void;
@@ -51,9 +48,6 @@ export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' 
   const [isJoining, setIsJoining] = useState(false);
   const [isEntering, setIsEntering] = useState<boolean>(false);
   const [pendingRoomReady, setPendingRoomReady] = useState<{ room: RoomState; user: User } | null>(null);
-  const [isCalibrationDemoOpen, setIsCalibrationDemoOpen] = useState<boolean>(false);
-  const [isHeaderDemoOpen, setIsHeaderDemoOpen] = useState<boolean>(false);
-  const [isSidebarDemoOpen, setIsSidebarDemoOpen] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>('');
 
   const handleNetworkModeChange = (mode: NetworkMode) => {
@@ -239,36 +233,9 @@ export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' 
             <Logo size="lg" layout="vertical" variant="titanium" showTagline={false} />
           </a>
 
-          {/* Quick Install, Calibration Demo & Titanium Header Controls */}
+          {/* Quick Install */}
           <div className="flex items-center gap-2 flex-wrap justify-center">
             <InstallAppButton variant="lobby" />
-            <button
-              type="button"
-              onClick={() => setIsCalibrationDemoOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-900/90 hover:bg-zinc-800 border border-white/10 hover:border-emerald-500/40 text-emerald-300 text-[11px] font-mono font-medium transition-all cursor-pointer shadow-sm active:scale-95"
-              title="Preview room creation calibration animation demos"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
-              <span>Calibration</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setIsHeaderDemoOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-900/90 hover:bg-zinc-800 border border-white/10 hover:border-zinc-400/40 text-zinc-300 text-[11px] font-mono font-medium transition-all cursor-pointer shadow-sm active:scale-95"
-              title="Preview Titanium Header design options"
-            >
-              <Sliders className="w-3.5 h-3.5 text-zinc-300" />
-              <span>Header</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setIsSidebarDemoOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-900/90 hover:bg-zinc-800 border border-white/10 hover:border-zinc-400/40 text-zinc-300 text-[11px] font-mono font-medium transition-all cursor-pointer shadow-sm active:scale-95"
-              title="Preview Titanium Sidebar design options"
-            >
-              <Sliders className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Sidebar</span>
-            </button>
           </div>
         </div>
 
@@ -493,27 +460,6 @@ export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' 
             setIsEntering(false);
             onRoomReady(pendingRoomReady.room, pendingRoomReady.user);
           }}
-        />
-      )}
-
-      {/* Interactive Demo Showcase Modal */}
-      {isCalibrationDemoOpen && (
-        <RoomCreationLoadingDemo
-          onClose={() => setIsCalibrationDemoOpen(false)}
-        />
-      )}
-
-      {/* Interactive Titanium Header Showcase Modal */}
-      {isHeaderDemoOpen && (
-        <TitaniumHeaderShowcase
-          onClose={() => setIsHeaderDemoOpen(false)}
-        />
-      )}
-
-      {/* Interactive Titanium Sidebar Showcase Modal */}
-      {isSidebarDemoOpen && (
-        <TitaniumSidebarShowcase
-          onClose={() => setIsSidebarDemoOpen(false)}
         />
       )}
     </div>
