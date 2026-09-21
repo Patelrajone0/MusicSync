@@ -23,6 +23,7 @@ import { getDeviceId } from './utils/deviceId';
 import { triggerMonetagAds, ADS_ENABLED } from './services/adManager';
 import { analytics } from './services/analytics';
 import { LoadingScreen } from './components/LoadingScreen';
+import { RoomCreationLoadingDemo } from './components/RoomCreationLoading';
 
 const SESSION_STORAGE_KEY = 'musicsync_user_session';
 const USER_NAME_STORAGE_KEY = 'musicsync_user_name';
@@ -143,6 +144,16 @@ export function App() {
       const urlParams = new URLSearchParams(window.location.search);
       const preview = urlParams.get('preview');
       return preview === 'loading' || preview === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const [isDemoLoadingOpen, setIsDemoLoadingOpen] = useState<boolean>(() => {
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const demo = urlParams.get('demo');
+      return demo === 'create' || demo === 'calibration' || demo === 'enter' || demo === 'true';
     } catch {
       return false;
     }
@@ -605,6 +616,22 @@ export function App() {
       window.removeEventListener('resize', resetScroll);
     };
   }, [roomCode]);
+
+  // If user requested live interactive demo of room creation calibration:
+  if (isDemoLoadingOpen) {
+    return (
+      <RoomCreationLoadingDemo
+        onClose={() => {
+          setIsDemoLoadingOpen(false);
+          try {
+            const url = new URL(window.location.href);
+            url.searchParams.delete('demo');
+            window.history.replaceState({}, '', url.pathname + (url.search ? url.search : ''));
+          } catch {}
+        }}
+      />
+    );
+  }
 
   // If user requested live preview of loading screen:
   if (isPreviewLoadingOpen) {

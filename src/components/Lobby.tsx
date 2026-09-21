@@ -14,6 +14,7 @@ import { Logo } from './Logo';
 import { getDeviceId } from '../utils/deviceId';
 import { NetworkMode } from './NetworkModeModal';
 import { InstallAppButton } from './InstallAppButton';
+import { RoomCreationOverlay, RoomCreationLoadingDemo } from './RoomCreationLoading';
 
 interface LobbyProps {
   onRoomReady: (room: RoomState, user: User) => void;
@@ -45,7 +46,9 @@ export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' 
 
   const [isCreating, setIsCreating] = useState(false);
   const [isJoining, setIsJoining] = useState(false);
-  const [isEntering, setIsEntering] = useState(false);
+  const [isEntering, setIsEntering] = useState<boolean>(false);
+  const [pendingRoomReady, setPendingRoomReady] = useState<{ room: RoomState; user: User } | null>(null);
+  const [isCalibrationDemoOpen, setIsCalibrationDemoOpen] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>('');
 
   const handleNetworkModeChange = (mode: NetworkMode) => {
@@ -97,11 +100,9 @@ export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' 
       socket.emit('create_room', { userName, deviceId: getDeviceId(), networkMode }, (res: any) => {
         clearTimeout(timeoutId);
         if (res && res.success && res.room && res.user) {
+          setPendingRoomReady({ room: res.room, user: res.user });
           setIsEntering(true);
-          setTimeout(() => {
-            setIsCreating(false);
-            onRoomReady(res.room, res.user);
-          }, 450);
+          setIsCreating(false);
         } else {
           setIsCreating(false);
           setErrorMessage(res?.error || 'Failed to create room. Please try again.');
@@ -233,8 +234,19 @@ export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' 
             <Logo size="lg" layout="vertical" variant="titanium" showTagline={false} />
           </a>
 
-          {/* Quick Install App Trigger */}
-          <InstallAppButton variant="lobby" />
+          {/* Quick Install & Calibration Demo Controls */}
+          <div className="flex items-center gap-2 flex-wrap justify-center">
+            <InstallAppButton variant="lobby" />
+            <button
+              type="button"
+              onClick={() => setIsCalibrationDemoOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-900/90 hover:bg-zinc-800 border border-white/10 hover:border-emerald-500/40 text-emerald-300 text-[11px] font-mono font-medium transition-all cursor-pointer shadow-sm active:scale-95"
+              title="Preview room creation calibration animation demos"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
+              <span>Calibration Demos</span>
+            </button>
+          </div>
         </div>
 
         {/* Modern Classic Dark Card */}
@@ -450,6 +462,22 @@ export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' 
       {/* Subtle Fade on Entry */}
       {isEntering && (
         <div className="fixed inset-0 z-40 pointer-events-none bg-black/40 backdrop-blur-sm animate-fade-in" />
+      )}
+      {/* Room Creation Calibration Animation Overlay */}
+      {isEntering && pendingRoomReady && (
+        <RoomCreationOverlay
+          onComplete={() => {
+            setIsEntering(false);
+            onRoomReady(pendingRoomReady.room, pendingRoomReady.user);
+          }}
+        />
+      )}
+
+      {/* Interactive Demo Showcase Modal */}
+      {isCalibrationDemoOpen && (
+        <RoomCreationLoadingDemo
+          onClose={() => setIsCalibrationDemoOpen(false)}
+        />
       )}
     </div>
   );
