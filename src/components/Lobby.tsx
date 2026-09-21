@@ -6,6 +6,7 @@ import {
   Sparkles,
   Plus,
   LogIn,
+  Sliders,
 } from 'lucide-react';
 import { RoomState, User } from '../types';
 import { socket } from '../services/socket';
@@ -15,6 +16,7 @@ import { getDeviceId } from '../utils/deviceId';
 import { NetworkMode } from './NetworkModeModal';
 import { InstallAppButton } from './InstallAppButton';
 import { RoomCreationOverlay, RoomCreationLoadingDemo } from './RoomCreationLoading';
+import { TitaniumHeaderShowcase } from './TitaniumHeaderShowcase';
 
 interface LobbyProps {
   onRoomReady: (room: RoomState, user: User) => void;
@@ -49,6 +51,7 @@ export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' 
   const [isEntering, setIsEntering] = useState<boolean>(false);
   const [pendingRoomReady, setPendingRoomReady] = useState<{ room: RoomState; user: User } | null>(null);
   const [isCalibrationDemoOpen, setIsCalibrationDemoOpen] = useState<boolean>(false);
+  const [isHeaderDemoOpen, setIsHeaderDemoOpen] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>('');
 
   const handleNetworkModeChange = (mode: NetworkMode) => {
@@ -234,7 +237,7 @@ export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' 
             <Logo size="lg" layout="vertical" variant="titanium" showTagline={false} />
           </a>
 
-          {/* Quick Install & Calibration Demo Controls */}
+          {/* Quick Install, Calibration Demo & Titanium Header Controls */}
           <div className="flex items-center gap-2 flex-wrap justify-center">
             <InstallAppButton variant="lobby" />
             <button
@@ -244,7 +247,16 @@ export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' 
               title="Preview room creation calibration animation demos"
             >
               <Sparkles className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
-              <span>Calibration Demos</span>
+              <span>Calibration</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsHeaderDemoOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-900/90 hover:bg-zinc-800 border border-white/10 hover:border-zinc-400/40 text-zinc-300 text-[11px] font-mono font-medium transition-all cursor-pointer shadow-sm active:scale-95"
+              title="Preview Titanium Header design options"
+            >
+              <Sliders className="w-3.5 h-3.5 text-zinc-300" />
+              <span>Titanium Header</span>
             </button>
           </div>
         </div>
@@ -477,6 +489,13 @@ export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' 
       {isCalibrationDemoOpen && (
         <RoomCreationLoadingDemo
           onClose={() => setIsCalibrationDemoOpen(false)}
+        />
+      )}
+
+      {/* Interactive Titanium Header Showcase Modal */}
+      {isHeaderDemoOpen && (
+        <TitaniumHeaderShowcase
+          onClose={() => setIsHeaderDemoOpen(false)}
         />
       )}
     </div>

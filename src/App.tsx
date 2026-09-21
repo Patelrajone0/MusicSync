@@ -24,6 +24,7 @@ import { triggerMonetagAds, ADS_ENABLED } from './services/adManager';
 import { analytics } from './services/analytics';
 import { LoadingScreen } from './components/LoadingScreen';
 import { RoomCreationLoadingDemo } from './components/RoomCreationLoading';
+import { TitaniumHeaderShowcase } from './components/TitaniumHeaderShowcase';
 
 const SESSION_STORAGE_KEY = 'musicsync_user_session';
 const USER_NAME_STORAGE_KEY = 'musicsync_user_name';
@@ -154,6 +155,17 @@ export function App() {
       const urlParams = new URLSearchParams(window.location.search);
       const demo = urlParams.get('demo');
       return demo === 'create' || demo === 'calibration' || demo === 'enter' || demo === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const [isHeaderDemoOpen, setIsHeaderDemoOpen] = useState<boolean>(() => {
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const demo = urlParams.get('demo');
+      const preview = urlParams.get('preview');
+      return demo === 'header' || preview === 'header';
     } catch {
       return false;
     }
@@ -616,6 +628,23 @@ export function App() {
       window.removeEventListener('resize', resetScroll);
     };
   }, [roomCode]);
+
+  // If user requested live interactive demo of Titanium Header options:
+  if (isHeaderDemoOpen) {
+    return (
+      <TitaniumHeaderShowcase
+        onClose={() => {
+          setIsHeaderDemoOpen(false);
+          try {
+            const url = new URL(window.location.href);
+            url.searchParams.delete('demo');
+            url.searchParams.delete('preview');
+            window.history.replaceState({}, '', url.pathname + (url.search ? url.search : ''));
+          } catch {}
+        }}
+      />
+    );
+  }
 
   // If user requested live interactive demo of room creation calibration:
   if (isDemoLoadingOpen) {
