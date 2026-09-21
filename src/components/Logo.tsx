@@ -38,11 +38,11 @@ export const Logo: React.FC<LogoProps> = ({
       return (
         <div className={`flex flex-col items-center text-center group select-none ${className}`}>
           <div className="relative flex flex-col items-center">
-            {/* Dark Brushed Titanium Emblem & Wordmark (True transparent PNG, zero background box) */}
+            {/* Official Enhanced MusicSync Titanium Emblem & Wordmark */}
             <img
-              src="/musicsync-titanium.png?v=3"
-              alt="MusicSync Titanium"
-              className="w-full max-w-[280px] sm:max-w-[320px] h-auto object-contain relative z-10 transition-transform duration-300 group-hover:scale-[1.01]"
+              src="/musicsync-logo.png"
+              alt="MusicSync Official Logo"
+              className="w-full max-w-[280px] sm:max-w-[340px] h-auto object-contain relative z-10 transition-transform duration-300 group-hover:scale-[1.01] filter drop-shadow-[0_10px_30px_rgba(0,0,0,0.8)]"
             />
 
             {showTagline && (
