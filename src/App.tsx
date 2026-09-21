@@ -109,11 +109,33 @@ export function App() {
   const [isHistoryOpen, setIsHistoryOpen] = useState<boolean>(false);
   const [kickedNotice, setKickedNotice] = useState<string | null>(null);
 
-  // Auto-reconnect state on page refresh
-  const [isReconnecting, setIsReconnecting] = useState<boolean>(() => {
+  // Auto-reconnect & page refresh loading screen state (guarantees at least 1 full animation cycle)
+  const [showLoadingScreen, setShowLoadingScreen] = useState<boolean>(() => {
     const urlRoom = new URLSearchParams(window.location.search).get('room');
     const session = getStoredSession();
-    return Boolean(urlRoom || (session && session.roomCode));
+    const hasRoom = Boolean(urlRoom || (session && session.roomCode));
+
+    // Detect if this page load is a browser refresh / reload
+    const isReload = (() => {
+      try {
+        const navEntries = performance.getEntriesByType('navigation');
+        if (navEntries.length > 0) {
+          return (navEntries[0] as PerformanceNavigationTiming).type === 'reload';
+        }
+        return (performance as any).navigation?.type === 1;
+      } catch {
+        return false;
+      }
+    })();
+
+    return hasRoom || isReload;
+  });
+
+  const [isRejoinReady, setIsRejoinReady] = useState<boolean>(() => {
+    const urlRoom = new URLSearchParams(window.location.search).get('room');
+    const session = getStoredSession();
+    const hasRoom = Boolean(urlRoom || (session && session.roomCode));
+    return !hasRoom; // Already ready if no room to rejoin
   });
 
   const [isPreviewLoadingOpen, setIsPreviewLoadingOpen] = useState<boolean>(() => {
@@ -494,7 +516,7 @@ export function App() {
     const targetColor = session?.avatarColor;
 
     if (!targetRoom) {
-      setIsReconnecting(false);
+      setIsRejoinReady(true);
       return;
     }
 
@@ -514,7 +536,6 @@ export function App() {
         },
         (response: { success: boolean; room?: RoomState; user?: User; error?: string }) => {
           if (!isMounted) return;
-          setIsReconnecting(false);
 
           if (response.success && response.room && response.user) {
             handleRoomReady(response.room, response.user);
@@ -528,6 +549,8 @@ export function App() {
             const cleanUrl = window.location.pathname;
             window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
           }
+
+          setIsRejoinReady(true);
         }
       );
     };
@@ -541,9 +564,9 @@ export function App() {
 
     const timer = setTimeout(() => {
       if (isMounted) {
-        setIsReconnecting(false);
+        setIsRejoinReady(true);
       }
-    }, 4000);
+    }, 4500);
 
     return () => {
       isMounted = false;
@@ -600,9 +623,14 @@ export function App() {
     );
   }
 
-  // Reconnecting splash screen during page refresh
-  if (isReconnecting) {
-    return <LoadingScreen />;
+  // Reconnecting / page refresh loading screen (completes at least 1 full animation cycle)
+  if (showLoadingScreen) {
+    return (
+      <LoadingScreen
+        isReady={isRejoinReady}
+        onComplete={() => setShowLoadingScreen(false)}
+      />
+    );
   }
 
   // Kicked From Room Notice Popup Modal

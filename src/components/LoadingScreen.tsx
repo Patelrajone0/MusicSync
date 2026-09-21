@@ -1,54 +1,93 @@
 import React, { useState, useEffect } from 'react';
-import { Wifi, X, Volume2, ShieldCheck, Sparkles } from 'lucide-react';
+import { Wifi, X, Check } from 'lucide-react';
 
 interface LoadingScreenProps {
   isPreview?: boolean;
+  isReady?: boolean;
   onClose?: () => void;
+  onComplete?: () => void;
   statusText?: string;
+  minDuration?: number;
 }
 
 export const LoadingScreen: React.FC<LoadingScreenProps> = ({
   isPreview = false,
+  isReady = true,
   onClose,
+  onComplete,
   statusText,
+  minDuration = 2000, // Completes at least 1 full animation cycle (~2.0s)
 }) => {
-  // Smooth progressive calibration counter (18% -> 99%)
-  const [progressPercent, setProgressPercent] = useState(24);
+  const [progressPercent, setProgressPercent] = useState(12);
   const [activeStageIndex, setActiveStageIndex] = useState(0);
+  const [hasCompletedCycle, setHasCompletedCycle] = useState(false);
+  const [isFadingOut, setIsFadingOut] = useState(false);
 
   const CALIBRATION_STAGES = [
     { label: 'SYNCHRONIZING P2P MESH NODES', detail: 'Locating nearby active speakers' },
     { label: 'CALIBRATING SUB-MILLISECOND NTP CLOCK', detail: '0.00ms audio clock offset locked' },
     { label: 'BUFFERING 48kHz LOSSLESS STREAM', detail: 'Pre-filling audio ring buffer' },
-    { label: 'AUDIO MESH SYNCHRONIZED', detail: 'Ready for synchronized playback' },
+    { label: 'AUDIO MESH SYNCHRONIZED', detail: 'Lossless audio stream ready' },
   ];
 
-  // Increment simulated progress with smooth natural pacing
+  // Drive smooth progressive calibration across at least 1 full cycle (minDuration)
   useEffect(() => {
+    const startTime = Date.now();
+
     const interval = setInterval(() => {
-      setProgressPercent((prev) => {
-        if (prev < 50) return prev + Math.floor(Math.random() * 4 + 3);
-        if (prev < 85) return prev + Math.floor(Math.random() * 3 + 2);
-        if (prev < 98) return prev + 1;
-        return 98;
-      });
-    }, 180);
+      const elapsed = Date.now() - startTime;
+      const progressRatio = Math.min(1, elapsed / minDuration);
+
+      // Smooth natural easing curve
+      const eased = 1 - Math.pow(1 - progressRatio, 2.2);
+
+      if (progressRatio < 1) {
+        const calculated = Math.min(98, Math.max(12, Math.round(eased * 98)));
+        setProgressPercent(calculated);
+      } else {
+        setHasCompletedCycle(true);
+      }
+    }, 35);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [minDuration]);
 
-  // Update telemetry stage based on progress
+  // Update telemetry stage index based on progress
   useEffect(() => {
-    if (progressPercent < 45) {
+    if (progressPercent < 40) {
       setActiveStageIndex(0);
-    } else if (progressPercent < 75) {
+    } else if (progressPercent < 72) {
       setActiveStageIndex(1);
-    } else if (progressPercent < 94) {
+    } else if (progressPercent < 98) {
       setActiveStageIndex(2);
     } else {
       setActiveStageIndex(3);
     }
   }, [progressPercent]);
+
+  // When at least 1 full cycle is done AND socket session is ready:
+  useEffect(() => {
+    if (isPreview) return; // Keep active indefinitely in preview mode until closed
+
+    if (hasCompletedCycle && isReady && !isFadingOut) {
+      setProgressPercent(100);
+      setActiveStageIndex(3);
+
+      // Hold briefly at 100% so user registers completion
+      const holdTimer = setTimeout(() => {
+        setIsFadingOut(true);
+
+        // Smooth fade-out transition into the application view
+        const fadeTimer = setTimeout(() => {
+          if (onComplete) onComplete();
+        }, 320);
+
+        return () => clearTimeout(fadeTimer);
+      }, 300);
+
+      return () => clearTimeout(holdTimer);
+    }
+  }, [hasCompletedCycle, isReady, isPreview, isFadingOut, onComplete]);
 
   // Allow Esc key to exit preview if opened
   useEffect(() => {
@@ -61,9 +100,14 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({
   }, [isPreview, onClose]);
 
   const currentStage = CALIBRATION_STAGES[activeStageIndex];
+  const isDone = progressPercent >= 100;
 
   return (
-    <div className="fixed inset-0 z-[99999] w-full h-full bg-dark-950 flex flex-col items-center justify-center select-none overflow-hidden font-sans">
+    <div
+      className={`fixed inset-0 z-[99999] w-full h-full bg-dark-950 flex flex-col items-center justify-center select-none overflow-hidden font-sans transition-opacity duration-300 ${
+        isFadingOut ? 'opacity-0 pointer-events-none' : 'opacity-100 animate-fade-in'
+      }`}
+    >
       {/* Background Soft Lighting Field */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[680px] h-[680px] bg-gradient-to-tr from-emerald-500/10 via-zinc-400/5 to-transparent rounded-full blur-3xl pointer-events-none animate-pulse-slow" />
       <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[420px] h-[420px] bg-gradient-to-b from-teal-500/8 to-transparent rounded-full blur-2xl pointer-events-none" />
@@ -178,13 +222,25 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({
           {/* Telemetry Indicator Row */}
           <div className="flex justify-between items-center text-[10px] font-mono text-zinc-400 px-1">
             <span className="flex items-center gap-1.5 uppercase tracking-wider font-semibold">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400 shadow-[0_0_8px_#34d399]"></span>
+              {isDone ? (
+                <span className="flex items-center justify-center w-3 h-3 rounded-full bg-emerald-400/20 border border-emerald-400 text-emerald-400">
+                  <Check className="w-2 h-2 stroke-[3]" />
+                </span>
+              ) : (
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400 shadow-[0_0_8px_#34d399]"></span>
+                </span>
+              )}
+              <span className={isDone ? 'text-emerald-300 font-bold' : 'text-zinc-300'}>
+                {currentStage.label}
               </span>
-              <span className="text-zinc-300">{currentStage.label}</span>
             </span>
-            <span className="text-emerald-400 font-bold tracking-widest tabular-nums">
+            <span
+              className={`font-bold tracking-widest tabular-nums ${
+                isDone ? 'text-emerald-300 shadow-[0_0_8px_rgba(52,211,153,0.8)]' : 'text-emerald-400'
+              }`}
+            >
               {progressPercent}%
             </span>
           </div>
