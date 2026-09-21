@@ -17,6 +17,7 @@ import { NetworkMode } from './NetworkModeModal';
 import { InstallAppButton } from './InstallAppButton';
 import { RoomCreationOverlay, RoomCreationLoadingDemo } from './RoomCreationLoading';
 import { TitaniumHeaderShowcase } from './TitaniumHeaderShowcase';
+import { TitaniumSidebarShowcase } from './TitaniumSidebarShowcase';
 
 interface LobbyProps {
   onRoomReady: (room: RoomState, user: User) => void;
@@ -52,6 +53,7 @@ export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' 
   const [pendingRoomReady, setPendingRoomReady] = useState<{ room: RoomState; user: User } | null>(null);
   const [isCalibrationDemoOpen, setIsCalibrationDemoOpen] = useState<boolean>(false);
   const [isHeaderDemoOpen, setIsHeaderDemoOpen] = useState<boolean>(false);
+  const [isSidebarDemoOpen, setIsSidebarDemoOpen] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>('');
 
   const handleNetworkModeChange = (mode: NetworkMode) => {
@@ -256,7 +258,16 @@ export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' 
               title="Preview Titanium Header design options"
             >
               <Sliders className="w-3.5 h-3.5 text-zinc-300" />
-              <span>Titanium Header</span>
+              <span>Header</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsSidebarDemoOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-900/90 hover:bg-zinc-800 border border-white/10 hover:border-zinc-400/40 text-zinc-300 text-[11px] font-mono font-medium transition-all cursor-pointer shadow-sm active:scale-95"
+              title="Preview Titanium Sidebar design options"
+            >
+              <Sliders className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Sidebar</span>
             </button>
           </div>
         </div>
@@ -496,6 +507,13 @@ export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' 
       {isHeaderDemoOpen && (
         <TitaniumHeaderShowcase
           onClose={() => setIsHeaderDemoOpen(false)}
+        />
+      )}
+
+      {/* Interactive Titanium Sidebar Showcase Modal */}
+      {isSidebarDemoOpen && (
+        <TitaniumSidebarShowcase
+          onClose={() => setIsSidebarDemoOpen(false)}
         />
       )}
     </div>

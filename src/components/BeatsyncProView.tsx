@@ -46,6 +46,8 @@ import { NetworkModeModal, NetworkMode } from './NetworkModeModal';
 import { HeaderBrandLogo } from './HeaderBrandLogo';
 import { TitaniumHeader } from './TitaniumHeader';
 import { TitaniumHeaderShowcase } from './TitaniumHeaderShowcase';
+import { TitaniumSidebar } from './TitaniumSidebar';
+import { TitaniumSidebarShowcase } from './TitaniumSidebarShowcase';
 import { analytics } from '../services/analytics';
 
 interface BeatsyncProViewProps {
@@ -124,6 +126,7 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const [isHeaderShowcaseOpen, setIsHeaderShowcaseOpen] = useState(false);
+  const [isSidebarShowcaseOpen, setIsSidebarShowcaseOpen] = useState(false);
 
   // Dismiss leave confirmation modal on Escape key press
   useEffect(() => {
@@ -808,145 +811,29 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
       <div className="flex-1 min-h-0 flex overflow-hidden relative">
         
         {/* ========================================================= */}
-        {/* COLUMN 1: LEFT SIDEBAR (Room Info, Permissions, Users, Tips) */}
+        {/* COLUMN 1: LEFT SIDEBAR (Titanium Pro Studio) */}
         {/* ========================================================= */}
-        <aside className={`w-full md:w-60 lg:w-64 shrink-0 bg-dark-900/80 backdrop-blur-2xl border-r border-white/10 flex-col p-3.5 gap-4 overflow-y-auto relative z-10 ${
-          mobileTab === 'room' ? 'flex' : 'hidden md:flex'
-        }`}>
-          {/* Room Header & QR Trigger */}
-          <div className="flex items-center justify-between shrink-0">
-            <div className="flex items-center gap-2 min-w-0">
-              <h2 className="text-sm font-bold text-white tracking-tight flex items-center gap-1.5 truncate">
-                <span># Room {roomCode}</span>
-              </h2>
-            </div>
-            <button
-              type="button"
-              onClick={() => setIsQRModalOpen(true)}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-dark-950/80 hover:bg-cyan-500/20 border border-white/10 hover:border-cyan-400/40 text-slate-300 hover:text-cyan-300 text-xs font-semibold cursor-pointer transition-all shrink-0 shadow-sm"
-              title="View Room QR Code & Info"
-            >
-              <QrCode className="w-3 h-3 text-cyan-400" />
-              <span>QR</span>
-            </button>
-          </div>
+        <TitaniumSidebar
+          roomCode={roomCode}
+          users={users}
+          currentUser={currentUser}
+          hostId={hostId}
+          mobileTab={mobileTab}
+          playbackPermission={playbackPermission}
+          onPermissionChange={(perm) => {
+            setPlaybackPermission(perm);
+            socket.emit('set_playback_permission', { permission: perm });
+          }}
+          onOpenQR={() => setIsQRModalOpen(true)}
+          onUploadAudio={handleUploadClick}
+          onOpenShowcase={() => setIsSidebarShowcaseOpen(true)}
+        />
 
-          {/* PLAYBACK PERMISSIONS (Everyone vs Admins) */}
-          <div className="space-y-2 shrink-0">
-            <div className="flex items-center gap-1.5">
-              <div className="relative w-3.5 h-3.5 rounded-full p-[1px] bg-gradient-to-tr from-cyan-400 via-sky-400 to-fuchsia-500 shadow-[0_0_6px_rgba(0,240,255,0.4)] shrink-0 flex items-center justify-center">
-                <div className="w-full h-full rounded-full bg-dark-950 flex items-center justify-center">
-                  <Radio className="w-2 h-2 text-cyan-400" />
-                </div>
-              </div>
-              <label className="text-[11px] font-bold text-slate-300 uppercase tracking-wider font-mono">
-                Playback Permissions
-              </label>
-            </div>
-            <div className="grid grid-cols-2 p-1 rounded-2xl bg-dark-950/90 border border-white/10 text-xs">
-              <button
-                type="button"
-                onClick={() => {
-                  setPlaybackPermission('everyone');
-                  socket.emit('set_playback_permission', { permission: 'everyone' });
-                }}
-                className={`py-1.5 rounded-xl font-semibold transition-all flex items-center justify-center gap-1 cursor-pointer ${
-                  playbackPermission === 'everyone'
-                    ? 'bg-cyan-500/20 border border-cyan-400/40 text-cyan-300 font-bold shadow-[0_0_12px_rgba(0,240,255,0.25)]'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                <Users className="w-3 h-3" />
-                <span>Everyone</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setPlaybackPermission('admins');
-                  socket.emit('set_playback_permission', { permission: 'admins' });
-                }}
-                className={`py-1.5 rounded-xl font-semibold transition-all flex items-center justify-center gap-1 cursor-pointer ${
-                  playbackPermission === 'admins'
-                    ? 'bg-gradient-to-r from-amber-500/30 to-amber-600/30 border border-amber-500/50 text-amber-300 font-bold shadow-[0_0_12px_rgba(245,158,11,0.25)]'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                <Crown className="w-3 h-3 text-amber-400 fill-amber-400" />
-                <span>Admins</span>
-              </button>
-            </div>
-          </div>
-
-          {/* CONNECTED USERS LIST */}
-          <div className="space-y-2 flex-1 min-h-[140px] flex flex-col">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5">
-                <div className="relative w-3.5 h-3.5 rounded-full p-[1px] bg-gradient-to-tr from-cyan-400 via-sky-400 to-fuchsia-500 shadow-[0_0_6px_rgba(0,240,255,0.4)] shrink-0 flex items-center justify-center">
-                  <div className="w-full h-full rounded-full bg-dark-950 flex items-center justify-center">
-                    <Users className="w-2 h-2 text-cyan-400" />
-                  </div>
-                </div>
-                <label className="text-[11px] font-bold text-slate-300 uppercase tracking-wider font-mono">
-                  Connected Users
-                </label>
-              </div>
-              <span className="px-2 py-0.5 rounded-full bg-dark-950 border border-white/10 text-cyan-400 font-mono text-[10px] font-bold shadow-[0_0_8px_rgba(0,240,255,0.2)]">
-                {users.length}
-              </span>
-            </div>
-
-            <div className="space-y-1.5 overflow-y-auto flex-1 pr-1">
-              {users.map((u) => {
-                const isUserHost = u.role === 'host' || u.id === hostId;
-                const isYou = u.id === currentUser?.id || u.id === socket.id;
-
-                return (
-                  <div
-                    key={u.id}
-                    className={`flex items-center justify-between p-2 sm:p-2.5 rounded-xl border transition-all ${
-                      isYou
-                        ? 'bg-cyan-950/40 border-cyan-400/40 text-white shadow-[0_0_12px_rgba(0,240,255,0.15)] ring-1 ring-cyan-400/30'
-                        : 'bg-dark-950/70 border-white/5 hover:border-white/10 text-slate-300'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2 min-w-0">
-                      <div className="relative w-6 h-6 rounded-full bg-dark-900 border border-white/10 flex items-center justify-center text-xs shrink-0">
-                        <span>🇮🇳</span>
-                        {isUserHost && (
-                          <span className="absolute -top-1 -right-1 text-amber-400">
-                            <Crown className="w-2.5 h-2.5 fill-amber-400" />
-                          </span>
-                        )}
-                      </div>
-                      <span className="text-xs font-semibold truncate">{u.name}</span>
-                    </div>
-
-                    {isYou && (
-                      <span className="text-[9px] font-mono font-bold px-2 py-0.5 rounded-full bg-gradient-to-r from-cyan-400 to-sky-400 text-black shadow-[0_0_8px_rgba(0,240,255,0.6)] shrink-0">
-                        You
-                      </span>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Quick Upload Button */}
-          <button
-            type="button"
-            onClick={handleUploadClick}
-            className="w-full p-2.5 rounded-2xl border border-white/10 hover:border-cyan-400/30 bg-dark-950/80 hover:bg-dark-900 flex items-center gap-2.5 text-left transition-all cursor-pointer group active:scale-[0.98] shrink-0 shadow-sm"
-          >
-            <div className="w-7 h-7 rounded-xl bg-cyan-500/15 border border-cyan-400/30 flex items-center justify-center text-cyan-300 shrink-0 group-hover:bg-cyan-400 group-hover:text-black transition-colors shadow-[0_0_8px_rgba(0,240,255,0.2)]">
-              <Upload className="w-3.5 h-3.5" />
-            </div>
-            <div className="min-w-0">
-              <h4 className="text-xs font-bold text-white leading-tight">Upload audio</h4>
-              <p className="text-[10px] text-slate-400 leading-tight">Add music to queue</p>
-            </div>
-          </button>
-        </aside>
+        {isSidebarShowcaseOpen && (
+          <TitaniumSidebarShowcase
+            onClose={() => setIsSidebarShowcaseOpen(false)}
+          />
+        )}
 
         {/* ========================================================= */}
         {/* COLUMN 2: CENTER (Direct Search & Live Results / Added Songs) */}

@@ -25,6 +25,7 @@ import { analytics } from './services/analytics';
 import { LoadingScreen } from './components/LoadingScreen';
 import { RoomCreationLoadingDemo } from './components/RoomCreationLoading';
 import { TitaniumHeaderShowcase } from './components/TitaniumHeaderShowcase';
+import { TitaniumSidebarShowcase } from './components/TitaniumSidebarShowcase';
 
 const SESSION_STORAGE_KEY = 'musicsync_user_session';
 const USER_NAME_STORAGE_KEY = 'musicsync_user_name';
@@ -166,6 +167,17 @@ export function App() {
       const demo = urlParams.get('demo');
       const preview = urlParams.get('preview');
       return demo === 'header' || preview === 'header';
+    } catch {
+      return false;
+    }
+  });
+
+  const [isSidebarDemoOpen, setIsSidebarDemoOpen] = useState<boolean>(() => {
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const demo = urlParams.get('demo');
+      const preview = urlParams.get('preview');
+      return demo === 'sidebar' || preview === 'sidebar';
     } catch {
       return false;
     }
@@ -635,6 +647,23 @@ export function App() {
       <TitaniumHeaderShowcase
         onClose={() => {
           setIsHeaderDemoOpen(false);
+          try {
+            const url = new URL(window.location.href);
+            url.searchParams.delete('demo');
+            url.searchParams.delete('preview');
+            window.history.replaceState({}, '', url.pathname + (url.search ? url.search : ''));
+          } catch {}
+        }}
+      />
+    );
+  }
+
+  // If user requested live interactive demo of Titanium Sidebar options:
+  if (isSidebarDemoOpen) {
+    return (
+      <TitaniumSidebarShowcase
+        onClose={() => {
+          setIsSidebarDemoOpen(false);
           try {
             const url = new URL(window.location.href);
             url.searchParams.delete('demo');
