@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Sparkles, Check, X, RotateCcw, LayoutGrid, Maximize2, Radio, Disc, Terminal, Activity } from 'lucide-react';
+import { Sparkles, Check, X, RotateCcw, LayoutGrid, Maximize2, Radio, Disc, Terminal, Activity, ShieldCheck } from 'lucide-react';
 
-export type RoomCreateTheme = 'demo1' | 'demo2' | 'demo3' | 'demo4' | 'demo5' | 'demo6';
+export type RoomCreateTheme = 'demo5' | 'demo1' | 'demo2' | 'demo3' | 'demo4' | 'demo6';
 
 interface RoomCreationCardProps {
   theme: RoomCreateTheme;
@@ -19,11 +19,17 @@ export const RoomCreationContent: React.FC<RoomCreationCardProps> = ({
   const [step, setStep] = useState(1);
   const totalDashes = theme === 'demo6' ? 10 : 8;
 
-  // Animated telemetry numbers matching the screenshot
+  // Animated telemetry numbers
+  const [meshNodes, setMeshNodes] = useState(8);
+  const [clockOffset, setClockOffset] = useState('+1.84');
+  const [measurements, setMeasurements] = useState(2);
+  const [audioEngineText, setAudioEngineText] = useState('initializing');
+  const [wsRelayText, setWsRelayText] = useState('CONNECTING');
+
+  // Exact Beatsync replica counters (for demo1)
   const [pairsSent, setPairsSent] = useState(6);
   const [pureMeasurements, setPureMeasurements] = useState(2);
   const [impureMeasurements, setImpureMeasurements] = useState(1);
-  const [measurements, setMeasurements] = useState(2);
   const [audioStatus, setAudioStatus] = useState('0 loaded');
   const [wsStatus, setWsStatus] = useState('open');
 
@@ -31,24 +37,66 @@ export const RoomCreationContent: React.FC<RoomCreationCardProps> = ({
     if (!autoPlay) return;
 
     setStep(1);
+    setMeshNodes(8);
+    setClockOffset('+1.84');
+    setMeasurements(2);
+    setAudioEngineText('initializing');
+    setWsRelayText('CONNECTING');
+
     setPairsSent(6);
     setPureMeasurements(2);
     setImpureMeasurements(1);
-    setMeasurements(2);
     setAudioStatus('0 loaded');
     setWsStatus('open');
 
     const totalSteps = totalDashes;
-    const intervalMs = 220; // Smooth ~1.8s calibration duration
+    const intervalMs = 210; // ~1.7s total sequence
 
     const interval = setInterval(() => {
       setStep((prev) => {
         const next = prev + 1;
 
-        // Dynamically increment telemetry counters realistically
-        setPairsSent((p) => Math.min(29, p + Math.floor(Math.random() * 4 + 2)));
-        setMeasurements((m) => Math.min(16, m + Math.floor(Math.random() * 2 + 1)));
+        // Dynamic process simulation for Titanium Studio Capsule (Demo 5)
+        if (next === 2) {
+          setMeshNodes(14);
+          setClockOffset('+0.92');
+          setMeasurements(5);
+          setAudioEngineText('handshake');
+          setWsRelayText('SYNCING');
+        } else if (next === 3) {
+          setMeshNodes(19);
+          setClockOffset('+0.36');
+          setMeasurements(8);
+          setAudioEngineText('pre-buffering');
+          setWsRelayText('VERIFYING');
+        } else if (next === 4) {
+          setMeshNodes(23);
+          setClockOffset('+0.12');
+          setMeasurements(11);
+          setAudioEngineText('48kHz Lossless');
+          setWsRelayText('CALIBRATING');
+        } else if (next === 5) {
+          setMeshNodes(26);
+          setClockOffset('-0.03');
+          setMeasurements(13);
+          setAudioEngineText('48kHz Lossless');
+          setWsRelayText('LOCKING');
+        } else if (next === 6) {
+          setMeshNodes(28);
+          setClockOffset('0.00');
+          setMeasurements(15);
+          setAudioEngineText('48kHz Lossless');
+          setWsRelayText('LOCKED');
+        } else if (next >= 7) {
+          setMeshNodes(29);
+          setClockOffset('0.00');
+          setMeasurements(16);
+          setAudioEngineText('48kHz Lossless');
+          setWsRelayText('LOCKED');
+        }
 
+        // Demo 1 Replica counters
+        setPairsSent((p) => Math.min(29, p + Math.floor(Math.random() * 4 + 3)));
         if (next >= 3) {
           setPureMeasurements((val) => Math.min(14, val + 2));
           setImpureMeasurements((val) => Math.min(9, val + 1));
@@ -56,11 +104,8 @@ export const RoomCreationContent: React.FC<RoomCreationCardProps> = ({
         if (next >= 6) {
           setAudioStatus('1 ready');
         }
+
         if (next >= totalSteps) {
-          setMeasurements(16);
-          setPureMeasurements(14);
-          setImpureMeasurements(9);
-          setPairsSent(29);
           clearInterval(interval);
           if (onAnimationEnd) {
             setTimeout(onAnimationEnd, 350);
@@ -75,7 +120,98 @@ export const RoomCreationContent: React.FC<RoomCreationCardProps> = ({
   }, [autoPlay, totalDashes, onAnimationEnd]);
 
   // =========================================================================
-  // OPTION 1: BEATSYNC MATTE STUDIO (Pixel-Perfect Exact Replica from Photo)
+  // OPTION 5 (DEFAULT): TITANIUM STUDIO CAPSULE WITH LIVE PROCESS TELEMETRY
+  // =========================================================================
+  if (theme === 'demo5') {
+    return (
+      <div
+        className={`relative w-full ${
+          isCompact ? 'max-w-[340px] p-5' : 'max-w-[420px] p-7 sm:p-8'
+        } rounded-[26px] bg-[#121418]/95 border border-emerald-500/25 shadow-[0_25px_60px_rgba(0,0,0,0.95),0_0_35px_rgba(16,185,129,0.14)] text-left select-none font-sans backdrop-blur-xl`}
+      >
+        {/* Ambient emerald backlight */}
+        <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-48 h-48 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
+
+        {/* Floating Titanium Logo Emblem */}
+        <div className="flex justify-center mb-3.5 relative z-10">
+          <img
+            src="/musicsync-titanium.png?v=3"
+            alt="MusicSync"
+            className="w-full max-w-[175px] h-auto object-contain drop-shadow-[0_4px_24px_rgba(0,0,0,0.85)]"
+          />
+        </div>
+
+        {/* Status Header with Pulsing Mint Dot */}
+        <div className="flex items-center justify-center gap-2 mb-4 relative z-10">
+          <span className="relative flex h-2.5 w-2.5">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400 shadow-[0_0_12px_#34d399]" />
+          </span>
+          <span className="text-xs sm:text-sm font-semibold text-zinc-300">
+            {step >= totalDashes ? 'Master Audio Clock Locked' : 'Calibrating Room Session...'}
+          </span>
+        </div>
+
+        {/* 8 Segmented Calibration Dashes with Diffuse White Bloom */}
+        <div className="grid grid-cols-8 gap-2 my-5 px-1 relative z-10">
+          {Array.from({ length: 8 }).map((_, i) => {
+            const isFilled = i < step;
+            return (
+              <div
+                key={i}
+                className={`h-1.5 sm:h-2 rounded-full transition-all duration-150 ${
+                  isFilled
+                    ? 'bg-white shadow-[0_0_16px_rgba(255,255,255,1),0_0_30px_rgba(255,255,255,0.6)]'
+                    : 'bg-[#24272f]'
+                }`}
+              />
+            );
+          })}
+        </div>
+
+        {/* LIVE MONOSPACE TELEMETRY (Directly below calibration dashes) */}
+        <div className="space-y-2 font-mono text-xs sm:text-[13px] text-zinc-400 pt-2 border-t border-white/[0.06] relative z-10">
+          <div className="flex justify-between items-center">
+            <span className="text-zinc-500">mesh nodes</span>
+            <span className="text-zinc-200 tabular-nums">{meshNodes} sent</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-zinc-500">clock offset</span>
+            <span
+              className={`tabular-nums font-semibold transition-colors duration-150 ${
+                clockOffset === '0.00' ? 'text-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]' : 'text-zinc-300'
+              }`}
+            >
+              {clockOffset} ms
+            </span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-zinc-500">measurements</span>
+            <span className="text-zinc-200 tabular-nums">{measurements} / 16</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-zinc-500">audio engine</span>
+            <span className="text-white font-medium">{audioEngineText}</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-zinc-500">ws relay</span>
+            <span
+              className={`font-bold uppercase tracking-wider transition-colors duration-200 ${
+                wsRelayText === 'LOCKED'
+                  ? 'text-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.6)]'
+                  : 'text-zinc-400'
+              }`}
+            >
+              {wsRelayText}
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // OPTION 1: BEATSYNC MATTE STUDIO (1:1 Exact Replica from Screenshot)
   // =========================================================================
   if (theme === 'demo1') {
     return (
@@ -84,7 +220,6 @@ export const RoomCreationContent: React.FC<RoomCreationCardProps> = ({
           isCompact ? 'max-w-[340px] p-5' : 'max-w-[420px] p-7 sm:p-8'
         } rounded-[26px] bg-[#14161a] border border-[#23262d] shadow-[0_25px_60px_rgba(0,0,0,0.95)] text-left select-none font-sans`}
       >
-        {/* Header: Mint Green Glowing Dot + Beatsync Calibrating */}
         <div className="flex flex-col items-center text-center space-y-1.5 mb-6">
           <div className="flex items-center gap-2.5">
             <span className="relative flex h-3 w-3">
@@ -100,7 +235,6 @@ export const RoomCreationContent: React.FC<RoomCreationCardProps> = ({
           </p>
         </div>
 
-        {/* 8 Horizontal Pill Dashes with Intense Diffuse White Bloom */}
         <div className="grid grid-cols-8 gap-2 sm:gap-2.5 my-6 px-1">
           {Array.from({ length: 8 }).map((_, i) => {
             const isFilled = i < step;
@@ -117,7 +251,6 @@ export const RoomCreationContent: React.FC<RoomCreationCardProps> = ({
           })}
         </div>
 
-        {/* Monospace Telemetry Table matching photo 1:1 */}
         <div className="space-y-2 font-mono text-xs sm:text-[13px] text-[#71717a] pt-1">
           <div className="flex justify-between items-center">
             <span>pairs sent</span>
@@ -145,10 +278,9 @@ export const RoomCreationContent: React.FC<RoomCreationCardProps> = ({
   }
 
   // =========================================================================
-  // OPTION 2: ACOUSTIC WAVE SPECTRUM (A Truly Different Audio-Reactive Take!)
+  // OPTION 2: ACOUSTIC WAVE SPECTRUM (Audio Frequency Bars)
   // =========================================================================
   if (theme === 'demo2') {
-    // 8 frequency equalizer heights forming an acoustic arch
     const barHeights = ['h-3.5', 'h-5', 'h-7', 'h-8', 'h-8', 'h-6', 'h-4.5', 'h-3.5'];
 
     return (
@@ -157,7 +289,6 @@ export const RoomCreationContent: React.FC<RoomCreationCardProps> = ({
           isCompact ? 'max-w-[340px] p-5' : 'max-w-[420px] p-7 sm:p-8'
         } rounded-[26px] bg-[#121418] border border-white/[0.08] shadow-[0_25px_60px_rgba(0,0,0,0.95)] text-left select-none font-sans`}
       >
-        {/* Header */}
         <div className="flex flex-col items-center text-center space-y-1.5 mb-5">
           <div className="flex items-center gap-2.5">
             <span className="relative flex h-3 w-3">
@@ -173,7 +304,6 @@ export const RoomCreationContent: React.FC<RoomCreationCardProps> = ({
           </p>
         </div>
 
-        {/* 8 Vertical Acoustic Equalizer Bars with White Bloom */}
         <div className="flex items-center justify-center gap-2.5 h-10 my-5 px-2">
           {Array.from({ length: 8 }).map((_, i) => {
             const isFilled = i < step;
@@ -190,7 +320,6 @@ export const RoomCreationContent: React.FC<RoomCreationCardProps> = ({
           })}
         </div>
 
-        {/* Acoustic Monospace Telemetry */}
         <div className="space-y-2 font-mono text-xs sm:text-[13px] text-zinc-400 pt-1">
           <div className="flex justify-between items-center">
             <span className="text-zinc-500">clock drift</span>
@@ -218,7 +347,7 @@ export const RoomCreationContent: React.FC<RoomCreationCardProps> = ({
   }
 
   // =========================================================================
-  // OPTION 3: RADIAL SONIC ORBIT DIAL (Circular Segmented Gauge - Unique!)
+  // OPTION 3: RADIAL SONIC ORBIT DIAL (Circular Arc Gauge)
   // =========================================================================
   if (theme === 'demo3') {
     return (
@@ -227,7 +356,6 @@ export const RoomCreationContent: React.FC<RoomCreationCardProps> = ({
           isCompact ? 'max-w-[340px] p-5' : 'max-w-[420px] p-7 sm:p-8'
         } rounded-[26px] bg-[#131519] border border-white/[0.08] shadow-[0_25px_60px_rgba(0,0,0,0.95)] text-center select-none font-sans`}
       >
-        {/* Header */}
         <div className="flex flex-col items-center space-y-1 mb-4">
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_10px_#10b981] animate-pulse" />
@@ -240,13 +368,10 @@ export const RoomCreationContent: React.FC<RoomCreationCardProps> = ({
           </p>
         </div>
 
-        {/* Circular Segmented Radial Dial (8 Arc Segments) */}
         <div className="relative w-24 h-24 sm:w-28 sm:h-28 mx-auto my-4 flex items-center justify-center">
           <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
             {Array.from({ length: 8 }).map((_, i) => {
               const isFilled = i < step;
-              const dashAngle = 360 / 8;
-              const strokeDasharray = '28 7'; // segmented arc dashes
               const strokeDashoffset = -i * 35;
 
               return (
@@ -270,7 +395,6 @@ export const RoomCreationContent: React.FC<RoomCreationCardProps> = ({
             })}
           </svg>
 
-          {/* Central Counter */}
           <div className="absolute inset-0 flex flex-col items-center justify-center font-mono">
             <span className="text-sm sm:text-base font-bold text-white tabular-nums">
               {measurements}/16
@@ -279,7 +403,6 @@ export const RoomCreationContent: React.FC<RoomCreationCardProps> = ({
           </div>
         </div>
 
-        {/* Telemetry Monospace Table */}
         <div className="space-y-1.5 font-mono text-xs sm:text-[12px] text-zinc-400 text-left pt-2 border-t border-white/[0.06]">
           <div className="flex justify-between items-center">
             <span className="text-zinc-500">pairs sent</span>
@@ -323,7 +446,6 @@ export const RoomCreationContent: React.FC<RoomCreationCardProps> = ({
           </p>
         </div>
 
-        {/* 8 Segmented Emerald Laser Dashes */}
         <div className="grid grid-cols-8 gap-2 my-6 px-1">
           {Array.from({ length: 8 }).map((_, i) => {
             const isFilled = i < step;
@@ -343,7 +465,7 @@ export const RoomCreationContent: React.FC<RoomCreationCardProps> = ({
         <div className="space-y-2 font-mono text-xs sm:text-[13px] text-zinc-400 pt-1">
           <div className="flex justify-between items-center">
             <span className="text-zinc-500">mesh nodes</span>
-            <span className="text-white tabular-nums">{pairsSent} sent</span>
+            <span className="text-white tabular-nums">{meshNodes} sent</span>
           </div>
           <div className="flex justify-between items-center">
             <span className="text-zinc-500">clock offset</span>
@@ -361,57 +483,6 @@ export const RoomCreationContent: React.FC<RoomCreationCardProps> = ({
             <span className="text-zinc-500">ws relay</span>
             <span className="text-emerald-400 font-semibold uppercase">{step >= totalDashes ? 'LOCKED' : 'OPEN'}</span>
           </div>
-        </div>
-      </div>
-    );
-  }
-
-  // =========================================================================
-  // OPTION 5: TITANIUM STUDIO CAPSULE (Luxury High-End Hardware)
-  // =========================================================================
-  if (theme === 'demo5') {
-    return (
-      <div
-        className={`relative w-full ${
-          isCompact ? 'max-w-[340px] p-5' : 'max-w-[420px] p-7 sm:p-8'
-        } rounded-[26px] bg-[#141518] border border-white/[0.08] shadow-[0_25px_60px_rgba(0,0,0,0.95)] text-center select-none font-sans`}
-      >
-        {/* Titanium Logo Icon */}
-        <div className="flex justify-center mb-3">
-          <img
-            src="/musicsync-titanium.png?v=3"
-            alt="MusicSync"
-            className="w-full max-w-[170px] h-auto object-contain drop-shadow-[0_4px_20px_rgba(0,0,0,0.8)]"
-          />
-        </div>
-
-        <div className="flex items-center justify-center gap-2 mb-4">
-          <span className="w-2.5 h-2.5 rounded-full bg-white shadow-[0_0_10px_#ffffff] animate-pulse" />
-          <span className="text-xs sm:text-sm font-semibold text-zinc-300">
-            {step >= totalDashes ? 'Master Audio Clock Locked' : 'Calibrating Room Session...'}
-          </span>
-        </div>
-
-        {/* 8 Platinum Dashes */}
-        <div className="grid grid-cols-8 gap-2 my-5 px-1">
-          {Array.from({ length: 8 }).map((_, i) => {
-            const isFilled = i < step;
-            return (
-              <div
-                key={i}
-                className={`h-1.5 rounded-full transition-all duration-150 ${
-                  isFilled
-                    ? 'bg-white shadow-[0_0_14px_rgba(255,255,255,1)]'
-                    : 'bg-zinc-800'
-                }`}
-              />
-            );
-          })}
-        </div>
-
-        <div className="flex justify-between items-center text-xs font-mono text-zinc-400 pt-1">
-          <span className="text-zinc-500">CALIBRATION</span>
-          <span className="text-white font-bold tabular-nums">{measurements} / 16 SAMPLES</span>
         </div>
       </div>
     );
@@ -442,7 +513,6 @@ export const RoomCreationContent: React.FC<RoomCreationCardProps> = ({
         {step >= totalDashes ? '> 0ms audio sync verified' : '> Synchronizing P2P timeframes...'}
       </p>
 
-      {/* 10 Cyan High-Density Dashes */}
       <div className="grid grid-cols-10 gap-1.5 my-4">
         {Array.from({ length: 10 }).map((_, i) => {
           const isFilled = i < step;
@@ -478,7 +548,8 @@ export const RoomCreationContent: React.FC<RoomCreationCardProps> = ({
 };
 
 // ===========================================================================
-// FULLSCREEN ROOM CREATION OVERLAY (Active when entering/creating a room)
+// FULLSCREEN ROOM CREATION OVERLAY (Active when user clicks Create Room)
+// Defaults to demo5 (Titanium Studio Capsule with live process details!)
 // ===========================================================================
 interface RoomCreationOverlayProps {
   onComplete: () => void;
@@ -487,13 +558,13 @@ interface RoomCreationOverlayProps {
 
 export const RoomCreationOverlay: React.FC<RoomCreationOverlayProps> = ({
   onComplete,
-  theme = 'demo1',
+  theme = 'demo5',
 }) => {
   const [selectedTheme] = useState<RoomCreateTheme>(() => {
     try {
-      return (localStorage.getItem('musicsync_create_theme') as RoomCreateTheme) || theme;
+      return (localStorage.getItem('musicsync_create_theme') as RoomCreateTheme) || 'demo5';
     } catch {
-      return theme;
+      return 'demo5';
     }
   });
 
@@ -510,7 +581,7 @@ export const RoomCreationOverlay: React.FC<RoomCreationOverlayProps> = ({
 };
 
 // ===========================================================================
-// INTERACTIVE DEMO SHOWCASE (Supports all 6 variations with Live Preview)
+// INTERACTIVE DEMO SHOWCASE
 // ===========================================================================
 interface RoomCreationLoadingDemoProps {
   onClose?: () => void;
@@ -523,13 +594,13 @@ export const RoomCreationLoadingDemo: React.FC<RoomCreationLoadingDemoProps> = (
 }) => {
   const [activeTheme, setActiveTheme] = useState<RoomCreateTheme>(() => {
     try {
-      return (localStorage.getItem('musicsync_create_theme') as RoomCreateTheme) || 'demo1';
+      return (localStorage.getItem('musicsync_create_theme') as RoomCreateTheme) || 'demo5';
     } catch {
-      return 'demo1';
+      return 'demo5';
     }
   });
 
-  const [viewMode, setViewMode] = useState<'grid' | RoomCreateTheme>('grid');
+  const [viewMode, setViewMode] = useState<'grid' | RoomCreateTheme>('demo5');
   const [replayKey, setReplayKey] = useState(0);
   const [savedToast, setSavedToast] = useState<string | null>(null);
 
@@ -542,8 +613,16 @@ export const RoomCreationLoadingDemo: React.FC<RoomCreationLoadingDemoProps> = (
     desc: string;
   }[] = [
     {
-      id: 'demo1',
+      id: 'demo5',
       number: '01',
+      name: 'Titanium Studio Capsule',
+      tag: 'RECOMMENDED • APPLIED',
+      icon: ShieldCheck,
+      desc: 'Applied active design: Titanium logo, 8 white glowing dashes, and the exact live process telemetry table right below the calibration.',
+    },
+    {
+      id: 'demo1',
+      number: '02',
       name: 'Beatsync Exact Replica',
       tag: '1:1 SCREENSHOT REPLICA',
       icon: Radio,
@@ -551,7 +630,7 @@ export const RoomCreationLoadingDemo: React.FC<RoomCreationLoadingDemoProps> = (
     },
     {
       id: 'demo2',
-      number: '02',
+      number: '03',
       name: 'Acoustic Waveform',
       tag: 'AUDIO SPECTRUM BARS',
       icon: Activity,
@@ -559,7 +638,7 @@ export const RoomCreationLoadingDemo: React.FC<RoomCreationLoadingDemoProps> = (
     },
     {
       id: 'demo3',
-      number: '03',
+      number: '04',
       name: 'Radial Sonic Orbit',
       tag: 'CIRCULAR ARC GAUGE',
       icon: Disc,
@@ -567,19 +646,11 @@ export const RoomCreationLoadingDemo: React.FC<RoomCreationLoadingDemoProps> = (
     },
     {
       id: 'demo4',
-      number: '04',
+      number: '05',
       name: 'Emerald Laser Grid',
       tag: 'BRAND EDITION',
       icon: Sparkles,
       desc: 'MusicSync emerald-to-white glowing laser dashes with acoustic P2P telemetry.',
-    },
-    {
-      id: 'demo5',
-      number: '05',
-      name: 'Titanium Studio Capsule',
-      tag: 'LUXURY CLEAN',
-      icon: Check,
-      desc: 'Understated luxury with the Titanium logo and pure platinum glowing dashes.',
     },
     {
       id: 'demo6',
@@ -610,11 +681,11 @@ export const RoomCreationLoadingDemo: React.FC<RoomCreationLoadingDemoProps> = (
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'g' || e.key === '0') setViewMode('grid');
-      if (e.key === '1') setViewMode('demo1');
-      if (e.key === '2') setViewMode('demo2');
-      if (e.key === '3') setViewMode('demo3');
-      if (e.key === '4') setViewMode('demo4');
-      if (e.key === '5') setViewMode('demo5');
+      if (e.key === '1') setViewMode('demo5');
+      if (e.key === '2') setViewMode('demo1');
+      if (e.key === '3') setViewMode('demo2');
+      if (e.key === '4') setViewMode('demo3');
+      if (e.key === '5') setViewMode('demo4');
       if (e.key === '6') setViewMode('demo6');
       if (e.key === 'r' || e.key === 'R') handleReplay();
       if (e.key === 'Escape' && onClose) onClose();
@@ -638,11 +709,11 @@ export const RoomCreationLoadingDemo: React.FC<RoomCreationLoadingDemoProps> = (
               <h2 className="text-sm sm:text-base font-bold text-white tracking-tight flex items-center gap-2">
                 <span>Room Calibration Showcase</span>
                 <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 uppercase">
-                  6 Design Variations
+                  Titanium Capsule Applied
                 </span>
               </h2>
               <p className="text-[11px] text-zinc-400 hidden sm:block">
-                Choose your favorite calibration animation for room creation.
+                Titanium Studio Capsule is active with real-time process telemetry.
               </p>
             </div>
           </div>
@@ -735,7 +806,7 @@ export const RoomCreationLoadingDemo: React.FC<RoomCreationLoadingDemoProps> = (
           <div className="max-w-7xl mx-auto space-y-4">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs text-zinc-400 px-1">
               <p>
-                Compare all 6 live calibration designs. Click <strong>"Select This"</strong> on any card to lock it as your room creation animation.
+                Compare all 6 live calibration designs. <strong>Titanium Studio Capsule</strong> is applied with live process telemetry.
               </p>
               <span className="text-[11px] font-mono text-emerald-400">
                 Active Theme: {THEMES_INFO.find((t) => t.id === activeTheme)?.name}
@@ -781,7 +852,7 @@ export const RoomCreationLoadingDemo: React.FC<RoomCreationLoadingDemoProps> = (
                     </div>
 
                     {/* Live Animation Container */}
-                    <div className="relative h-[300px] sm:h-[330px] w-full bg-[#08080a] flex items-center justify-center p-3 overflow-hidden">
+                    <div className="relative h-[340px] sm:h-[370px] w-full bg-[#08080a] flex items-center justify-center p-3 overflow-hidden">
                       <RoomCreationContent
                         theme={opt.id}
                         isCompact={true}
