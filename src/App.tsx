@@ -26,6 +26,7 @@ import { LoadingScreen } from './components/LoadingScreen';
 import { RoomCreationLoadingDemo } from './components/RoomCreationLoading';
 import { TitaniumHeaderShowcase } from './components/TitaniumHeaderShowcase';
 import { TitaniumSidebarShowcase } from './components/TitaniumSidebarShowcase';
+import { TitaniumStudioShowcase } from './components/TitaniumStudioShowcase';
 
 const SESSION_STORAGE_KEY = 'musicsync_user_session';
 const USER_NAME_STORAGE_KEY = 'musicsync_user_name';
@@ -178,6 +179,17 @@ export function App() {
       const demo = urlParams.get('demo');
       const preview = urlParams.get('preview');
       return demo === 'sidebar' || preview === 'sidebar';
+    } catch {
+      return false;
+    }
+  });
+
+  const [isStudioDemoOpen, setIsStudioDemoOpen] = useState<boolean>(() => {
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const demo = urlParams.get('demo');
+      const preview = urlParams.get('preview');
+      return demo === 'studio' || demo === 'player' || preview === 'studio' || preview === 'player';
     } catch {
       return false;
     }
@@ -664,6 +676,23 @@ export function App() {
       <TitaniumSidebarShowcase
         onClose={() => {
           setIsSidebarDemoOpen(false);
+          try {
+            const url = new URL(window.location.href);
+            url.searchParams.delete('demo');
+            url.searchParams.delete('preview');
+            window.history.replaceState({}, '', url.pathname + (url.search ? url.search : ''));
+          } catch {}
+        }}
+      />
+    );
+  }
+
+  // If user requested live interactive demo of Titanium Studio options (Center, Right, Player):
+  if (isStudioDemoOpen) {
+    return (
+      <TitaniumStudioShowcase
+        onClose={() => {
+          setIsStudioDemoOpen(false);
           try {
             const url = new URL(window.location.href);
             url.searchParams.delete('demo');
