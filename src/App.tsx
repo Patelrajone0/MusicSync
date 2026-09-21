@@ -22,11 +22,7 @@ import { userTasteEngine } from './services/userTaste';
 import { getDeviceId } from './utils/deviceId';
 import { triggerMonetagAds, ADS_ENABLED } from './services/adManager';
 import { analytics } from './services/analytics';
-import {
-  LoadingScreensShowcase,
-  LoadingScreenContent,
-  LoadingTheme,
-} from './components/LoadingScreensShowcase';
+import { LoadingScreen } from './components/LoadingScreen';
 
 const SESSION_STORAGE_KEY = 'musicsync_user_session';
 const USER_NAME_STORAGE_KEY = 'musicsync_user_name';
@@ -120,20 +116,11 @@ export function App() {
     return Boolean(urlRoom || (session && session.roomCode));
   });
 
-  // Loading screen theme & live preview showcase state
-  const [loadingTheme, setLoadingTheme] = useState<LoadingTheme>(() => {
-    try {
-      return (localStorage.getItem('musicsync_loading_theme') as LoadingTheme) || 'option1';
-    } catch {
-      return 'option1';
-    }
-  });
-
   const [isPreviewLoadingOpen, setIsPreviewLoadingOpen] = useState<boolean>(() => {
     try {
       const urlParams = new URLSearchParams(window.location.search);
       const preview = urlParams.get('preview');
-      return preview === 'loading' || preview === 'loaders' || preview === 'themes' || preview === 'all' || preview === 'true';
+      return preview === 'loading' || preview === 'true';
     } catch {
       return false;
     }
@@ -596,10 +583,11 @@ export function App() {
     };
   }, [roomCode]);
 
-  // If user requested live interactive preview of loading screens:
+  // If user requested live preview of loading screen:
   if (isPreviewLoadingOpen) {
     return (
-      <LoadingScreensShowcase
+      <LoadingScreen
+        isPreview
         onClose={() => {
           setIsPreviewLoadingOpen(false);
           try {
@@ -608,19 +596,13 @@ export function App() {
             window.history.replaceState({}, '', url.pathname + (url.search ? url.search : ''));
           } catch {}
         }}
-        onSelectTheme={(theme) => setLoadingTheme(theme)}
-        initialTheme={loadingTheme}
       />
     );
   }
 
-  // Reconnecting splash screen during page refresh (renders active animated theme)
+  // Reconnecting splash screen during page refresh
   if (isReconnecting) {
-    return (
-      <div className="min-h-screen bg-dark-950 flex flex-col items-center justify-center select-none relative overflow-hidden">
-        <LoadingScreenContent theme={loadingTheme} />
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   // Kicked From Room Notice Popup Modal
@@ -677,7 +659,6 @@ export function App() {
         <Lobby
           onRoomReady={handleRoomReady}
           initialRoomCode={initialRoomCode}
-          onOpenLoadingPreview={() => setIsPreviewLoadingOpen(true)}
         />
         {kickedPopupModal}
         <InstallPwaPrompt />
