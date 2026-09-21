@@ -519,14 +519,14 @@ const StudioLayoutPreview: React.FC<StudioLayoutPreviewProps> = ({
         <div className="md:col-span-2 flex flex-col gap-2.5">
           {/* Universal Search Bar */}
           <div
-            className={`w-full h-10 px-3.5 rounded-full flex items-center justify-between transition-all ${
+            className={`w-full h-10 px-3.5 flex items-center justify-between transition-all ${
               isStudio
-                ? 'bg-[#0e1014]/95 border border-white/[0.08] hover:border-white/20 shadow-sm'
+                ? 'rounded-[16px] bg-[#0e1014]/95 border border-white/[0.1] hover:border-white/25 focus-within:border-white/40 shadow-sm'
                 : isRack
-                ? 'bg-black/90 border border-zinc-800 hover:border-zinc-600 font-mono shadow-inner'
+                ? 'rounded-full bg-black/90 border border-zinc-800 hover:border-zinc-600 font-mono shadow-inner'
                 : isStealth
-                ? 'bg-[#090a0c] border border-zinc-800/90 hover:border-zinc-700'
-                : 'bg-white/[0.04] backdrop-blur-2xl border border-white/15 shadow-[0_2px_12px_rgba(0,0,0,0.3)]'
+                ? 'rounded-full bg-[#090a0c] border border-zinc-800/90 hover:border-zinc-700'
+                : 'rounded-[16px] bg-white/[0.04] backdrop-blur-2xl border border-white/15 shadow-[0_2px_12px_rgba(0,0,0,0.3)]'
             }`}
           >
             <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -546,21 +546,31 @@ const StudioLayoutPreview: React.FC<StudioLayoutPreviewProps> = ({
 
           {/* Queue Card */}
           <div
-            className={`flex-1 rounded-2xl p-4 flex flex-col items-center justify-center text-center relative overflow-hidden ${
+            className={`flex-1 p-4 flex flex-col items-center justify-center text-center relative overflow-hidden ${
               isStudio
-                ? 'bg-[#0e1014]/90 backdrop-blur-2xl border border-white/[0.08] shadow-md'
+                ? 'rounded-[22px] bg-[#0e1014]/90 backdrop-blur-2xl border border-white/[0.1] hover:border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.8),inset_0_1px_0_rgba(255,255,255,0.15)]'
                 : isRack
-                ? 'bg-[#0d0f14] border border-zinc-800 font-mono shadow-inner'
+                ? 'rounded-2xl bg-[#0d0f14] border border-zinc-800 font-mono shadow-inner'
                 : isStealth
-                ? 'bg-[#090a0c] border border-zinc-800/90'
-                : 'bg-zinc-950/60 backdrop-blur-2xl border border-white/[0.12] shadow-lg'
+                ? 'rounded-2xl bg-[#090a0c] border border-zinc-800/90'
+                : 'rounded-[22px] bg-zinc-950/60 backdrop-blur-2xl border border-white/[0.12] shadow-lg'
             }`}
           >
+            {/* Specular Squircle Corner Accents for Studio Theme */}
+            {isStudio && (
+              <>
+                <div className="absolute top-0 left-0 w-7 h-7 rounded-tl-[22px] border-t border-l border-white/30 pointer-events-none" />
+                <div className="absolute top-0 right-0 w-7 h-7 rounded-tr-[22px] border-t border-r border-white/30 pointer-events-none" />
+                <div className="absolute bottom-0 left-0 w-7 h-7 rounded-bl-[22px] border-b border-l border-white/20 pointer-events-none" />
+                <div className="absolute bottom-0 right-0 w-7 h-7 rounded-br-[22px] border-b border-r border-white/20 pointer-events-none" />
+              </>
+            )}
+
             {/* Top specular hairline */}
             <div
               className={`absolute top-0 left-1/2 -translate-x-1/2 w-48 h-[1px] pointer-events-none ${
                 isStudio
-                  ? 'bg-gradient-to-r from-transparent via-zinc-200/40 to-transparent'
+                  ? 'bg-gradient-to-r from-transparent via-zinc-200/50 to-transparent shadow-[0_0_10px_rgba(255,255,255,0.4)]'
                   : isRack
                   ? 'bg-gradient-to-r from-transparent via-emerald-400/30 to-transparent'
                   : isStealth

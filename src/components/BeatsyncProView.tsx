@@ -142,6 +142,16 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
   const currentCornerDef =
     CURVED_CORNER_STYLES.find((c) => c.id === cornerStyle) || CURVED_CORNER_STYLES[0];
 
+  useEffect(() => {
+    const handleStyleChange = (e: any) => {
+      if (e.detail) {
+        setCornerStyle(e.detail);
+      }
+    };
+    window.addEventListener('musicsync_corner_style_changed', handleStyleChange);
+    return () => window.removeEventListener('musicsync_corner_style_changed', handleStyleChange);
+  }, []);
+
   // Dismiss leave confirmation modal on Escape key press
   useEffect(() => {
     if (!showLeaveConfirm) return;
@@ -869,8 +879,18 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
         <main className={`flex-1 min-w-0 flex flex-col p-2 sm:p-4 gap-2 sm:gap-3 bg-dark-950/40 overflow-hidden relative z-10 ${
           mobileTab === 'queue' ? 'flex' : 'hidden md:flex'
         }`}>
+          {/* Ambient Corner Flare Glows for Liquid Squircle */}
+          {currentCornerDef.id === 'liquid-squircle' && (
+            <>
+              <div className="absolute -top-10 -left-10 w-44 h-44 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute -top-10 -right-10 w-44 h-44 bg-cyan-400/10 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute -bottom-10 -left-10 w-44 h-44 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute -bottom-10 -right-10 w-44 h-44 bg-emerald-400/10 rounded-full blur-3xl pointer-events-none" />
+            </>
+          )}
+
           {/* Top Quick Bar: Curved Corners Switcher Pill */}
-          <div className="flex items-center justify-between px-1 text-xs shrink-0">
+          <div className="flex items-center justify-between px-1 text-xs shrink-0 relative z-10">
             <button
               type="button"
               onClick={() => setIsCornerShowcaseOpen(true)}
@@ -1159,7 +1179,7 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
                         onDrop={(e) => handleDrop(e, idx)}
                         onDragEnd={handleDragEnd}
                         onClick={() => handlePlayTrack(track)}
-                        className={`relative flex items-center justify-between py-2 px-3 rounded-2xl border transition-all cursor-pointer group select-none ${
+                        className={`relative flex items-center justify-between py-2 px-3 rounded-[14px] border transition-all cursor-pointer group select-none ${
                           isBeingDragged
                             ? 'opacity-40 border-dashed border-zinc-400/80 bg-zinc-900/60 scale-[0.98]'
                             : isDropTarget

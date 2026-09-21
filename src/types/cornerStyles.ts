@@ -119,5 +119,8 @@ export function getStoredCornerStyle(): CurvedCornerStyle {
 export function saveStoredCornerStyle(style: CurvedCornerStyle) {
   try {
     localStorage.setItem(CORNER_STORAGE_KEY, style);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('musicsync_corner_style_changed', { detail: style }));
+    }
   } catch {}
 }
