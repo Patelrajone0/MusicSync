@@ -889,21 +889,6 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
             </>
           )}
 
-          {/* Top Quick Bar: Curved Corners Switcher Pill */}
-          <div className="flex items-center justify-between px-1 text-xs shrink-0 relative z-10">
-            <button
-              type="button"
-              onClick={() => setIsCornerShowcaseOpen(true)}
-              className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-emerald-400/40 text-[11px] text-zinc-300 hover:text-white transition-all cursor-pointer shadow-sm group select-none"
-              title="Click to preview and choose curved corner designs"
-            >
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-zinc-400">Corners:</span>
-              <span className="text-emerald-300 font-mono font-bold">{currentCornerDef.name.split(' ')[0]}</span>
-              <span className="text-[10px] text-zinc-500 group-hover:text-zinc-300 ml-0.5">Switch ▾</span>
-            </button>
-          </div>
-
           {/* Universal Search Bar with Adaptive Curved Corners */}
           <div className="w-full shrink-0">
             <div className={`relative w-full h-11 sm:h-12 px-4 flex items-center justify-between transition-all duration-300 ${currentCornerDef.searchContainerClass}`}>
