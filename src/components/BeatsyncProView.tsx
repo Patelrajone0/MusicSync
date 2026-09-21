@@ -49,6 +49,13 @@ import { TitaniumHeaderShowcase } from './TitaniumHeaderShowcase';
 import { TitaniumSidebar } from './TitaniumSidebar';
 import { TitaniumSidebarShowcase } from './TitaniumSidebarShowcase';
 import { TitaniumStudioShowcase } from './TitaniumStudioShowcase';
+import { CurvedCornersShowcase } from './CurvedCornersShowcase';
+import {
+  CurvedCornerStyle,
+  CURVED_CORNER_STYLES,
+  getStoredCornerStyle,
+  saveStoredCornerStyle,
+} from '../types/cornerStyles';
 import { analytics } from '../services/analytics';
 
 interface BeatsyncProViewProps {
@@ -129,6 +136,11 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
   const [isHeaderShowcaseOpen, setIsHeaderShowcaseOpen] = useState(false);
   const [isSidebarShowcaseOpen, setIsSidebarShowcaseOpen] = useState(false);
   const [isStudioShowcaseOpen, setIsStudioShowcaseOpen] = useState(false);
+  const [isCornerShowcaseOpen, setIsCornerShowcaseOpen] = useState(false);
+  const [cornerStyle, setCornerStyle] = useState<CurvedCornerStyle>(getStoredCornerStyle);
+
+  const currentCornerDef =
+    CURVED_CORNER_STYLES.find((c) => c.id === cornerStyle) || CURVED_CORNER_STYLES[0];
 
   // Dismiss leave confirmation modal on Escape key press
   useEffect(() => {
@@ -844,17 +856,39 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
           />
         )}
 
+        {isCornerShowcaseOpen && (
+          <CurvedCornersShowcase
+            onClose={() => setIsCornerShowcaseOpen(false)}
+            onApplyStyle={(newStyle) => setCornerStyle(newStyle)}
+          />
+        )}
+
         {/* ========================================================= */}
         {/* COLUMN 2: CENTER (Direct Search & Live Results / Added Songs) */}
         {/* ========================================================= */}
         <main className={`flex-1 min-w-0 flex flex-col p-2 sm:p-4 gap-2 sm:gap-3 bg-dark-950/40 overflow-hidden relative z-10 ${
           mobileTab === 'queue' ? 'flex' : 'hidden md:flex'
         }`}>
-          {/* Universal Search Bar with Titanium Studio Look */}
+          {/* Top Quick Bar: Curved Corners Switcher Pill */}
+          <div className="flex items-center justify-between px-1 text-xs shrink-0">
+            <button
+              type="button"
+              onClick={() => setIsCornerShowcaseOpen(true)}
+              className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-emerald-400/40 text-[11px] text-zinc-300 hover:text-white transition-all cursor-pointer shadow-sm group select-none"
+              title="Click to preview and choose curved corner designs"
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="text-zinc-400">Corners:</span>
+              <span className="text-emerald-300 font-mono font-bold">{currentCornerDef.name.split(' ')[0]}</span>
+              <span className="text-[10px] text-zinc-500 group-hover:text-zinc-300 ml-0.5">Switch ▾</span>
+            </button>
+          </div>
+
+          {/* Universal Search Bar with Adaptive Curved Corners */}
           <div className="w-full shrink-0">
-            <div className="relative w-full h-11 sm:h-12 px-4 rounded-full bg-[#0d0f12]/90 backdrop-blur-2xl border border-white/[0.08] hover:border-zinc-500/40 focus-within:border-zinc-400/80 focus-within:shadow-[0_0_20px_rgba(255,255,255,0.06)] flex items-center justify-between transition-all duration-200">
+            <div className={`relative w-full h-11 sm:h-12 px-4 flex items-center justify-between transition-all duration-300 ${currentCornerDef.searchContainerClass}`}>
               <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                <Search className="w-4 h-4 text-zinc-400 shrink-0" />
+                <Search className={`w-4 h-4 shrink-0 ${currentCornerDef.id === 'neon-kinetic' ? 'text-emerald-400' : currentCornerDef.id === 'organic-capsule' ? 'text-purple-300' : 'text-zinc-400'}`} />
                 <input
                   ref={searchInputRef}
                   type="text"
@@ -885,7 +919,13 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
                     <X className="w-3.5 h-3.5" />
                   </button>
                 )}
-                <kbd className="px-2 py-0.5 rounded-full bg-black/60 border border-white/[0.08] text-[10px] font-mono text-zinc-400">
+                <kbd className={`px-2 py-0.5 rounded-full border text-[10px] font-mono select-none ${
+                  currentCornerDef.id === 'neon-kinetic'
+                    ? 'bg-emerald-950/60 border-emerald-500/30 text-emerald-300'
+                    : currentCornerDef.id === 'titanium-chamfer'
+                    ? 'bg-zinc-900 border-zinc-700 text-zinc-300'
+                    : 'bg-black/60 border-white/[0.08] text-zinc-400'
+                }`}>
                   ⌘K
                 </kbd>
               </div>
@@ -910,9 +950,38 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
           {/* MAIN CENTER CONTENT AREA: SEARCH RESULTS OR ADDED SONGS (QUEUE) */}
           {searchQuery.trim() ? (
             /* STATE 1: SEARCH RESULTS in Titanium Card */
-            <div className="flex-1 min-h-0 flex flex-col rounded-3xl bg-[#0d0f12]/90 backdrop-blur-2xl border border-white/[0.08] hover:border-zinc-500/30 p-3 sm:p-4 overflow-hidden animate-fade-in shadow-[0_0_50px_rgba(0,0,0,0.8)] relative">
+            <div className={`flex-1 min-h-0 flex flex-col p-3 sm:p-4 overflow-hidden animate-fade-in ${currentCornerDef.queueCardContainerClass}`}>
               {/* Top ambient hairline */}
               <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-[1px] bg-gradient-to-r from-transparent via-zinc-200/40 to-transparent pointer-events-none" />
+
+              {/* Corner Specular / Accent Lights */}
+              {currentCornerDef.id === 'liquid-squircle' && (
+                <>
+                  <div className="absolute top-0 left-0 w-8 h-8 rounded-tl-[22px] border-t border-l border-white/30 pointer-events-none" />
+                  <div className="absolute top-0 right-0 w-8 h-8 rounded-tr-[22px] border-t border-r border-white/30 pointer-events-none" />
+                  <div className="absolute bottom-0 left-0 w-8 h-8 rounded-bl-[22px] border-b border-l border-white/20 pointer-events-none" />
+                  <div className="absolute bottom-0 right-0 w-8 h-8 rounded-br-[22px] border-b border-r border-white/20 pointer-events-none" />
+                </>
+              )}
+              {currentCornerDef.id === 'neon-kinetic' && (
+                <>
+                  <span className="absolute top-2.5 left-2.5 w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.9)] animate-pulse" />
+                  <span className="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.9)] animate-pulse" />
+                  <span className="absolute bottom-2.5 left-2.5 w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.9)] animate-pulse" />
+                  <span className="absolute bottom-2.5 right-2.5 w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.9)] animate-pulse" />
+                </>
+              )}
+              {currentCornerDef.id === 'titanium-chamfer' && (
+                <>
+                  <div className="absolute top-2.5 left-2.5 w-2.5 h-2.5 border-t-2 border-l-2 border-zinc-400/80 rounded-tl-sm pointer-events-none" />
+                  <div className="absolute top-2.5 right-2.5 w-2.5 h-2.5 border-t-2 border-r-2 border-zinc-400/80 rounded-tr-sm pointer-events-none" />
+                  <div className="absolute bottom-2.5 left-2.5 w-2.5 h-2.5 border-b-2 border-l-2 border-zinc-400/80 rounded-bl-sm pointer-events-none" />
+                  <div className="absolute bottom-2.5 right-2.5 w-2.5 h-2.5 border-b-2 border-r-2 border-zinc-400/80 rounded-br-sm pointer-events-none" />
+                </>
+              )}
+              {currentCornerDef.id === 'organic-capsule' && (
+                <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-64 h-20 bg-purple-500/15 rounded-full blur-2xl pointer-events-none" />
+              )}
 
               {isSearching && searchResults.length === 0 ? (
                 <div className="flex-1 min-h-[220px] flex flex-col items-center justify-center text-zinc-400 gap-2.5">
@@ -1021,9 +1090,38 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
             </div>
           ) : (
             /* STATE 2: ADDED SONGS / QUEUE in Titanium Card */
-            <div className="flex-1 min-h-0 flex flex-col rounded-3xl bg-[#0d0f12]/90 backdrop-blur-2xl border border-white/[0.08] hover:border-zinc-500/30 p-3 sm:p-4 overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.8)] relative">
+            <div className={`flex-1 min-h-0 flex flex-col p-3 sm:p-4 overflow-hidden ${currentCornerDef.queueCardContainerClass}`}>
               {/* Top ambient hairline */}
               <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-[1px] bg-gradient-to-r from-transparent via-zinc-200/40 to-transparent pointer-events-none" />
+
+              {/* Corner Specular / Accent Lights */}
+              {currentCornerDef.id === 'liquid-squircle' && (
+                <>
+                  <div className="absolute top-0 left-0 w-8 h-8 rounded-tl-[22px] border-t border-l border-white/30 pointer-events-none" />
+                  <div className="absolute top-0 right-0 w-8 h-8 rounded-tr-[22px] border-t border-r border-white/30 pointer-events-none" />
+                  <div className="absolute bottom-0 left-0 w-8 h-8 rounded-bl-[22px] border-b border-l border-white/20 pointer-events-none" />
+                  <div className="absolute bottom-0 right-0 w-8 h-8 rounded-br-[22px] border-b border-r border-white/20 pointer-events-none" />
+                </>
+              )}
+              {currentCornerDef.id === 'neon-kinetic' && (
+                <>
+                  <span className="absolute top-2.5 left-2.5 w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.9)] animate-pulse" />
+                  <span className="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.9)] animate-pulse" />
+                  <span className="absolute bottom-2.5 left-2.5 w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.9)] animate-pulse" />
+                  <span className="absolute bottom-2.5 right-2.5 w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.9)] animate-pulse" />
+                </>
+              )}
+              {currentCornerDef.id === 'titanium-chamfer' && (
+                <>
+                  <div className="absolute top-2.5 left-2.5 w-2.5 h-2.5 border-t-2 border-l-2 border-zinc-400/80 rounded-tl-sm pointer-events-none" />
+                  <div className="absolute top-2.5 right-2.5 w-2.5 h-2.5 border-t-2 border-r-2 border-zinc-400/80 rounded-tr-sm pointer-events-none" />
+                  <div className="absolute bottom-2.5 left-2.5 w-2.5 h-2.5 border-b-2 border-l-2 border-zinc-400/80 rounded-bl-sm pointer-events-none" />
+                  <div className="absolute bottom-2.5 right-2.5 w-2.5 h-2.5 border-b-2 border-r-2 border-zinc-400/80 rounded-br-sm pointer-events-none" />
+                </>
+              )}
+              {currentCornerDef.id === 'organic-capsule' && (
+                <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-64 h-20 bg-purple-500/15 rounded-full blur-2xl pointer-events-none" />
+              )}
 
               <div className="flex-1 min-h-0 overflow-y-auto space-y-1.5 pr-1 select-none pt-1">
                 {localQueue.length === 0 ? (
