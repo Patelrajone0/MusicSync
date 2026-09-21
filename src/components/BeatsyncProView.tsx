@@ -811,7 +811,7 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
       <div className="flex-1 min-h-0 flex overflow-hidden relative">
         
         {/* ========================================================= */}
-        {/* COLUMN 1: LEFT SIDEBAR (Titanium Pro Studio) */}
+        {/* COLUMN 1: LEFT SIDEBAR (Titanium Studio Minimal) */}
         {/* ========================================================= */}
         <TitaniumSidebar
           roomCode={roomCode}
@@ -826,7 +826,8 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
           }}
           onOpenQR={() => setIsQRModalOpen(true)}
           onUploadAudio={handleUploadClick}
-          onOpenShowcase={() => setIsSidebarShowcaseOpen(true)}
+          theme="studio"
+          showThemeSwitcher={false}
         />
 
         {isSidebarShowcaseOpen && (
