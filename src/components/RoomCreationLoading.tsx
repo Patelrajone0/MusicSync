@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Sparkles, Check, X, RotateCcw, LayoutGrid, Maximize2, ArrowRight } from 'lucide-react';
+import { Sparkles, Check, X, RotateCcw, LayoutGrid, Maximize2, Radio, Disc, Terminal, Activity } from 'lucide-react';
 
-export type RoomCreateTheme = 'demo1' | 'demo2' | 'demo3' | 'demo4';
+export type RoomCreateTheme = 'demo1' | 'demo2' | 'demo3' | 'demo4' | 'demo5' | 'demo6';
 
 interface RoomCreationCardProps {
   theme: RoomCreateTheme;
@@ -17,13 +17,13 @@ export const RoomCreationContent: React.FC<RoomCreationCardProps> = ({
   autoPlay = true,
 }) => {
   const [step, setStep] = useState(1);
-  const totalDashes = theme === 'demo3' ? 10 : 8;
+  const totalDashes = theme === 'demo6' ? 10 : 8;
 
-  // Animated telemetry numbers
+  // Animated telemetry numbers matching the screenshot
   const [pairsSent, setPairsSent] = useState(6);
-  const [pureMeasurements, setPureMeasurements] = useState(4);
+  const [pureMeasurements, setPureMeasurements] = useState(2);
   const [impureMeasurements, setImpureMeasurements] = useState(1);
-  const [measurements, setMeasurements] = useState(3);
+  const [measurements, setMeasurements] = useState(2);
   const [audioStatus, setAudioStatus] = useState('0 loaded');
   const [wsStatus, setWsStatus] = useState('open');
 
@@ -32,23 +32,24 @@ export const RoomCreationContent: React.FC<RoomCreationCardProps> = ({
 
     setStep(1);
     setPairsSent(6);
-    setPureMeasurements(4);
+    setPureMeasurements(2);
     setImpureMeasurements(1);
-    setMeasurements(3);
+    setMeasurements(2);
     setAudioStatus('0 loaded');
     setWsStatus('open');
 
     const totalSteps = totalDashes;
-    const intervalMs = 210; // ~1.7s total cycle
+    const intervalMs = 220; // Smooth ~1.8s calibration duration
 
     const interval = setInterval(() => {
       setStep((prev) => {
         const next = prev + 1;
+
         // Dynamically increment telemetry counters realistically
-        setPairsSent((p) => Math.min(32, p + Math.floor(Math.random() * 4 + 2)));
+        setPairsSent((p) => Math.min(29, p + Math.floor(Math.random() * 4 + 2)));
         setMeasurements((m) => Math.min(16, m + Math.floor(Math.random() * 2 + 1)));
 
-        if (next >= 4) {
+        if (next >= 3) {
           setPureMeasurements((val) => Math.min(14, val + 2));
           setImpureMeasurements((val) => Math.min(9, val + 1));
         }
@@ -74,69 +75,69 @@ export const RoomCreationContent: React.FC<RoomCreationCardProps> = ({
   }, [autoPlay, totalDashes, onAnimationEnd]);
 
   // =========================================================================
-  // DEMO 1: EXACT BEATSYNC REPLICA (From User Screenshot)
+  // OPTION 1: BEATSYNC MATTE STUDIO (Pixel-Perfect Exact Replica from Photo)
   // =========================================================================
   if (theme === 'demo1') {
     return (
       <div
         className={`relative w-full ${
-          isCompact ? 'max-w-[340px] p-5' : 'max-w-[430px] p-6 sm:p-7'
-        } rounded-2xl bg-[#121417]/95 border border-white/[0.08] shadow-[0_20px_50px_rgba(0,0,0,0.9),0_0_25px_rgba(0,0,0,0.7)] text-left select-none backdrop-blur-xl font-sans`}
+          isCompact ? 'max-w-[340px] p-5' : 'max-w-[420px] p-7 sm:p-8'
+        } rounded-[26px] bg-[#14161a] border border-[#23262d] shadow-[0_25px_60px_rgba(0,0,0,0.95)] text-left select-none font-sans`}
       >
-        {/* Header: Green pulsing dot + Title + Subtitle */}
-        <div className="flex flex-col items-center text-center space-y-1 mb-5">
-          <div className="flex items-center gap-2">
-            <span className="relative flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400 shadow-[0_0_10px_#34d399]" />
+        {/* Header: Mint Green Glowing Dot + Beatsync Calibrating */}
+        <div className="flex flex-col items-center text-center space-y-1.5 mb-6">
+          <div className="flex items-center gap-2.5">
+            <span className="relative flex h-3 w-3">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#10b981] opacity-75" />
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-[#10b981] shadow-[0_0_12px_#10b981,0_0_22px_rgba(16,185,129,0.6)]" />
             </span>
-            <h3 className={`${isCompact ? 'text-sm' : 'text-base'} font-semibold text-white tracking-tight`}>
+            <h3 className={`${isCompact ? 'text-base' : 'text-lg'} font-bold text-white tracking-tight`}>
               Beatsync calibrating
             </h3>
           </div>
-          <p className={`${isCompact ? 'text-[11px]' : 'text-xs'} text-zinc-400 font-normal`}>
-            {step >= totalDashes ? 'Time synchronized • Ready' : 'Synchronizing time...'}
+          <p className={`${isCompact ? 'text-xs' : 'text-sm'} text-[#71717a] font-normal`}>
+            {step >= totalDashes ? 'Time synchronized' : 'Synchronizing time...'}
           </p>
         </div>
 
-        {/* 8 Segmented White Glowing Dashes */}
-        <div className="grid grid-cols-8 gap-1.5 sm:gap-2 my-5 px-1">
+        {/* 8 Horizontal Pill Dashes with Intense Diffuse White Bloom */}
+        <div className="grid grid-cols-8 gap-2 sm:gap-2.5 my-6 px-1">
           {Array.from({ length: 8 }).map((_, i) => {
             const isFilled = i < step;
             return (
               <div
                 key={i}
-                className={`h-1 sm:h-1.5 rounded-full transition-all duration-150 ${
+                className={`h-1.5 sm:h-2 rounded-full transition-all duration-150 ${
                   isFilled
-                    ? 'bg-white shadow-[0_0_14px_rgba(255,255,255,0.95),0_0_24px_rgba(255,255,255,0.6)]'
-                    : 'bg-white/[0.12]'
+                    ? 'bg-white shadow-[0_0_16px_rgba(255,255,255,1),0_0_32px_rgba(255,255,255,0.6)]'
+                    : 'bg-[#26282f]'
                 }`}
               />
             );
           })}
         </div>
 
-        {/* Monospace 2-Column Telemetry Table (Faithful Replica) */}
-        <div className="space-y-1.5 font-mono text-[11px] sm:text-xs text-zinc-400 pt-1">
+        {/* Monospace Telemetry Table matching photo 1:1 */}
+        <div className="space-y-2 font-mono text-xs sm:text-[13px] text-[#71717a] pt-1">
           <div className="flex justify-between items-center">
-            <span className="text-zinc-500">pairs sent</span>
-            <span className="text-zinc-300 font-medium tabular-nums">{pairsSent}</span>
+            <span>pairs sent</span>
+            <span className="text-[#d4d4d8] tabular-nums">{pairsSent}</span>
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-zinc-500">pure / impure</span>
-            <span className="text-zinc-300 font-medium tabular-nums">{pureMeasurements} / {impureMeasurements}</span>
+            <span>pure / impure</span>
+            <span className="text-[#d4d4d8] tabular-nums">{pureMeasurements} / {impureMeasurements}</span>
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-zinc-500">measurements</span>
-            <span className="text-zinc-300 font-medium tabular-nums">{measurements} / 16</span>
+            <span>measurements</span>
+            <span className="text-[#d4d4d8] tabular-nums">{measurements} / 16</span>
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-zinc-500">audio</span>
-            <span className="text-zinc-300 font-medium">{audioStatus}</span>
+            <span>audio</span>
+            <span className="text-[#d4d4d8]">{audioStatus}</span>
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-zinc-500">ws</span>
-            <span className="text-emerald-400 font-medium">{wsStatus}</span>
+            <span>ws</span>
+            <span className="text-[#10b981] font-semibold">{wsStatus}</span>
           </div>
         </div>
       </div>
@@ -144,36 +145,255 @@ export const RoomCreationContent: React.FC<RoomCreationCardProps> = ({
   }
 
   // =========================================================================
-  // DEMO 2: MUSICSYNC EMERALD AUDIO MESH (Brand Edition)
+  // OPTION 2: ACOUSTIC WAVE SPECTRUM (A Truly Different Audio-Reactive Take!)
   // =========================================================================
   if (theme === 'demo2') {
+    // 8 frequency equalizer heights forming an acoustic arch
+    const barHeights = ['h-3.5', 'h-5', 'h-7', 'h-8', 'h-8', 'h-6', 'h-4.5', 'h-3.5'];
+
     return (
       <div
         className={`relative w-full ${
-          isCompact ? 'max-w-[340px] p-5' : 'max-w-[430px] p-6 sm:p-7'
-        } rounded-2xl bg-[#0f1214]/95 border border-emerald-500/25 shadow-[0_20px_50px_rgba(0,0,0,0.9),0_0_30px_rgba(16,185,129,0.12)] text-left select-none backdrop-blur-xl font-sans`}
+          isCompact ? 'max-w-[340px] p-5' : 'max-w-[420px] p-7 sm:p-8'
+        } rounded-[26px] bg-[#121418] border border-white/[0.08] shadow-[0_25px_60px_rgba(0,0,0,0.95)] text-left select-none font-sans`}
       >
-        {/* Soft emerald ambient backlight */}
-        <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-48 h-48 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
-
         {/* Header */}
-        <div className="flex flex-col items-center text-center space-y-1 mb-5 relative z-10">
-          <div className="flex items-center gap-2">
-            <span className="relative flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400 shadow-[0_0_12px_#34d399]" />
+        <div className="flex flex-col items-center text-center space-y-1.5 mb-5">
+          <div className="flex items-center gap-2.5">
+            <span className="relative flex h-3 w-3">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-cyan-400 shadow-[0_0_12px_#00f0ff]" />
             </span>
-            <h3 className={`${isCompact ? 'text-sm' : 'text-base'} font-bold text-white tracking-tight`}>
-              MusicSync calibrating
+            <h3 className={`${isCompact ? 'text-base' : 'text-lg'} font-bold text-white tracking-tight`}>
+              Acoustic Wave calibrating
             </h3>
           </div>
-          <p className={`${isCompact ? 'text-[11px]' : 'text-xs'} text-emerald-400/80 font-mono`}>
-            {step >= totalDashes ? '0ms P2P Mesh Locked • Ready' : 'Locking 0ms acoustic sync...'}
+          <p className={`${isCompact ? 'text-xs' : 'text-sm'} text-zinc-400 font-normal`}>
+            {step >= totalDashes ? 'Acoustic latency locked' : 'Harmonizing multi-speaker clock...'}
           </p>
         </div>
 
-        {/* 8 Segmented Emerald-to-Cyan Glowing Dashes */}
-        <div className="grid grid-cols-8 gap-1.5 sm:gap-2 my-5 px-1 relative z-10">
+        {/* 8 Vertical Acoustic Equalizer Bars with White Bloom */}
+        <div className="flex items-center justify-center gap-2.5 h-10 my-5 px-2">
+          {Array.from({ length: 8 }).map((_, i) => {
+            const isFilled = i < step;
+            return (
+              <div
+                key={i}
+                className={`w-2.5 rounded-full transition-all duration-200 ${barHeights[i]} ${
+                  isFilled
+                    ? 'bg-white shadow-[0_0_16px_rgba(255,255,255,1),0_0_28px_rgba(0,240,255,0.7)] animate-pulse'
+                    : 'bg-[#252830]'
+                }`}
+              />
+            );
+          })}
+        </div>
+
+        {/* Acoustic Monospace Telemetry */}
+        <div className="space-y-2 font-mono text-xs sm:text-[13px] text-zinc-400 pt-1">
+          <div className="flex justify-between items-center">
+            <span className="text-zinc-500">clock drift</span>
+            <span className="text-white tabular-nums">0.00 ms</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-zinc-500">sub-frame jitter</span>
+            <span className="text-white tabular-nums">&lt;0.02 ms</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-zinc-500">audio ring buffer</span>
+            <span className="text-white tabular-nums">{measurements} / 16</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-zinc-500">lossless stream</span>
+            <span className="text-white">48kHz Lossless</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-zinc-500">mesh sync</span>
+            <span className="text-cyan-400 font-semibold uppercase">{step >= totalDashes ? 'LOCKED' : 'SYNCING'}</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // OPTION 3: RADIAL SONIC ORBIT DIAL (Circular Segmented Gauge - Unique!)
+  // =========================================================================
+  if (theme === 'demo3') {
+    return (
+      <div
+        className={`relative w-full ${
+          isCompact ? 'max-w-[340px] p-5' : 'max-w-[420px] p-7 sm:p-8'
+        } rounded-[26px] bg-[#131519] border border-white/[0.08] shadow-[0_25px_60px_rgba(0,0,0,0.95)] text-center select-none font-sans`}
+      >
+        {/* Header */}
+        <div className="flex flex-col items-center space-y-1 mb-4">
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_10px_#10b981] animate-pulse" />
+            <h3 className={`${isCompact ? 'text-base' : 'text-lg'} font-bold text-white tracking-tight`}>
+              Sonic Orbit calibrating
+            </h3>
+          </div>
+          <p className="text-xs text-zinc-400 font-normal">
+            {step >= totalDashes ? 'Sub-frame clock established' : 'Orbital acoustic calibration...'}
+          </p>
+        </div>
+
+        {/* Circular Segmented Radial Dial (8 Arc Segments) */}
+        <div className="relative w-24 h-24 sm:w-28 sm:h-28 mx-auto my-4 flex items-center justify-center">
+          <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
+            {Array.from({ length: 8 }).map((_, i) => {
+              const isFilled = i < step;
+              const dashAngle = 360 / 8;
+              const strokeDasharray = '28 7'; // segmented arc dashes
+              const strokeDashoffset = -i * 35;
+
+              return (
+                <circle
+                  key={i}
+                  cx="50"
+                  cy="50"
+                  r="40"
+                  fill="none"
+                  stroke={isFilled ? '#ffffff' : '#262830'}
+                  strokeWidth="6"
+                  strokeLinecap="round"
+                  strokeDasharray="23 8.5"
+                  strokeDashoffset={strokeDashoffset}
+                  className="transition-all duration-200"
+                  style={{
+                    filter: isFilled ? 'drop-shadow(0 0 8px rgba(255, 255, 255, 0.9))' : 'none',
+                  }}
+                />
+              );
+            })}
+          </svg>
+
+          {/* Central Counter */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center font-mono">
+            <span className="text-sm sm:text-base font-bold text-white tabular-nums">
+              {measurements}/16
+            </span>
+            <span className="text-[9px] text-emerald-400 uppercase font-semibold">0ms NTP</span>
+          </div>
+        </div>
+
+        {/* Telemetry Monospace Table */}
+        <div className="space-y-1.5 font-mono text-xs sm:text-[12px] text-zinc-400 text-left pt-2 border-t border-white/[0.06]">
+          <div className="flex justify-between items-center">
+            <span className="text-zinc-500">pairs sent</span>
+            <span className="text-zinc-300 tabular-nums">{pairsSent}</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-zinc-500">audio samples</span>
+            <span className="text-zinc-300 tabular-nums">{pureMeasurements} / {impureMeasurements}</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-zinc-500">connection</span>
+            <span className="text-emerald-400 font-semibold">{wsStatus}</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // OPTION 4: EMERALD LASER GRID (MusicSync Glowing Brand Edition)
+  // =========================================================================
+  if (theme === 'demo4') {
+    return (
+      <div
+        className={`relative w-full ${
+          isCompact ? 'max-w-[340px] p-5' : 'max-w-[420px] p-7 sm:p-8'
+        } rounded-[26px] bg-[#101317] border border-emerald-500/25 shadow-[0_25px_60px_rgba(0,0,0,0.95),0_0_30px_rgba(16,185,129,0.15)] text-left select-none font-sans`}
+      >
+        <div className="flex flex-col items-center text-center space-y-1.5 mb-6">
+          <div className="flex items-center gap-2.5">
+            <span className="relative flex h-3 w-3">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-400 shadow-[0_0_14px_#34d399]" />
+            </span>
+            <h3 className={`${isCompact ? 'text-base' : 'text-lg'} font-bold text-white tracking-tight`}>
+              MusicSync calibrating
+            </h3>
+          </div>
+          <p className={`${isCompact ? 'text-xs' : 'text-sm'} text-emerald-400/80 font-mono`}>
+            {step >= totalDashes ? 'P2P Mesh Locked • 0ms Drift' : 'Calibrating multi-device audio clock...'}
+          </p>
+        </div>
+
+        {/* 8 Segmented Emerald Laser Dashes */}
+        <div className="grid grid-cols-8 gap-2 my-6 px-1">
+          {Array.from({ length: 8 }).map((_, i) => {
+            const isFilled = i < step;
+            return (
+              <div
+                key={i}
+                className={`h-1.5 sm:h-2 rounded-full transition-all duration-150 ${
+                  isFilled
+                    ? 'bg-gradient-to-r from-emerald-400 via-teal-300 to-white shadow-[0_0_16px_rgba(52,211,153,1),0_0_24px_rgba(16,185,129,0.6)]'
+                    : 'bg-[#1b2223] border border-emerald-500/20'
+                }`}
+              />
+            );
+          })}
+        </div>
+
+        <div className="space-y-2 font-mono text-xs sm:text-[13px] text-zinc-400 pt-1">
+          <div className="flex justify-between items-center">
+            <span className="text-zinc-500">mesh nodes</span>
+            <span className="text-white tabular-nums">{pairsSent} sent</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-zinc-500">clock offset</span>
+            <span className="text-emerald-400 tabular-nums">0.00 ms</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-zinc-500">measurements</span>
+            <span className="text-white tabular-nums">{measurements} / 16</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-zinc-500">audio engine</span>
+            <span className="text-white">48kHz Lossless</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-zinc-500">ws relay</span>
+            <span className="text-emerald-400 font-semibold uppercase">{step >= totalDashes ? 'LOCKED' : 'OPEN'}</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // OPTION 5: TITANIUM STUDIO CAPSULE (Luxury High-End Hardware)
+  // =========================================================================
+  if (theme === 'demo5') {
+    return (
+      <div
+        className={`relative w-full ${
+          isCompact ? 'max-w-[340px] p-5' : 'max-w-[420px] p-7 sm:p-8'
+        } rounded-[26px] bg-[#141518] border border-white/[0.08] shadow-[0_25px_60px_rgba(0,0,0,0.95)] text-center select-none font-sans`}
+      >
+        {/* Titanium Logo Icon */}
+        <div className="flex justify-center mb-3">
+          <img
+            src="/musicsync-titanium.png?v=3"
+            alt="MusicSync"
+            className="w-full max-w-[170px] h-auto object-contain drop-shadow-[0_4px_20px_rgba(0,0,0,0.8)]"
+          />
+        </div>
+
+        <div className="flex items-center justify-center gap-2 mb-4">
+          <span className="w-2.5 h-2.5 rounded-full bg-white shadow-[0_0_10px_#ffffff] animate-pulse" />
+          <span className="text-xs sm:text-sm font-semibold text-zinc-300">
+            {step >= totalDashes ? 'Master Audio Clock Locked' : 'Calibrating Room Session...'}
+          </span>
+        </div>
+
+        {/* 8 Platinum Dashes */}
+        <div className="grid grid-cols-8 gap-2 my-5 px-1">
           {Array.from({ length: 8 }).map((_, i) => {
             const isFilled = i < step;
             return (
@@ -181,161 +401,84 @@ export const RoomCreationContent: React.FC<RoomCreationCardProps> = ({
                 key={i}
                 className={`h-1.5 rounded-full transition-all duration-150 ${
                   isFilled
-                    ? 'bg-gradient-to-r from-emerald-400 to-teal-200 shadow-[0_0_12px_rgba(52,211,153,0.9),0_0_20px_rgba(16,185,129,0.5)]'
-                    : 'bg-emerald-950/40 border border-emerald-500/20'
+                    ? 'bg-white shadow-[0_0_14px_rgba(255,255,255,1)]'
+                    : 'bg-zinc-800'
                 }`}
               />
             );
           })}
         </div>
 
-        {/* Monospace Telemetry */}
-        <div className="space-y-1.5 font-mono text-[11px] sm:text-xs text-zinc-400 pt-1 relative z-10">
-          <div className="flex justify-between items-center">
-            <span className="text-zinc-500">p2p mesh sync</span>
-            <span className="text-zinc-200 font-semibold tabular-nums">{pairsSent} nodes</span>
-          </div>
-          <div className="flex justify-between items-center">
-            <span className="text-zinc-500">clock offset</span>
-            <span className="text-emerald-400 font-semibold tabular-nums">0.00 ms</span>
-          </div>
-          <div className="flex justify-between items-center">
-            <span className="text-zinc-500">ntp measurements</span>
-            <span className="text-zinc-200 font-semibold tabular-nums">{measurements} / 16</span>
-          </div>
-          <div className="flex justify-between items-center">
-            <span className="text-zinc-500">lossless stream</span>
-            <span className="text-zinc-200 font-semibold">48kHz</span>
-          </div>
-          <div className="flex justify-between items-center">
-            <span className="text-zinc-500">relay status</span>
-            <span className="text-emerald-400 font-semibold uppercase">{step >= totalDashes ? 'LOCKED' : 'SYNCING'}</span>
-          </div>
+        <div className="flex justify-between items-center text-xs font-mono text-zinc-400 pt-1">
+          <span className="text-zinc-500">CALIBRATION</span>
+          <span className="text-white font-bold tabular-nums">{measurements} / 16 SAMPLES</span>
         </div>
       </div>
     );
   }
 
   // =========================================================================
-  // DEMO 3: CYBER HUD TERMINAL (10 Dashes with Technical Framing)
-  // =========================================================================
-  if (theme === 'demo3') {
-    return (
-      <div
-        className={`relative w-full ${
-          isCompact ? 'max-w-[340px] p-5' : 'max-w-[430px] p-6 sm:p-7'
-        } rounded-2xl bg-[#0d1015]/95 border border-cyan-500/25 shadow-[0_20px_50px_rgba(0,0,0,0.95),0_0_30px_rgba(0,240,255,0.12)] text-left select-none backdrop-blur-xl font-mono`}
-      >
-        {/* Header with technical badge */}
-        <div className="flex justify-between items-center mb-4 border-b border-white/[0.08] pb-3">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-sm bg-cyan-400 animate-pulse shadow-[0_0_8px_#00f0ff]" />
-            <span className="text-xs font-bold text-white tracking-widest uppercase">
-              BEATSYNC // CALIBRATION
-            </span>
-          </div>
-          <span className="text-[10px] text-cyan-400 font-bold bg-cyan-950/60 border border-cyan-500/30 px-2 py-0.5 rounded">
-            {step >= totalDashes ? '100% LOCKED' : `${Math.round((step / totalDashes) * 100)}%`}
-          </span>
-        </div>
-
-        <p className="text-[11px] text-zinc-400 mb-4 tracking-wide">
-          {step >= totalDashes ? '> Audio sub-millisecond clock locked' : '> Synchronizing P2P audio frames...'}
-        </p>
-
-        {/* 10 Segmented Cyan Laser Dashes */}
-        <div className="grid grid-cols-10 gap-1.5 my-4">
-          {Array.from({ length: 10 }).map((_, i) => {
-            const isFilled = i < step;
-            return (
-              <div
-                key={i}
-                className={`h-1.5 rounded-sm transition-all duration-150 ${
-                  isFilled
-                    ? 'bg-gradient-to-r from-cyan-400 to-sky-200 shadow-[0_0_12px_rgba(0,240,255,0.9)]'
-                    : 'bg-cyan-950/40 border border-cyan-500/20'
-                }`}
-              />
-            );
-          })}
-        </div>
-
-        {/* Telemetry Matrix */}
-        <div className="space-y-1.5 text-[11px] text-zinc-400 pt-2 border-t border-white/[0.06]">
-          <div className="flex justify-between items-center">
-            <span className="text-zinc-500">[SYS] packets sent</span>
-            <span className="text-cyan-300 tabular-nums">{pairsSent}</span>
-          </div>
-          <div className="flex justify-between items-center">
-            <span className="text-zinc-500">[NTP] clock jitter</span>
-            <span className="text-cyan-300 tabular-nums">&lt;0.05ms</span>
-          </div>
-          <div className="flex justify-between items-center">
-            <span className="text-zinc-500">[DEV] buffer samples</span>
-            <span className="text-cyan-300 tabular-nums">{measurements} / 16</span>
-          </div>
-          <div className="flex justify-between items-center">
-            <span className="text-zinc-500">[NET] websocket link</span>
-            <span className="text-emerald-400">ESTABLISHED</span>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // =========================================================================
-  // DEMO 4: MINIMALIST TITANIUM STUDIO (Clean Apple Studio Minimal)
+  // OPTION 6: RETRO CYBER TERMINAL (10 Dashes with Technical Monospace HUD)
   // =========================================================================
   return (
     <div
       className={`relative w-full ${
-        isCompact ? 'max-w-[340px] p-5' : 'max-w-[430px] p-6 sm:p-7'
-      } rounded-2xl bg-[#111114]/95 border border-white/[0.08] shadow-[0_20px_50px_rgba(0,0,0,0.9)] text-center select-none backdrop-blur-xl font-sans`}
+        isCompact ? 'max-w-[340px] p-5' : 'max-w-[420px] p-7 sm:p-8'
+      } rounded-[26px] bg-[#0c0f14] border border-cyan-500/30 shadow-[0_25px_60px_rgba(0,0,0,0.95),0_0_30px_rgba(0,240,255,0.15)] text-left select-none font-mono`}
     >
-      {/* Miniature Floating Titanium Logo */}
-      <div className="flex justify-center mb-3">
-        <img
-          src="/musicsync-titanium.png?v=3"
-          alt="MusicSync"
-          className="w-full max-w-[170px] h-auto object-contain drop-shadow-[0_4px_20px_rgba(0,0,0,0.8)]"
-        />
-      </div>
-
-      <div className="flex items-center justify-center gap-1.5 mb-4">
-        <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399] animate-pulse" />
-        <span className="text-xs font-semibold text-zinc-300">
-          {step >= totalDashes ? 'Ready to enter room' : 'Calibrating room sync...'}
+      <div className="flex justify-between items-center mb-4 border-b border-cyan-500/20 pb-3">
+        <div className="flex items-center gap-2">
+          <span className="w-2.5 h-2.5 rounded-sm bg-cyan-400 shadow-[0_0_8px_#00f0ff] animate-pulse" />
+          <span className="text-xs font-bold text-white tracking-widest uppercase">
+            BEATSYNC // SYNC_V2
+          </span>
+        </div>
+        <span className="text-[10px] text-cyan-300 font-bold bg-cyan-950/80 border border-cyan-500/40 px-2 py-0.5 rounded">
+          {step >= totalDashes ? 'LOCKED' : `${Math.round((step / totalDashes) * 100)}%`}
         </span>
       </div>
 
-      {/* 8 Clean Platinum / White Dashes */}
-      <div className="grid grid-cols-8 gap-1.5 sm:gap-2 my-4 px-2">
-        {Array.from({ length: 8 }).map((_, i) => {
+      <p className="text-[11px] text-zinc-400 mb-4 tracking-wide">
+        {step >= totalDashes ? '> 0ms audio sync verified' : '> Synchronizing P2P timeframes...'}
+      </p>
+
+      {/* 10 Cyan High-Density Dashes */}
+      <div className="grid grid-cols-10 gap-1.5 my-4">
+        {Array.from({ length: 10 }).map((_, i) => {
           const isFilled = i < step;
           return (
             <div
               key={i}
-              className={`h-1 sm:h-1.5 rounded-full transition-all duration-150 ${
+              className={`h-1.5 rounded-sm transition-all duration-150 ${
                 isFilled
-                  ? 'bg-white shadow-[0_0_12px_rgba(255,255,255,0.9)]'
-                  : 'bg-zinc-800'
+                  ? 'bg-gradient-to-r from-cyan-400 to-sky-100 shadow-[0_0_12px_rgba(0,240,255,0.9)]'
+                  : 'bg-cyan-950/40 border border-cyan-500/20'
               }`}
             />
           );
         })}
       </div>
 
-      {/* Clean Telemetry Line */}
-      <div className="flex justify-between items-center text-[10px] font-mono text-zinc-500 pt-2 px-1">
-        <span>MEASUREMENTS {measurements}/16</span>
-        <span className="text-emerald-400 font-bold">0ms LOCKED</span>
+      <div className="space-y-1.5 text-xs text-zinc-400 pt-2 border-t border-cyan-500/15">
+        <div className="flex justify-between items-center">
+          <span className="text-zinc-500">packets sent</span>
+          <span className="text-cyan-300 tabular-nums">{pairsSent}</span>
+        </div>
+        <div className="flex justify-between items-center">
+          <span className="text-zinc-500">measurements</span>
+          <span className="text-cyan-300 tabular-nums">{measurements} / 16</span>
+        </div>
+        <div className="flex justify-between items-center">
+          <span className="text-zinc-500">socket state</span>
+          <span className="text-emerald-400 font-bold">CONNECTED</span>
+        </div>
       </div>
     </div>
   );
 };
 
 // ===========================================================================
-// FULLSCREEN ROOM CREATION OVERLAY (Shown when user clicks Create Room)
+// FULLSCREEN ROOM CREATION OVERLAY (Active when entering/creating a room)
 // ===========================================================================
 interface RoomCreationOverlayProps {
   onComplete: () => void;
@@ -367,7 +510,7 @@ export const RoomCreationOverlay: React.FC<RoomCreationOverlayProps> = ({
 };
 
 // ===========================================================================
-// INTERACTIVE DEMO SHOWCASE PAGE (Allows comparing and selecting demos live)
+// INTERACTIVE DEMO SHOWCASE (Supports all 6 variations with Live Preview)
 // ===========================================================================
 interface RoomCreationLoadingDemoProps {
   onClose?: () => void;
@@ -390,34 +533,61 @@ export const RoomCreationLoadingDemo: React.FC<RoomCreationLoadingDemoProps> = (
   const [replayKey, setReplayKey] = useState(0);
   const [savedToast, setSavedToast] = useState<string | null>(null);
 
-  const THEMES_INFO: { id: RoomCreateTheme; number: string; name: string; tag: string; desc: string }[] = [
+  const THEMES_INFO: {
+    id: RoomCreateTheme;
+    number: string;
+    name: string;
+    tag: string;
+    icon: any;
+    desc: string;
+  }[] = [
     {
       id: 'demo1',
       number: '01',
       name: 'Beatsync Exact Replica',
-      tag: 'FAITHFUL REPLICA',
-      desc: '1:1 recreation from your screenshot with white glowing segmented dashes & full monospace telemetry table.',
+      tag: '1:1 SCREENSHOT REPLICA',
+      icon: Radio,
+      desc: 'Exact matte charcoal card, glowing mint LED, 8 diffuse white fluorescent pill dashes, and full monospace telemetry table.',
     },
     {
       id: 'demo2',
       number: '02',
-      name: 'MusicSync Emerald Mesh',
-      tag: 'BRAND EDITION',
-      desc: 'MusicSync brand edition with glowing emerald-to-cyan audio dashes and acoustic telemetry.',
+      name: 'Acoustic Waveform',
+      tag: 'AUDIO SPECTRUM BARS',
+      icon: Activity,
+      desc: 'Different Take: 8 vertical soundwave frequency bars that pulse and illuminate with intense audio bloom.',
     },
     {
       id: 'demo3',
       number: '03',
-      name: 'Cyber HUD Terminal',
-      tag: 'TECH HUD',
-      desc: 'High-density 10-dash laser meter with system header and technical telemetry matrix.',
+      name: 'Radial Sonic Orbit',
+      tag: 'CIRCULAR ARC GAUGE',
+      icon: Disc,
+      desc: 'Different Take: Circular 8-segment arc dial inspired by Teenage Engineering / high-end audio synthesizers.',
     },
     {
       id: 'demo4',
       number: '04',
-      name: 'Titanium Studio Minimal',
-      tag: 'STUDIO LUXURY',
-      desc: 'Minimalist card featuring the Titanium emblem and clean white glowing dashes.',
+      name: 'Emerald Laser Grid',
+      tag: 'BRAND EDITION',
+      icon: Sparkles,
+      desc: 'MusicSync emerald-to-white glowing laser dashes with acoustic P2P telemetry.',
+    },
+    {
+      id: 'demo5',
+      number: '05',
+      name: 'Titanium Studio Capsule',
+      tag: 'LUXURY CLEAN',
+      icon: Check,
+      desc: 'Understated luxury with the Titanium logo and pure platinum glowing dashes.',
+    },
+    {
+      id: 'demo6',
+      number: '06',
+      name: 'Retro Terminal HUD',
+      tag: 'CYBER HUD',
+      icon: Terminal,
+      desc: 'High-density 10-dash cyan terminal with live packets and status matrix.',
     },
   ];
 
@@ -444,6 +614,8 @@ export const RoomCreationLoadingDemo: React.FC<RoomCreationLoadingDemoProps> = (
       if (e.key === '2') setViewMode('demo2');
       if (e.key === '3') setViewMode('demo3');
       if (e.key === '4') setViewMode('demo4');
+      if (e.key === '5') setViewMode('demo5');
+      if (e.key === '6') setViewMode('demo6');
       if (e.key === 'r' || e.key === 'R') handleReplay();
       if (e.key === 'Escape' && onClose) onClose();
     };
@@ -452,9 +624,9 @@ export const RoomCreationLoadingDemo: React.FC<RoomCreationLoadingDemoProps> = (
   }, [onClose]);
 
   return (
-    <div className="fixed inset-0 z-[99999] w-full h-full bg-[#08080a] flex flex-col select-none overflow-hidden font-sans text-white">
+    <div className="fixed inset-0 z-[99999] w-full h-full bg-[#090a0d] flex flex-col select-none overflow-hidden font-sans text-white">
       {/* Top Header Controls Bar */}
-      <header className="sticky top-0 z-50 w-full px-4 sm:px-6 py-3.5 bg-[#0e1014]/90 backdrop-blur-2xl border-b border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-2xl">
+      <header className="sticky top-0 z-50 w-full px-4 sm:px-6 py-3.5 bg-[#101217]/95 backdrop-blur-2xl border-b border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-2xl">
         <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-start">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-500 p-0.5 shadow-[0_0_15px_rgba(52,211,153,0.4)]">
@@ -464,13 +636,13 @@ export const RoomCreationLoadingDemo: React.FC<RoomCreationLoadingDemoProps> = (
             </div>
             <div>
               <h2 className="text-sm sm:text-base font-bold text-white tracking-tight flex items-center gap-2">
-                <span>Room Calibration Demos</span>
+                <span>Room Calibration Showcase</span>
                 <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 uppercase">
-                  4 Variations
+                  6 Design Variations
                 </span>
               </h2>
               <p className="text-[11px] text-zinc-400 hidden sm:block">
-                Select your preferred animation for room creation.
+                Choose your favorite calibration animation for room creation.
               </p>
             </div>
           </div>
@@ -486,14 +658,14 @@ export const RoomCreationLoadingDemo: React.FC<RoomCreationLoadingDemoProps> = (
           )}
         </div>
 
-        {/* View Switchers & Actions */}
+        {/* View Switchers & Controls */}
         <div className="flex items-center gap-2 overflow-x-auto max-w-full">
           {/* Replay Button */}
           <button
             type="button"
             onClick={handleReplay}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-white/10 text-xs font-semibold cursor-pointer transition-all active:scale-95 shadow"
-            title="Replay calibration animation (Press R)"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-zinc-900 hover:bg-zinc-800 text-zinc-200 border border-white/10 text-xs font-semibold cursor-pointer transition-all active:scale-95 shadow"
+            title="Replay calibration sequence (Press R)"
           >
             <RotateCcw className="w-3.5 h-3.5 text-emerald-400" />
             <span>Replay (R)</span>
@@ -512,7 +684,7 @@ export const RoomCreationLoadingDemo: React.FC<RoomCreationLoadingDemoProps> = (
             }`}
           >
             <LayoutGrid className="w-3.5 h-3.5" />
-            <span>All 4 Grid</span>
+            <span>All 6 Grid</span>
           </button>
 
           {/* Direct Option Tabs */}
@@ -528,7 +700,7 @@ export const RoomCreationLoadingDemo: React.FC<RoomCreationLoadingDemoProps> = (
               }`}
             >
               <span>{t.number}</span>
-              <span className="hidden lg:inline">{t.name.split(' ')[0]}</span>
+              <span className="hidden xl:inline">{t.name.split(' ')[0]}</span>
             </button>
           ))}
 
@@ -558,22 +730,22 @@ export const RoomCreationLoadingDemo: React.FC<RoomCreationLoadingDemoProps> = (
 
       {/* Main Viewport */}
       {viewMode === 'grid' ? (
-        /* 2x2 Interactive Comparison Grid */
-        <main className="flex-1 w-full h-full overflow-y-auto p-4 sm:p-6 pb-20 custom-scrollbar">
-          <div className="max-w-6xl mx-auto space-y-4">
+        /* Responsive Comparison Grid */
+        <main className="flex-1 w-full h-full overflow-y-auto p-4 sm:p-6 pb-24 custom-scrollbar">
+          <div className="max-w-7xl mx-auto space-y-4">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs text-zinc-400 px-1">
               <p>
-                Compare all 4 calibration animations. Click <strong>"Select This"</strong> on your
-                favorite option to use it when entering/creating rooms.
+                Compare all 6 live calibration designs. Click <strong>"Select This"</strong> on any card to lock it as your room creation animation.
               </p>
               <span className="text-[11px] font-mono text-emerald-400">
-                Active: {THEMES_INFO.find((t) => t.id === activeTheme)?.name}
+                Active Theme: {THEMES_INFO.find((t) => t.id === activeTheme)?.name}
               </span>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 sm:gap-6">
               {THEMES_INFO.map((opt) => {
                 const isSelected = activeTheme === opt.id;
+                const Icon = opt.icon;
 
                 return (
                   <div
@@ -586,17 +758,22 @@ export const RoomCreationLoadingDemo: React.FC<RoomCreationLoadingDemoProps> = (
                   >
                     {/* Card Top Title Bar */}
                     <div className="px-5 py-3 border-b border-white/[0.08] bg-zinc-950/70 flex items-center justify-between gap-3">
-                      <div>
-                        <h3 className="text-sm font-bold text-white tracking-tight flex items-center gap-2">
-                          <span>{opt.name}</span>
-                        </h3>
-                        <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider">
-                          {opt.tag}
-                        </span>
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-lg bg-white/5 flex items-center justify-center text-zinc-300">
+                          <Icon className="w-3.5 h-3.5 text-emerald-400" />
+                        </div>
+                        <div>
+                          <h3 className="text-sm font-bold text-white tracking-tight flex items-center gap-2">
+                            <span>{opt.name}</span>
+                          </h3>
+                          <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider">
+                            {opt.tag}
+                          </span>
+                        </div>
                       </div>
 
                       {isSelected && (
-                        <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-[10px] font-mono font-bold">
+                        <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-[10px] font-mono font-bold">
                           <Check className="w-3 h-3 stroke-[3]" />
                           <span>ACTIVE</span>
                         </div>
@@ -604,7 +781,7 @@ export const RoomCreationLoadingDemo: React.FC<RoomCreationLoadingDemoProps> = (
                     </div>
 
                     {/* Live Animation Container */}
-                    <div className="relative h-[290px] sm:h-[320px] w-full bg-[#08080a] flex items-center justify-center p-4 overflow-hidden">
+                    <div className="relative h-[300px] sm:h-[330px] w-full bg-[#08080a] flex items-center justify-center p-3 overflow-hidden">
                       <RoomCreationContent
                         theme={opt.id}
                         isCompact={true}
@@ -679,7 +856,7 @@ export const RoomCreationLoadingDemo: React.FC<RoomCreationLoadingDemoProps> = (
               className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-zinc-900/90 hover:bg-white text-zinc-300 hover:text-black border border-white/15 text-xs font-bold backdrop-blur-xl transition-all cursor-pointer shadow-lg"
             >
               <LayoutGrid className="w-3.5 h-3.5" />
-              <span>← Back to All 4 Grid</span>
+              <span>← Back to All 6 Grid</span>
             </button>
           </div>
 
@@ -718,10 +895,8 @@ export const RoomCreationLoadingDemo: React.FC<RoomCreationLoadingDemoProps> = (
         <p className="text-[11px] font-mono text-zinc-400">
           Press <kbd className="px-1.5 py-0.5 rounded bg-zinc-900 border border-white/10 text-white">R</kbd> to replay •{' '}
           <kbd className="px-1.5 py-0.5 rounded bg-zinc-900 border border-white/10 text-white">G</kbd> for grid •{' '}
-          <kbd className="px-1.5 py-0.5 rounded bg-zinc-900 border border-white/10 text-white">1</kbd>{' '}
-          <kbd className="px-1.5 py-0.5 rounded bg-zinc-900 border border-white/10 text-white">2</kbd>{' '}
-          <kbd className="px-1.5 py-0.5 rounded bg-zinc-900 border border-white/10 text-white">3</kbd>{' '}
-          <kbd className="px-1.5 py-0.5 rounded bg-zinc-900 border border-white/10 text-white">4</kbd> to inspect •{' '}
+          <kbd className="px-1.5 py-0.5 rounded bg-zinc-900 border border-white/10 text-white">1</kbd>-
+          <kbd className="px-1.5 py-0.5 rounded bg-zinc-900 border border-white/10 text-white">6</kbd> to inspect •{' '}
           <kbd className="px-1.5 py-0.5 rounded bg-zinc-900 border border-white/10 text-white">Esc</kbd> to close
         </p>
       </footer>
