@@ -789,12 +789,13 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
         onChange={handleFileSelected}
       />
 
-      {/* 1. TOP TELEMETRY HUD BAR (Titanium Pro Studio) */}
+      {/* 1. TOP TELEMETRY HUD BAR (Titanium Studio Minimal) */}
       <TitaniumHeader
         roomCode={roomCode}
         syncStats={syncStats}
         onLeaveRoom={() => setShowLeaveConfirm(true)}
-        onOpenShowcase={() => setIsHeaderShowcaseOpen(true)}
+        theme="studio"
+        showThemeSwitcher={false}
       />
 
       {isHeaderShowcaseOpen && (

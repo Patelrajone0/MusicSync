@@ -73,7 +73,7 @@ export const TitaniumHeader: React.FC<TitaniumHeaderProps> = ({
   theme: controlledTheme,
   onThemeChange,
   onOpenShowcase,
-  showThemeSwitcher = true,
+  showThemeSwitcher = false,
   className = '',
 }) => {
   const [internalTheme, setInternalTheme] = useState<TitaniumHeaderTheme>(getStoredHeaderTheme);
