@@ -18,11 +18,16 @@ import { InstallAppButton } from './InstallAppButton';
 interface LobbyProps {
   onRoomReady: (room: RoomState, user: User) => void;
   initialRoomCode?: string;
+  onOpenLoadingPreview?: () => void;
 }
 
 const USER_NAME_STORAGE_KEY = 'musicsync_user_name';
 
-export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' }) => {
+export const Lobby: React.FC<LobbyProps> = ({
+  onRoomReady,
+  initialRoomCode = '',
+  onOpenLoadingPreview,
+}) => {
   // Mode: 'create' | 'join'
   const [activeTab, setActiveTab] = useState<'create' | 'join'>(initialRoomCode ? 'join' : 'create');
 
@@ -233,8 +238,21 @@ export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' 
             <Logo size="lg" layout="vertical" variant="titanium" showTagline={false} />
           </a>
 
-          {/* Quick Install App Trigger */}
-          <InstallAppButton variant="lobby" />
+          {/* Quick Install & Preview Controls */}
+          <div className="flex items-center gap-2 flex-wrap justify-center">
+            <InstallAppButton variant="lobby" />
+            {onOpenLoadingPreview && (
+              <button
+                type="button"
+                onClick={onOpenLoadingPreview}
+                className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-dark-900/90 hover:bg-cyan-500/20 border border-cyan-400/35 hover:border-cyan-400 text-cyan-300 text-[11px] font-mono font-semibold transition-all cursor-pointer shadow-[0_0_12px_rgba(0,240,255,0.18)] active:scale-95"
+                title="Preview new animated loading screens live"
+              >
+                <Sparkles className="w-3 h-3 text-cyan-400 animate-pulse" />
+                <span>Preview Loaders</span>
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Modern Classic Dark Card */}
