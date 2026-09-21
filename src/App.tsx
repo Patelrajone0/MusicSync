@@ -132,7 +132,8 @@ export function App() {
   const [isPreviewLoadingOpen, setIsPreviewLoadingOpen] = useState<boolean>(() => {
     try {
       const urlParams = new URLSearchParams(window.location.search);
-      return urlParams.get('preview') === 'loading';
+      const preview = urlParams.get('preview');
+      return preview === 'loading' || preview === 'loaders' || preview === 'themes' || preview === 'all' || preview === 'true';
     } catch {
       return false;
     }

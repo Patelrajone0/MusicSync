@@ -245,11 +245,11 @@ export const Lobby: React.FC<LobbyProps> = ({
               <button
                 type="button"
                 onClick={onOpenLoadingPreview}
-                className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-dark-900/90 hover:bg-cyan-500/20 border border-cyan-400/35 hover:border-cyan-400 text-cyan-300 text-[11px] font-mono font-semibold transition-all cursor-pointer shadow-[0_0_12px_rgba(0,240,255,0.18)] active:scale-95"
-                title="Preview new animated loading screens live"
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-cyan-500/10 via-purple-500/10 to-pink-500/10 hover:from-cyan-500/20 hover:via-purple-500/20 hover:to-pink-500/20 border border-cyan-400/35 hover:border-cyan-300 text-cyan-300 text-[11px] font-mono font-semibold transition-all cursor-pointer shadow-[0_0_14px_rgba(0,240,255,0.18)] active:scale-95"
+                title="Preview all 4 animated loading screen themes live side-by-side"
               >
-                <Sparkles className="w-3 h-3 text-cyan-400 animate-pulse" />
-                <span>Preview Loaders</span>
+                <Sparkles className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
+                <span>Live Previews (All 4)</span>
               </button>
             )}
           </div>
