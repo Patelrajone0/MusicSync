@@ -31,7 +31,10 @@ import {
   Plus,
   Loader2,
   Music,
-  X
+  X,
+  GripVertical,
+  ChevronUp,
+  ChevronDown
 } from 'lucide-react';
 import { Track, PlaybackState, UserRole, SyncStats, User } from '../types';
 import { syncEngine } from '../services/syncEngine';
@@ -130,6 +133,125 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [showLeaveConfirm]);
+
+  // Local optimistic queue state for instantaneous UI reordering
+  const [localQueue, setLocalQueue] = useState<Track[]>(queue);
+
+  useEffect(() => {
+    setLocalQueue(queue);
+  }, [queue]);
+
+  // Queue Drag & Drop and Touch Reordering state
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const touchDragStartIndexRef = useRef<number | null>(null);
+  const touchDragCurrentIndexRef = useRef<number | null>(null);
+
+  const handleReorder = (fromIndex: number, toIndex: number) => {
+    if (!canControl) return;
+    if (
+      fromIndex === toIndex ||
+      fromIndex < 0 ||
+      toIndex < 0 ||
+      fromIndex >= localQueue.length ||
+      toIndex >= localQueue.length
+    ) {
+      return;
+    }
+
+    // Optimistically update local queue so reordering feels instantaneous (0ms lag)
+    const updatedQueue = [...localQueue];
+    const [movedItem] = updatedQueue.splice(fromIndex, 1);
+    updatedQueue.splice(toIndex, 0, movedItem);
+    setLocalQueue(updatedQueue);
+
+    // Sync authoritative reordered queue with room server & other clients
+    socket.emit('queue_reorder', {
+      fromIndex,
+      toIndex,
+      queueIds: updatedQueue.map((t) => t.queueId || t.id),
+    });
+  };
+
+  const handleMoveQueueItem = (fromIndex: number, direction: 'up' | 'down') => {
+    const toIndex = direction === 'up' ? fromIndex - 1 : fromIndex + 1;
+    handleReorder(fromIndex, toIndex);
+  };
+
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    if (!canControl) return;
+    setDraggedIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', String(index));
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    if (!canControl) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (dragOverIndex !== index) {
+      setDragOverIndex(index);
+    }
+  };
+
+  const handleDragLeave = (e: React.DragEvent, index: number) => {
+    if (dragOverIndex === index) {
+      setDragOverIndex(null);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent, targetIndex: number) => {
+    e.preventDefault();
+    const fromStr = e.dataTransfer.getData('text/plain');
+    const from = draggedIndex ?? (fromStr ? parseInt(fromStr, 10) : null);
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+    if (typeof from === 'number' && !isNaN(from) && from !== targetIndex) {
+      handleReorder(from, targetIndex);
+    }
+  };
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+  };
+
+  // Touch Drag-and-Drop for mobile devices (iOS / Android)
+  const handleTouchStart = (e: React.TouchEvent, index: number) => {
+    if (!canControl) return;
+    touchDragStartIndexRef.current = index;
+    touchDragCurrentIndexRef.current = index;
+    setDraggedIndex(index);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (touchDragStartIndexRef.current === null) return;
+    const touch = e.touches[0];
+    if (!touch) return;
+
+    const element = document.elementFromPoint(touch.clientX, touch.clientY);
+    const queueItemEl = element?.closest('[data-queue-index]');
+    if (queueItemEl) {
+      const targetIdx = parseInt(queueItemEl.getAttribute('data-queue-index') || '', 10);
+      if (!isNaN(targetIdx) && targetIdx !== touchDragCurrentIndexRef.current) {
+        touchDragCurrentIndexRef.current = targetIdx;
+        setDragOverIndex(targetIdx);
+      }
+    }
+  };
+
+  const handleTouchEnd = () => {
+    const from = touchDragStartIndexRef.current;
+    const to = touchDragCurrentIndexRef.current;
+    touchDragStartIndexRef.current = null;
+    touchDragCurrentIndexRef.current = null;
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+
+    if (from !== null && to !== null && from !== to) {
+      handleReorder(from, to);
+    }
+  };
 
   // Chat state
   interface SafeChatMessage {
@@ -911,7 +1033,7 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
               </div>
             </div>
 
-            {queue.length > 0 && searchQuery.trim() && (
+            {localQueue.length > 0 && searchQuery.trim() && (
               <div className="flex items-center justify-end px-2 mt-1.5 text-[10px] font-mono select-none">
                 <button
                   type="button"
@@ -921,7 +1043,7 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
                   }}
                   className="text-cyan-400 hover:underline font-mono text-[10px] cursor-pointer"
                 >
-                  View Queue ({queue.length}) →
+                  View Queue ({localQueue.length}) →
                 </button>
               </div>
             )}
@@ -1046,19 +1168,21 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
               <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-[1.5px] bg-gradient-to-r from-transparent via-cyan-400/60 to-transparent pointer-events-none" />
 
               <div className="flex-1 min-h-0 overflow-y-auto space-y-1.5 pr-1 select-none pt-1">
-                {queue.length === 0 ? (
+                {localQueue.length === 0 ? (
                   <div className="flex-1 min-h-[220px] py-12 flex flex-col items-center justify-center text-center p-6 text-slate-500">
                     <Disc3 className="w-10 h-10 mb-2 opacity-30 text-cyan-400 animate-spin-slow" />
                     <p className="text-sm font-semibold text-slate-300">No songs in queue</p>
                     <p className="text-xs text-slate-500 mt-1">Type in the search bar above to add music</p>
                   </div>
                 ) : (
-                  queue.map((track, idx) => {
+                  localQueue.map((track, idx) => {
                     const isCurrent = Boolean(
                       currentTrack &&
                       ((track.queueId && currentTrack.queueId && track.queueId === currentTrack.queueId) ||
                         track.id === currentTrack.id)
                     );
+                    const isBeingDragged = draggedIndex === idx;
+                    const isDropTarget = dragOverIndex === idx && draggedIndex !== idx;
 
                     const cleanTitle = cleanTrackTitle(track.title, track.artist);
                     const displayTitle = track.artist && !cleanTitle.toLowerCase().includes(track.artist.toLowerCase())
@@ -1068,18 +1192,82 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
                     return (
                       <div
                         key={track.queueId || `${track.id}-${idx}`}
-                        className={`flex items-center justify-between py-2 px-3 rounded-2xl border transition-all cursor-pointer group ${
-                          isCurrent
+                        data-queue-index={idx}
+                        draggable={canControl}
+                        onDragStart={(e) => handleDragStart(e, idx)}
+                        onDragOver={(e) => handleDragOver(e, idx)}
+                        onDragLeave={(e) => handleDragLeave(e, idx)}
+                        onDrop={(e) => handleDrop(e, idx)}
+                        onDragEnd={handleDragEnd}
+                        onClick={() => handlePlayTrack(track)}
+                        className={`relative flex items-center justify-between py-2 px-3 rounded-2xl border transition-all cursor-pointer group select-none ${
+                          isBeingDragged
+                            ? 'opacity-40 border-dashed border-cyan-400/80 bg-cyan-950/40 scale-[0.98]'
+                            : isDropTarget
+                            ? 'bg-cyan-950/70 border-cyan-400 ring-2 ring-cyan-400/50 shadow-[0_0_20px_rgba(0,240,255,0.35)]'
+                            : isCurrent
                             ? 'bg-gradient-to-r from-cyan-950/60 via-dark-900/90 to-purple-950/40 border-cyan-400/50 shadow-[0_0_20px_rgba(0,240,255,0.2)] ring-1 ring-cyan-400/40'
                             : 'bg-dark-950/50 hover:bg-dark-900/80 border-white/5 hover:border-cyan-400/20'
                         }`}
-                        onClick={() => handlePlayTrack(track)}
                       >
-                        {/* Left: Grip dots + Number + Play Button + Title */}
-                        <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
-                          <span className="text-slate-600 group-hover:text-slate-400 text-xs shrink-0 select-none opacity-40 font-mono tracking-tighter">
-                            ⠿
-                          </span>
+                        {/* Drop Target Indicator Bar */}
+                        {isDropTarget && (
+                          <div className="absolute -top-1 left-2 right-2 h-1 rounded-full bg-gradient-to-r from-cyan-400 via-sky-400 to-fuchsia-500 shadow-[0_0_10px_rgba(0,240,255,0.8)] pointer-events-none z-20 animate-pulse" />
+                        )}
+
+                        {/* Left: Grip Handle + Move Arrows + Number + Play Button + Title */}
+                        <div className="flex items-center gap-2 sm:gap-2.5 min-w-0 flex-1">
+                          {canControl ? (
+                            <div
+                              className="flex items-center gap-0.5 shrink-0"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {/* Touch & Mouse Drag Gripper Handle */}
+                              <div
+                                onTouchStart={(e) => handleTouchStart(e, idx)}
+                                onTouchMove={handleTouchMove}
+                                onTouchEnd={handleTouchEnd}
+                                className={`p-1 -ml-1 text-slate-500 hover:text-cyan-300 active:text-cyan-400 cursor-grab active:cursor-grabbing transition-colors rounded touch-none ${
+                                  isBeingDragged ? 'text-cyan-400' : ''
+                                }`}
+                                title="Drag to reorder"
+                              >
+                                <GripVertical className="w-3.5 h-3.5" />
+                              </div>
+
+                              {/* Quick Move Up/Down Arrows */}
+                              <div className="hidden sm:flex flex-col -space-y-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button
+                                  type="button"
+                                  disabled={idx === 0}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleMoveQueueItem(idx, 'up');
+                                  }}
+                                  className="text-slate-500 hover:text-cyan-300 disabled:opacity-0 p-0.5 transition-colors cursor-pointer"
+                                  title="Move up"
+                                >
+                                  <ChevronUp className="w-2.5 h-2.5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={idx === localQueue.length - 1}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleMoveQueueItem(idx, 'down');
+                                  }}
+                                  className="text-slate-500 hover:text-cyan-300 disabled:opacity-0 p-0.5 transition-colors cursor-pointer"
+                                  title="Move down"
+                                >
+                                  <ChevronDown className="w-2.5 h-2.5" />
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <span className="text-slate-600 group-hover:text-slate-400 text-xs shrink-0 select-none opacity-40 font-mono tracking-tighter">
+                              ⠿
+                            </span>
+                          )}
 
                           <span className={`text-xs font-mono font-bold w-4 text-center shrink-0 ${
                             isCurrent ? 'text-cyan-400' : 'text-slate-500'

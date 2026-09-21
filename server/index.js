@@ -2259,7 +2259,6 @@ io.on('connection', (socket) => {
 
     // Always add track to room.queue so it stays in Up Next
     room.queue.push(queueItem);
-    room.queue = sortQueue(room.queue);
     io.to(currentRoomCode).emit('queue_updated', { queue: room.queue });
 
     // If a track is already currently playing, refresh auto-advance
@@ -2439,6 +2438,50 @@ io.on('connection', (socket) => {
 
   socket.on('queue_shuffle', handleQueueShuffle);
   socket.on('toggle_shuffle', handleQueueShuffle);
+
+  const handleQueueReorder = ({ fromIndex, toIndex, queueIds }) => {
+    if (!currentRoomCode) return;
+    const room = rooms.get(currentRoomCode);
+    if (!room) return;
+
+    const user = room.users.get(socket.id);
+    const isHostOrDj = Boolean(
+      room.playbackPermission === 'everyone' ||
+      (user && (user.role === 'host' || user.role === 'dj')) ||
+      room.hostId === socket.id ||
+      (user && room.hostId === user.id) ||
+      room.users.size <= 1
+    );
+    if (!isHostOrDj) return;
+
+    if (Array.isArray(queueIds) && queueIds.length === room.queue.length) {
+      const idMap = new Map(room.queue.map(t => [t.queueId || t.id, t]));
+      const reordered = [];
+      for (const id of queueIds) {
+        const t = idMap.get(id);
+        if (t) reordered.push(t);
+      }
+      if (reordered.length === room.queue.length) {
+        room.queue = reordered;
+      }
+    } else if (typeof fromIndex === 'number' && typeof toIndex === 'number') {
+      if (
+        fromIndex >= 0 &&
+        fromIndex < room.queue.length &&
+        toIndex >= 0 &&
+        toIndex < room.queue.length &&
+        fromIndex !== toIndex
+      ) {
+        const [movedItem] = room.queue.splice(fromIndex, 1);
+        room.queue.splice(toIndex, 0, movedItem);
+      }
+    }
+
+    io.to(currentRoomCode).emit('queue_updated', { queue: room.queue });
+  };
+
+  socket.on('queue_reorder', handleQueueReorder);
+  socket.on('reorder_queue', handleQueueReorder);
 
   // 6b. Room Repeat Mode Synchronization
   const handleSetRepeatMode = ({ mode }) => {
