@@ -1319,8 +1319,8 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
         <aside className={`w-full md:w-72 lg:w-80 shrink-0 bg-[#0c0e12]/95 backdrop-blur-2xl border-l border-white/[0.08] flex flex-col p-2.5 sm:p-3.5 gap-2.5 sm:gap-3 h-full overflow-hidden relative z-10 ${
           mobileTab === 'spatial' || mobileTab === 'chat' ? 'flex' : 'hidden md:flex'
         }`}>
-          {/* Segmented Top Tab Switcher: Chat vs Spatial */}
-          <div className="grid grid-cols-2 p-1 rounded-2xl bg-[#090b0e] border border-white/[0.08] text-xs shrink-0">
+          {/* Segmented Top Tab Switcher: Chat vs Spatial (Desktop only; on mobile, navigation is handled by bottom navigation tabs) */}
+          <div className="hidden md:grid grid-cols-2 p-1 rounded-2xl bg-[#090b0e] border border-white/[0.08] text-xs shrink-0">
             <button
               type="button"
               onClick={() => {
@@ -1354,8 +1354,8 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
           </div>
 
           {/* SPATIAL AUDIO VIEW */}
-          {rightTab === 'spatial' && (
-            <div className="flex-1 flex flex-col gap-3 min-h-0">
+          {(mobileTab === 'spatial' || (mobileTab !== 'chat' && rightTab === 'spatial')) && (
+            <div className="flex-1 flex flex-col justify-between sm:justify-start gap-2.5 sm:gap-3 min-h-0 overflow-y-auto no-scrollbar">
               {/* Spatial Audio Header with ON/OFF switch */}
               <div className="flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-2 font-bold text-xs text-zinc-200">
@@ -1502,7 +1502,7 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
           )}
 
           {/* CHAT TAB VIEW */}
-          {rightTab === 'chat' && (
+          {(mobileTab === 'chat' || (mobileTab !== 'spatial' && rightTab === 'chat')) && (
             <div className="flex-1 flex flex-col min-h-0 bg-[#090b0e] rounded-3xl border border-white/[0.08] overflow-hidden relative shadow-inner">
               {/* Top ambient hairline */}
               <div className="absolute top-0 left-1/2 -translate-x-1/2 w-36 h-[1px] bg-gradient-to-r from-transparent via-zinc-300/30 to-transparent pointer-events-none" />
