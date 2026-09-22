@@ -16,7 +16,7 @@ import { NetworkMode } from './components/NetworkModeModal';
 import { PlaybackHistoryModal } from './components/PlaybackHistoryModal';
 import { BeatsyncProView } from './components/BeatsyncProView';
 import { InstallPwaPrompt } from './components/InstallPwaPrompt';
-import { UserX } from 'lucide-react';
+import { UserX, WifiOff } from 'lucide-react';
 
 import { userTasteEngine } from './services/userTaste';
 import { getDeviceId } from './utils/deviceId';
@@ -636,6 +636,78 @@ export function App() {
     };
   }, []);
 
+  // Local Wi-Fi Network Change Monitor:
+  // If the user is in a Local Wi-Fi room and switches to cellular or a different network,
+  // warn them immediately and remove them from the local room.
+  useEffect(() => {
+    if (!roomCode || networkMode !== 'local') return;
+
+    const checkNetworkStatus = () => {
+      // 1. Check Network Information API (cellular vs wifi)
+      const conn =
+        (navigator as any).connection ||
+        (navigator as any).mozConnection ||
+        (navigator as any).webkitConnection;
+
+      if (conn && (conn.type === 'cellular' || conn.type === 'wimax')) {
+        setKickedNotice(
+          'Network Changed: Cellular mobile data detected. Local Wi-Fi rooms require all devices to stay connected to the same Wi-Fi network or mobile hotspot.'
+        );
+        handleLeaveRoom();
+        return;
+      }
+
+      // 2. Query the server to verify same-network IP matching
+      if (socket.connected) {
+        socket.emit('verify_network_mode', { roomCode }, (res: { valid: boolean; reason?: string }) => {
+          if (res && !res.valid) {
+            setKickedNotice(
+              res.reason ||
+                'Network Changed: You switched from Local Wi-Fi to cellular or another network. You have been removed from the local room.'
+            );
+            handleLeaveRoom();
+          }
+        });
+      }
+    };
+
+    // Check immediately on mount/networkMode/roomCode change
+    checkNetworkStatus();
+
+    // Listen to browser network changes
+    const conn =
+      (navigator as any).connection ||
+      (navigator as any).mozConnection ||
+      (navigator as any).webkitConnection;
+
+    if (conn && conn.addEventListener) {
+      conn.addEventListener('change', checkNetworkStatus);
+    }
+
+    const handleOnline = () => {
+      checkNetworkStatus();
+    };
+
+    const handleSocketConnect = () => {
+      checkNetworkStatus();
+    };
+
+    window.addEventListener('online', handleOnline);
+    socket.on('connect', handleSocketConnect);
+
+    // Periodic heartbeat verification every 4 seconds
+    const intervalId = setInterval(checkNetworkStatus, 4000);
+
+    return () => {
+      if (conn && conn.removeEventListener) {
+        conn.removeEventListener('change', checkNetworkStatus);
+      }
+      window.removeEventListener('online', handleOnline);
+      socket.off('connect', handleSocketConnect);
+      clearInterval(intervalId);
+    };
+  }, [roomCode, networkMode]);
+
   // Dismiss kicked notice modal on Escape key press
   useEffect(() => {
     if (!kickedNotice) return;
@@ -778,6 +850,16 @@ export function App() {
     );
   }
 
+  // Check if warning is due to network change or host kick
+  const isNetworkChangeWarning = Boolean(
+    kickedNotice && (
+      kickedNotice.includes('Network Changed') ||
+      kickedNotice.includes('cellular') ||
+      kickedNotice.includes('Wi-Fi') ||
+      kickedNotice.includes('hotspot')
+    )
+  );
+
   // Kicked From Room Notice Popup Modal
   const kickedPopupModal = kickedNotice && typeof document !== 'undefined' ? createPortal(
     <div
@@ -789,19 +871,33 @@ export function App() {
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="relative bg-dark-900/95 border border-rose-500/40 rounded-3xl p-6 sm:p-7 max-w-sm sm:max-w-md w-full shadow-[0_0_50px_rgba(244,63,94,0.28)] animate-popover-spring text-center select-none"
+        className={`relative bg-dark-900/95 border rounded-3xl p-6 sm:p-7 max-w-sm sm:max-w-md w-full animate-popover-spring text-center select-none ${
+          isNetworkChangeWarning
+            ? 'border-amber-500/40 shadow-[0_0_50px_rgba(245,158,11,0.28)]'
+            : 'border-rose-500/40 shadow-[0_0_50px_rgba(244,63,94,0.28)]'
+        }`}
       >
         {/* Glow ambient aura behind modal */}
-        <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-40 h-40 bg-rose-500/20 rounded-full blur-2xl pointer-events-none" />
+        <div
+          className={`absolute -top-12 left-1/2 -translate-x-1/2 w-40 h-40 rounded-full blur-2xl pointer-events-none ${
+            isNetworkChangeWarning ? 'bg-amber-500/20' : 'bg-rose-500/20'
+          }`}
+        />
 
         {/* Halo Badged Icon */}
-        <div className="relative mx-auto w-16 h-16 rounded-2xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center text-rose-400 shadow-[0_0_24px_rgba(244,63,94,0.35)] mb-4">
-          <UserX className="w-8 h-8" />
+        <div
+          className={`relative mx-auto w-16 h-16 rounded-2xl border flex items-center justify-center mb-4 ${
+            isNetworkChangeWarning
+              ? 'bg-amber-500/15 border-amber-500/30 text-amber-400 shadow-[0_0_24px_rgba(245,158,11,0.35)]'
+              : 'bg-rose-500/15 border-rose-500/30 text-rose-400 shadow-[0_0_24px_rgba(244,63,94,0.35)]'
+          }`}
+        >
+          {isNetworkChangeWarning ? <WifiOff className="w-8 h-8" /> : <UserX className="w-8 h-8" />}
         </div>
 
         {/* Title */}
         <h3 id="kicked-modal-title" className="text-lg sm:text-xl font-black tracking-tight text-white mb-2">
-          Removed from Room
+          {isNetworkChangeWarning ? 'Local Wi-Fi Network Changed' : 'Removed from Room'}
         </h3>
 
         {/* Short message informing the user */}
@@ -809,14 +905,20 @@ export function App() {
           {kickedNotice}
         </p>
         <p className="text-xs text-slate-400 mb-6">
-          You can create your own room or join another room at any time.
+          {isNetworkChangeWarning
+            ? 'To re-join, connect back to the same Wi-Fi/Hotspot, or create a Public Online Cloud room.'
+            : 'You can create your own room or join another room at any time.'}
         </p>
 
         {/* Dismiss Button */}
         <button
           type="button"
           onClick={() => setKickedNotice(null)}
-          className="w-full py-3 px-5 rounded-xl bg-gradient-to-r from-rose-500 via-pink-600 to-rose-600 hover:from-rose-400 hover:to-pink-500 text-white font-bold text-sm tracking-wide shadow-[0_0_20px_rgba(244,63,94,0.35)] hover:shadow-[0_0_25px_rgba(244,63,94,0.55)] transition-all duration-200 active:scale-95 cursor-pointer"
+          className={`w-full py-3 px-5 rounded-xl text-white font-bold text-sm tracking-wide transition-all duration-200 active:scale-95 cursor-pointer shadow-lg ${
+            isNetworkChangeWarning
+              ? 'bg-gradient-to-r from-amber-500 via-orange-600 to-amber-600 hover:from-amber-400 hover:to-orange-500 shadow-[0_0_20px_rgba(245,158,11,0.35)] hover:shadow-[0_0_25px_rgba(245,158,11,0.55)]'
+              : 'bg-gradient-to-r from-rose-500 via-pink-600 to-rose-600 hover:from-rose-400 hover:to-pink-500 shadow-[0_0_20px_rgba(244,63,94,0.35)] hover:shadow-[0_0_25px_rgba(244,63,94,0.55)]'
+          }`}
         >
           Understood
         </button>

@@ -1700,13 +1700,109 @@ io.on('connection', (socket) => {
   let currentRoomCode = null;
   let currentUser = null;
 
-  // 1. High Precision NTP Clock Synchronization (Ping-Pong)
+  // 1. High Precision NTP Clock Synchronization (Ping-Pong) & Local Wi-Fi Network Check
   socket.on('ntp_ping', (data) => {
-    // data contains client timestamp t0
+    // If user is in a Local Wi-Fi room, continuously verify they stay on the same local network
+    if (currentRoomCode) {
+      const room = rooms.get(currentRoomCode);
+      if (room && room.networkMode === 'local' && room.hostNetworkIp) {
+        const clientIp = normalizeIp(getClientIp(socket));
+        if (clientIp && !isSameNetwork(clientIp, room.hostNetworkIp)) {
+          const user = room.users.get(socket.id);
+          const wasHost = user?.role === 'host' || room.hostId === socket.id;
+          room.users.delete(socket.id);
+          socket.leave(currentRoomCode);
+
+          socket.emit('kicked_from_room', {
+            reason: 'Network Changed: You switched from Local Wi-Fi to cellular data or another internet network. Local rooms require all devices to remain on the same Wi-Fi network.',
+            code: 'NETWORK_CHANGED'
+          });
+
+          if (room.users.size > 0) {
+            if (wasHost) {
+              const nextUser = room.users.values().next().value;
+              if (nextUser) {
+                room.hostId = nextUser.id;
+                nextUser.role = 'host';
+              }
+            }
+            io.to(currentRoomCode).emit('room_users_updated', {
+              users: Array.from(room.users.values()),
+              hostId: room.hostId
+            });
+          } else {
+            rooms.delete(currentRoomCode);
+          }
+
+          currentRoomCode = null;
+          currentUser = null;
+          return;
+        }
+      }
+    }
+
     socket.emit('ntp_pong', {
       t0: data.t0,
       serverTime: Date.now()
     });
+  });
+
+  // 1b. Explicit Local Wi-Fi Network Verification Handler
+  socket.on('verify_network_mode', ({ roomCode } = {}, callback) => {
+    const targetCode = roomCode || currentRoomCode;
+    if (!targetCode) {
+      if (typeof callback === 'function') callback({ valid: true });
+      return;
+    }
+    const room = rooms.get(targetCode);
+    if (!room || room.networkMode !== 'local' || !room.hostNetworkIp) {
+      if (typeof callback === 'function') callback({ valid: true });
+      return;
+    }
+
+    const clientIp = normalizeIp(getClientIp(socket));
+    if (clientIp && !isSameNetwork(clientIp, room.hostNetworkIp)) {
+      const user = room.users.get(socket.id);
+      const wasHost = user?.role === 'host' || room.hostId === socket.id;
+      room.users.delete(socket.id);
+      socket.leave(targetCode);
+
+      socket.emit('kicked_from_room', {
+        reason: 'Network Changed: You switched from Local Wi-Fi to cellular data or another internet network. Local rooms require all devices to remain on the same Wi-Fi network.',
+        code: 'NETWORK_CHANGED'
+      });
+
+      if (room.users.size > 0) {
+        if (wasHost) {
+          const nextUser = room.users.values().next().value;
+          if (nextUser) {
+            room.hostId = nextUser.id;
+            nextUser.role = 'host';
+          }
+        }
+        io.to(targetCode).emit('room_users_updated', {
+          users: Array.from(room.users.values()),
+          hostId: room.hostId
+        });
+      } else {
+        rooms.delete(targetCode);
+      }
+
+      currentRoomCode = null;
+      currentUser = null;
+
+      if (typeof callback === 'function') {
+        callback({
+          valid: false,
+          reason: 'Network Changed: You switched from Local Wi-Fi to cellular data or another internet network. Local rooms require all devices to remain on the same Wi-Fi network.'
+        });
+      }
+      return;
+    }
+
+    if (typeof callback === 'function') {
+      callback({ valid: true });
+    }
   });
 
   // 2. Room Creation
@@ -1824,14 +1920,13 @@ io.on('connection', (socket) => {
     }
 
     // STRICT SAME-NETWORK CHECK FOR LOCAL WI-FI MODE:
-    // If the room is in Local Wi-Fi Mode, only devices sharing the exact same network / local Wi-Fi as the host can join!
-    const isReconnectingHost = existingUser && (existingUser.role === 'host' || room.hostId === existingSocketId);
-    if (room.networkMode === 'local' && room.hostNetworkIp && !isReconnectingHost) {
+    // If the room is in Local Wi-Fi Mode, all devices (including host) must stay on the exact same local Wi-Fi / hotspot!
+    if (room.networkMode === 'local' && room.hostNetworkIp) {
       if (!isSameNetwork(clientIp, room.hostNetworkIp)) {
         if (typeof callback === 'function') {
           return callback({
             success: false,
-            error: 'Private Room (Local Wi-Fi Only): This room is private and only allows devices connected to the host\'s Wi-Fi network or mobile hotspot. Please connect to the same Wi-Fi/Hotspot to join, or ask the host to switch to Public Online Cloud mode.',
+            error: 'Network Changed (Local Wi-Fi Only): You switched to cellular data or another internet network. Local rooms require all devices to remain on the same Wi-Fi network or mobile hotspot.',
             code: 'DIFFERENT_NETWORK'
           });
         }
