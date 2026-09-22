@@ -32,3 +32,6 @@ Thumbs.db
 
 # Uploaded local media
 server/data/uploads/
+
+# Scratch directory
+scratch/

@@ -151,7 +151,7 @@ export const InstallPwaPrompt: React.FC = () => {
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-500/20 to-purple-500/20 border border-cyan-500/40 flex items-center justify-center shadow-[0_0_15px_rgba(0,240,255,0.2)]">
                 <img
-                  src="/musicsync-icon-192.png"
+                  src="/musicsync-icon-192.png?v=5"
                   alt="MusicSync Icon"
                   className="w-8 h-8 rounded-xl object-contain"
                 />
@@ -220,7 +220,7 @@ export const InstallPwaPrompt: React.FC = () => {
               <div className="relative">
                 <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#121626] to-[#0a0c16] border border-cyan-500/40 p-2 flex items-center justify-center shadow-[0_0_25px_rgba(0,240,255,0.25)]">
                   <img
-                    src="/musicsync-icon-192.png"
+                    src="/musicsync-icon-192.png?v=5"
                     alt="MusicSync"
                     className="w-full h-full object-contain rounded-xl"
                   />

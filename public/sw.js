@@ -1,5 +1,5 @@
 // MusicSync Progressive Web App Service Worker
-const CACHE_NAME = 'musicsync-cache-v2';
+const CACHE_NAME = 'musicsync-cache-v3';
 
 // Essential assets to cache on install for instant loading and offline shell
 const STATIC_ASSETS = [

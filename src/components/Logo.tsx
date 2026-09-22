@@ -38,9 +38,9 @@ export const Logo: React.FC<LogoProps> = ({
       return (
         <div className={`flex flex-col items-center text-center group select-none ${className}`}>
           <div className="relative flex flex-col items-center">
-            {/* Dark Brushed Titanium Emblem & Wordmark (True transparent PNG, zero background box) */}
+            {/* Dark Brushed Titanium Emblem & Wordmark */}
             <img
-              src="/musicsync-titanium.png?v=4"
+              src="/musicsync-titanium.png?v=5"
               alt="MusicSync Titanium"
               className="w-full max-w-[280px] sm:max-w-[320px] h-auto object-contain relative z-10 transition-transform duration-300 group-hover:scale-[1.01]"
             />
@@ -136,14 +136,14 @@ export const Logo: React.FC<LogoProps> = ({
           <div className="relative flex flex-col items-center">
             <div className="absolute -inset-3 bg-gradient-to-r from-cyan-500/20 via-purple-500/15 to-pink-500/20 rounded-3xl blur-2xl opacity-40 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
             <img
-              src="/musicsync-logo.png"
+              src="/musicsync-logo.png?v=5"
               alt="MusicSync Logo"
-              className="w-full max-w-[280px] sm:max-w-[340px] h-auto object-contain relative z-10 mix-blend-screen drop-shadow-[0_8px_32px_rgba(0,0,0,0.8)]"
+              className="w-full max-w-[280px] sm:max-w-[340px] h-auto object-contain relative z-10 drop-shadow-[0_8px_32px_rgba(0,0,0,0.8)]"
             />
           </div>
         ) : (
           <img
-            src="/musicsync-icon.png"
+            src="/musicsync-icon.png?v=5"
             alt="MusicSync Icon"
             className={`${iconSizes[size]} object-contain relative z-10`}
           />
@@ -157,7 +157,7 @@ export const Logo: React.FC<LogoProps> = ({
     <div className={`flex items-center gap-2 sm:gap-2.5 group select-none ${className}`}>
       <div className="relative shrink-0">
         <img
-          src="/musicsync-icon.png"
+          src="/musicsync-icon.png?v=5"
           alt="MusicSync"
           className={`${iconSizes[size]} object-contain relative z-10 drop-shadow-md shrink-0`}
         />

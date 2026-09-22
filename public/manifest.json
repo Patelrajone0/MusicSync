@@ -13,31 +13,31 @@
   "categories": ["music", "entertainment", "utilities"],
   "icons": [
     {
-      "src": "/musicsync-icon-192.png",
+      "src": "/musicsync-icon-192.png?v=5",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/musicsync-icon-192.png",
+      "src": "/musicsync-icon-192.png?v=5",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "maskable"
     },
     {
-      "src": "/musicsync-icon-512.png",
+      "src": "/musicsync-icon-512.png?v=5",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/musicsync-icon-512.png",
+      "src": "/musicsync-icon-512.png?v=5",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
     },
     {
-      "src": "/musicsync-icon.svg",
+      "src": "/musicsync-icon.svg?v=5",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"

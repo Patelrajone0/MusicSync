@@ -145,7 +145,7 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
           >
             <div className="relative w-[24px] h-[24px] sm:w-[28px] sm:h-[28px] rounded-full p-[1.5px] bg-gradient-to-tr from-cyan-400 via-sky-400 to-fuchsia-500 shadow-[0_0_10px_rgba(0,240,255,0.45)] group-hover:shadow-[0_0_14px_rgba(0,240,255,0.7)] transition-shadow shrink-0 flex items-center justify-center">
               <img
-                src="/musicsync-icon.png"
+                src="/musicsync-icon.png?v=5"
                 alt="MusicSync Logo"
                 className="w-full h-full rounded-full object-contain p-0.5 block"
               />

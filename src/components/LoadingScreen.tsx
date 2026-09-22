@@ -102,7 +102,7 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({
         {/* Pure MusicSync Titanium Emblem */}
         <div className="relative flex flex-col items-center mb-6">
           <img
-            src="/musicsync-titanium.png?v=4"
+            src="/musicsync-titanium.png?v=5"
             alt="MusicSync"
             className="w-full max-w-[220px] sm:max-w-[250px] h-auto object-contain drop-shadow-[0_10px_30px_rgba(0,0,0,0.85)]"
           />
