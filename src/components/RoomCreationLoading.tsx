@@ -135,7 +135,7 @@ export const RoomCreationContent: React.FC<RoomCreationCardProps> = ({
         {/* Floating Titanium Logo Emblem */}
         <div className="flex justify-center mb-3.5 relative z-10">
           <img
-            src="/musicsync-titanium.png?v=5"
+            src="/musicsync-titanium.png?v=6"
             alt="MusicSync"
             className="w-full max-w-[175px] h-auto object-contain drop-shadow-[0_4px_24px_rgba(0,0,0,0.85)]"
           />
