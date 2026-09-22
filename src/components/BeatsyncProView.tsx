@@ -108,8 +108,8 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
   // Mobile bottom tab: 'queue' | 'spatial' | 'chat' | 'room'
   const [mobileTab, setMobileTab] = useState<'queue' | 'spatial' | 'chat' | 'room'>('queue');
 
-  // Spatial Audio state
-  const [isSpatialEnabled, setIsSpatialEnabled] = useState(true);
+  // Spatial Audio state (strictly OFF by default unless manually enabled by user)
+  const [isSpatialEnabled, setIsSpatialEnabled] = useState(false);
   const [listenerPos, setListenerPos] = useState<{ x: number; y: number }>({ x: 0, y: 0.35 }); // normalized -1 to +1
   const [isDraggingNode, setIsDraggingNode] = useState(false);
   const [is8DRotating, setIs8DRotating] = useState(false);
@@ -665,6 +665,13 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
     }
   }, [mobileTab]);
 
+  // Spatial Audio is strictly OFF by default and resets to OFF whenever a new room is created or joined
+  useEffect(() => {
+    setIsSpatialEnabled(false);
+    setIs8DRotating(false);
+    syncEngine.disableSpatialAudio();
+  }, [roomCode]);
+
   // Spatial audio drag handling (Desktop Mouse + Mobile Touch)
   const handleRadarMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!isSpatialEnabled) return;
@@ -729,7 +736,9 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
 
   const handleResetNode = () => {
     setListenerPos({ x: 0, y: -0.7 });
-    syncEngine.setSpatialPosition(0, 0.2);
+    if (isSpatialEnabled) {
+      syncEngine.setSpatialPosition(0, 0.2);
+    }
   };
 
   const handleToggle8D = () => {
@@ -1349,13 +1358,23 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
             <div className="flex-1 flex flex-col gap-3 min-h-0">
               {/* Spatial Audio Header with ON/OFF switch */}
               <div className="flex items-center justify-between shrink-0">
-                <div className="flex items-center gap-1.5 font-bold text-xs text-zinc-200">
+                <div className="flex items-center gap-2 font-bold text-xs text-zinc-200">
                   <Compass className="w-3.5 h-3.5 text-zinc-400" />
                   <span>Spatial Audio</span>
+                  <span
+                    className={`text-[9px] font-mono px-1.5 py-0.5 rounded-full uppercase tracking-wider font-semibold border ${
+                      isSpatialEnabled
+                        ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30 shadow-[0_0_8px_rgba(16,185,129,0.2)]'
+                        : 'bg-zinc-800 text-zinc-400 border-zinc-700/60'
+                    }`}
+                  >
+                    {isSpatialEnabled ? 'ON' : 'OFF'}
+                  </span>
                 </div>
                 <button
                   type="button"
                   onClick={handleToggleSpatial}
+                  aria-label="Toggle Spatial Audio"
                   className={`w-9 h-5 rounded-full transition-colors relative cursor-pointer p-0.5 ${
                     isSpatialEnabled ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.4)]' : 'bg-zinc-800'
                   }`}
@@ -1377,8 +1396,17 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
                 onTouchStart={handleRadarTouchStart}
                 onTouchMove={handleRadarTouchMove}
                 onTouchEnd={handleRadarTouchEnd}
-                className="relative w-full aspect-square rounded-3xl bg-[#090b0e] border border-white/[0.08] overflow-hidden flex items-center justify-center cursor-crosshair select-none touch-none shadow-inner"
+                className={`relative w-full aspect-square rounded-3xl bg-[#090b0e] border border-white/[0.08] overflow-hidden flex items-center justify-center select-none touch-none shadow-inner transition-opacity duration-200 ${
+                  isSpatialEnabled ? 'cursor-crosshair opacity-100' : 'cursor-not-allowed opacity-60'
+                }`}
               >
+                {!isSpatialEnabled && (
+                  <div className="absolute inset-x-4 bottom-3 z-20 pointer-events-none flex items-center justify-center">
+                    <span className="text-[10px] font-mono tracking-wide text-zinc-400 bg-black/80 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/10 shadow-lg">
+                      Spatial Audio is OFF · Toggle switch above to activate
+                    </span>
+                  </div>
+                )}
                 {/* Radar Grid Lines */}
                 <div className="absolute inset-2 border border-white/[0.04] rounded-full pointer-events-none" />
                 <div className="absolute inset-8 border border-white/[0.04] rounded-full pointer-events-none" />

@@ -351,6 +351,7 @@ export function App() {
       duration: 0,
     });
     syncEngine.pausePlayback();
+    syncEngine.disableSpatialAudio();
     mediaSessionService.updateMetadata(null);
     socket.emit('leave_room', { deviceId: getDeviceId() });
     socket.disconnect();
@@ -537,6 +538,7 @@ export function App() {
       setNetworkMode(room.networkMode);
       syncEngine.setNetworkMode(room.networkMode);
     }
+    syncEngine.disableSpatialAudio();
     setIsAudioUnlocked(syncEngine.isUnlocked());
 
     // Save session and persistent user name in localStorage forever!
