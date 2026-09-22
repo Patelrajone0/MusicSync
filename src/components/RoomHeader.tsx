@@ -147,7 +147,7 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
               <img
                 src="/musicsync-icon.png"
                 alt="MusicSync Logo"
-                className="w-full h-full rounded-full object-cover bg-dark-950 block"
+                className="w-full h-full rounded-full object-contain p-0.5 block"
               />
             </div>
             <span className="text-xs sm:text-sm font-black tracking-tight text-white">

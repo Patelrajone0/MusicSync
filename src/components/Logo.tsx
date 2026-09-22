@@ -40,7 +40,7 @@ export const Logo: React.FC<LogoProps> = ({
           <div className="relative flex flex-col items-center">
             {/* Dark Brushed Titanium Emblem & Wordmark (True transparent PNG, zero background box) */}
             <img
-              src="/musicsync-titanium.png?v=3"
+              src="/musicsync-titanium.png?v=4"
               alt="MusicSync Titanium"
               className="w-full max-w-[280px] sm:max-w-[320px] h-auto object-contain relative z-10 transition-transform duration-300 group-hover:scale-[1.01]"
             />
