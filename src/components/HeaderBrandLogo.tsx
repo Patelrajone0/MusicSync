@@ -25,11 +25,12 @@ export const HeaderBrandLogo: React.FC<{
         className={`flex items-center gap-2 select-none px-2 py-1 rounded-md hover:bg-white/5 active:scale-95 transition-all duration-150 cursor-pointer border border-zinc-800/80 bg-zinc-950/60 text-left focus:outline-none ${className}`}
         title="MusicSync Pro Rack Console · Click to refresh"
       >
-        <img
-          src="/musicsync-icon.png"
-          alt="MusicSync"
-          className="w-4 h-4 object-contain filter drop-shadow-[0_0_6px_rgba(52,211,153,0.4)]"
-        />
+        <div className="flex items-center gap-1 h-3.5 px-0.5 shrink-0">
+          <span className="w-1 h-2 rounded-[1px] bg-zinc-500 animate-pulse" style={{ animationDuration: '1.2s' }} />
+          <span className="w-1 h-3.5 rounded-[1px] bg-zinc-300 border-t border-emerald-400 animate-pulse shadow-[0_0_6px_rgba(52,211,153,0.5)]" style={{ animationDuration: '0.8s', animationDelay: '0.2s' }} />
+          <span className="w-1 h-3 rounded-[1px] bg-zinc-300 border-t border-emerald-400 animate-pulse shadow-[0_0_6px_rgba(52,211,153,0.5)]" style={{ animationDuration: '1.0s', animationDelay: '0.4s' }} />
+          <span className="w-1 h-1.5 rounded-[1px] bg-zinc-500 animate-pulse" style={{ animationDuration: '1.3s', animationDelay: '0.15s' }} />
+        </div>
         <div className="flex items-center gap-1.5">
           <span className="font-mono font-bold text-xs tracking-wider text-zinc-100 uppercase">
             MusicSync
@@ -51,11 +52,12 @@ export const HeaderBrandLogo: React.FC<{
         className={`flex items-center gap-2 select-none px-1.5 py-0.5 rounded-lg hover:bg-white/5 active:scale-95 transition-all duration-150 cursor-pointer border-0 bg-transparent text-left focus:outline-none ${className}`}
         title="MusicSync Stealth · Click to refresh"
       >
-        <img
-          src="/musicsync-icon.png"
-          alt="MusicSync"
-          className="w-4 h-4 object-contain filter drop-shadow-[0_0_6px_rgba(255,255,255,0.2)]"
-        />
+        <div className="flex items-center gap-1 h-3.5 px-0.5 shrink-0">
+          <span className="w-0.5 h-2 rounded-full bg-zinc-500 animate-pulse" style={{ animationDuration: '1.2s' }} />
+          <span className="w-0.5 h-3.5 rounded-full bg-zinc-200 animate-pulse" style={{ animationDuration: '0.8s', animationDelay: '0.2s' }} />
+          <span className="w-0.5 h-2.5 rounded-full bg-zinc-300 animate-pulse" style={{ animationDuration: '1.0s', animationDelay: '0.4s' }} />
+          <span className="w-0.5 h-1.5 rounded-full bg-zinc-600 animate-pulse" style={{ animationDuration: '1.3s', animationDelay: '0.15s' }} />
+        </div>
         <div className="flex items-center gap-1">
           <span className="font-sans font-bold text-xs tracking-tight text-zinc-200 hover:text-white transition-colors">
             MusicSync
@@ -75,11 +77,12 @@ export const HeaderBrandLogo: React.FC<{
         className={`flex items-center gap-2 select-none px-2 py-0.5 rounded-xl hover:bg-white/10 active:scale-95 transition-all duration-150 cursor-pointer border border-white/10 bg-white/[0.03] backdrop-blur-md text-left focus:outline-none shadow-[0_2px_10px_rgba(0,0,0,0.3)] ${className}`}
         title="MusicSync Aerograde Glass · Click to refresh"
       >
-        <img
-          src="/musicsync-icon.png"
-          alt="MusicSync"
-          className="w-4.5 h-4.5 object-contain filter drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]"
-        />
+        <div className="flex items-center gap-[2.5px] h-4 px-0.5 shrink-0">
+          <span className="w-1 h-2.5 rounded-full bg-gradient-to-t from-zinc-500 via-zinc-300 to-white animate-pulse shadow-[0_0_8px_rgba(255,255,255,0.4)]" style={{ animationDuration: '1.2s' }} />
+          <span className="w-1 h-4 rounded-full bg-gradient-to-t from-zinc-400 via-white to-zinc-200 animate-pulse shadow-[0_0_10px_rgba(255,255,255,0.7)]" style={{ animationDuration: '0.8s', animationDelay: '0.2s' }} />
+          <span className="w-1 h-3 rounded-full bg-gradient-to-t from-zinc-400 via-white to-zinc-300 animate-pulse shadow-[0_0_9px_rgba(255,255,255,0.5)]" style={{ animationDuration: '1.0s', animationDelay: '0.4s' }} />
+          <span className="w-1 h-2 rounded-full bg-gradient-to-t from-zinc-500 via-zinc-300 to-white animate-pulse shadow-[0_0_7px_rgba(255,255,255,0.4)]" style={{ animationDuration: '1.3s', animationDelay: '0.15s' }} />
+        </div>
         <span className="font-sans font-extrabold text-xs tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white via-zinc-100 to-zinc-400 hover:brightness-125 transition-all">
           MusicSync
         </span>
@@ -96,11 +99,24 @@ export const HeaderBrandLogo: React.FC<{
         className={`flex items-center gap-2 select-none px-1.5 py-0.5 rounded-lg hover:bg-white/10 active:scale-95 transition-all duration-150 cursor-pointer border-0 bg-transparent text-left focus:outline-none ${className}`}
         title="MusicSync · Click to refresh"
       >
-        <img
-          src="/musicsync-icon.png"
-          alt="MusicSync"
-          className="w-4.5 h-4.5 object-contain filter drop-shadow-[0_0_8px_rgba(0,240,255,0.5)]"
-        />
+        <div className="flex items-center gap-[2.5px] h-4 px-0.5 shrink-0">
+          <span
+            className="w-1 h-2.5 rounded-full bg-gradient-to-t from-cyan-400 to-fuchsia-500 animate-pulse shadow-[0_0_6px_rgba(0,240,255,0.6)]"
+            style={{ animationDuration: '1.2s' }}
+          />
+          <span
+            className="w-1 h-4 rounded-full bg-gradient-to-t from-cyan-400 via-sky-400 to-fuchsia-500 animate-pulse shadow-[0_0_8px_rgba(157,78,221,0.7)]"
+            style={{ animationDuration: '0.8s', animationDelay: '0.2s' }}
+          />
+          <span
+            className="w-1 h-3 rounded-full bg-gradient-to-t from-cyan-400 via-sky-400 to-fuchsia-500 animate-pulse shadow-[0_0_7px_rgba(157,78,221,0.6)]"
+            style={{ animationDuration: '1.0s', animationDelay: '0.4s' }}
+          />
+          <span
+            className="w-1 h-2 rounded-full bg-gradient-to-t from-cyan-400 to-fuchsia-500 animate-pulse shadow-[0_0_5px_rgba(0,240,255,0.5)]"
+            style={{ animationDuration: '1.3s', animationDelay: '0.15s' }}
+          />
+        </div>
         <span className="font-sans font-extrabold text-xs tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-sky-300 to-fuchsia-400 hover:brightness-125 transition-all">
           MusicSync
         </span>
@@ -113,15 +129,26 @@ export const HeaderBrandLogo: React.FC<{
     <button
       type="button"
       onClick={handleClick}
-      className={`flex items-center gap-2.5 select-none px-2 py-1 rounded-lg hover:bg-white/[0.06] active:scale-95 transition-all duration-150 cursor-pointer border-0 bg-transparent text-left focus:outline-none group ${className}`}
+      className={`flex items-center gap-2 select-none px-2 py-1 rounded-lg hover:bg-white/[0.06] active:scale-95 transition-all duration-150 cursor-pointer border-0 bg-transparent text-left focus:outline-none group ${className}`}
       title="MusicSync Titanium Studio · Click to refresh"
     >
-      {/* Official Titanium Emblem Icon */}
-      <div className="relative w-5 h-5 shrink-0 flex items-center justify-center">
-        <img
-          src="/musicsync-icon.png"
-          alt="MusicSync Icon"
-          className="w-full h-full object-contain filter drop-shadow-[0_0_8px_rgba(255,255,255,0.3)] transition-transform duration-300 group-hover:scale-105"
+      {/* Dynamic 4-Bar Titanium Equalizer */}
+      <div className="flex items-center gap-[2.5px] h-3.5 px-0.5 shrink-0">
+        <span
+          className="w-1 h-2 rounded-full bg-gradient-to-t from-zinc-500 via-zinc-300 to-zinc-100 animate-pulse shadow-[0_0_4px_rgba(255,255,255,0.3)]"
+          style={{ animationDuration: '1.2s' }}
+        />
+        <span
+          className="w-1 h-3.5 rounded-full bg-gradient-to-t from-zinc-400 via-zinc-100 to-white animate-pulse shadow-[0_0_6px_rgba(255,255,255,0.5)]"
+          style={{ animationDuration: '0.8s', animationDelay: '0.2s' }}
+        />
+        <span
+          className="w-1 h-2.5 rounded-full bg-gradient-to-t from-zinc-400 via-zinc-200 to-white animate-pulse shadow-[0_0_5px_rgba(255,255,255,0.4)]"
+          style={{ animationDuration: '1.0s', animationDelay: '0.4s' }}
+        />
+        <span
+          className="w-1 h-1.5 rounded-full bg-gradient-to-t from-zinc-600 via-zinc-400 to-zinc-200 animate-pulse shadow-[0_0_3px_rgba(255,255,255,0.2)]"
+          style={{ animationDuration: '1.3s', animationDelay: '0.15s' }}
         />
       </div>
 

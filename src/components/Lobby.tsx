@@ -15,7 +15,6 @@ import { getDeviceId } from '../utils/deviceId';
 import { NetworkMode } from './NetworkModeModal';
 import { InstallAppButton } from './InstallAppButton';
 import { RoomCreationOverlay } from './RoomCreationLoading';
-import { CurvedCornersShowcase } from './CurvedCornersShowcase';
 
 interface LobbyProps {
   onRoomReady: (room: RoomState, user: User) => void;
@@ -48,7 +47,6 @@ export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' 
   const [isCreating, setIsCreating] = useState(false);
   const [isJoining, setIsJoining] = useState(false);
   const [isEntering, setIsEntering] = useState<boolean>(false);
-  const [isCornerShowcaseOpen, setIsCornerShowcaseOpen] = useState<boolean>(false);
   const [pendingRoomReady, setPendingRoomReady] = useState<{ room: RoomState; user: User } | null>(null);
   const [errorMessage, setErrorMessage] = useState<string>('');
 
@@ -449,24 +447,8 @@ export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' 
         <p className="text-[11px] text-zinc-500 text-center mt-4">
           No account required · Instant peer-to-peer sync
         </p>
-
-        {/* Curved Corners Showcase Preview Button */}
-        <div className="flex items-center justify-center mt-3">
-          <button
-            type="button"
-            onClick={() => setIsCornerShowcaseOpen(true)}
-            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-emerald-400/40 text-xs font-medium text-zinc-300 hover:text-white transition-all duration-200 cursor-pointer shadow-sm group select-none"
-          >
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse group-hover:shadow-[0_0_8px_rgba(52,211,153,0.9)]" />
-            <span>Curved Corners Studio: Preview & Choose Designs</span>
-            <span className="text-[10px] font-mono text-emerald-400">4 Designs →</span>
-          </button>
-        </div>
       </div>
 
-      {isCornerShowcaseOpen && (
-        <CurvedCornersShowcase onClose={() => setIsCornerShowcaseOpen(false)} />
-      )}
 
       {/* Subtle Fade on Entry */}
       {isEntering && (
