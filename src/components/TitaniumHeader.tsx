@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { LogOut, Copy, Check, ChevronDown, Sliders, Sparkles, Cpu, Radio, ShieldCheck, Activity } from 'lucide-react';
 import { HeaderBrandLogo } from './HeaderBrandLogo';
 import { SyncStats } from '../types';
+import { haptics } from '../utils/haptics';
 
 export type TitaniumHeaderTheme = 'studio' | 'rack' | 'stealth' | 'aerograde';
 
@@ -91,6 +92,7 @@ export const TitaniumHeader: React.FC<TitaniumHeaderProps> = ({
 
   const handleCopyRoomCode = (e: React.MouseEvent) => {
     e.stopPropagation();
+    haptics.success();
     try {
       if (navigator.clipboard && roomCode) {
         navigator.clipboard.writeText(roomCode);
@@ -98,6 +100,11 @@ export const TitaniumHeader: React.FC<TitaniumHeaderProps> = ({
         setTimeout(() => setCopiedCode(false), 2000);
       }
     } catch {}
+  };
+
+  const handleLeave = () => {
+    haptics.warning();
+    onLeaveRoom();
   };
 
   const clockOffsetNum = typeof syncStats.clockOffset === 'number' ? syncStats.clockOffset : -11.0;
@@ -199,7 +206,7 @@ export const TitaniumHeader: React.FC<TitaniumHeaderProps> = ({
             {/* Industrial Eject Button */}
             <button
               type="button"
-              onClick={onLeaveRoom}
+              onClick={handleLeave}
               className="flex items-center gap-1.5 px-3 py-1 rounded-md bg-black/80 hover:bg-rose-950/40 border border-zinc-800 hover:border-rose-700/50 text-zinc-400 hover:text-rose-300 transition-all cursor-pointer text-xs font-bold active:scale-95 shadow-sm"
               title="Eject / Leave Room"
             >
@@ -283,7 +290,7 @@ export const TitaniumHeader: React.FC<TitaniumHeaderProps> = ({
 
             <button
               type="button"
-              onClick={onLeaveRoom}
+              onClick={handleLeave}
               className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#101217] hover:bg-rose-950/30 border border-zinc-800 hover:border-rose-900/50 text-zinc-400 hover:text-rose-300 transition-all cursor-pointer text-xs font-semibold active:scale-95 shadow-sm"
               title="Leave Room"
             >
@@ -372,7 +379,7 @@ export const TitaniumHeader: React.FC<TitaniumHeaderProps> = ({
 
             <button
               type="button"
-              onClick={onLeaveRoom}
+              onClick={handleLeave}
               className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/[0.05] hover:bg-rose-500/20 border border-white/[0.15] hover:border-rose-400/40 text-zinc-300 hover:text-rose-200 transition-all cursor-pointer text-xs font-semibold active:scale-95 shadow-[0_2px_10px_rgba(0,0,0,0.3)] backdrop-blur-md"
               title="Leave Room"
             >
@@ -459,7 +466,7 @@ export const TitaniumHeader: React.FC<TitaniumHeaderProps> = ({
           {/* Leave Room Button */}
           <button
             type="button"
-            onClick={onLeaveRoom}
+            onClick={handleLeave}
             className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-900/80 hover:bg-rose-500/15 border border-white/[0.08] hover:border-rose-500/30 text-zinc-400 hover:text-rose-300 transition-all cursor-pointer text-xs font-semibold active:scale-95 shadow-sm"
             title="Leave Room"
           >

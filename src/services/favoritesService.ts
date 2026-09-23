@@ -1,6 +1,7 @@
 import { useState, useEffect, useSyncExternalStore } from 'react';
 import { Track } from '../types';
 import { cleanTrackTitle } from './musicApi';
+import { haptics } from '../utils/haptics';
 
 const FAVORITES_USER_ID_KEY = 'musicsync_user_id';
 const FAVORITES_CACHE_KEY = 'musicsync_favorites_cache_v1';
@@ -113,6 +114,7 @@ class FavoritesService {
     const alreadyFav = this.isFavorite(track.id);
 
     if (alreadyFav) {
+      haptics.light();
       // Optimistic removal
       this.favorites = this.favorites.filter((t) => t.id !== track.id);
       this.saveToLocalStorage();
@@ -129,6 +131,7 @@ class FavoritesService {
 
       return false;
     } else {
+      haptics.success();
       // Optimistic addition
       const favTrack: Track = {
         id: track.id,

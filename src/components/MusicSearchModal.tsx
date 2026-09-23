@@ -33,6 +33,7 @@ import { socket } from '../services/socket';
 import { syncEngine } from '../services/syncEngine';
 import { useFavorites } from '../services/favoritesService';
 import { localMusicService, LocalUploadProgress } from '../services/localMusicService';
+import { haptics } from '../utils/haptics';
 
 function formatTimeAgo(timestamp: number): string {
   const diff = Date.now() - timestamp;
@@ -594,6 +595,7 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
   };
 
   const handleAddTrack = (track: Track) => {
+    haptics.success();
     socket.emit('queue_add', { track });
     // Save to user taste profile!
     userTasteEngine.recordInteraction(track, 'queued');
@@ -604,6 +606,7 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
 
   const handleClearAllHistory = () => {
     if (window.confirm('Are you sure you want to clear your playback history?')) {
+      haptics.warning();
       userTasteEngine.clearHistory();
       setHistoryItems([]);
       stopPreview();
@@ -611,6 +614,7 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
   };
 
   const handlePlayNow = (track: Track) => {
+    haptics.medium();
     stopPreview();
     syncEngine.primePlayback(track, 0);
     socket.emit('request_play', { track, position: 0 });
@@ -619,6 +623,7 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
   };
 
   const handleDeleteLocalTrack = async (trackId: string) => {
+    haptics.warning();
     if (previewTrackId === trackId) {
       stopPreview();
     }

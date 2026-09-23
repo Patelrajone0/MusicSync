@@ -13,6 +13,7 @@ import {
   Monitor
 } from 'lucide-react';
 import { usePWAInstall, isRunningStandalone } from '../services/usePWAInstall';
+import { haptics } from '../utils/haptics';
 
 const PWA_DISMISS_STORAGE_KEY = 'musicsync_pwa_dismissed_timestamp';
 const DISMISS_COOLDOWN_MS = 3 * 24 * 60 * 60 * 1000; // 3 days cooldown if dismissed
@@ -84,6 +85,7 @@ export const InstallPwaPrompt: React.FC = () => {
   };
 
   const handleInstallClick = async () => {
+    haptics.success();
     if (isIOS) {
       setShowIosGuide(true);
       return;

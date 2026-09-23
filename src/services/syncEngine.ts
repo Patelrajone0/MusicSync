@@ -1,6 +1,7 @@
 import { socket } from './socket';
 import { SyncStats, Track } from '../types';
 import { mediaSessionService } from './mediaSession';
+import { wakeLockService } from './wakeLockService';
 
 // Detect iOS devices (iPhone, iPad, iPod, iPadOS on MacIntel, and WebKit touch browsers)
 export const isIOSDevice = typeof navigator !== 'undefined' && (
@@ -214,6 +215,7 @@ class SyncEngine {
           this.isPlaying = true;
           this.isAutoplayBlocked = false;
           this.notifyAutoplayBlocked(false);
+          wakeLockService.requestLock().catch(() => {});
 
           const playPromise = this.audio.play();
           if (playPromise !== undefined) {
@@ -481,6 +483,7 @@ class SyncEngine {
     this.startPosition = startPosition;
     this.isPlaying = true;
     this.currentTrack = track;
+    wakeLockService.requestLock().catch(() => {});
     mediaSessionService.updateMetadata(track);
     mediaSessionService.setPlaybackState('playing');
 
@@ -571,6 +574,7 @@ class SyncEngine {
     this.isPlaying = false;
     this.isBuffering = false;
     this.notifyBuffering(false);
+    wakeLockService.releaseLock().catch(() => {});
     mediaSessionService.setPlaybackState('paused');
 
     if (this.audio) {
@@ -590,6 +594,7 @@ class SyncEngine {
     this.isPlaying = false;
     this.isBuffering = false;
     this.notifyBuffering(false);
+    wakeLockService.releaseLock().catch(() => {});
     mediaSessionService.updateMetadata(null);
     mediaSessionService.setPlaybackState('none');
 

@@ -15,6 +15,7 @@ import { getDeviceId } from '../utils/deviceId';
 import { NetworkMode } from './NetworkModeModal';
 import { InstallAppButton } from './InstallAppButton';
 import { RoomCreationOverlay } from './RoomCreationLoading';
+import { haptics } from '../utils/haptics';
 
 interface LobbyProps {
   onRoomReady: (room: RoomState, user: User) => void;
@@ -99,6 +100,7 @@ export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' 
       socket.emit('create_room', { userName, deviceId: getDeviceId(), networkMode }, (res: any) => {
         clearTimeout(timeoutId);
         if (res && res.success && res.room && res.user) {
+          haptics.success();
           setPendingRoomReady({ room: res.room, user: res.user });
           setIsEntering(true);
           setIsCreating(false);
@@ -164,6 +166,7 @@ export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' 
       socket.emit('join_room', { roomCode: code, userName, deviceId: getDeviceId() }, (res: any) => {
         clearTimeout(timeoutId);
         if (res && res.success && res.room && res.user) {
+          haptics.success();
           setIsEntering(true);
           setTimeout(() => {
             setIsJoining(false);

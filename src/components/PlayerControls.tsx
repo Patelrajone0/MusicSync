@@ -18,6 +18,7 @@ import { Track, PlaybackState, UserRole, SyncStats } from '../types';
 import { syncEngine } from '../services/syncEngine';
 import { socket } from '../services/socket';
 import { cleanTrackTitle } from '../services/musicApi';
+import { haptics } from '../utils/haptics';
 
 interface PlayerControlsProps {
   currentTrack: Track | null;
@@ -220,6 +221,7 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
 
   // 1. Play / Pause Toggle with Zero-Lag Optimistic feedback & listener speaker toggle
   const handleTogglePlay = () => {
+    haptics.medium();
     triggerBtnAnimation('play');
 
     if (!isAudioUnlocked) {
@@ -375,6 +377,7 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
 
   // 2. Previous Track / Rewind
   const handlePrevious = () => {
+    haptics.medium();
     triggerBtnAnimation('prev');
 
     if (!canControl) {
@@ -404,6 +407,7 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
 
   // 3. Next Track / Skip
   const handleSkip = () => {
+    haptics.medium();
     triggerBtnAnimation('next');
     if (!canControl) {
       setStatusToast('Only Host or DJ can skip songs');
@@ -424,6 +428,7 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
 
   // 4. Shuffle Toggle
   const handleToggleShuffle = () => {
+    haptics.light();
     triggerBtnAnimation('shuffle');
     const nextVal = !isShuffle;
     setIsShuffle(nextVal);
@@ -444,6 +449,7 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
 
   // 5. Repeat Toggle (off -> all -> one -> off)
   const handleToggleRepeat = () => {
+    haptics.light();
     triggerBtnAnimation('repeat');
     const nextMode = repeatMode === 'off' ? 'all' : repeatMode === 'all' ? 'one' : 'off';
     setRepeatMode(nextMode);
@@ -472,6 +478,7 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
   };
 
   const handleSeekCommit = () => {
+    haptics.selection();
     setIsDragging(false);
     setCurrentPosition(seekValue);
     // Instant local seek for zero lag

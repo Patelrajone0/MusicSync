@@ -57,6 +57,7 @@ import {
   saveStoredCornerStyle,
 } from '../types/cornerStyles';
 import { analytics } from '../services/analytics';
+import { haptics } from '../utils/haptics';
 
 interface BeatsyncProViewProps {
   roomCode: string;
@@ -189,6 +190,8 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
       return;
     }
 
+    haptics.light();
+
     // Optimistically update local queue so reordering feels instantaneous (0ms lag)
     const updatedQueue = [...localQueue];
     const [movedItem] = updatedQueue.splice(fromIndex, 1);
@@ -205,11 +208,13 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
 
   const handleMoveQueueItem = (fromIndex: number, direction: 'up' | 'down') => {
     const toIndex = direction === 'up' ? fromIndex - 1 : fromIndex + 1;
+    haptics.light();
     handleReorder(fromIndex, toIndex);
   };
 
   const handleDragStart = (e: React.DragEvent, index: number) => {
     if (!canControl) return;
+    haptics.selection();
     setDraggedIndex(index);
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', String(index));
@@ -249,6 +254,7 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
   // Touch Drag-and-Drop for mobile devices (iOS / Android)
   const handleTouchStart = (e: React.TouchEvent, index: number) => {
     if (!canControl) return;
+    haptics.selection();
     touchDragStartIndexRef.current = index;
     touchDragCurrentIndexRef.current = index;
     setDraggedIndex(index);
@@ -264,6 +270,7 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
     if (queueItemEl) {
       const targetIdx = parseInt(queueItemEl.getAttribute('data-queue-index') || '', 10);
       if (!isNaN(targetIdx) && targetIdx !== touchDragCurrentIndexRef.current) {
+        haptics.selection();
         touchDragCurrentIndexRef.current = targetIdx;
         setDragOverIndex(targetIdx);
       }
@@ -461,6 +468,7 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
   }, [searchQuery]);
 
   const handlePlayTrack = (track: Track) => {
+    haptics.medium();
     if (!isAudioUnlocked) onUnlockAudio();
     syncEngine.primePlayback(track, 0);
     socket.emit('request_play', { track, position: 0 });
@@ -473,6 +481,7 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
       return;
     }
 
+    haptics.success();
     addingTrackIdsRef.current.add(track.id);
     setAddedTrackIds((prev) => new Set(prev).add(track.id));
 
@@ -488,6 +497,7 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
 
   // Toggle Play / Pause Handler
   const handleTogglePlay = () => {
+    haptics.medium();
     if (!isAudioUnlocked) {
       onUnlockAudio();
     }
@@ -1294,6 +1304,7 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
+                                haptics.warning();
                                 socket.emit('queue_remove', { queueId: track.queueId, trackId: track.id });
                                 socket.emit('remove_from_queue', { queueId: track.queueId, trackId: track.id });
                               }}
@@ -1689,6 +1700,7 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
             <button
               type="button"
               onClick={() => {
+                haptics.light();
                 socket.emit('queue_shuffle');
                 socket.emit('toggle_shuffle');
               }}
@@ -1701,6 +1713,7 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
             <button
               type="button"
               onClick={() => {
+                haptics.medium();
                 socket.emit('request_previous');
                 socket.emit('play_prev');
               }}
@@ -1727,6 +1740,7 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
             <button
               type="button"
               onClick={() => {
+                haptics.medium();
                 socket.emit('request_skip');
                 socket.emit('play_next');
               }}
@@ -1739,6 +1753,7 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
             <button
               type="button"
               onClick={() => {
+                haptics.light();
                 socket.emit('set_repeat_mode', { mode: 'all' });
                 socket.emit('toggle_repeat');
               }}
@@ -1757,6 +1772,7 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
               className="flex-1 py-1.5 -my-1.5 flex items-center cursor-pointer relative group select-none"
               onClick={(e) => {
                 if (!canControl) return;
+                haptics.selection();
                 const rect = e.currentTarget.getBoundingClientRect();
                 const clickX = e.clientX - rect.left;
                 const pct = Math.max(0, Math.min(1, clickX / rect.width));

@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { socket } from './services/socket';
 import { syncEngine } from './services/syncEngine';
 import { mediaSessionService } from './services/mediaSession';
+import { wakeLockService } from './services/wakeLockService';
 import {
   Track,
   User,
@@ -352,6 +353,7 @@ export function App() {
     });
     syncEngine.pausePlayback();
     syncEngine.disableSpatialAudio();
+    wakeLockService.releaseLock().catch(() => {});
     mediaSessionService.updateMetadata(null);
     socket.emit('leave_room', { deviceId: getDeviceId() });
     socket.disconnect();
@@ -360,6 +362,14 @@ export function App() {
     const cleanUrl = window.location.pathname;
     window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
   };
+
+  // Synchronize screen wake lock with playback state to prevent mobile sleep during music
+  useEffect(() => {
+    wakeLockService.syncWithPlayback(playbackState.status);
+    return () => {
+      wakeLockService.releaseLock().catch(() => {});
+    };
+  }, [playbackState.status]);
 
   // Socket.io Real-Time Room Event Listeners
   useEffect(() => {
