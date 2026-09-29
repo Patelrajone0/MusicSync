@@ -30,6 +30,7 @@ export interface Track {
   isTrending?: boolean;
   trendingRank?: number;
   isRecommended?: boolean;
+  isOfficial?: boolean;
   isMixed?: boolean;
   isLongMix?: boolean;
   mixBadge?: string;

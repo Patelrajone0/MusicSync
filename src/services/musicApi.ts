@@ -191,6 +191,26 @@ export function cleanTrackTitle(rawTitle: string = '', rawArtist: string = ''): 
   return title || rawTitle;
 }
 
+export const UNOFFICIAL_TRACK_REGEX = /\b(remix|re-mix|remixed|remixing|mashup|mash-up|mash\s+up|dj\s+mix|club\s+mix|party\s+mix|party\s+remix|dance\s+mix|extended\s+mix|megamix|mega-mix|continuous\s+mix|non[- ]?stop|nonstop|mixtape|soundclash|dhol\s+mix|dubstep\s+mix|trap\s+mix|trance\s+mix|house\s+mix|edm\s+mix|bootleg|vip\s+edit|vip\s+mix|dj\s+edit|party\s+edit|club\s+edit|bass\s+boost(ed)?|high\s+bass|heavy\s+bass|car\s+bass|extra\s+bass|ultra\s+bass|synth\s+rework|re-drum|redrum|slowed|slowed\s*\+?\s*reverb|slowed\s+and\s+reverb|slowed\s+down|reverb\s+version|reverbed|sped\s+up|speed\s+up|speedup|speed-up|nightcore|daycore|[381]d\s+audio|[381]d\s+sound|8d\s+music|surround\s+sound|pitch\s+shift(ed)?|pitched\s+up|pitched\s+down|lofi\s+remix|lo-fi\s+remix|lofi\s+version|lo-fi\s+version|lofi\s+edit|lo-fi\s+edit|lofi\s+flip|lo-fi\s+flip|club\s+flip|bass\s+flip|remix\s+flip|acoustic\s+cover|piano\s+cover|guitar\s+cover|drum\s+cover|vocal\s+cover|female\s+cover|male\s+cover|violin\s+cover|flute\s+cover|orchestral\s+cover|live\s+cover|unplugged\s+cover|fan\s+cover|female\s+version|male\s+version|fan\s+version|fan\s+made|fanmade|tribute\s+version|tribute\s+to|parody\s+version|parody\s+song|ai\s+cover|ai\s+version|ai\s+song|ai\s+voice|ai\s+vocal|fingerstyle\s+guitar|fingerstyle\s+cover|synthesizer\s+cover|synth\s+cover|karaoke|minus\s+one|backing\s+track|without\s+vocals?|no\s+vocals?|vocals?\s+removed|acapella|a\s+cappella|bgm\s+only|bgm\s+cover|music\s+only|track\s+only|tutorial|how\s+to\s+play|reaction|reacting\s+to|review|podcast|interview|motivational\s+speech|political\s+speech|inspirational\s+speech|full\s+speech|dialogue\s+scene|movie\s+scene|film\s+scene|comedy\s+scene|status\s+video|whatsapp\s+status|reels\s+audio|reels\s+viral|tiktok\s+viral|tiktok\s+sound|trending\s+sound|ringtone|caller\s+tune|teaser|trailer|motion\s+poster|preview\s+clip|short\s+clip|snippet|leaked\s+audio|unreleased\s+snippet|10\s+hours|1\s+hour\s+loop|loop\s+1\s+hour|hours\s+loop)\b/i;
+
+export const COVER_PATTERNS = /(\bcovered?\s+by\b|[\(\[]\s*cover\s*[\)\]]|\s*[-–—:]\s*cover\b|\bcover\s+(version|song|by|audio|track)\b|\bcover$|\b\w+\s+cover\b)/i;
+export const AI_PATTERNS = /\b(ai\s+.*?(cover|version|song|voice|remake)|ai\s+generated)\b/i;
+export const INSTRUMENTAL_PATTERNS = /([\(\[]\s*instrumental\s*[\)\]]|\s*[-–—:]\s*instrumental\b|\binstrumental\s+(version|cover|track)\b)/i;
+
+export function isOfficialOriginalSong(rawTitle: string = '', artist: string = '', genre: string = '', duration: number = 0): boolean {
+  if (!rawTitle || typeof rawTitle !== 'string') return false;
+  // Strict commercial song duration: 75 seconds to 480 seconds (8 minutes max)
+  if (duration > 0 && (duration < 75 || duration > 480)) return false;
+
+  const combined = `${rawTitle} ${artist || ''} ${genre || ''}`;
+  if (UNOFFICIAL_TRACK_REGEX.test(combined)) return false;
+  if (COVER_PATTERNS.test(combined)) return false;
+  if (AI_PATTERNS.test(combined)) return false;
+  if (INSTRUMENTAL_PATTERNS.test(combined)) return false;
+
+  return true;
+}
+
 export async function searchTracks(
   query: string,
   language: string = 'all',
@@ -201,7 +221,7 @@ export async function searchTracks(
   exclude: string = ''
 ): Promise<SearchResult> {
   const trimmed = query.trim();
-  let url = `/api/search?q=${encodeURIComponent(trimmed)}&lang=${encodeURIComponent(language)}&offset=${offset}&mode=${mode}`;
+  let url = `/api/search?q=${encodeURIComponent(trimmed)}&lang=${encodeURIComponent(language)}&offset=${offset}`;
   if (userArtists) {
     url += `&artists=${encodeURIComponent(userArtists)}`;
   }
@@ -217,12 +237,14 @@ export async function searchTracks(
     if (!res.ok) throw new Error('Search failed');
     const data = await res.json();
     const cleanedTracks = (data.tracks || [])
-      .filter((t: Track) => !isJunkOrSpamTrack(t.title, t.artist))
+      .filter((t: Track) => isOfficialOriginalSong(t.title, t.artist, t.genre, t.duration) && !isJunkOrSpamTrack(t.title, t.artist))
       .map((t: Track) => ({
         ...t,
-        title: cleanTrackTitle(t.title, t.artist)
+        title: cleanTrackTitle(t.title, t.artist),
+        isOfficial: true,
+        isMixed: false
       }))
-      .filter((t: Track) => !isJunkOrSpamTrack(t.title, t.artist));
+      .filter((t: Track) => isOfficialOriginalSong(t.title, t.artist, t.genre, t.duration) && !isJunkOrSpamTrack(t.title, t.artist));
     return {
       tracks: cleanedTracks,
       message: data.message,
@@ -231,14 +253,14 @@ export async function searchTracks(
     };
   } catch (err) {
     console.warn('Search query error, falling back to curated:', err);
-    const curated = await getCuratedTracks(mode);
+    const curated = await getCuratedTracks();
     return { tracks: curated, hasMore: false };
   }
 }
 
 export async function getSearchSuggestions(query: string, language: string = 'all', mode: 'normal' | 'mixed' = 'normal'): Promise<string[]> {
   try {
-    const res = await fetch(`/api/search/suggestions?q=${encodeURIComponent(query.trim())}&lang=${encodeURIComponent(language)}&mode=${mode}`);
+    const res = await fetch(`/api/search/suggestions?q=${encodeURIComponent(query.trim())}&lang=${encodeURIComponent(language)}`);
     if (!res.ok) return [];
     const data = await res.json();
     return data.suggestions || [];
@@ -249,16 +271,18 @@ export async function getSearchSuggestions(query: string, language: string = 'al
 
 export async function getCuratedTracks(mode: 'normal' | 'mixed' = 'normal'): Promise<Track[]> {
   try {
-    const res = await fetch(`/api/tracks/curated?mode=${mode}`);
+    const res = await fetch('/api/tracks/curated');
     if (!res.ok) throw new Error('Curated fetch failed');
     const data = await res.json();
     return (data.tracks || [])
-      .filter((t: Track) => !isJunkOrSpamTrack(t.title, t.artist))
+      .filter((t: Track) => isOfficialOriginalSong(t.title, t.artist, t.genre, t.duration) && !isJunkOrSpamTrack(t.title, t.artist))
       .map((t: Track) => ({
         ...t,
-        title: cleanTrackTitle(t.title, t.artist)
+        title: cleanTrackTitle(t.title, t.artist),
+        isOfficial: true,
+        isMixed: false
       }))
-      .filter((t: Track) => !isJunkOrSpamTrack(t.title, t.artist));
+      .filter((t: Track) => isOfficialOriginalSong(t.title, t.artist, t.genre, t.duration) && !isJunkOrSpamTrack(t.title, t.artist));
   } catch (err) {
     console.error('Failed to load curated tracks:', err);
     return [];

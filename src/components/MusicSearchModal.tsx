@@ -223,14 +223,9 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
   const [previewTrackId, setPreviewTrackId] = useState<string | null>(null);
   const previewAudioRef = useRef<HTMLAudioElement | null>(null);
 
-  // Selected filter for normal original songs
+  // Selected filter for official original songs
   const [selectedLanguage, setSelectedLanguage] = useState<
     'for_you' | 'trending' | 'all' | 'english' | 'hindi' | 'gujarati' | 'punjabi'
-  >('all');
-
-  // Selected filter for mixed songs (remixes, mashups, non-stop sets)
-  const [selectedMixedLanguage, setSelectedMixedLanguage] = useState<
-    'all' | 'hindi' | 'punjabi' | 'gujarati' | 'english'
   >('all');
 
   const [serverMessage, setServerMessage] = useState<string | null>(null);
@@ -250,8 +245,8 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const isLoadingMoreRef = useRef<boolean>(false);
 
-  // Tabs: search (original songs), mixed (remixes/mashups/non-stop), history, local (device import)
-  const [activeTab, setActiveTab] = useState<'search' | 'mixed' | 'history' | 'local'>('search');
+  // Tabs: search (official & original songs), history, local (device import)
+  const [activeTab, setActiveTab] = useState<'search' | 'history' | 'local'>('search');
   const [historyItems, setHistoryItems] = useState<HistoryItem[]>(() => userTasteEngine.getHistory());
   const { isFavorite, toggleFavorite } = useFavorites();
 
@@ -286,16 +281,14 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
     if (isOpen || inline) {
       setTasteSummary(userTasteEngine.getTasteSummary());
       setHistoryItems(userTasteEngine.getHistory());
-      if (activeTab === 'mixed') {
-        loadDefaultResults(selectedMixedLanguage, 'mixed');
-      } else if (activeTab === 'search') {
-        loadDefaultResults(selectedLanguage, 'normal');
+      if (activeTab === 'search') {
+        loadDefaultResults(selectedLanguage);
       }
     } else {
       stopPreview();
       setShowAutocomplete(false);
     }
-  }, [isOpen, inline, selectedLanguage, selectedMixedLanguage, activeTab]);
+  }, [isOpen, inline, selectedLanguage, activeTab]);
 
   // Escape key closes search modal
   useEffect(() => {
@@ -316,17 +309,14 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
       setAutocompleteSuggestions([]);
       return;
     }
-    const currentMode = activeTab === 'mixed' ? 'mixed' : 'normal';
-    const currentLang = currentMode === 'mixed'
-      ? selectedMixedLanguage
-      : (selectedLanguage === 'for_you' || selectedLanguage === 'trending' ? 'all' : selectedLanguage);
+    const currentLang = selectedLanguage === 'for_you' || selectedLanguage === 'trending' ? 'all' : selectedLanguage;
 
     const timer = setTimeout(async () => {
-      const suggestions = await getSearchSuggestions(query, currentLang, currentMode);
+      const suggestions = await getSearchSuggestions(query, currentLang);
       setAutocompleteSuggestions(suggestions);
     }, 150);
     return () => clearTimeout(timer);
-  }, [query, selectedLanguage, selectedMixedLanguage, activeTab]);
+  }, [query, selectedLanguage, activeTab]);
 
   // Close autocomplete and dropdown on click outside
   useEffect(() => {
@@ -417,11 +407,9 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
 
   const loadDefaultResults = async (
     lang?: string,
-    modeOverride?: 'normal' | 'mixed',
     seedOverride?: string
   ) => {
-    const currentMode = modeOverride || (activeTab === 'mixed' ? 'mixed' : 'normal');
-    const currentLang = lang || (currentMode === 'mixed' ? selectedMixedLanguage : selectedLanguage);
+    const currentLang = lang || selectedLanguage;
     const activeSeed = seedOverride || refreshSeed;
     const seenIds = getRecentlySeenTrackIds();
 
@@ -429,8 +417,8 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
     setCurrentOffset(0);
     setHasMore(true);
     try {
-      const tasteQuery = (currentMode === 'normal' && currentLang === 'for_you') ? userTasteEngine.getPersonalizedQuery() : '';
-      const res = await searchTracks('', currentLang, 0, tasteQuery, currentMode, activeSeed, seenIds.join(','));
+      const tasteQuery = currentLang === 'for_you' ? userTasteEngine.getPersonalizedQuery() : '';
+      const res = await searchTracks('', currentLang, 0, tasteQuery, 'normal', activeSeed, seenIds.join(','));
       setResults(deduplicateTrackList(res.tracks || []));
       setServerMessage(res.message || null);
       setCurrentOffset(res.offset || 30);
@@ -450,11 +438,7 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
     setIsRotating(true);
     const newSeed = Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
     setRefreshSeed(newSeed);
-    if (activeTab === 'mixed') {
-      loadDefaultResults(selectedMixedLanguage, 'mixed', newSeed);
-    } else {
-      loadDefaultResults(selectedLanguage, 'normal', newSeed);
-    }
+    loadDefaultResults(selectedLanguage, newSeed);
     setTimeout(() => setIsRotating(false), 500);
   };
 
@@ -462,13 +446,11 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
     e?: React.FormEvent,
     overrideQuery?: string,
     overrideLang?: string,
-    newOffset: number = 0,
-    overrideMode?: 'normal' | 'mixed'
+    newOffset: number = 0
   ) => {
     if (e) e.preventDefault();
-    const currentMode = overrideMode !== undefined ? overrideMode : (activeTab === 'mixed' ? 'mixed' : 'normal');
     const q = overrideQuery !== undefined ? overrideQuery : query;
-    const l = overrideLang !== undefined ? overrideLang : (currentMode === 'mixed' ? selectedMixedLanguage : selectedLanguage);
+    const l = overrideLang !== undefined ? overrideLang : selectedLanguage;
     setShowAutocomplete(false);
     setIsLoading(true);
     setCurrentOffset(0);
@@ -476,9 +458,9 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
     stopPreview();
 
     try {
-      const tasteQuery = (currentMode === 'normal' && l === 'for_you') ? userTasteEngine.getPersonalizedQuery() : '';
+      const tasteQuery = l === 'for_you' ? userTasteEngine.getPersonalizedQuery() : '';
       const seenIds = !q ? getRecentlySeenTrackIds() : [];
-      const res = await searchTracks(q, l, newOffset, tasteQuery, currentMode, refreshSeed, seenIds.join(','));
+      const res = await searchTracks(q, l, newOffset, tasteQuery, 'normal', refreshSeed, seenIds.join(','));
       setResults(deduplicateTrackList(res.tracks || []));
       setServerMessage(res.message || null);
       setCurrentOffset(res.offset || 30);
@@ -498,16 +480,15 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
     isLoadingMoreRef.current = true;
     setIsLoadingMore(true);
 
-    const currentMode = activeTab === 'mixed' ? 'mixed' : 'normal';
-    const l = currentMode === 'mixed' ? selectedMixedLanguage : selectedLanguage;
+    const l = selectedLanguage;
     try {
-      const tasteQuery = (currentMode === 'normal' && l === 'for_you') ? userTasteEngine.getPersonalizedQuery() : '';
+      const tasteQuery = l === 'for_you' ? userTasteEngine.getPersonalizedQuery() : '';
       const seenIds = !query ? getRecentlySeenTrackIds() : [];
-      const res = await searchTracks(query, l, currentOffset, tasteQuery, currentMode, refreshSeed, seenIds.join(','));
+      const res = await searchTracks(query, l, currentOffset, tasteQuery, 'normal', refreshSeed, seenIds.join(','));
       if (res.tracks && res.tracks.length > 0) {
         setResults((prev) => deduplicateTrackList([...prev, ...res.tracks]));
         setCurrentOffset(res.offset || currentOffset + 30);
-        // Suggestions (!query) stream infinitely across all modes (Normal & Mixed)
+        // Suggestions (!query) stream infinitely
         setHasMore(!query ? true : (res.hasMore !== false && res.tracks.length > 0));
         if (!query) {
           recordRecentlySeenTrackIds(res.tracks.map((t) => t.id));
@@ -565,7 +546,7 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
     return () => observer.disconnect();
   }, [hasMore, isLoading, currentOffset, activeTab, query, results.length]);
 
-  const handleTabChange = (tab: 'search' | 'mixed' | 'history' | 'local') => {
+  const handleTabChange = (tab: 'search' | 'history' | 'local') => {
     setActiveTab(tab);
     stopPreview();
     setQuery('');
@@ -577,20 +558,9 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
   ) => {
     setSelectedLanguage(lang);
     if (!query) {
-      loadDefaultResults(lang, 'normal');
+      loadDefaultResults(lang);
     } else {
-      handleSearch(undefined, query, lang, 0, 'normal');
-    }
-  };
-
-  const handleMixedLanguageChange = (
-    lang: 'all' | 'hindi' | 'punjabi' | 'gujarati' | 'english'
-  ) => {
-    setSelectedMixedLanguage(lang);
-    if (!query) {
-      loadDefaultResults(lang, 'mixed');
-    } else {
-      handleSearch(undefined, query, lang, 0, 'mixed');
+      handleSearch(undefined, query, lang, 0);
     }
   };
 
@@ -675,50 +645,6 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
     { id: 'gujarati', label: 'Gujarati', icon: Disc, color: 'text-yellow-400' },
   ] as const;
 
-  const mixedLanguageOptions = [
-    { id: 'all', label: '🔥 All Mixed', icon: Flame, color: 'text-amber-400' },
-    { id: 'hindi', label: '🇮🇳 Hindi Mixes', icon: Music, color: 'text-rose-400' },
-    { id: 'punjabi', label: '🎶 Punjabi Mixes', icon: Zap, color: 'text-amber-400' },
-    { id: 'gujarati', label: '🪘 Gujarati Non-Stop', icon: Disc, color: 'text-emerald-400' },
-    { id: 'english', label: '🇬🇧 English Club & EDM', icon: Radio, color: 'text-cyan-400' },
-  ] as const;
-
-  const mixedPartyVibes: Record<string, { label: string; q: string }[]> = {
-    all: [
-      { label: '🎉 Non-Stop Party Sets', q: 'party non stop megamix' },
-      { label: '🎛️ Mega Mashups', q: 'mega mashup non stop' },
-      { label: '⏳ 1-Hour Continuous Sets', q: '1 hour continuous mix' },
-      { label: '🕺 Club DJ Sets', q: 'club dj set extended mix' },
-      { label: '🔊 High Bass Dance Remixes', q: 'bass boosted dance remix' },
-      { label: '⚡ Festival Anthems', q: 'festival anthem club mix' }
-    ],
-    hindi: [
-      { label: '💃 Bollywood Club Mashup', q: 'bollywood club party mashup' },
-      { label: '❤️ Romantic Mashup', q: 'romantic mashup arijit atif' },
-      { label: '📻 Retro 90s Dance Remix', q: '90s bollywood retro dance remix' },
-      { label: '⏳ 1-Hour Hindi Party Set', q: 'bollywood non stop 1 hour' },
-      { label: '🔥 High Bass Party Mix', q: 'hindi party songs non stop remix' }
-    ],
-    punjabi: [
-      { label: '🥁 Bhangra Dhol Mix', q: 'punjabi bhangra dhol party mix' },
-      { label: '🦁 Sidhu x Aujla Mashup', q: 'sidhu moose wala karan aujla mashup' },
-      { label: '🏎️ Punjabi Bass Boosted', q: 'punjabi bass boosted car mix' },
-      { label: '⏳ Non-Stop Bhangra Party', q: 'punjabi party mix non-stop' }
-    ],
-    gujarati: [
-      { label: '🪘 1-Hour Non-Stop Garba', q: 'non stop garba 1 hour raas' },
-      { label: '🔥 Navratri High Energy', q: 'navratri high energy garba mix' },
-      { label: '⚡ Sanedo & Titoda Remix', q: 'sanedo titoda fast garba remix' },
-      { label: '💃 Folk Fusion Dandiya', q: 'gujarati folk dandiya fusion mix' }
-    ],
-    english: [
-      { label: '⚡ 1-Hour EDM Festival Set', q: 'edm festival 1 hour continuous mix' },
-      { label: '🌃 Synthwave Night Drive', q: 'synthwave 80s continuous mix' },
-      { label: '🍸 Deep House Club Session', q: 'deep house club session 1 hour' },
-      { label: '🔥 Pop Hits Party Mashup', q: 'pop dance mashup party mix' }
-    ]
-  };
-
   const limitlessArtists: Record<string, string[]> = {
     for_you: tasteSummary.topArtists.length > 0 ? tasteSummary.topArtists : ['Diljit Dosanjh', 'Arijit Singh', 'Karan Aujla', 'Aditya Gadhvi', 'Coldplay'],
     trending: ['Tauba Tauba', 'Sari Duniya Jala Denge', 'Khalasi', 'Starboy', 'Lover', 'Kesariya', 'Blinding Lights', 'Chogada Tara'],
@@ -740,34 +666,34 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
     gujarati: [
       'Aditya Gadhvi', 'Khalasi', 'Kinjal Dave', 'Kirtidan Gadhvi', 'Geeta Rabari', 'Osman Mir',
       'Jignesh Kaviraj', 'Atul Purohit', 'Falguni Pathak', 'Chogada', 'Sanedo', 'Dholida',
-      'Garba Nonstop', 'Titoda', 'Dayro', 'Vijay Suvada', 'Vikram Thakor', 'Hemant Chauhan'
+      'Garba', 'Titoda', 'Dayro', 'Vijay Suvada', 'Vikram Thakor', 'Hemant Chauhan'
     ],
     english: [
       'The Weeknd', 'Coldplay', 'Dua Lipa', 'Ed Sheeran', 'Taylor Swift', 'Drake',
       'Post Malone', 'Bruno Mars', 'Billie Eilish', 'Imagine Dragons', 'Synthwave', 'Deep House',
-      'EDM Festival', 'Cyberpunk', '80s Retro', 'Chillhop', 'Eminem', 'Maroon 5', 'Adele', 'Queen'
+      'Pop Hits', '80s Retro', 'Chillhop', 'Eminem', 'Maroon 5', 'Adele', 'Queen'
     ],
   };
 
   const limitlessMoods: Record<string, { label: string; q: string }[]> = {
     for_you: [
       { label: 'My Mix', q: userTasteEngine.getPersonalizedQuery() || 'trending' },
-      { label: 'Energy Boost', q: 'high bass party' },
+      { label: 'High Energy', q: 'dance pop' },
       { label: 'Late Night Chill', q: 'lofi chill' }
     ],
     trending: [
-      { label: 'Top Chartbusters', q: 'trending chartbusters 2024' },
-      { label: 'Viral Bass Drops', q: 'viral high bass songs' },
-      { label: 'Club Anthems', q: 'trending party club' }
+      { label: 'Top Chartbusters', q: 'trending chartbusters' },
+      { label: 'Top Hits', q: 'viral hits' },
+      { label: 'Studio Anthems', q: 'trending party songs' }
     ],
     all: [
-      { label: 'Party Dance', q: 'party dance high bass' },
+      { label: 'Dance Pop', q: 'dance pop hits' },
       { label: 'Midnight Lofi', q: 'lofi chill midnight' },
       { label: 'Romantic Ballads', q: 'romantic love songs' },
-      { label: 'Car Bass Drive', q: 'car bass songs' },
-      { label: 'Garba & Dandiya', q: 'gujarati garba non stop' },
+      { label: 'Car Audio Beats', q: 'car audio songs' },
+      { label: 'Garba & Folk', q: 'gujarati garba' },
       { label: 'Bhangra Energy', q: 'punjabi bhangra dhol' },
-      { label: 'Gym Workout EDM', q: 'gym edm workout' },
+      { label: 'Gym Workout', q: 'workout motivational songs' },
       { label: 'Acoustic Chill', q: 'acoustic guitar unplugged' },
       { label: '90s Melodies', q: '90s classic melodies' }
     ],
@@ -778,37 +704,36 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
       { label: '90s Golden Era', q: '90s bollywood melodies' },
       { label: 'Desi Hip-Hop', q: 'desi hip hop divine seedhe maut' },
       { label: 'Emotional & Sad', q: 'sad hindi songs arijit' },
-      { label: 'Acoustic Unplugged', q: 'hindi acoustic cover' }
+      { label: 'Acoustic Unplugged', q: 'hindi acoustic unplugged' }
     ],
     punjabi: [
       { label: 'Bhangra Dhol Beats', q: 'punjabi bhangra dhol' },
       { label: 'Car Bass & 808s', q: 'punjabi car bass 808' },
       { label: 'Sidhu Moosetape', q: 'sidhu moose wala moosetape' },
-      { label: 'Club Soundclash', q: 'punjabi club party mix' },
+      { label: 'Bhangra Anthems', q: 'punjabi bhangra' },
       { label: 'Romantic Punjabi', q: 'punjabi romantic love' },
-      { label: 'UK Punjabi Bass', q: 'uk punjabi bass' }
+      { label: 'UK Punjabi Sound', q: 'uk punjabi sound' }
     ],
     gujarati: [
-      { label: 'Non-Stop Garba Raas', q: 'gujarati garba non stop' },
+      { label: 'Garba Raas', q: 'gujarati garba' },
       { label: 'Coke Studio Folk', q: 'khalasi aditya gadhvi' },
-      { label: 'Dandiya Dholida', q: 'dholida garba high bass' },
-      { label: 'Titoda & Sanedo', q: 'sanedo titoda non stop' },
+      { label: 'Dandiya Dholida', q: 'dholida garba' },
+      { label: 'Titoda & Sanedo', q: 'sanedo titoda' },
       { label: 'Dayro & Lokgeet', q: 'gujarati dayro lokgeet' },
       { label: 'Kinjal & Geeta Hits', q: 'kinjal dave geeta rabari' }
     ],
     english: [
-      { label: 'Synthwave & Cyberpunk', q: 'synthwave 80s cyberpunk' },
+      { label: 'Synthwave & Cyberpunk', q: 'synthwave 80s' },
       { label: 'Midnight Lofi Beats', q: 'chillhop lofi english beats' },
-      { label: 'Global Pop Hits', q: 'top billboard pop 2024' },
-      { label: 'Deep House Club', q: 'deep house club mix' },
-      { label: 'Festival EDM Anthem', q: 'edm festival anthem' },
+      { label: 'Global Pop Hits', q: 'top billboard pop' },
+      { label: 'Deep House', q: 'deep house' },
+      { label: 'Electronic Anthems', q: 'electronic anthems' },
       { label: '80s Retro Rock', q: 'retro classic rock 80s' }
     ]
   };
 
   const currentArtists = limitlessArtists[selectedLanguage] || limitlessArtists.all;
   const currentMoods = limitlessMoods[selectedLanguage] || limitlessMoods.all;
-  const currentMixedVibes = mixedPartyVibes[selectedMixedLanguage] || mixedPartyVibes.all;
 
   if (!inline && !isOpen) return null;
 
@@ -847,21 +772,7 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
             }`}
           >
             <Disc className={`w-3 h-3 ${activeTab === 'search' ? 'animate-spin' : ''}`} style={{ animationDuration: '4s' }} />
-            <span>Songs</span>
-          </button>
-
-          {/* Tab 2: Mixes */}
-          <button
-            type="button"
-            onClick={() => handleTabChange('mixed')}
-            className={`px-3 py-1 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 active:scale-95 cursor-pointer ${
-              activeTab === 'mixed'
-                ? 'bg-gradient-to-r from-amber-400 to-rose-400 text-black shadow-[0_0_10px_rgba(251,191,36,0.4)]'
-                : 'text-amber-400/80 hover:text-amber-300 hover:bg-amber-400/10'
-            }`}
-          >
-            <Flame className="w-3 h-3 fill-current" />
-            <span>Mixes</span>
+            <span>Official Songs</span>
           </button>
 
           {/* Tab 3: History */}
@@ -920,21 +831,21 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
         </div>
       </div>
 
-      {/* Tab 1 & Tab 2: Catalog Search (Original Songs & Mixed Songs) */}
-      {(activeTab === 'search' || activeTab === 'mixed') && (
+      {/* Tab 1: Catalog Search (Official & Original Songs) */}
+      {activeTab === 'search' && (
         <div className="p-3 sm:p-4 flex-1 flex flex-col min-h-0">
-          {/* Mixed Songs Mini Banner */}
-          {activeTab === 'mixed' && (
-            <div className="mb-2.5 p-2 sm:p-2.5 rounded-xl bg-gradient-to-r from-amber-950/40 via-rose-950/30 to-dark-950 border border-amber-500/30 flex items-center gap-2.5 text-xs shadow-md">
-              <div className="p-1.5 rounded-lg bg-amber-500/20 text-amber-300 shrink-0">
-                <Flame className="w-4 h-4 fill-current animate-pulse" />
-              </div>
-              <div className="min-w-0">
-                <span className="font-bold text-white text-xs">Mixed Songs & Non-Stop Sets</span>
-                <span className="text-[10px] text-slate-300 ml-2 hidden sm:inline">Continuous DJ mixes, mashups & party sets</span>
-              </div>
+          {/* Official Music Assurance Badge */}
+          <div className="mb-2.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-cyan-950/40 via-sky-950/30 to-dark-950 border border-cyan-500/25 flex items-center justify-between text-xs shadow-sm">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="flex h-2 w-2 relative shrink-0">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
+              </span>
+              <span className="font-semibold text-cyan-300 text-[11px] sm:text-xs">Official & Original Songs Only</span>
+              <span className="text-[10px] text-slate-400 hidden sm:inline">• Studio releases, authentic artists & clean audio</span>
             </div>
-          )}
+            <span className="text-[10px] font-mono text-cyan-400/80 bg-cyan-500/10 px-1.5 py-0.5 rounded-full border border-cyan-400/20 shrink-0">Verified Catalog</span>
+          </div>
 
           {/* 2. Modern Search Bar with Integrated Language Filter Selector */}
           <div ref={searchInputContainerRef} className="relative mb-2.5">
@@ -948,11 +859,7 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
                   setQuery(e.target.value);
                   setShowAutocomplete(true);
                 }}
-                placeholder={
-                  activeTab === 'mixed'
-                    ? 'Search party mixes, DJ sets, remixes...'
-                    : 'Search songs, artists, or genres...'
-                }
+                placeholder="Search official songs, artists, or genres..."
                 className="w-full bg-dark-950/80 border border-white/10 rounded-full pl-10 pr-48 sm:pr-56 py-2 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 focus:shadow-[0_0_12px_rgba(0,240,255,0.25)] transition-all"
                 autoFocus={!inline}
               />
@@ -975,71 +882,38 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
 
                 {/* Custom Integrated Theme Dropdown inside Search Bar */}
                 <div ref={langDropdownRef} className="relative flex items-center shrink-0">
-                  {activeTab === 'search' && (
-                    <button
-                      type="button"
-                      onClick={() => setIsLangDropdownOpen((prev) => !prev)}
-                      className={`h-7 px-2.5 rounded-full border text-[11px] font-semibold flex items-center gap-1.5 transition-all shadow-sm cursor-pointer select-none active:scale-95 ${
-                        isLangDropdownOpen
-                          ? 'bg-cyan-500/20 text-cyan-300 border-cyan-400 shadow-[0_0_10px_rgba(0,240,255,0.3)]'
-                          : 'bg-dark-900/95 hover:bg-dark-850 text-cyan-300 border-cyan-400/30 hover:border-cyan-400'
+                  <button
+                    type="button"
+                    onClick={() => setIsLangDropdownOpen((prev) => !prev)}
+                    className={`h-7 px-2.5 rounded-full border text-[11px] font-semibold flex items-center gap-1.5 transition-all shadow-sm cursor-pointer select-none active:scale-95 ${
+                      isLangDropdownOpen
+                        ? 'bg-cyan-500/20 text-cyan-300 border-cyan-400 shadow-[0_0_10px_rgba(0,240,255,0.3)]'
+                        : 'bg-dark-900/95 hover:bg-dark-850 text-cyan-300 border-cyan-400/30 hover:border-cyan-400'
+                    }`}
+                    title="Filter songs by language or category"
+                  >
+                    <span className="truncate max-w-[85px] sm:max-w-none">
+                      {languageOptions.find((o) => o.id === selectedLanguage)?.label || 'All Original'}
+                    </span>
+                    <ChevronDown
+                      className={`w-3 h-3 text-cyan-400 transition-transform duration-200 shrink-0 ${
+                        isLangDropdownOpen ? 'rotate-180 text-cyan-300' : ''
                       }`}
-                      title="Filter songs by language or category"
-                    >
-                      <span className="truncate max-w-[85px] sm:max-w-none">
-                        {languageOptions.find((o) => o.id === selectedLanguage)?.label || 'All Original'}
-                      </span>
-                      <ChevronDown
-                        className={`w-3 h-3 text-cyan-400 transition-transform duration-200 shrink-0 ${
-                          isLangDropdownOpen ? 'rotate-180 text-cyan-300' : ''
-                        }`}
-                      />
-                    </button>
-                  )}
-
-                  {activeTab === 'mixed' && (
-                    <button
-                      type="button"
-                      onClick={() => setIsLangDropdownOpen((prev) => !prev)}
-                      className={`h-7 px-2.5 rounded-full border text-[11px] font-semibold flex items-center gap-1.5 transition-all shadow-sm cursor-pointer select-none active:scale-95 ${
-                        isLangDropdownOpen
-                          ? 'bg-amber-500/20 text-amber-300 border-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.3)]'
-                          : 'bg-dark-900/95 hover:bg-dark-850 text-amber-300 border-amber-500/30 hover:border-amber-400'
-                      }`}
-                      title="Filter mix vibes"
-                    >
-                      <span className="truncate max-w-[85px] sm:max-w-none">
-                        {mixedLanguageOptions.find((o) => o.id === selectedMixedLanguage)?.label || 'All Mixed'}
-                      </span>
-                      <ChevronDown
-                        className={`w-3 h-3 text-amber-400 transition-transform duration-200 shrink-0 ${
-                          isLangDropdownOpen ? 'rotate-180 text-amber-300' : ''
-                        }`}
-                      />
-                    </button>
-                  )}
+                    />
+                  </button>
 
                   {/* Custom Styled Theme Popover Menu */}
                   {isLangDropdownOpen && (
                     <div
-                      className={`absolute right-0 top-full mt-2 w-48 sm:w-52 z-50 bg-dark-950/95 backdrop-blur-2xl rounded-2xl border p-1.5 shadow-[0_16px_40px_rgba(0,0,0,0.95)] animate-popover-spring ${
-                        activeTab === 'mixed'
-                          ? 'border-amber-500/30 shadow-[0_16px_40px_rgba(0,0,0,0.95),0_0_20px_rgba(251,191,36,0.15)]'
-                          : 'border-cyan-400/30 shadow-[0_16px_40px_rgba(0,0,0,0.95),0_0_20px_rgba(0,240,255,0.15)]'
-                      }`}
+                      className="absolute right-0 top-full mt-2 w-48 sm:w-52 z-50 bg-dark-950/95 backdrop-blur-2xl rounded-2xl border border-cyan-400/30 p-1.5 shadow-[0_16px_40px_rgba(0,0,0,0.95),0_0_20px_rgba(0,240,255,0.15)] animate-popover-spring"
                     >
                       <div className="px-2.5 py-1 text-[9px] font-mono uppercase tracking-wider text-slate-400 flex items-center justify-between border-b border-white/5 mb-1">
-                        <span>{activeTab === 'mixed' ? 'Select Mix Vibes' : 'Filter Songs'}</span>
-                        <span className={`text-[8px] px-1 py-0.5 rounded font-mono ${
-                          activeTab === 'mixed' ? 'bg-amber-500/10 text-amber-300' : 'bg-cyan-500/10 text-cyan-300'
-                        }`}>Live Sync</span>
+                        <span>Filter Songs</span>
+                        <span className="text-[8px] px-1 py-0.5 rounded font-mono bg-cyan-500/10 text-cyan-300">Live Sync</span>
                       </div>
                       <div className="space-y-0.5">
-                        {(activeTab === 'mixed' ? mixedLanguageOptions : languageOptions).map((opt) => {
-                          const isSelected =
-                            activeTab === 'mixed'
-                              ? selectedMixedLanguage === opt.id
-                              : selectedLanguage === opt.id;
+                        {languageOptions.map((opt) => {
+                          const isSelected = selectedLanguage === opt.id;
                           const IconComp = opt.icon;
 
                           return (
@@ -1047,39 +921,25 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
                               key={opt.id}
                               type="button"
                               onClick={() => {
-                                if (activeTab === 'mixed') {
-                                  handleMixedLanguageChange(opt.id as any);
-                                } else {
-                                  handleLanguageChange(opt.id as any);
-                                }
+                                handleLanguageChange(opt.id as any);
                                 setIsLangDropdownOpen(false);
                               }}
                               className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer select-none active:scale-[0.98] ${
                                 isSelected
-                                  ? activeTab === 'mixed'
-                                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-[0_0_10px_rgba(251,191,36,0.2)]'
-                                    : 'bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 shadow-[0_0_10px_rgba(0,240,255,0.2)]'
+                                  ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 shadow-[0_0_10px_rgba(0,240,255,0.2)]'
                                   : 'text-slate-300 hover:text-white hover:bg-white/10 border border-transparent'
                               }`}
                             >
                               <div className="flex items-center gap-2 min-w-0">
                                 <IconComp
                                   className={`w-3.5 h-3.5 shrink-0 ${
-                                    isSelected
-                                      ? activeTab === 'mixed'
-                                        ? 'text-amber-400'
-                                        : 'text-cyan-400'
-                                      : opt.color
+                                    isSelected ? 'text-cyan-400' : opt.color
                                   }`}
                                 />
                                 <span className="truncate">{opt.label}</span>
                               </div>
                               {isSelected && (
-                                <Check
-                                  className={`w-3.5 h-3.5 shrink-0 ${
-                                    activeTab === 'mixed' ? 'text-amber-400' : 'text-cyan-400'
-                                  }`}
-                                />
+                                <Check className="w-3.5 h-3.5 shrink-0 text-cyan-400" />
                               )}
                             </button>
                           );
@@ -1091,11 +951,7 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
 
                 <button
                   type="submit"
-                  className={`h-7 px-3 flex items-center justify-center font-bold text-xs rounded-full transition-all active:scale-95 cursor-pointer shadow-md shrink-0 ${
-                    activeTab === 'mixed'
-                      ? 'bg-gradient-to-r from-amber-400 to-rose-400 text-black hover:brightness-110 shadow-[0_0_8px_rgba(251,191,36,0.3)]'
-                      : 'bg-cyan-400 text-black hover:bg-white shadow-[0_0_8px_rgba(0,240,255,0.35)]'
-                  }`}
+                  className="h-7 px-3 flex items-center justify-center font-bold text-xs rounded-full transition-all active:scale-95 cursor-pointer shadow-md shrink-0 bg-cyan-400 text-black hover:bg-white shadow-[0_0_8px_rgba(0,240,255,0.35)]"
                 >
                   Search
                 </button>
@@ -1176,11 +1032,7 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
               {isLoading ? (
                 <div className="flex flex-col items-center justify-center py-12 text-slate-400 text-sm gap-2">
                   <div className="w-6 h-6 border-2 border-electric-cyan border-t-transparent rounded-full animate-spin"></div>
-                  <span>
-                    {activeTab === 'mixed'
-                      ? 'Finding continuous party mixes & mashups...'
-                      : 'Searching music databases for original tracks...'}
-                  </span>
+                  <span>Searching verified databases for official original tracks...</span>
                 </div>
               ) : results.length === 0 ? (
                 <div className="text-center py-10 sm:py-12 px-4 sm:px-6">
@@ -1188,15 +1040,10 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
                     <Sparkles className="w-6 h-6" />
                   </div>
                   <h4 className="text-sm font-semibold text-white mb-1.5">
-                    {serverMessage ||
-                      (activeTab === 'mixed'
-                        ? 'No party mixes found matching your query'
-                        : 'No tracks found matching your query')}
+                    {serverMessage || 'No official tracks found matching your query'}
                   </h4>
                   <p className="text-xs text-slate-400 max-w-sm mx-auto">
-                    {activeTab === 'mixed'
-                      ? 'MusicSync brings you high-energy remixes, party mashups and non-stop continuous sets in English, Hindi, Gujarati & Punjabi.'
-                      : 'MusicSync curates full original songs in English, Hindi, Gujarati & Punjabi.'}
+                    MusicSync strictly curates full official and original studio songs in English, Hindi, Gujarati & Punjabi.
                   </p>
                 </div>
               ) : (
@@ -1204,15 +1051,12 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
                   {results.map((track) => {
                     const isAdded = isTrackInPlayer(track);
                     const isPreviewing = previewTrackId === track.id;
-                    const isLongTrack = track.duration >= 600 || track.isLongMix;
 
                     return (
                       <div
                         key={track.id}
                         className={`flex items-center justify-between p-2 sm:p-2.5 rounded-xl border transition-colors group ${
-                          track.isMixed || isLongTrack
-                            ? 'bg-gradient-to-r from-amber-950/25 via-rose-950/15 to-dark-950 border-amber-500/25 hover:border-amber-500/50'
-                            : track.isTrending
+                          track.isTrending
                             ? 'bg-gradient-to-r from-amber-950/20 via-dark-950 to-dark-950 border-amber-500/20 hover:border-amber-500/40'
                             : track.isRecommended
                             ? 'bg-gradient-to-r from-purple-950/20 via-dark-950 to-dark-950 border-purple-500/20 hover:border-purple-500/40'
@@ -1249,21 +1093,11 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
                             </h4>
                             <p className="text-[11px] sm:text-xs text-slate-400 truncate">{track.artist}</p>
                             <div className="flex items-center gap-1 sm:gap-1.5 mt-1 flex-wrap">
-                              {/* Mixed Badge */}
-                              {track.mixBadge && (
-                                <span className="text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 rounded-full font-mono bg-rose-500/20 text-rose-300 border border-rose-500/40 font-bold flex items-center gap-0.5 shadow-sm">
-                                  <Flame className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-rose-400 fill-current animate-pulse" />
-                                  <span>{track.mixBadge}</span>
-                                </span>
-                              )}
-
-                              {/* Long Mix Non-Stop Badge */}
-                              {isLongTrack && !track.mixBadge?.includes('Non-Stop') && (
-                                <span className="text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 rounded-full font-mono bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold flex items-center gap-0.5">
-                                  <Clock className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-amber-400" />
-                                  <span>Non-Stop Set</span>
-                                </span>
-                              )}
+                              {/* Official Verified Badge */}
+                              <span className="text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 rounded-full font-mono bg-cyan-500/15 text-cyan-300 border border-cyan-400/30 font-semibold flex items-center gap-1">
+                                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
+                                <span>Official</span>
+                              </span>
 
                               {track.isTrending && (
                                 <span className="text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 rounded-full font-mono bg-amber-500/15 text-amber-300 border border-amber-500/40 font-bold flex items-center gap-0.5 shadow-sm">
@@ -1279,18 +1113,8 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
                               )}
 
                               {/* Duration Badge */}
-                              <span
-                                className={`text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 rounded-full font-mono font-semibold flex items-center gap-1 ${
-                                  isLongTrack
-                                    ? 'bg-amber-950/80 text-amber-300 border border-amber-500/40'
-                                    : 'bg-emerald-950/80 text-emerald-400 border border-emerald-500/30'
-                                }`}
-                              >
-                                <span
-                                  className={`w-1.5 h-1.5 rounded-full ${
-                                    isLongTrack ? 'bg-amber-400 animate-pulse' : 'bg-emerald-400'
-                                  }`}
-                                ></span>
+                              <span className="text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 rounded-full font-mono font-semibold flex items-center gap-1 bg-emerald-950/80 text-emerald-400 border border-emerald-500/30">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                                 <span>{formatTrackDuration(track.duration)}</span>
                               </span>
 
@@ -1330,8 +1154,6 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
                           className={`flex items-center gap-1 sm:gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all active:scale-95 shrink-0 ml-1.5 shadow-sm cursor-pointer ${
                             isAdded
                               ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/50 shadow-[0_0_10px_rgba(16,185,129,0.35)] hover:bg-emerald-500/30'
-                              : activeTab === 'mixed'
-                              ? 'bg-gradient-to-r from-amber-400 to-rose-400 text-black hover:brightness-110 shadow-[0_0_10px_rgba(251,191,36,0.3)]'
                               : 'bg-dark-900 hover:bg-dark-850 text-cyan-300 border border-cyan-400/40 hover:border-cyan-400 shadow-[0_0_8px_rgba(0,240,255,0.25)]'
                           }`}
                           title={isAdded ? 'Added to player queue' : 'Add to queue'}
@@ -1357,7 +1179,7 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
                     {isLoadingMore ? (
                       <div className="flex items-center justify-center gap-2 py-2 text-xs text-electric-cyan font-mono">
                         <Loader2 className="w-4 h-4 animate-spin text-electric-cyan" />
-                        <span>Streaming next suggestions from limitless catalog...</span>
+                        <span>Streaming next verified original songs...</span>
                       </div>
                     ) : hasMore ? (
                       <button
@@ -1366,11 +1188,7 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
                         className="flex items-center justify-center gap-2 text-[11px] text-slate-500 hover:text-cyan-400 font-mono py-2 transition-colors cursor-pointer"
                       >
                         <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
-                        <span>
-                          {activeTab === 'mixed'
-                            ? 'Infinite party mixes & mashups streaming (Scroll for more)'
-                            : 'Infinite songs suggestions streaming (Scroll for more)'}
-                        </span>
+                        <span>Infinite official songs streaming (Scroll for more)</span>
                       </button>
                     ) : (
                       query && (
