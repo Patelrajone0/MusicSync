@@ -553,6 +553,77 @@ export const AboutHelpModal: React.FC<AboutHelpModalProps> = ({
               </div>
             </div>
 
+            {/* 5. OTHER PROJECTS BY RAJ PATEL */}
+            <div className="space-y-2.5">
+              <div className="flex items-center justify-between px-1">
+                <span className="text-[10px] font-mono uppercase text-zinc-400 font-bold tracking-wider flex items-center gap-1.5">
+                  <Globe className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>Other Projects by Raj Patel</span>
+                </span>
+                <span className="text-[10px] font-mono text-zinc-500">
+                  Web Ecosystem
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                {/* Parkable */}
+                <a
+                  href="https://patelrajone0.github.io/Parkable/login/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-3.5 rounded-2xl bg-zinc-950/70 hover:bg-zinc-900 border border-white/[0.08] hover:border-cyan-500/40 transition-all flex items-start justify-between gap-3 group cursor-pointer shadow-sm hover:shadow-cyan-500/5"
+                >
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-white group-hover:text-cyan-300 transition-colors">
+                        Parkable
+                      </span>
+                      <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
+                        Live App
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-zinc-400 leading-snug">
+                      Smart parking space management and vehicle slot reservation platform.
+                    </p>
+                    <span className="text-[10px] font-mono text-cyan-400/80 group-hover:text-cyan-300 flex items-center gap-1 pt-0.5">
+                      patelrajone0.github.io/Parkable
+                    </span>
+                  </div>
+                  <div className="p-1.5 rounded-lg bg-white/[0.04] text-zinc-500 group-hover:text-cyan-300 transition-colors shrink-0 mt-0.5">
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </div>
+                </a>
+
+                {/* Ambient Clock */}
+                <a
+                  href="https://ambient-clock.onrender.com/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-3.5 rounded-2xl bg-zinc-950/70 hover:bg-zinc-900 border border-white/[0.08] hover:border-amber-500/40 transition-all flex items-start justify-between gap-3 group cursor-pointer shadow-sm hover:shadow-amber-500/5"
+                >
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-white group-hover:text-amber-300 transition-colors">
+                        Ambient Clock
+                      </span>
+                      <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20">
+                        Live App
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-zinc-400 leading-snug">
+                      Minimalist ambient digital timepiece & aesthetic focus dashboard.
+                    </p>
+                    <span className="text-[10px] font-mono text-amber-400/80 group-hover:text-amber-300 flex items-center gap-1 pt-0.5">
+                      ambient-clock.onrender.com
+                    </span>
+                  </div>
+                  <div className="p-1.5 rounded-lg bg-white/[0.04] text-zinc-500 group-hover:text-amber-300 transition-colors shrink-0 mt-0.5">
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </div>
+                </a>
+              </div>
+            </div>
+
           </div>
         )}
 
