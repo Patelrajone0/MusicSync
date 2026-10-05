@@ -116,29 +116,17 @@ const CATEGORIES = ['All', 'Getting Started', 'Audio & Latency', 'Network & Mode
 interface AboutHelpModalProps {
   type: AboutHelpModalType;
   onClose: () => void;
-  initialTab?: 'about' | 'help';
 }
 
 export const AboutHelpModal: React.FC<AboutHelpModalProps> = ({
   type,
-  onClose,
-  initialTab
+  onClose
 }) => {
-  // Current active view mode inside modal: 'about' | 'help'
-  const [activeSection, setActiveSection] = useState<'about' | 'help'>('help');
-
   // Help section states
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [expandedFaqId, setExpandedFaqId] = useState<string | null>('faq-1');
   const [copiedEmail, setCopiedEmail] = useState(false);
-
-  // Sync with prop when opened
-  useEffect(() => {
-    if (type) {
-      setActiveSection(type);
-    }
-  }, [type]);
 
   // Handle escape key
   useEffect(() => {
@@ -189,48 +177,25 @@ export const AboutHelpModal: React.FC<AboutHelpModalProps> = ({
         className="relative w-full max-w-3xl bg-[#0f1015]/95 border border-white/[0.12] rounded-2xl sm:rounded-3xl shadow-[0_20px_70px_rgba(0,0,0,0.85)] overflow-hidden text-zinc-200 flex flex-col max-h-[90vh] my-auto transition-all"
       >
         {/* ================================================================= */}
-        {/* TOP MODAL NAVIGATION & SYSTEM STATUS BAR                          */}
+        {/* MODAL HEADER (DEDICATED PER SECTION - NO TAB SWITCHER BAR)        */}
         {/* ================================================================= */}
-        <header className="px-4 sm:px-6 py-3.5 border-b border-white/[0.08] bg-[#12131b]/95 backdrop-blur-md flex flex-wrap items-center justify-between gap-3 shrink-0">
-          {/* Section Segmented Switcher */}
-          <div className="flex items-center gap-1 bg-black/60 p-1 rounded-xl border border-white/[0.08]">
-            <button
-              type="button"
-              onClick={() => setActiveSection('help')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                activeSection === 'help'
-                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30 shadow-sm'
-                  : 'text-zinc-400 hover:text-white'
-              }`}
-            >
-              <HelpCircle className="w-3.5 h-3.5" />
-              <span>Help & Support</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveSection('about')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                activeSection === 'about'
-                  ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 shadow-sm'
-                  : 'text-zinc-400 hover:text-white'
-              }`}
-            >
-              <Info className="w-3.5 h-3.5" />
-              <span>About MusicSync</span>
-            </button>
-          </div>
-
-          {/* System Status Widget & Close */}
-          <div className="flex items-center gap-2.5">
-            {/* Live Status Widget */}
-            <div
-              className="flex items-center gap-2 px-2.5 py-1 rounded-full bg-emerald-950/40 border border-emerald-500/30 text-[11px] font-mono text-emerald-300 shadow-sm"
-              title="All systems operational: WebSocket Relay, NTP Clock Calibration, Web Audio Scheduler"
-            >
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
-              <span className="hidden sm:inline font-semibold">Systems Normal</span>
-              <span className="text-emerald-500/80">|</span>
-              <span className="text-emerald-400">99.98%</span>
+        {type === 'about' ? (
+          <header className="px-4 sm:px-6 py-3.5 border-b border-white/[0.08] bg-[#12131b]/95 backdrop-blur-md flex items-center justify-between gap-3 shrink-0">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-cyan-500 via-blue-500 to-indigo-600 p-0.5 shadow-md flex items-center justify-center">
+                <div className="w-full h-full bg-[#0a0a0f] rounded-[10px] flex items-center justify-center">
+                  <Info className="w-4 h-4 text-cyan-300" />
+                </div>
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-sm sm:text-base font-bold text-white tracking-wide">About MusicSync</h2>
+                  <span className="px-2 py-0.5 rounded-full bg-cyan-950/60 border border-cyan-500/30 text-[10px] font-mono text-cyan-300">
+                    v2.4 Titanium
+                  </span>
+                </div>
+                <p className="text-[11px] text-zinc-400 hidden sm:block">Mission, Architecture & Creator Details</p>
+              </div>
             </div>
 
             <button
@@ -241,13 +206,48 @@ export const AboutHelpModal: React.FC<AboutHelpModalProps> = ({
             >
               <X className="w-4 h-4" />
             </button>
-          </div>
-        </header>
+          </header>
+        ) : (
+          <header className="px-4 sm:px-6 py-3.5 border-b border-white/[0.08] bg-[#12131b]/95 backdrop-blur-md flex items-center justify-between gap-3 shrink-0">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-500 via-orange-500 to-rose-600 p-0.5 shadow-md flex items-center justify-center">
+                <div className="w-full h-full bg-[#0a0a0f] rounded-[10px] flex items-center justify-center">
+                  <HelpCircle className="w-4 h-4 text-amber-300" />
+                </div>
+              </div>
+              <div>
+                <h2 className="text-sm sm:text-base font-bold text-white tracking-wide">Help & Support</h2>
+                <p className="text-[11px] text-zinc-400 hidden sm:block">Knowledge Base, FAQs & Troubleshooting</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2.5">
+              <div
+                className="flex items-center gap-2 px-2.5 py-1 rounded-full bg-emerald-950/40 border border-emerald-500/30 text-[11px] font-mono text-emerald-300 shadow-sm"
+                title="All systems operational: WebSocket Relay, NTP Clock Calibration, Web Audio Scheduler"
+              >
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+                <span className="hidden sm:inline font-semibold">Systems Normal</span>
+                <span className="text-emerald-500/80">|</span>
+                <span className="text-emerald-400">99.98%</span>
+              </div>
+
+              <button
+                type="button"
+                onClick={onClose}
+                className="p-1.5 rounded-xl text-zinc-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                title="Close Modal (Esc)"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </header>
+        )}
 
         {/* ================================================================= */}
         {/* TAB 1: HELP SECTION                                               */}
         {/* ================================================================= */}
-        {activeSection === 'help' && (
+        {type === 'help' && (
           <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-5 space-y-6">
             
             {/* 1. TOP PROMINENT SEARCH BAR */}
@@ -486,7 +486,7 @@ export const AboutHelpModal: React.FC<AboutHelpModalProps> = ({
         {/* ================================================================= */}
         {/* TAB 2: ABOUT SECTION                                              */}
         {/* ================================================================= */}
-        {activeSection === 'about' && (
+        {type === 'about' && (
           <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-5 space-y-6">
 
             {/* 1. OUR CORE MISSION HERO */}
@@ -685,29 +685,11 @@ export const AboutHelpModal: React.FC<AboutHelpModalProps> = ({
           </div>
 
           <div className="flex items-center gap-2 ml-auto">
-            {activeSection === 'help' ? (
-              <button
-                type="button"
-                onClick={() => setActiveSection('about')}
-                className="px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-zinc-300 hover:text-white font-medium transition-all cursor-pointer"
-              >
-                Read Our Story →
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setActiveSection('help')}
-                className="px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-zinc-300 hover:text-white font-medium transition-all cursor-pointer"
-              >
-                Need Help? View FAQs →
-              </button>
-            )}
-
             <button
               type="button"
               onClick={onClose}
-              className={`px-4 py-1.5 rounded-xl font-bold transition-all cursor-pointer shadow-lg active:scale-95 ${
-                activeSection === 'help'
+              className={`px-5 py-1.5 rounded-xl font-bold transition-all cursor-pointer shadow-lg active:scale-95 ${
+                type === 'help'
                   ? 'bg-amber-400 hover:bg-amber-300 text-zinc-950 shadow-amber-500/20'
                   : 'bg-cyan-400 hover:bg-cyan-300 text-zinc-950 shadow-cyan-500/20'
               }`}
