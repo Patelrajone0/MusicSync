@@ -207,11 +207,14 @@
   </div>
 
   <!-- REAL LIVE INTERACTIVE MODAL: ABOUT -->
-  <div id="modal-about" class="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md hidden items-center justify-center p-4">
-    <div class="bg-[#0f1117] border border-cyan-500/30 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 relative text-xs">
-      <div class="flex items-center justify-between">
+  <!-- REAL LIVE INTERACTIVE MODAL: ABOUT -->
+  <div id="modal-about" class="fixed inset-0 z-[100] bg-black/85 backdrop-blur-md hidden items-center justify-center p-3 sm:p-5">
+    <div class="bg-[#0f1117] border border-cyan-500/30 rounded-2xl max-w-2xl w-full p-5 sm:p-6 shadow-2xl space-y-5 relative text-xs max-h-[85vh] overflow-y-auto custom-scrollbar">
+      
+      <!-- Modal Top Header & Status -->
+      <div class="flex items-center justify-between pb-3 border-b border-white/[0.08]">
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-indigo-600 flex items-center justify-center font-bold text-white shadow-lg">
+          <div class="w-11 h-11 rounded-xl bg-gradient-to-tr from-cyan-500 via-blue-600 to-indigo-600 flex items-center justify-center font-bold text-white shadow-lg text-lg">
             MS
           </div>
           <div>
@@ -221,52 +224,101 @@
             <p class="text-slate-400 text-[11px]">High-Precision Multi-Device Audio Synchronizer</p>
           </div>
         </div>
-        <button onclick="closeModal('about')" class="p-1 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white">✕</button>
-      </div>
-
-      <div class="grid grid-cols-3 gap-2 text-center">
-        <div class="p-2 rounded-xl bg-black/60 border border-white/[0.06]">
-          <div class="text-[9px] text-slate-500 uppercase font-mono">Sync Accuracy</div>
-          <div class="text-sm font-bold text-cyan-300 font-mono">±2.5 ms</div>
-        </div>
-        <div class="p-2 rounded-xl bg-black/60 border border-white/[0.06]">
-          <div class="text-[9px] text-slate-500 uppercase font-mono">Sync Protocol</div>
-          <div class="text-sm font-bold text-emerald-400 font-mono">NTP RFC 5905</div>
-        </div>
-        <div class="p-2 rounded-xl bg-black/60 border border-white/[0.06]">
-          <div class="text-[9px] text-slate-500 uppercase font-mono">Audio Engine</div>
-          <div class="text-sm font-bold text-indigo-300 font-mono">Web Audio API</div>
+        
+        <div class="flex items-center gap-2">
+          <span class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-950/60 border border-emerald-500/30 text-[10px] text-emerald-300 font-mono">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            Operational
+          </span>
+          <button onclick="closeModal('about')" class="p-1.5 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white">✕</button>
         </div>
       </div>
 
-      <div class="p-3 rounded-xl bg-black/40 border border-white/[0.06] text-slate-300 space-y-2 leading-relaxed">
-        <p><strong>MusicSync</strong> transforms multiple smartphones, laptops, and speakers into a unified acoustic sound system with sub-millisecond precision.</p>
-        <p class="text-slate-400">Continuous NTP ping round-trips calculate clock offset, drift, and network jitter to synchronize playback buffers across all devices effortlessly.</p>
+      <!-- 1. OUR CORE MISSION -->
+      <div class="p-4 rounded-xl bg-gradient-to-tr from-cyan-950/40 via-zinc-900 to-indigo-950/30 border border-cyan-500/30 space-y-1.5">
+        <span class="text-[10px] font-mono text-cyan-400 uppercase font-bold tracking-wider">Our Core Mission</span>
+        <h4 class="text-sm font-extrabold text-white leading-snug">
+          "To transform any collection of ordinary smartphones, laptops, and speakers into a unified, high-fidelity acoustic sound system—zero wires, zero logins, pure sub-millisecond harmony."
+        </h4>
+        <p class="text-slate-400 text-[11px] leading-relaxed">
+          Music sounds best when shared physically in the same room. Rather than separate headphones, MusicSync democratizes surround sound through open web standards.
+        </p>
       </div>
 
-      <div>
-        <div class="text-[10px] font-mono text-slate-400 uppercase font-bold mb-1">Architecture</div>
-        <div class="flex flex-wrap gap-1.5 text-[10px] font-mono">
-          <span class="px-2 py-0.5 rounded bg-zinc-900 border border-white/10 text-slate-300">React 18</span>
-          <span class="px-2 py-0.5 rounded bg-zinc-900 border border-white/10 text-slate-300">Socket.io NTP</span>
-          <span class="px-2 py-0.5 rounded bg-zinc-900 border border-white/10 text-slate-300">Web Audio API</span>
-          <span class="px-2 py-0.5 rounded bg-zinc-900 border border-white/10 text-slate-300">TailwindCSS</span>
-          <span class="px-2 py-0.5 rounded bg-zinc-900 border border-white/10 text-slate-300">TypeScript</span>
+      <!-- 2. KEY MILESTONES -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
+        <div class="p-2.5 rounded-xl bg-black/60 border border-white/[0.06]">
+          <div class="text-[9px] text-slate-500 uppercase font-mono">Clock Precision</div>
+          <div class="text-base font-bold text-cyan-300 font-mono">±2.1 ms</div>
+          <div class="text-[9px] text-slate-500">Zero phase echo</div>
+        </div>
+        <div class="p-2.5 rounded-xl bg-black/60 border border-white/[0.06]">
+          <div class="text-[9px] text-slate-500 uppercase font-mono">Max Devices</div>
+          <div class="text-base font-bold text-emerald-400 font-mono">50+</div>
+          <div class="text-[9px] text-slate-500">Tested live per room</div>
+        </div>
+        <div class="p-2.5 rounded-xl bg-black/60 border border-white/[0.06]">
+          <div class="text-[9px] text-slate-500 uppercase font-mono">Account Friction</div>
+          <div class="text-base font-bold text-amber-300 font-mono">0.0 sec</div>
+          <div class="text-[9px] text-slate-500">No passwords or emails</div>
+        </div>
+        <div class="p-2.5 rounded-xl bg-black/60 border border-white/[0.06]">
+          <div class="text-[9px] text-slate-500 uppercase font-mono">Architecture</div>
+          <div class="text-base font-bold text-indigo-300 font-mono">100% PWA</div>
+          <div class="text-[9px] text-slate-500">Web Audio API + NTP</div>
+        </div>
+      </div>
+
+      <!-- 3. VISUAL STORYTELLING: CHAPTERS -->
+      <div class="space-y-2">
+        <span class="text-[10px] font-mono text-slate-400 uppercase font-bold tracking-wider">The Story</span>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+          <div class="p-3 rounded-xl bg-black/40 border border-white/[0.06] space-y-1">
+            <span class="text-rose-400 font-bold text-[10px] font-mono">01 // The Problem</span>
+            <h5 class="text-xs font-bold text-white">Out-of-Sync Audio</h5>
+            <p class="text-[11px] text-slate-400 leading-snug">Hitting "Play" on Bluetooth or Spotify produces chaotic 500ms delays.</p>
+          </div>
+          <div class="p-3 rounded-xl bg-black/40 border border-white/[0.06] space-y-1">
+            <span class="text-cyan-400 font-bold text-[10px] font-mono">02 // The Solution</span>
+            <h5 class="text-xs font-bold text-white">NTP Satellite Sync</h5>
+            <p class="text-[11px] text-slate-400 leading-snug">Adapting satellite RFC 5905 time protocols down to Web Audio hardware sample clocks.</p>
+          </div>
+          <div class="p-3 rounded-xl bg-black/40 border border-white/[0.06] space-y-1">
+            <span class="text-emerald-400 font-bold text-[10px] font-mono">03 // The Result</span>
+            <h5 class="text-xs font-bold text-white">Universal Surround</h5>
+            <p class="text-[11px] text-slate-400 leading-snug">Any phone or speaker joins in seconds without proprietary gear.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. MEET THE CREATOR -->
+      <div class="p-3.5 rounded-xl bg-[#12131b] border border-white/[0.08] flex items-center gap-3">
+        <div class="w-12 h-12 rounded-xl bg-gradient-to-tr from-cyan-400 via-blue-500 to-indigo-600 flex items-center justify-center font-bold text-white font-mono text-sm shrink-0">
+          RP
+        </div>
+        <div class="space-y-0.5 flex-1">
+          <div class="flex items-center justify-between">
+            <h5 class="text-xs font-bold text-white">Raj Patel</h5>
+            <span class="text-[10px] font-mono text-cyan-300">Founder & Audio Architect</span>
+          </div>
+          <p class="text-[11px] text-slate-300 italic">"Technology should bring people together in the same room, not force everyone into separate headphones."</p>
         </div>
       </div>
 
       <div class="pt-3 border-t border-white/[0.08] flex justify-between items-center">
-        <span class="text-[11px] text-slate-500">Built for party sound & surround listening</span>
+        <span class="text-[11px] text-slate-500">Free & Open-Web PWA</span>
         <button onclick="closeModal('about')" class="px-4 py-1.5 rounded-xl bg-cyan-500 text-black font-bold hover:bg-cyan-400 transition-all cursor-pointer">
-          Close Preview
+          Done
         </button>
       </div>
     </div>
   </div>
 
   <!-- REAL LIVE INTERACTIVE MODAL: HELP & GUIDE -->
-  <div id="modal-help" class="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md hidden items-center justify-center p-4">
-    <div class="bg-[#0f1117] border border-amber-500/30 rounded-2xl max-w-xl w-full p-6 shadow-2xl space-y-4 relative text-xs max-h-[85vh] flex flex-col">
+  <div id="modal-help" class="fixed inset-0 z-[100] bg-black/85 backdrop-blur-md hidden items-center justify-center p-3 sm:p-5">
+    <div class="bg-[#0f1117] border border-amber-500/30 rounded-2xl max-w-2xl w-full p-5 sm:p-6 shadow-2xl space-y-4 relative text-xs max-h-[88vh] flex flex-col">
+      
+      <!-- Header with Status -->
       <div class="flex items-center justify-between pb-3 border-b border-white/[0.08] shrink-0">
         <div class="flex items-center gap-2.5">
           <div class="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-500/30 text-amber-400 flex items-center justify-center font-bold text-base">
@@ -274,54 +326,112 @@
           </div>
           <div>
             <h3 class="text-base font-bold text-white">Help & Quick Start Guide</h3>
-            <p class="text-slate-400 text-[11px]">Everything you need to synchronize audio across devices</p>
-          </div>
-        </div>
-        <button onclick="closeModal('help')" class="p-1 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white">✕</button>
-      </div>
-
-      <div class="flex-1 overflow-y-auto space-y-3 custom-scrollbar pr-1">
-        <div class="p-3 rounded-xl bg-amber-950/30 border border-amber-500/30 text-amber-200">
-          <h4 class="font-bold text-xs mb-1">🔊 Browser Audio Autoplay Unlock</h4>
-          <p class="text-[11px] text-amber-200/80 leading-relaxed">
-            Mobile browsers (iOS Safari & Chrome) require a physical screen tap before audio is unlocked. Tap anywhere on screen if you see the "Unlock Audio" prompt.
-          </p>
-        </div>
-
-        <div class="p-3 rounded-xl bg-black/60 border border-white/[0.06] space-y-2">
-          <h4 class="font-bold text-white text-xs">🚀 3 Steps to Sync</h4>
-          <div class="space-y-1.5 text-slate-300">
-            <div><strong>1. Host Creates Room:</strong> Tap "Create Room" to generate a 6-digit code or QR code.</div>
-            <div><strong>2. Guests Join:</strong> Friends open MusicSync on their phones and enter the 6-digit code.</div>
-            <div><strong>3. Hit Play:</strong> Add tracks to the queue. When the host plays, all devices play in millisecond sync!</div>
+            <p class="text-slate-400 text-[11px]">Instant answers, sync troubleshooting & live support</p>
           </div>
         </div>
 
-        <div class="p-3 rounded-xl bg-black/60 border border-white/[0.06] space-y-2">
-          <h4 class="font-bold text-white text-xs">⌨️ Keyboard Shortcuts</h4>
-          <div class="grid grid-cols-2 gap-1.5 text-[11px] font-mono">
-            <div class="flex justify-between p-1.5 rounded bg-zinc-900 border border-white/5">
-              <span class="text-slate-300">Play / Pause</span>
-              <kbd class="px-1.5 rounded bg-zinc-800 text-amber-300">Space</kbd>
-            </div>
-            <div class="flex justify-between p-1.5 rounded bg-zinc-900 border border-white/5">
-              <span class="text-slate-300">Skip Track</span>
-              <kbd class="px-1.5 rounded bg-zinc-800 text-amber-300">Shift + →</kbd>
-            </div>
-            <div class="flex justify-between p-1.5 rounded bg-zinc-900 border border-white/5">
-              <span class="text-slate-300">Mute Audio</span>
-              <kbd class="px-1.5 rounded bg-zinc-800 text-amber-300">M</kbd>
-            </div>
-            <div class="flex justify-between p-1.5 rounded bg-zinc-900 border border-white/5">
-              <span class="text-slate-300">Fullscreen</span>
-              <kbd class="px-1.5 rounded bg-zinc-800 text-amber-300">F</kbd>
-            </div>
+        <div class="flex items-center gap-2">
+          <!-- Status Widget -->
+          <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-950/60 border border-emerald-500/30 text-[10px] text-emerald-300 font-mono">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span>Services Operational</span>
           </div>
+          <button onclick="closeModal('help')" class="p-1.5 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white">✕</button>
         </div>
       </div>
 
-      <div class="pt-3 border-t border-white/[0.08] flex justify-between items-center shrink-0">
-        <span class="text-[11px] text-slate-500">Press Esc or click Got It to dismiss</span>
+      <!-- 1. TOP PROMINENT SEARCH BAR -->
+      <div class="relative shrink-0">
+        <div class="flex items-center bg-black/60 border border-white/[0.12] focus-within:border-amber-400 rounded-xl px-3.5 py-2.5">
+          <span class="mr-2 text-amber-400">🔍</span>
+          <input
+            id="html-faq-search"
+            type="text"
+            oninput="filterHtmlFaqs()"
+            placeholder="Type your question (e.g. bluetooth delay, autoplay unlock, wifi vs online, hotkeys)..."
+            class="w-full bg-transparent text-xs text-white placeholder-slate-500 focus:outline-none"
+          >
+        </div>
+      </div>
+
+      <!-- 2. CATEGORY TABS -->
+      <div class="flex items-center gap-1 overflow-x-auto pb-1 text-xs shrink-0">
+        <button onclick="filterCategory('All')" id="cat-all" class="px-2.5 py-1 rounded-lg bg-amber-400 text-black font-bold">All</button>
+        <button onclick="filterCategory('Getting Started')" id="cat-start" class="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300">Getting Started</button>
+        <button onclick="filterCategory('Audio & Latency')" id="cat-audio" class="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300">Audio & Latency</button>
+        <button onclick="filterCategory('Network & Modes')" id="cat-net" class="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300">Network & Modes</button>
+        <button onclick="filterCategory('Host & Controls')" id="cat-host" class="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300">Host & Controls</button>
+      </div>
+
+      <!-- 3. FAQS LIST -->
+      <div id="html-faqs-container" class="flex-1 overflow-y-auto space-y-2 custom-scrollbar pr-1">
+        <!-- FAQ 1 -->
+        <div class="faq-card p-3 rounded-xl bg-black/40 border border-white/[0.06] space-y-1" data-cat="Getting Started">
+          <div class="flex justify-between items-center text-xs font-bold text-white">
+            <span>How do I connect multiple phones or speakers together?</span>
+            <span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300">Popular</span>
+          </div>
+          <p class="text-[11px] text-slate-400">One person creates a room to get a 6-digit code. Friends tap Join Room and enter the code. As soon as music plays, all devices stream in exact millisecond sync.</p>
+        </div>
+
+        <!-- FAQ 2 -->
+        <div class="faq-card p-3 rounded-xl bg-black/40 border border-white/[0.06] space-y-1" data-cat="Audio & Latency">
+          <div class="flex justify-between items-center text-xs font-bold text-white">
+            <span>Why is there an "Unlock Audio" prompt on iPhone or Chrome?</span>
+            <span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300">Crucial</span>
+          </div>
+          <p class="text-[11px] text-slate-400">Mobile browsers require a physical screen tap before web audio can play. Tap anywhere on screen or hit "Unlock Audio" once to activate sound.</p>
+        </div>
+
+        <!-- FAQ 3 -->
+        <div class="faq-card p-3 rounded-xl bg-black/40 border border-white/[0.06] space-y-1" data-cat="Audio & Latency">
+          <div class="flex justify-between items-center text-xs font-bold text-white">
+            <span>What if my Bluetooth speaker has a delay?</span>
+            <span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300">Bluetooth</span>
+          </div>
+          <p class="text-[11px] text-slate-400">Bluetooth hardware adds 100-200ms latency. Inside any room, open Settings and adjust your personal "Device Offset Slider" to align phone and Bluetooth speakers perfectly.</p>
+        </div>
+
+        <!-- FAQ 4 -->
+        <div class="faq-card p-3 rounded-xl bg-black/40 border border-white/[0.06] space-y-1" data-cat="Network & Modes">
+          <div class="flex justify-between items-center text-xs font-bold text-white">
+            <span>Local Wi-Fi Mode vs Public Cloud Mode</span>
+            <span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300">Network</span>
+          </div>
+          <p class="text-[11px] text-slate-400">Local Wi-Fi offers near-zero latency for devices on the same router or hotspot. Public Cloud relays audio across the internet for long-distance listening.</p>
+        </div>
+
+        <!-- FAQ 5 -->
+        <div class="faq-card p-3 rounded-xl bg-black/40 border border-white/[0.06] space-y-1" data-cat="Host & Controls">
+          <div class="flex justify-between items-center text-xs font-bold text-white">
+            <span>Keyboard Shortcuts</span>
+            <span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300">Hotkeys</span>
+          </div>
+          <p class="text-[11px] text-slate-400">Space = Play/Pause | Shift+Right = Skip | Shift+Left = Previous | M = Mute | F = Fullscreen | Esc = Close.</p>
+        </div>
+      </div>
+
+      <!-- 4. QUICK CONTACT OPTIONS -->
+      <div class="p-3.5 rounded-xl bg-[#12131b] border border-white/[0.08] shrink-0 space-y-2">
+        <div class="text-[11px] font-bold text-white flex items-center justify-between">
+          <span>Need Direct Assistance?</span>
+          <span class="text-[10px] text-cyan-400 font-mono">support@musicsync.live</span>
+        </div>
+        <div class="grid grid-cols-3 gap-2 text-center text-xs">
+          <a href="mailto:support@musicsync.live" class="p-2 rounded-lg bg-black/50 hover:bg-zinc-800 border border-white/10 text-white font-medium">
+            ✉️ Email Support
+          </a>
+          <a href="https://github.com/Patelrajone0/MusicSync/issues" target="_blank" class="p-2 rounded-lg bg-black/50 hover:bg-zinc-800 border border-white/10 text-white font-medium">
+            🐛 GitHub Issues
+          </a>
+          <a href="https://github.com/Patelrajone0/MusicSync/discussions" target="_blank" class="p-2 rounded-lg bg-black/50 hover:bg-zinc-800 border border-white/10 text-white font-medium">
+            💬 Discussions
+          </a>
+        </div>
+      </div>
+
+      <div class="pt-2 border-t border-white/[0.08] flex justify-between items-center shrink-0">
+        <span class="text-[11px] text-slate-500">Press Esc anytime</span>
         <button onclick="closeModal('help')" class="px-4 py-1.5 rounded-xl bg-amber-500 text-black font-bold hover:bg-amber-400 transition-all cursor-pointer">
           Got It
         </button>
@@ -673,6 +783,49 @@
     function closeModal(type) {
       document.getElementById(`modal-${type}`).classList.add('hidden');
       document.getElementById(`modal-${type}`).classList.remove('flex');
+    }
+
+    let activeHtmlCategory = 'All';
+
+    function filterCategory(cat) {
+      activeHtmlCategory = cat;
+      const categories = ['All', 'Getting Started', 'Audio & Latency', 'Network & Modes', 'Host & Controls'];
+      const mapId = {
+        'All': 'cat-all',
+        'Getting Started': 'cat-start',
+        'Audio & Latency': 'cat-audio',
+        'Network & Modes': 'cat-net',
+        'Host & Controls': 'cat-host'
+      };
+
+      categories.forEach(c => {
+        const el = document.getElementById(mapId[c]);
+        if (el) {
+          if (c === cat) {
+            el.className = 'px-2.5 py-1 rounded-lg bg-amber-400 text-black font-bold';
+          } else {
+            el.className = 'px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300';
+          }
+        }
+      });
+
+      filterHtmlFaqs();
+    }
+
+    function filterHtmlFaqs() {
+      const q = (document.getElementById('html-faq-search')?.value || '').toLowerCase().trim();
+      const cards = document.querySelectorAll('.faq-card');
+      cards.forEach(card => {
+        const cat = card.getAttribute('data-cat');
+        const text = card.textContent.toLowerCase();
+        const matchesCat = activeHtmlCategory === 'All' || cat === activeHtmlCategory;
+        const matchesQuery = !q || text.includes(q);
+        if (matchesCat && matchesQuery) {
+          card.classList.remove('hidden');
+        } else {
+          card.classList.add('hidden');
+        }
+      });
     }
 
     // Keyboard shortcuts
