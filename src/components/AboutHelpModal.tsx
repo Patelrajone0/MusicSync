@@ -3,14 +3,12 @@ import {
   Info,
   HelpCircle,
   X,
-  Search,
   ChevronDown,
   ChevronUp,
   Volume2,
   Keyboard,
   ShieldCheck,
   CheckCircle2,
-  MessageSquare,
   Mail,
   ExternalLink,
   Sparkles,
@@ -24,7 +22,6 @@ import {
   Sliders,
   Check,
   Globe,
-  Clock,
   ArrowRight,
   Smile
 } from 'lucide-react';
@@ -123,7 +120,6 @@ export const AboutHelpModal: React.FC<AboutHelpModalProps> = ({
   onClose
 }) => {
   // Help section states
-  const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [expandedFaqId, setExpandedFaqId] = useState<string | null>('faq-1');
   const [copiedEmail, setCopiedEmail] = useState(false);
@@ -141,20 +137,12 @@ export const AboutHelpModal: React.FC<AboutHelpModalProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [type, onClose]);
 
-  // Filtered FAQs based on category & search term
+  // Filtered FAQs based on category
   const filteredFaqs = useMemo(() => {
     return FAQS_DATA.filter((item) => {
-      const matchesCategory =
-        selectedCategory === 'All' || item.category === selectedCategory;
-      const q = searchQuery.toLowerCase().trim();
-      const matchesSearch =
-        !q ||
-        item.question.toLowerCase().includes(q) ||
-        item.answer.toLowerCase().includes(q) ||
-        (item.badge && item.badge.toLowerCase().includes(q));
-      return matchesCategory && matchesSearch;
+      return selectedCategory === 'All' || item.category === selectedCategory;
     });
-  }, [searchQuery, selectedCategory]);
+  }, [selectedCategory]);
 
   const handleCopyEmail = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -221,26 +209,14 @@ export const AboutHelpModal: React.FC<AboutHelpModalProps> = ({
               </div>
             </div>
 
-            <div className="flex items-center gap-2.5">
-              <div
-                className="flex items-center gap-2 px-2.5 py-1 rounded-full bg-emerald-950/40 border border-emerald-500/30 text-[11px] font-mono text-emerald-300 shadow-sm"
-                title="All systems operational: WebSocket Relay, NTP Clock Calibration, Web Audio Scheduler"
-              >
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
-                <span className="hidden sm:inline font-semibold">Systems Normal</span>
-                <span className="text-emerald-500/80">|</span>
-                <span className="text-emerald-400">99.98%</span>
-              </div>
-
-              <button
-                type="button"
-                onClick={onClose}
-                className="p-1.5 rounded-xl text-zinc-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
-                title="Close Modal (Esc)"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-1.5 rounded-xl text-zinc-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+              title="Close Modal (Esc)"
+            >
+              <X className="w-4 h-4" />
+            </button>
           </header>
         )}
 
@@ -250,51 +226,7 @@ export const AboutHelpModal: React.FC<AboutHelpModalProps> = ({
         {type === 'help' && (
           <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-5 space-y-6">
             
-            {/* 1. TOP PROMINENT SEARCH BAR */}
-            <div className="space-y-2">
-              <div className="relative group">
-                <div className="absolute -inset-0.5 rounded-2xl bg-gradient-to-r from-amber-500/20 via-cyan-500/20 to-indigo-500/20 blur opacity-60 group-hover:opacity-100 transition duration-300 pointer-events-none" />
-                <div className="relative flex items-center bg-[#0a0a0f] border border-white/[0.12] focus-within:border-amber-400/80 rounded-2xl px-4 py-3 shadow-inner">
-                  <Search className="w-5 h-5 text-amber-400 shrink-0 mr-3" />
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search questions (e.g. bluetooth delay, autoplay unlock, wifi vs online, hotkeys)..."
-                    className="w-full bg-transparent text-sm text-white placeholder-zinc-500 focus:outline-none"
-                    autoFocus
-                  />
-                  {searchQuery && (
-                    <button
-                      type="button"
-                      onClick={() => setSearchQuery('')}
-                      className="p-1 rounded-full hover:bg-zinc-800 text-zinc-400 hover:text-white ml-2"
-                      title="Clear search"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {/* Instant Search Stats */}
-              {searchQuery && (
-                <div className="flex items-center justify-between text-[11px] font-mono px-1 text-zinc-400">
-                  <span>
-                    Found <strong className="text-amber-300">{filteredFaqs.length}</strong> matching questions for "{searchQuery}"
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setSearchQuery('')}
-                    className="text-amber-400 hover:underline"
-                  >
-                    Reset Filter
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* 2. CATEGORY FILTER CHIPS */}
+            {/* 1. CATEGORY FILTER CHIPS */}
             <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
               {CATEGORIES.map((cat) => {
                 const isSelected = selectedCategory === cat;
@@ -315,7 +247,7 @@ export const AboutHelpModal: React.FC<AboutHelpModalProps> = ({
               })}
             </div>
 
-            {/* 3. CATEGORIZED FAQS ACCORDION */}
+            {/* 2. CATEGORIZED FAQS ACCORDION */}
             <div className="space-y-2.5">
               <div className="flex items-center justify-between px-1">
                 <span className="text-[11px] font-mono uppercase text-zinc-400 font-bold tracking-wider">
@@ -328,17 +260,10 @@ export const AboutHelpModal: React.FC<AboutHelpModalProps> = ({
 
               {filteredFaqs.length === 0 ? (
                 <div className="p-8 rounded-2xl bg-zinc-950/60 border border-white/[0.06] text-center space-y-2">
-                  <div className="text-2xl">🔍</div>
-                  <h4 className="text-sm font-bold text-white">No results found for "{searchQuery}"</h4>
-                  <p className="text-xs text-zinc-400 max-w-sm mx-auto">
-                    Try searching for "bluetooth", "autoplay", "sync", or contact our live community below!
-                  </p>
+                  <h4 className="text-sm font-bold text-white">No questions in this category</h4>
                   <button
                     type="button"
-                    onClick={() => {
-                      setSearchQuery('');
-                      setSelectedCategory('All');
-                    }}
+                    onClick={() => setSelectedCategory('All')}
                     className="mt-2 px-3 py-1.5 rounded-xl bg-zinc-800 text-xs font-semibold text-white hover:bg-zinc-700"
                   >
                     View All Questions
