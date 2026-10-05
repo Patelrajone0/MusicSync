@@ -591,21 +591,34 @@ export const AboutHelpModal: React.FC<AboutHelpModalProps> = ({
               </span>
 
               <div className="p-4 sm:p-5 rounded-2xl bg-[#12131b] border border-white/[0.08] flex flex-col sm:flex-row items-center sm:items-start gap-4">
-                {/* Avatar Badge */}
+                {/* Avatar Photo Frame */}
                 <div className="relative shrink-0">
                   <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-cyan-400 via-blue-500 to-indigo-600 p-0.5 shadow-xl">
-                    <div className="w-full h-full bg-zinc-950 rounded-[14px] flex items-center justify-center text-white font-extrabold text-xl font-mono">
-                      RP
+                    <div className="w-full h-full bg-zinc-950 rounded-[14px] overflow-hidden flex items-center justify-center relative">
+                      <img
+                        src="/raj-patel.png"
+                        alt="Raj Patel"
+                        className="w-full h-full object-cover object-top"
+                        onError={(e) => {
+                          const target = e.currentTarget as HTMLElement;
+                          target.style.display = 'none';
+                          const fallback = target.nextElementSibling as HTMLElement;
+                          if (fallback) fallback.style.display = 'flex';
+                        }}
+                      />
+                      <div className="w-full h-full bg-zinc-950 hidden items-center justify-center text-white font-extrabold text-xl font-mono">
+                        RP
+                      </div>
                     </div>
                   </div>
-                  <div className="absolute -bottom-1 -right-1 px-1.5 py-0.5 rounded-full bg-emerald-500 border border-black text-[9px] font-bold text-black uppercase">
+                  <div className="absolute -bottom-1 -right-1 px-1.5 py-0.5 rounded-full bg-emerald-500 border border-black text-[9px] font-bold text-black uppercase shadow">
                     Host
                   </div>
                 </div>
 
                 {/* Details */}
-                <div className="space-y-1.5 text-center sm:text-left flex-1">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                <div className="space-y-2 text-center sm:text-left flex-1">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div>
                       <h4 className="text-sm font-bold text-white flex items-center justify-center sm:justify-start gap-2">
                         <span>Raj Patel</span>
@@ -616,8 +629,17 @@ export const AboutHelpModal: React.FC<AboutHelpModalProps> = ({
                       <p className="text-[11px] text-zinc-400">Full-Stack Engineer & Audio Systems Designer</p>
                     </div>
 
-                    {/* Social Link Chips */}
-                    <div className="flex items-center justify-center sm:justify-end gap-1.5 pt-1 sm:pt-0">
+                    {/* Social & Contact Chips */}
+                    <div className="flex items-center justify-center sm:justify-end gap-1.5 flex-wrap pt-1 sm:pt-0">
+                      <a
+                        href="mailto:Patelrajone0@gmail.com"
+                        className="px-2.5 py-1 rounded-lg bg-cyan-950/40 hover:bg-cyan-900/50 border border-cyan-500/30 hover:border-cyan-400/60 text-[11px] font-mono text-cyan-300 hover:text-white flex items-center gap-1.5 transition-colors cursor-pointer"
+                        title="Email Raj Patel"
+                      >
+                        <Mail className="w-3 h-3 text-cyan-400" />
+                        <span>Patelrajone0@gmail.com</span>
+                      </a>
+
                       <a
                         href="https://github.com/Patelrajone0/MusicSync"
                         target="_blank"
@@ -633,6 +655,20 @@ export const AboutHelpModal: React.FC<AboutHelpModalProps> = ({
                   <p className="text-xs text-zinc-300 italic leading-relaxed pt-1 border-t border-white/[0.04]">
                     "Music sounds best when shared in the same room. Technology should bring people together, not force everyone into separate headphones."
                   </p>
+
+                  {/* Made with Love in INDIA */}
+                  <div className="pt-2 border-t border-white/[0.06] flex items-center justify-center sm:justify-between text-[11px] text-zinc-400">
+                    <div className="inline-flex items-center gap-1.5 font-medium tracking-wide text-zinc-200 bg-white/[0.03] px-2.5 py-1 rounded-lg border border-white/[0.06]">
+                      <span>Made with</span>
+                      <span className="text-rose-500 animate-pulse">❤️</span>
+                      <span>in <strong className="text-white font-bold">INDIA</strong></span>
+                      <span className="text-xs">🇮🇳</span>
+                    </div>
+
+                    <span className="text-[10px] font-mono text-zinc-500 hidden sm:inline">
+                      Sub-millisecond audio sync engine
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
