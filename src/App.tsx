@@ -29,6 +29,7 @@ import { TitaniumHeaderShowcase } from './components/TitaniumHeaderShowcase';
 import { TitaniumSidebarShowcase } from './components/TitaniumSidebarShowcase';
 import { TitaniumStudioShowcase } from './components/TitaniumStudioShowcase';
 import { CurvedCornersShowcase } from './components/CurvedCornersShowcase';
+import { AboutHelpShowcase } from './components/AboutHelpShowcase';
 
 const SESSION_STORAGE_KEY = 'musicsync_user_session';
 const USER_NAME_STORAGE_KEY = 'musicsync_user_name';
@@ -203,6 +204,26 @@ export function App() {
       const demo = urlParams.get('demo');
       const preview = urlParams.get('preview');
       return demo === 'corners' || demo === 'corner' || preview === 'corners' || preview === 'corner';
+    } catch {
+      return false;
+    }
+  });
+
+  const [isAboutHelpDemoOpen, setIsAboutHelpDemoOpen] = useState<boolean>(() => {
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const demo = urlParams.get('demo');
+      const preview = urlParams.get('preview');
+      return (
+        demo === 'about' ||
+        demo === 'help' ||
+        demo === 'about-help' ||
+        demo === 'abouthelp' ||
+        preview === 'about' ||
+        preview === 'help' ||
+        preview === 'about-help' ||
+        preview === 'abouthelp'
+      );
     } catch {
       return false;
     }
@@ -826,6 +847,23 @@ export function App() {
           try {
             const url = new URL(window.location.href);
             url.searchParams.delete('demo');
+            window.history.replaceState({}, '', url.pathname + (url.search ? url.search : ''));
+          } catch {}
+        }}
+      />
+    );
+  }
+
+  // If user requested live interactive demo of About & Help placement options:
+  if (isAboutHelpDemoOpen) {
+    return (
+      <AboutHelpShowcase
+        onClose={() => {
+          setIsAboutHelpDemoOpen(false);
+          try {
+            const url = new URL(window.location.href);
+            url.searchParams.delete('demo');
+            url.searchParams.delete('preview');
             window.history.replaceState({}, '', url.pathname + (url.search ? url.search : ''));
           } catch {}
         }}

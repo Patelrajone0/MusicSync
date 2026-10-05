@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MusicSync • About & Help Placement Live Preview</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @keyframes pulseGlow {
+      0%, 100% { opacity: 0.4; transform: scale(1); }
+      50% { opacity: 0.9; transform: scale(1.04); }
+    }
+    .pulse-glow {
+      animation: pulseGlow 2.5s infinite ease-in-out;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: rgba(0,0,0,0.2);
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: rgba(255,255,255,0.15);
+      border-radius: 9999px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: rgba(255,255,255,0.3);
+    }
+  </style>
+</head>
+<body class="bg-[#07080b] text-slate-100 font-sans min-h-screen flex flex-col select-none overflow-hidden antialiased">
+
+  <!-- TOP APP BAR -->
+  <header class="h-14 border-b border-white/[0.08] bg-[#0c0d12]/95 backdrop-blur-xl px-4 sm:px-6 flex items-center justify-between z-50 shrink-0">
+    <div class="flex items-center gap-3">
+      <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-cyan-400 via-blue-500 to-indigo-600 p-0.5 shadow-[0_0_15px_rgba(6,182,212,0.35)]">
+        <div class="w-full h-full bg-[#0a0a0f] rounded-[10px] flex items-center justify-center">
+          <svg class="w-4 h-4 text-cyan-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+          </svg>
+        </div>
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <h1 class="text-sm sm:text-base font-extrabold tracking-tight text-white">MusicSync • Placement Live Preview</h1>
+          <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-500/20 border border-cyan-400/30 text-cyan-300 uppercase font-semibold">
+            Local Interactive Demo
+          </span>
+        </div>
+        <p class="text-[11px] text-slate-400 hidden sm:block">Where can About & Help be placed without affecting normal app behavior?</p>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <!-- Device Viewport Toggle -->
+      <div class="flex items-center bg-black/60 p-1 rounded-xl border border-white/[0.08]">
+        <button id="btn-desktop-view" onclick="setViewMode('desktop')" class="px-3 py-1 rounded-lg text-xs font-semibold bg-white/10 text-white transition-all">
+          🖥️ Desktop
+        </button>
+        <button id="btn-mobile-view" onclick="setViewMode('mobile')" class="px-3 py-1 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition-all">
+          📱 Mobile (390px)
+        </button>
+      </div>
+
+      <!-- Quick Test Modals -->
+      <button onclick="openModal('about')" class="px-3 py-1.5 rounded-xl bg-cyan-950/60 border border-cyan-500/40 hover:border-cyan-400 text-cyan-300 text-xs font-bold transition-all hover:bg-cyan-900/50">
+        ℹ️ Test About Modal
+      </button>
+      <button onclick="openModal('help')" class="px-3 py-1.5 rounded-xl bg-amber-950/60 border border-amber-500/40 hover:border-amber-400 text-amber-300 text-xs font-bold transition-all hover:bg-amber-900/50">
+        ❓ Test Help Guide
+      </button>
+      <a href="/" class="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 text-xs font-semibold transition-all">
+        ← Back to App
+      </a>
+    </div>
+  </header>
+
+  <!-- WORKSPACE SPLIT: 2 COLUMNS -->
+  <div class="flex-1 flex flex-col lg:flex-row overflow-hidden">
+    <!-- LEFT SIDEBAR: POSITION SELECTION & CRITIQUE -->
+    <aside class="w-full lg:w-96 shrink-0 bg-[#0c0d12] border-r border-white/[0.08] flex flex-col p-4 gap-3.5 overflow-y-auto custom-scrollbar">
+      <div>
+        <span class="text-[10px] font-mono uppercase text-cyan-400 font-bold tracking-wider">Evaluation Guide</span>
+        <h2 class="text-sm font-bold text-white mt-0.5">Select a Proposed Placement</h2>
+      </div>
+
+      <div class="space-y-2">
+        <!-- POS 1 -->
+        <button onclick="selectPosition(1)" id="pos-btn-1" class="w-full text-left p-3 rounded-xl border border-cyan-500/60 bg-white/[0.04] text-white transition-all ring-1 ring-cyan-500/40 shadow-lg cursor-pointer">
+          <div class="flex items-center justify-between text-xs font-bold">
+            <span>1. Lobby Top-Right Navbar</span>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-400/30">Lobby</span>
+          </div>
+          <p class="text-[11px] text-slate-300 mt-1">Floating glass capsule buttons at top right of the landing view.</p>
+          <div class="flex items-center justify-between mt-2 text-[10px] font-mono">
+            <span class="text-emerald-400 font-semibold">★ Recommended Best (9.8/10)</span>
+            <span class="text-slate-500">Press [1]</span>
+          </div>
+        </button>
+
+        <!-- POS 2 -->
+        <button onclick="selectPosition(2)" id="pos-btn-2" class="w-full text-left p-3 rounded-xl border border-white/[0.08] bg-white/[0.01] hover:bg-white/[0.03] text-slate-300 transition-all cursor-pointer">
+          <div class="flex items-center justify-between text-xs font-bold text-white">
+            <span>2. Lobby Card Footer Links</span>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-zinc-800 text-slate-400">Lobby</span>
+          </div>
+          <p class="text-[11px] text-slate-400 mt-1">Subtle text links below "No account required" in the card.</p>
+          <div class="flex items-center justify-between mt-2 text-[10px] font-mono">
+            <span class="text-amber-400 font-semibold">Ultra Minimalist (8.9/10)</span>
+            <span class="text-slate-500">Press [2]</span>
+          </div>
+        </button>
+
+        <!-- POS 3 -->
+        <button onclick="selectPosition(3)" id="pos-btn-3" class="w-full text-left p-3 rounded-xl border border-white/[0.08] bg-white/[0.01] hover:bg-white/[0.03] text-slate-300 transition-all cursor-pointer">
+          <div class="flex items-center justify-between text-xs font-bold text-white">
+            <span>3. Floating Action Dial (FAB)</span>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-zinc-800 text-slate-400">Universal</span>
+          </div>
+          <p class="text-[11px] text-slate-400 mt-1">Pulsing orb in bottom-right corner that pops up a speed-dial.</p>
+          <div class="flex items-center justify-between mt-2 text-[10px] font-mono">
+            <span class="text-cyan-400 font-semibold">Mobile Friendly (9.1/10)</span>
+            <span class="text-slate-500">Press [3]</span>
+          </div>
+        </button>
+
+        <!-- POS 4 -->
+        <button onclick="selectPosition(4)" id="pos-btn-4" class="w-full text-left p-3 rounded-xl border border-white/[0.08] bg-white/[0.01] hover:bg-white/[0.03] text-slate-300 transition-all cursor-pointer">
+          <div class="flex items-center justify-between text-xs font-bold text-white">
+            <span>4. In-Room Titanium Header</span>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-400/30">In-Room</span>
+          </div>
+          <p class="text-[11px] text-slate-400 mt-1">Right next to Theme switcher & Eject button in the top bar.</p>
+          <div class="flex items-center justify-between mt-2 text-[10px] font-mono">
+            <span class="text-emerald-400 font-semibold">★ Best In-Session (9.6/10)</span>
+            <span class="text-slate-500">Press [4]</span>
+          </div>
+        </button>
+
+        <!-- POS 5 -->
+        <button onclick="selectPosition(5)" id="pos-btn-5" class="w-full text-left p-3 rounded-xl border border-white/[0.08] bg-white/[0.01] hover:bg-white/[0.03] text-slate-300 transition-all cursor-pointer">
+          <div class="flex items-center justify-between text-xs font-bold text-white">
+            <span>5. In-Room Hardware Sidebar</span>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-400/30">In-Room</span>
+          </div>
+          <p class="text-[11px] text-slate-400 mt-1">Console utility section at bottom of left-hand hardware rack.</p>
+          <div class="flex items-center justify-between mt-2 text-[10px] font-mono">
+            <span class="text-indigo-400 font-semibold">Rackmount Style (8.7/10)</span>
+            <span class="text-slate-500">Press [5]</span>
+          </div>
+        </button>
+      </div>
+
+      <!-- DYNAMIC CRITIQUE BOX -->
+      <div id="critique-box" class="p-3.5 rounded-xl bg-black/50 border border-white/[0.08] space-y-2 mt-auto text-xs">
+        <!-- Will be populated by JS -->
+      </div>
+    </aside>
+
+    <!-- RIGHT MAIN CANVAS: LIVE PREVIEW STAGE -->
+    <main class="flex-1 bg-[#050608] flex items-center justify-center p-3 sm:p-6 overflow-y-auto relative">
+      <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(56,189,248,0.04),rgba(0,0,0,0)_70%)] pointer-events-none"></div>
+
+      <!-- PREVIEW STAGE WRAPPER -->
+      <div id="preview-frame" class="w-full max-w-5xl h-[84vh] bg-[#09090b] rounded-2xl border border-white/[0.12] shadow-2xl flex flex-col overflow-hidden relative transition-all duration-300">
+        
+        <!-- BROWSER SIMULATOR HEADER -->
+        <div class="h-8 bg-[#111218] border-b border-white/[0.08] px-3 flex items-center justify-between text-[11px] font-mono text-slate-400 shrink-0">
+          <div class="flex items-center gap-1.5">
+            <div class="w-2.5 h-2.5 rounded-full bg-rose-500/80"></div>
+            <div class="w-2.5 h-2.5 rounded-full bg-amber-500/80"></div>
+            <div class="w-2.5 h-2.5 rounded-full bg-emerald-500/80"></div>
+          </div>
+          <div class="px-3 py-0.5 rounded bg-black/60 border border-white/[0.06] text-[10px] flex items-center gap-1.5 text-slate-300">
+            <span class="text-emerald-400">🔒</span>
+            <span>https://musicsync.live</span>
+            <span id="browser-url-path" class="text-cyan-400">/</span>
+          </div>
+          <div id="device-label" class="text-[10px] text-slate-500">Desktop 1920x1080</div>
+        </div>
+
+        <!-- SIMULATED APP VIEWPORT -->
+        <div id="app-viewport" class="flex-1 relative overflow-hidden flex flex-col bg-[#09090b]">
+          <!-- Dynamic Content rendered by JavaScript -->
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- REAL LIVE INTERACTIVE MODAL: ABOUT -->
+  <div id="modal-about" class="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md hidden items-center justify-center p-4">
+    <div class="bg-[#0f1117] border border-cyan-500/30 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 relative text-xs">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-indigo-600 flex items-center justify-center font-bold text-white shadow-lg">
+            MS
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+              MusicSync Pro <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-400/30">v2.4 Titanium</span>
+            </h3>
+            <p class="text-slate-400 text-[11px]">High-Precision Multi-Device Audio Synchronizer</p>
+          </div>
+        </div>
+        <button onclick="closeModal('about')" class="p-1 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white">✕</button>
+      </div>
+
+      <div class="grid grid-cols-3 gap-2 text-center">
+        <div class="p-2 rounded-xl bg-black/60 border border-white/[0.06]">
+          <div class="text-[9px] text-slate-500 uppercase font-mono">Sync Accuracy</div>
+          <div class="text-sm font-bold text-cyan-300 font-mono">±2.5 ms</div>
+        </div>
+        <div class="p-2 rounded-xl bg-black/60 border border-white/[0.06]">
+          <div class="text-[9px] text-slate-500 uppercase font-mono">Sync Protocol</div>
+          <div class="text-sm font-bold text-emerald-400 font-mono">NTP RFC 5905</div>
+        </div>
+        <div class="p-2 rounded-xl bg-black/60 border border-white/[0.06]">
+          <div class="text-[9px] text-slate-500 uppercase font-mono">Audio Engine</div>
+          <div class="text-sm font-bold text-indigo-300 font-mono">Web Audio API</div>
+        </div>
+      </div>
+
+      <div class="p-3 rounded-xl bg-black/40 border border-white/[0.06] text-slate-300 space-y-2 leading-relaxed">
+        <p><strong>MusicSync</strong> transforms multiple smartphones, laptops, and speakers into a unified acoustic sound system with sub-millisecond precision.</p>
+        <p class="text-slate-400">Continuous NTP ping round-trips calculate clock offset, drift, and network jitter to synchronize playback buffers across all devices effortlessly.</p>
+      </div>
+
+      <div>
+        <div class="text-[10px] font-mono text-slate-400 uppercase font-bold mb-1">Architecture</div>
+        <div class="flex flex-wrap gap-1.5 text-[10px] font-mono">
+          <span class="px-2 py-0.5 rounded bg-zinc-900 border border-white/10 text-slate-300">React 18</span>
+          <span class="px-2 py-0.5 rounded bg-zinc-900 border border-white/10 text-slate-300">Socket.io NTP</span>
+          <span class="px-2 py-0.5 rounded bg-zinc-900 border border-white/10 text-slate-300">Web Audio API</span>
+          <span class="px-2 py-0.5 rounded bg-zinc-900 border border-white/10 text-slate-300">TailwindCSS</span>
+          <span class="px-2 py-0.5 rounded bg-zinc-900 border border-white/10 text-slate-300">TypeScript</span>
+        </div>
+      </div>
+
+      <div class="pt-3 border-t border-white/[0.08] flex justify-between items-center">
+        <span class="text-[11px] text-slate-500">Built for party sound & surround listening</span>
+        <button onclick="closeModal('about')" class="px-4 py-1.5 rounded-xl bg-cyan-500 text-black font-bold hover:bg-cyan-400 transition-all cursor-pointer">
+          Close Preview
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- REAL LIVE INTERACTIVE MODAL: HELP & GUIDE -->
+  <div id="modal-help" class="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md hidden items-center justify-center p-4">
+    <div class="bg-[#0f1117] border border-amber-500/30 rounded-2xl max-w-xl w-full p-6 shadow-2xl space-y-4 relative text-xs max-h-[85vh] flex flex-col">
+      <div class="flex items-center justify-between pb-3 border-b border-white/[0.08] shrink-0">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-500/30 text-amber-400 flex items-center justify-center font-bold text-base">
+            ?
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white">Help & Quick Start Guide</h3>
+            <p class="text-slate-400 text-[11px]">Everything you need to synchronize audio across devices</p>
+          </div>
+        </div>
+        <button onclick="closeModal('help')" class="p-1 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white">✕</button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto space-y-3 custom-scrollbar pr-1">
+        <div class="p-3 rounded-xl bg-amber-950/30 border border-amber-500/30 text-amber-200">
+          <h4 class="font-bold text-xs mb-1">🔊 Browser Audio Autoplay Unlock</h4>
+          <p class="text-[11px] text-amber-200/80 leading-relaxed">
+            Mobile browsers (iOS Safari & Chrome) require a physical screen tap before audio is unlocked. Tap anywhere on screen if you see the "Unlock Audio" prompt.
+          </p>
+        </div>
+
+        <div class="p-3 rounded-xl bg-black/60 border border-white/[0.06] space-y-2">
+          <h4 class="font-bold text-white text-xs">🚀 3 Steps to Sync</h4>
+          <div class="space-y-1.5 text-slate-300">
+            <div><strong>1. Host Creates Room:</strong> Tap "Create Room" to generate a 6-digit code or QR code.</div>
+            <div><strong>2. Guests Join:</strong> Friends open MusicSync on their phones and enter the 6-digit code.</div>
+            <div><strong>3. Hit Play:</strong> Add tracks to the queue. When the host plays, all devices play in millisecond sync!</div>
+          </div>
+        </div>
+
+        <div class="p-3 rounded-xl bg-black/60 border border-white/[0.06] space-y-2">
+          <h4 class="font-bold text-white text-xs">⌨️ Keyboard Shortcuts</h4>
+          <div class="grid grid-cols-2 gap-1.5 text-[11px] font-mono">
+            <div class="flex justify-between p-1.5 rounded bg-zinc-900 border border-white/5">
+              <span class="text-slate-300">Play / Pause</span>
+              <kbd class="px-1.5 rounded bg-zinc-800 text-amber-300">Space</kbd>
+            </div>
+            <div class="flex justify-between p-1.5 rounded bg-zinc-900 border border-white/5">
+              <span class="text-slate-300">Skip Track</span>
+              <kbd class="px-1.5 rounded bg-zinc-800 text-amber-300">Shift + →</kbd>
+            </div>
+            <div class="flex justify-between p-1.5 rounded bg-zinc-900 border border-white/5">
+              <span class="text-slate-300">Mute Audio</span>
+              <kbd class="px-1.5 rounded bg-zinc-800 text-amber-300">M</kbd>
+            </div>
+            <div class="flex justify-between p-1.5 rounded bg-zinc-900 border border-white/5">
+              <span class="text-slate-300">Fullscreen</span>
+              <kbd class="px-1.5 rounded bg-zinc-800 text-amber-300">F</kbd>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pt-3 border-t border-white/[0.08] flex justify-between items-center shrink-0">
+        <span class="text-[11px] text-slate-500">Press Esc or click Got It to dismiss</span>
+        <button onclick="closeModal('help')" class="px-4 py-1.5 rounded-xl bg-amber-500 text-black font-bold hover:bg-amber-400 transition-all cursor-pointer">
+          Got It
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentPosition = 1;
+    let isFabOpen = false;
+
+    const METADATA = {
+      1: {
+        title: "Position 1: Lobby Top-Right Quick Navbar",
+        badge: "Recommended Best for New Users",
+        score: "9.8 / 10",
+        path: "/",
+        pros: [
+          "Standard web convention (users instinctively look at top-right)",
+          "Prominent before creating or entering a room",
+          "Zero layout impact on room code input or create button",
+          "Clean capsule pill aesthetics"
+        ],
+        cons: [
+          "Only lives in the Lobby (needs a companion button inside active room)"
+        ],
+        verdict: "Perfect for explaining 'How MusicSync works' to visitors before they join."
+      },
+      2: {
+        title: "Position 2: Lobby Card Footer Links",
+        badge: "Ultra Minimalist",
+        score: "8.9 / 10",
+        path: "/",
+        pros: [
+          "Clean Linear / Discord landing page style",
+          "Centered right under the room action button",
+          "Zero visual distraction on the outer canvas"
+        ],
+        cons: [
+          "Slightly lower discovery rate than top-bar navigation"
+        ],
+        verdict: "Ideal if you want an ultra-distraction-free login card."
+      },
+      3: {
+        title: "Position 3: Floating Action Dial (FAB)",
+        badge: "Mobile Friendly & Thumb Accessible",
+        score: "9.1 / 10",
+        path: "/",
+        pros: [
+          "Thumb-friendly bottom-right corner on mobile smartphones",
+          "Can stay persistently visible in BOTH Lobby and in-room views",
+          "Interactive pulsing glow draws attention without clutter"
+        ],
+        cons: [
+          "Floating widget can occasionally overlap bottom toast notifications"
+        ],
+        verdict: "Great for mobile-first parties where users need instant assistance."
+      },
+      4: {
+        title: "Position 4: In-Room Titanium Header",
+        badge: "Recommended Inside Room",
+        score: "9.6 / 10",
+        path: "/room/64618",
+        pros: [
+          "Always accessible during live song playback",
+          "Sits naturally alongside Theme selector and Eject button",
+          "Essential for solving audio sync lag or Bluetooth latency during session"
+        ],
+        cons: [
+          "Only visible after joining or creating a room"
+        ],
+        verdict: "Must-have companion for in-session diagnostics and keyboard shortcuts."
+      },
+      5: {
+        title: "Position 5: In-Room Hardware Sidebar",
+        badge: "Teenage Engineering Hardware Style",
+        score: "8.7 / 10",
+        path: "/room/64618",
+        pros: [
+          "Fits the teenage-engineering hardware console theme",
+          "Has room for full descriptive labels and icons",
+          "Groups logically with Network Diagnostics and Room QR Code"
+        ],
+        cons: [
+          "On mobile screens, sidebar is hidden behind the Room tab"
+        ],
+        verdict: "Excellent for desktop DJs and power users managing party rooms."
+      }
+    };
+
+    function setViewMode(mode) {
+      const frame = document.getElementById('preview-frame');
+      const btnDesk = document.getElementById('btn-desktop-view');
+      const btnMob = document.getElementById('btn-mobile-view');
+      const devLabel = document.getElementById('device-label');
+
+      if (mode === 'mobile') {
+        frame.classList.remove('max-w-5xl');
+        frame.classList.add('max-w-[390px]', 'ring-8', 'ring-zinc-800/80');
+        btnMob.className = 'px-3 py-1 rounded-lg text-xs font-semibold bg-white/10 text-white transition-all';
+        btnDesk.className = 'px-3 py-1 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition-all';
+        devLabel.textContent = 'Mobile 390x844';
+      } else {
+        frame.classList.add('max-w-5xl');
+        frame.classList.remove('max-w-[390px]', 'ring-8', 'ring-zinc-800/80');
+        btnDesk.className = 'px-3 py-1 rounded-lg text-xs font-semibold bg-white/10 text-white transition-all';
+        btnMob.className = 'px-3 py-1 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition-all';
+        devLabel.textContent = 'Desktop 1920x1080';
+      }
+    }
+
+    function selectPosition(pos) {
+      currentPosition = pos;
+      for (let i = 1; i <= 5; i++) {
+        const btn = document.getElementById(`pos-btn-${i}`);
+        if (i === pos) {
+          btn.className = "w-full text-left p-3 rounded-xl border border-cyan-500/60 bg-white/[0.04] text-white transition-all ring-1 ring-cyan-500/40 shadow-lg cursor-pointer";
+        } else {
+          btn.className = "w-full text-left p-3 rounded-xl border border-white/[0.08] bg-white/[0.01] hover:bg-white/[0.03] text-slate-300 transition-all cursor-pointer";
+        }
+      }
+      renderCritique();
+      renderAppStage();
+    }
+
+    function renderCritique() {
+      const meta = METADATA[currentPosition];
+      document.getElementById('browser-url-path').textContent = meta.path;
+      document.getElementById('critique-box').innerHTML = `
+        <div class="flex items-center justify-between">
+          <span class="text-[10px] font-mono uppercase text-slate-400 font-bold">Analysis</span>
+          <span class="text-amber-400 font-mono font-bold">${meta.score}</span>
+        </div>
+        <div class="text-xs font-bold text-white">${meta.title}</div>
+        <div class="space-y-1 text-slate-300">
+          ${meta.pros.map(p => `<div class="flex items-start gap-1.5"><span class="text-emerald-400 font-bold">✓</span><span>${p}</span></div>`).join('')}
+        </div>
+        <div class="pt-2 border-t border-white/[0.08] text-[11px] text-cyan-300 italic">
+          💡 ${meta.verdict}
+        </div>
+      `;
+    }
+
+    function renderAppStage() {
+      const container = document.getElementById('app-viewport');
+      if (currentPosition === 1 || currentPosition === 2 || currentPosition === 3) {
+        // RENDER LOBBY
+        container.innerHTML = `
+          <div class="h-full w-full bg-[#09090b] text-slate-200 flex flex-col justify-center items-center px-4 relative overflow-y-auto">
+            
+            <!-- TOP BAR POSITION 1 -->
+            ${currentPosition === 1 ? `
+              <div class="absolute top-4 right-4 z-30 flex items-center gap-2">
+                <div class="relative pulse-glow">
+                  <div class="flex items-center gap-1.5 p-1 rounded-full bg-zinc-900/90 backdrop-blur-md border border-cyan-400 shadow-[0_0_20px_rgba(6,182,212,0.5)]">
+                    <button onclick="openModal('about')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-200 text-xs font-semibold cursor-pointer">
+                      <span>ℹ️</span> <span>About</span>
+                    </button>
+                    <span class="w-px h-3.5 bg-zinc-700"></span>
+                    <button onclick="openModal('help')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 text-xs font-semibold cursor-pointer">
+                      <span>❓</span> <span>Help & FAQ</span>
+                    </button>
+                  </div>
+                </div>
+                <span class="hidden sm:inline text-[10px] font-mono text-cyan-400 font-bold bg-cyan-950 px-2 py-0.5 rounded border border-cyan-800">
+                  ▲ Position 1 Live Trigger
+                </span>
+              </div>
+            ` : ''}
+
+            <!-- TOP LEFT LOGO BADGE -->
+            <div class="absolute top-4 left-4 z-20 flex items-center gap-2 text-xs font-mono text-slate-400">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+              <span>Web Audio NTP v2.4</span>
+            </div>
+
+            <!-- CENTRAL CARD -->
+            <div class="max-w-[400px] w-full bg-[#111115]/95 border border-white/[0.08] rounded-2xl p-6 shadow-2xl space-y-4 my-auto">
+              <div class="text-center space-y-1">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs font-bold text-white">
+                  <span>⚡</span> MusicSync Pro
+                </div>
+                <h3 class="text-lg font-extrabold text-white">Sync Music Across Phones</h3>
+              </div>
+
+              <!-- Input -->
+              <div class="space-y-1 text-xs">
+                <label class="text-slate-400 uppercase font-mono text-[10px]">Your Display Name</label>
+                <input type="text" value="AudioMaster" readonly class="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-white/10 text-white">
+              </div>
+
+              <!-- Button -->
+              <button class="w-full py-2.5 rounded-xl bg-white text-black font-bold text-xs shadow-md">
+                Create Live Room →
+              </button>
+
+              <!-- POSITION 2: CARD FOOTER -->
+              ${currentPosition === 2 ? `
+                <div class="relative pt-2">
+                  <div class="p-2 rounded-xl border border-cyan-400/80 bg-cyan-500/10 flex items-center justify-center gap-3 text-xs">
+                    <button onclick="openModal('about')" class="text-cyan-300 font-semibold hover:underline">
+                      ℹ️ About MusicSync
+                    </button>
+                    <span class="text-slate-600">•</span>
+                    <button onclick="openModal('help')" class="text-amber-300 font-semibold hover:underline">
+                      ❓ Help & FAQs
+                    </button>
+                  </div>
+                  <div class="text-center mt-1">
+                    <span class="text-[9px] font-mono text-cyan-400 font-bold bg-cyan-950 px-2 py-0.5 rounded border border-cyan-800">
+                      ▲ Position 2: Sub-Card Navigation Links
+                    </span>
+                  </div>
+                </div>
+              ` : `
+                <p class="text-[11px] text-slate-500 text-center">No account required · Sub-millisecond peer sync</p>
+              `}
+            </div>
+
+            <!-- POSITION 3: FAB -->
+            ${currentPosition === 3 ? `
+              <div class="absolute bottom-5 right-5 z-40 flex flex-col items-end gap-2">
+                ${isFabOpen ? `
+                  <div class="p-2 rounded-2xl bg-zinc-900 border border-cyan-400/60 shadow-2xl flex flex-col gap-1 text-xs min-w-[160px]">
+                    <button onclick="openModal('about')" class="p-2 rounded-lg hover:bg-zinc-800 text-left text-white flex items-center gap-2">
+                      <span>ℹ️</span> <span>About MusicSync</span>
+                    </button>
+                    <button onclick="openModal('help')" class="p-2 rounded-lg hover:bg-zinc-800 text-left text-white flex items-center gap-2">
+                      <span>❓</span> <span>Help & Guides</span>
+                    </button>
+                  </div>
+                ` : ''}
+                <div class="flex items-center gap-2">
+                  <span class="text-[10px] font-mono text-cyan-400 font-bold bg-cyan-950 px-2 py-0.5 rounded border border-cyan-800">
+                    ▲ Position 3 FAB
+                  </span>
+                  <button onclick="toggleFab()" class="w-12 h-12 rounded-full bg-gradient-to-tr from-cyan-600 to-indigo-600 border-2 border-white/40 text-white flex items-center justify-center text-lg shadow-2xl cursor-pointer hover:scale-105 active:scale-95 transition-all">
+                    ${isFabOpen ? '✕' : '❓'}
+                  </button>
+                </div>
+              </div>
+            ` : ''}
+
+          </div>
+        `;
+      } else {
+        // RENDER IN-ROOM CONTEXT (POSITIONS 4 & 5)
+        container.innerHTML = `
+          <div class="h-full w-full bg-[#0a0b0e] text-slate-200 flex flex-col font-mono text-xs">
+            <!-- TITANIUM TOP HEADER -->
+            <header class="h-12 bg-[#0d0f14] border-b border-zinc-800 px-4 flex items-center justify-between shrink-0">
+              <div class="flex items-center gap-3">
+                <span class="font-bold text-white">🎵 MUSIC//SYNC</span>
+                <span class="hidden sm:inline px-2 py-0.5 rounded bg-black/80 border border-zinc-800 text-[10px] text-emerald-400">
+                  ● NTP LOCKED (16/16)
+                </span>
+              </div>
+
+              <!-- RIGHT ACTIONS (POSITION 4) -->
+              <div class="flex items-center gap-2">
+                ${currentPosition === 4 ? `
+                  <div class="flex items-center gap-1.5 p-1 rounded-lg bg-zinc-900 border border-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.4)] pulse-glow">
+                    <button onclick="openModal('about')" class="px-2 py-1 rounded bg-black/80 text-cyan-300 hover:text-white border border-zinc-700 text-[11px] font-bold">
+                      ℹ️ About
+                    </button>
+                    <button onclick="openModal('help')" class="px-2 py-1 rounded bg-black/80 text-amber-300 hover:text-white border border-zinc-700 text-[11px] font-bold">
+                      ❓ Help
+                    </button>
+                  </div>
+                ` : `
+                  <div class="flex items-center gap-1 opacity-50">
+                    <button class="p-1 rounded bg-zinc-900 border border-zinc-800 text-slate-400">ℹ️</button>
+                    <button class="p-1 rounded bg-zinc-900 border border-zinc-800 text-slate-400">❓</button>
+                  </div>
+                `}
+                <button class="px-2.5 py-1 rounded bg-rose-950/60 border border-rose-800 text-rose-300 text-[10px] font-bold">
+                  EJECT
+                </button>
+              </div>
+            </header>
+
+            <div class="flex-1 flex overflow-hidden">
+              <!-- SIDEBAR (POSITION 5) -->
+              <aside class="w-56 bg-[#0d0f14] border-r border-zinc-800 p-3 flex flex-col justify-between shrink-0">
+                <div class="space-y-3">
+                  <div class="p-2 rounded bg-black/80 border border-zinc-800">
+                    <div class="text-[9px] text-slate-500 uppercase">ROOM CODE</div>
+                    <div class="text-sm font-bold text-cyan-400 tracking-wider">646-189</div>
+                  </div>
+                  <div class="text-[10px] text-slate-400">
+                    <div>● Host (Raj)</div>
+                    <div>● LivingRoom-Phone</div>
+                  </div>
+                </div>
+
+                <!-- SIDEBAR BOTTOM (POSITION 5) -->
+                <div class="space-y-2 pt-2 border-t border-zinc-800">
+                  ${currentPosition === 5 ? `
+                    <div class="p-2 rounded-xl bg-zinc-900 border border-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.3)] space-y-1.5 pulse-glow">
+                      <div class="text-[9px] font-bold text-cyan-300 uppercase">Position 5: Sidebar Utilities</div>
+                      <button onclick="openModal('about')" class="w-full text-left p-1.5 rounded bg-black/80 hover:bg-zinc-800 text-slate-200 text-xs flex items-center justify-between">
+                        <span>ℹ️ About MusicSync</span> <span>›</span>
+                      </button>
+                      <button onclick="openModal('help')" class="w-full text-left p-1.5 rounded bg-black/80 hover:bg-zinc-800 text-slate-200 text-xs flex items-center justify-between">
+                        <span>❓ Help & Guides</span> <span>›</span>
+                      </button>
+                    </div>
+                  ` : `
+                    <div class="space-y-1 opacity-50">
+                      <div class="p-1 rounded bg-zinc-950 text-slate-400 text-xs">ℹ️ About</div>
+                      <div class="p-1 rounded bg-zinc-950 text-slate-400 text-xs">❓ Help Docs</div>
+                    </div>
+                  `}
+                  <div class="text-[9px] text-slate-600 text-center font-mono">SYS // NTP ENGINE READY</div>
+                </div>
+              </aside>
+
+              <!-- MOCK PLAYER STAGE -->
+              <main class="flex-1 flex flex-col items-center justify-center p-6 gap-4">
+                <div class="w-40 h-40 rounded-2xl bg-gradient-to-tr from-cyan-950 via-zinc-900 to-indigo-950 border border-zinc-700 shadow-2xl flex items-center justify-center text-4xl">
+                  🎧
+                </div>
+                <div class="text-center font-sans">
+                  <div class="text-sm font-bold text-white">Cyber Synthwave Symphony</div>
+                  <div class="text-xs text-cyan-400 font-mono">Synced across 2 speakers (±1.8ms offset)</div>
+                </div>
+              </main>
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    function toggleFab() {
+      isFabOpen = !isFabOpen;
+      renderAppStage();
+    }
+
+    function openModal(type) {
+      document.getElementById(`modal-${type}`).classList.remove('hidden');
+      document.getElementById(`modal-${type}`).classList.add('flex');
+    }
+
+    function closeModal(type) {
+      document.getElementById(`modal-${type}`).classList.add('hidden');
+      document.getElementById(`modal-${type}`).classList.remove('flex');
+    }
+
+    // Keyboard shortcuts
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeModal('about');
+        closeModal('help');
+      }
+      if (e.key === '1') selectPosition(1);
+      if (e.key === '2') selectPosition(2);
+      if (e.key === '3') selectPosition(3);
+      if (e.key === '4') selectPosition(4);
+      if (e.key === '5') selectPosition(5);
+    });
+
+    // Initialize
+    selectPosition(1);
+  </script>
+</body>
+</html>
