@@ -159,7 +159,7 @@ export const AboutHelpModal: React.FC<AboutHelpModalProps> = ({
   const handleCopyEmail = (e: React.MouseEvent) => {
     e.stopPropagation();
     try {
-      navigator.clipboard.writeText('support@musicsync.live');
+      navigator.clipboard.writeText('Patelrajone0@gmail.com');
       setCopiedEmail(true);
       setTimeout(() => setCopiedEmail(false), 2200);
     } catch {}
@@ -395,87 +395,42 @@ export const AboutHelpModal: React.FC<AboutHelpModalProps> = ({
               )}
             </div>
 
-            {/* 4. QUICK CONTACT & LIVE SUPPORT OPTIONS */}
-            <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-zinc-950 via-[#13141c] to-zinc-950 border border-white/[0.08] space-y-3.5">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <div>
-                  <h4 className="text-sm font-bold text-white flex items-center gap-2">
-                    <Headphones className="w-4 h-4 text-cyan-400" />
-                    <span>Need More Help or Have an Issue?</span>
-                  </h4>
-                  <p className="text-xs text-zinc-400 mt-0.5">
-                    Connect directly with the developer and global audio community
-                  </p>
-                </div>
-                <div className="flex items-center gap-1.5 text-[11px] font-mono text-cyan-300 bg-cyan-950/60 px-2.5 py-1 rounded-full border border-cyan-500/30 w-fit">
-                  <Clock className="w-3 h-3" />
-                  <span>Avg reply: &lt; 2 hrs</span>
-                </div>
+            {/* 4. DIRECT DEVELOPER EMAIL SUPPORT */}
+            <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-zinc-950 via-[#13141c] to-zinc-950 border border-white/[0.08] space-y-3">
+              <div>
+                <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                  <Headphones className="w-4 h-4 text-amber-400" />
+                  <span>Need More Help or Have an Issue?</span>
+                </h4>
+                <p className="text-xs text-zinc-400 mt-0.5">
+                  Reach out directly for assistance, bug reports, or feedback
+                </p>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
-                {/* Email Support */}
+              <div className="pt-1">
                 <a
-                  href="mailto:support@musicsync.live?subject=MusicSync%20Inquiry"
+                  href="mailto:Patelrajone0@gmail.com?subject=MusicSync%20Support%20Inquiry"
                   onClick={handleCopyEmail}
-                  className="p-3 rounded-xl bg-zinc-900/90 hover:bg-zinc-850 border border-white/[0.08] hover:border-cyan-500/40 transition-all flex items-center justify-between group cursor-pointer"
+                  className="p-3.5 rounded-xl bg-zinc-900/90 hover:bg-zinc-850 border border-white/[0.08] hover:border-amber-500/40 transition-all flex items-center justify-between group cursor-pointer shadow-sm"
                 >
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
                       <Mail className="w-4 h-4" />
                     </div>
                     <div className="text-left">
-                      <div className="text-xs font-bold text-white group-hover:text-cyan-300 transition-colors">
-                        Email Support
+                      <div className="text-xs font-bold text-white group-hover:text-amber-300 transition-colors flex items-center gap-2">
+                        <span>Email Support</span>
+                        <span className="text-[10px] text-zinc-500 font-normal hidden sm:inline">(Click to email or copy)</span>
                       </div>
-                      <div className="text-[10px] text-zinc-400">
-                        {copiedEmail ? 'Copied to clipboard!' : 'support@musicsync.live'}
+                      <div className="text-xs font-mono text-amber-300/90 font-medium mt-0.5">
+                        {copiedEmail ? '✓ Copied to clipboard!' : 'Patelrajone0@gmail.com'}
                       </div>
                     </div>
                   </div>
-                  <ExternalLink className="w-3.5 h-3.5 text-zinc-600 group-hover:text-cyan-400" />
-                </a>
-
-                {/* Community Forum / GitHub */}
-                <a
-                  href="https://github.com/Patelrajone0/MusicSync/issues"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="p-3 rounded-xl bg-zinc-900/90 hover:bg-zinc-850 border border-white/[0.08] hover:border-amber-500/40 transition-all flex items-center justify-between group cursor-pointer"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
-                      <GithubIcon className="w-4 h-4" />
-                    </div>
-                    <div className="text-left">
-                      <div className="text-xs font-bold text-white group-hover:text-amber-300 transition-colors">
-                        GitHub Issues
-                      </div>
-                      <div className="text-[10px] text-zinc-400">Bug reports & requests</div>
-                    </div>
+                  <div className="flex items-center gap-2 text-xs text-zinc-400 group-hover:text-amber-300">
+                    <span className="hidden sm:inline text-[11px] font-mono">{copiedEmail ? 'Copied' : 'Contact'}</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
                   </div>
-                  <ExternalLink className="w-3.5 h-3.5 text-zinc-600 group-hover:text-amber-400" />
-                </a>
-
-                {/* Live Chat / Discussions */}
-                <a
-                  href="https://github.com/Patelrajone0/MusicSync/discussions"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="p-3 rounded-xl bg-zinc-900/90 hover:bg-zinc-850 border border-white/[0.08] hover:border-indigo-500/40 transition-all flex items-center justify-between group cursor-pointer"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
-                      <MessageSquare className="w-4 h-4" />
-                    </div>
-                    <div className="text-left">
-                      <div className="text-xs font-bold text-white group-hover:text-indigo-300 transition-colors">
-                        Community Forum
-                      </div>
-                      <div className="text-[10px] text-zinc-400">Share setups & ideas</div>
-                    </div>
-                  </div>
-                  <ExternalLink className="w-3.5 h-3.5 text-zinc-600 group-hover:text-indigo-400" />
                 </a>
               </div>
             </div>
