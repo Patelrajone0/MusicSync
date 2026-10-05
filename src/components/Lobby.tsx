@@ -6,7 +6,10 @@ import {
   Sparkles,
   Plus,
   LogIn,
+  Info,
+  HelpCircle,
 } from 'lucide-react';
+import { AboutHelpModal, AboutHelpModalType } from './AboutHelpModal';
 import { RoomState, User } from '../types';
 import { socket } from '../services/socket';
 import { syncEngine } from '../services/syncEngine';
@@ -50,6 +53,43 @@ export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' 
   const [isEntering, setIsEntering] = useState<boolean>(false);
   const [pendingRoomReady, setPendingRoomReady] = useState<{ room: RoomState; user: User } | null>(null);
   const [errorMessage, setErrorMessage] = useState<string>('');
+  const [activeModal, setActiveModal] = useState<AboutHelpModalType>(null);
+  const [buttonPlacement] = useState<'header' | 'footer'>(() => {
+    try {
+      const p = new URLSearchParams(window.location.search).get('placement');
+      return p === 'footer' || p === 'bottom' ? 'footer' : 'header';
+    } catch {
+      return 'header';
+    }
+  });
+
+  const renderFeaturedButtons = (size: 'normal' | 'compact' = 'normal') => (
+    <>
+      <button
+        type="button"
+        onClick={() => setActiveModal('about')}
+        className={`inline-flex items-center gap-1.5 rounded-full bg-zinc-900/90 hover:bg-zinc-800 border border-white/[0.08] hover:border-cyan-500/40 text-zinc-300 hover:text-white font-medium transition-all duration-150 active:scale-95 cursor-pointer shadow-sm group ${
+          size === 'compact' ? 'px-2.5 py-1 text-[11px]' : 'px-3 py-1.5 text-xs'
+        }`}
+        title="About MusicSync"
+      >
+        <Info className="w-3.5 h-3.5 text-zinc-400 group-hover:text-cyan-400 transition-colors" />
+        <span>About</span>
+      </button>
+
+      <button
+        type="button"
+        onClick={() => setActiveModal('help')}
+        className={`inline-flex items-center gap-1.5 rounded-full bg-zinc-900/90 hover:bg-zinc-800 border border-white/[0.08] hover:border-amber-500/40 text-zinc-300 hover:text-white font-medium transition-all duration-150 active:scale-95 cursor-pointer shadow-sm group ${
+          size === 'compact' ? 'px-2.5 py-1 text-[11px]' : 'px-3 py-1.5 text-xs'
+        }`}
+        title="Help & Quick Start Guide"
+      >
+        <HelpCircle className="w-3.5 h-3.5 text-zinc-400 group-hover:text-amber-400 transition-colors" />
+        <span>Help</span>
+      </button>
+    </>
+  );
 
   const handleNetworkModeChange = (mode: NetworkMode) => {
     setNetworkMode(mode);
@@ -236,9 +276,10 @@ export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' 
             <Logo size="lg" layout="vertical" variant="titanium" showTagline={false} />
           </a>
 
-          {/* Quick Install */}
+          {/* Quick Install & Featured Utility Badges */}
           <div className="flex items-center gap-2 flex-wrap justify-center">
             <InstallAppButton variant="lobby" />
+            {buttonPlacement === 'header' && renderFeaturedButtons('normal')}
           </div>
         </div>
 
@@ -446,10 +487,17 @@ export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' 
           )}
         </div>
 
-        {/* Minimal Footer Note */}
-        <p className="text-[11px] text-zinc-500 text-center mt-4">
-          No account required · Instant peer-to-peer sync
-        </p>
+        {/* Minimal Footer Note & Optional Utility Badges */}
+        <div className="flex flex-col items-center gap-2 mt-4">
+          <p className="text-[11px] text-zinc-500 text-center">
+            No account required · Instant peer-to-peer sync
+          </p>
+          {buttonPlacement === 'footer' && (
+            <div className="flex items-center gap-2 mt-1">
+              {renderFeaturedButtons('compact')}
+            </div>
+          )}
+        </div>
       </div>
 
 
@@ -466,6 +514,12 @@ export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' 
           }}
         />
       )}
+
+      {/* About & Help Modal */}
+      <AboutHelpModal
+        type={activeModal}
+        onClose={() => setActiveModal(null)}
+      />
     </div>
   );
 };
