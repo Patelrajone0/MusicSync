@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Info,
   HelpCircle,
@@ -108,8 +108,6 @@ const FAQS_DATA: FAQItem[] = [
   }
 ];
 
-const CATEGORIES = ['All', 'Getting Started', 'Audio & Latency', 'Network & Modes', 'Host & Controls'] as const;
-
 interface AboutHelpModalProps {
   type: AboutHelpModalType;
   onClose: () => void;
@@ -120,7 +118,6 @@ export const AboutHelpModal: React.FC<AboutHelpModalProps> = ({
   onClose
 }) => {
   // Help section states
-  const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [expandedFaqId, setExpandedFaqId] = useState<string | null>('faq-1');
   const [copiedEmail, setCopiedEmail] = useState(false);
 
@@ -136,13 +133,6 @@ export const AboutHelpModal: React.FC<AboutHelpModalProps> = ({
     }
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [type, onClose]);
-
-  // Filtered FAQs based on category
-  const filteredFaqs = useMemo(() => {
-    return FAQS_DATA.filter((item) => {
-      return selectedCategory === 'All' || item.category === selectedCategory;
-    });
-  }, [selectedCategory]);
 
   const handleCopyEmail = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -226,52 +216,19 @@ export const AboutHelpModal: React.FC<AboutHelpModalProps> = ({
         {type === 'help' && (
           <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-5 space-y-6">
             
-            {/* 1. CATEGORY FILTER CHIPS */}
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
-              {CATEGORIES.map((cat) => {
-                const isSelected = selectedCategory === cat;
-                return (
-                  <button
-                    key={cat}
-                    type="button"
-                    onClick={() => setSelectedCategory(cat)}
-                    className={`px-3 py-1.5 rounded-xl font-medium whitespace-nowrap transition-all cursor-pointer ${
-                      isSelected
-                        ? 'bg-amber-400 text-zinc-950 font-bold shadow-md shadow-amber-500/20'
-                        : 'bg-zinc-900/80 hover:bg-zinc-800 border border-white/[0.08] text-zinc-300 hover:text-white'
-                    }`}
-                  >
-                    {cat}
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* 2. CATEGORIZED FAQS ACCORDION */}
+            {/* 1. FAQS ACCORDION */}
             <div className="space-y-2.5">
               <div className="flex items-center justify-between px-1">
                 <span className="text-[11px] font-mono uppercase text-zinc-400 font-bold tracking-wider">
                   Frequently Asked Questions
                 </span>
                 <span className="text-[11px] text-zinc-500 font-mono">
-                  {filteredFaqs.length} Guides Available
+                  {FAQS_DATA.length} Guides
                 </span>
               </div>
 
-              {filteredFaqs.length === 0 ? (
-                <div className="p-8 rounded-2xl bg-zinc-950/60 border border-white/[0.06] text-center space-y-2">
-                  <h4 className="text-sm font-bold text-white">No questions in this category</h4>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedCategory('All')}
-                    className="mt-2 px-3 py-1.5 rounded-xl bg-zinc-800 text-xs font-semibold text-white hover:bg-zinc-700"
-                  >
-                    View All Questions
-                  </button>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {filteredFaqs.map((faq) => {
+              <div className="space-y-2">
+                {FAQS_DATA.map((faq) => {
                     const isOpen = expandedFaqId === faq.id;
                     return (
                       <div
@@ -316,11 +273,10 @@ export const AboutHelpModal: React.FC<AboutHelpModalProps> = ({
                       </div>
                     );
                   })}
-                </div>
-              )}
+              </div>
             </div>
 
-            {/* 4. DIRECT DEVELOPER EMAIL SUPPORT */}
+            {/* 2. DIRECT DEVELOPER EMAIL SUPPORT */}
             <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-zinc-950 via-[#13141c] to-zinc-950 border border-white/[0.08] space-y-3">
               <div>
                 <h4 className="text-sm font-bold text-white flex items-center gap-2">
