@@ -125,15 +125,20 @@ export const RoomCreationContent: React.FC<RoomCreationCardProps> = ({
   if (theme === 'demo5') {
     return (
       <div
+        style={{
+          backgroundColor: '#000000',
+          borderColor: 'var(--bg-border, rgba(255, 255, 255, 0.14))',
+          boxShadow: '0 25px 60px rgba(0,0,0,1), 0 0 25px rgba(255,255,255,0.05)',
+        }}
         className={`relative w-full ${
           isCompact ? 'max-w-[340px] p-5' : 'max-w-[420px] p-7 sm:p-8'
-        } rounded-[26px] bg-[#121418]/95 border border-emerald-500/25 shadow-[0_25px_60px_rgba(0,0,0,0.95),0_0_35px_rgba(16,185,129,0.14)] text-left select-none font-sans backdrop-blur-xl`}
+        } rounded-[28px] border text-left select-none font-sans overflow-hidden ring-1 ring-white/10`}
       >
-        {/* Ambient emerald backlight */}
-        <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-48 h-48 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
+        {/* Specular Top Hairline */}
+        <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none" />
 
         {/* Floating Titanium Logo Emblem */}
-        <div className="flex justify-center mb-3.5 relative z-10">
+        <div className="flex justify-center mb-4 relative z-10">
           <img
             src="/musicsync-titanium.png?v=6"
             alt="MusicSync"
@@ -141,13 +146,22 @@ export const RoomCreationContent: React.FC<RoomCreationCardProps> = ({
           />
         </div>
 
-        {/* Status Header with Pulsing Mint Dot */}
+        {/* Status Header with Pulsing Theme Dot */}
         <div className="flex items-center justify-center gap-2 mb-4 relative z-10">
           <span className="relative flex h-2.5 w-2.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400 shadow-[0_0_12px_#34d399]" />
+            <span
+              style={{ backgroundColor: 'var(--theme-accent, #00f0ff)' }}
+              className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"
+            />
+            <span
+              style={{
+                backgroundColor: 'var(--theme-accent, #00f0ff)',
+                boxShadow: '0 0 10px var(--theme-accent, #00f0ff)',
+              }}
+              className="relative inline-flex rounded-full h-2.5 w-2.5"
+            />
           </span>
-          <span className="text-xs sm:text-sm font-semibold text-zinc-300">
+          <span className="text-xs sm:text-sm font-semibold text-zinc-100 tracking-tight">
             {step >= totalDashes ? 'Master Audio Clock Locked' : 'Calibrating Room Session...'}
           </span>
         </div>
@@ -161,8 +175,8 @@ export const RoomCreationContent: React.FC<RoomCreationCardProps> = ({
                 key={i}
                 className={`h-1.5 sm:h-2 rounded-full transition-all duration-150 ${
                   isFilled
-                    ? 'bg-white shadow-[0_0_16px_rgba(255,255,255,1),0_0_30px_rgba(255,255,255,0.6)]'
-                    : 'bg-[#24272f]'
+                    ? 'bg-white shadow-[0_0_16px_rgba(255,255,255,1),0_0_24px_var(--theme-accent,rgba(0,240,255,0.6))]'
+                    : 'bg-[#0c0c10] border border-white/[0.08]'
                 }`}
               />
             );
@@ -170,7 +184,7 @@ export const RoomCreationContent: React.FC<RoomCreationCardProps> = ({
         </div>
 
         {/* LIVE MONOSPACE TELEMETRY (Directly below calibration dashes) */}
-        <div className="space-y-2 font-mono text-xs sm:text-[13px] text-zinc-400 pt-2 border-t border-white/[0.06] relative z-10">
+        <div className="space-y-2 font-mono text-xs sm:text-[13px] text-zinc-400 pt-3 border-t border-white/[0.08] relative z-10">
           <div className="flex justify-between items-center">
             <span className="text-zinc-500">mesh nodes</span>
             <span className="text-zinc-200 tabular-nums">{meshNodes} sent</span>
@@ -178,8 +192,16 @@ export const RoomCreationContent: React.FC<RoomCreationCardProps> = ({
           <div className="flex justify-between items-center">
             <span className="text-zinc-500">clock offset</span>
             <span
+              style={
+                clockOffset === '0.00'
+                  ? {
+                      color: 'var(--theme-accent, #00f0ff)',
+                      textShadow: '0 0 8px var(--theme-accent, #00f0ff)',
+                    }
+                  : undefined
+              }
               className={`tabular-nums font-semibold transition-colors duration-150 ${
-                clockOffset === '0.00' ? 'text-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]' : 'text-zinc-300'
+                clockOffset === '0.00' ? '' : 'text-zinc-200'
               }`}
             >
               {clockOffset} ms
@@ -196,10 +218,16 @@ export const RoomCreationContent: React.FC<RoomCreationCardProps> = ({
           <div className="flex justify-between items-center">
             <span className="text-zinc-500">ws relay</span>
             <span
-              className={`font-bold uppercase tracking-wider transition-colors duration-200 ${
+              style={
                 wsRelayText === 'LOCKED'
-                  ? 'text-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.6)]'
-                  : 'text-zinc-400'
+                  ? {
+                      color: 'var(--theme-accent, #00f0ff)',
+                      textShadow: '0 0 10px var(--theme-accent, #00f0ff)',
+                    }
+                  : undefined
+              }
+              className={`font-bold uppercase tracking-wider transition-colors duration-200 ${
+                wsRelayText === 'LOCKED' ? '' : 'text-zinc-400'
               }`}
             >
               {wsRelayText}
@@ -216,9 +244,14 @@ export const RoomCreationContent: React.FC<RoomCreationCardProps> = ({
   if (theme === 'demo1') {
     return (
       <div
+        style={{
+          backgroundColor: '#000000',
+          borderColor: 'var(--bg-border, rgba(255, 255, 255, 0.14))',
+          boxShadow: '0 25px 60px rgba(0,0,0,1)',
+        }}
         className={`relative w-full ${
           isCompact ? 'max-w-[340px] p-5' : 'max-w-[420px] p-7 sm:p-8'
-        } rounded-[26px] bg-[#14161a] border border-[#23262d] shadow-[0_25px_60px_rgba(0,0,0,0.95)] text-left select-none font-sans`}
+        } rounded-[28px] border text-left select-none font-sans overflow-hidden ring-1 ring-white/10`}
       >
         <div className="flex flex-col items-center text-center space-y-1.5 mb-6">
           <div className="flex items-center gap-2.5">
@@ -285,9 +318,14 @@ export const RoomCreationContent: React.FC<RoomCreationCardProps> = ({
 
     return (
       <div
+        style={{
+          backgroundColor: '#000000',
+          borderColor: 'var(--bg-border, rgba(255, 255, 255, 0.14))',
+          boxShadow: '0 25px 60px rgba(0,0,0,1)',
+        }}
         className={`relative w-full ${
           isCompact ? 'max-w-[340px] p-5' : 'max-w-[420px] p-7 sm:p-8'
-        } rounded-[26px] bg-[#121418] border border-white/[0.08] shadow-[0_25px_60px_rgba(0,0,0,0.95)] text-left select-none font-sans`}
+        } rounded-[28px] border text-left select-none font-sans overflow-hidden ring-1 ring-white/10`}
       >
         <div className="flex flex-col items-center text-center space-y-1.5 mb-5">
           <div className="flex items-center gap-2.5">
@@ -352,9 +390,14 @@ export const RoomCreationContent: React.FC<RoomCreationCardProps> = ({
   if (theme === 'demo3') {
     return (
       <div
+        style={{
+          backgroundColor: '#000000',
+          borderColor: 'var(--bg-border, rgba(255, 255, 255, 0.14))',
+          boxShadow: '0 25px 60px rgba(0,0,0,1)',
+        }}
         className={`relative w-full ${
           isCompact ? 'max-w-[340px] p-5' : 'max-w-[420px] p-7 sm:p-8'
-        } rounded-[26px] bg-[#131519] border border-white/[0.08] shadow-[0_25px_60px_rgba(0,0,0,0.95)] text-center select-none font-sans`}
+        } rounded-[28px] border text-center select-none font-sans overflow-hidden ring-1 ring-white/10`}
       >
         <div className="flex flex-col items-center space-y-1 mb-4">
           <div className="flex items-center gap-2">
@@ -427,9 +470,14 @@ export const RoomCreationContent: React.FC<RoomCreationCardProps> = ({
   if (theme === 'demo4') {
     return (
       <div
+        style={{
+          backgroundColor: '#000000',
+          borderColor: 'var(--bg-border, rgba(255, 255, 255, 0.14))',
+          boxShadow: '0 25px 60px rgba(0,0,0,1)',
+        }}
         className={`relative w-full ${
           isCompact ? 'max-w-[340px] p-5' : 'max-w-[420px] p-7 sm:p-8'
-        } rounded-[26px] bg-[#101317] border border-emerald-500/25 shadow-[0_25px_60px_rgba(0,0,0,0.95),0_0_30px_rgba(16,185,129,0.15)] text-left select-none font-sans`}
+        } rounded-[28px] border text-left select-none font-sans overflow-hidden ring-1 ring-white/10`}
       >
         <div className="flex flex-col items-center text-center space-y-1.5 mb-6">
           <div className="flex items-center gap-2.5">
@@ -493,9 +541,14 @@ export const RoomCreationContent: React.FC<RoomCreationCardProps> = ({
   // =========================================================================
   return (
     <div
+      style={{
+        backgroundColor: '#000000',
+        borderColor: 'var(--bg-border, rgba(255, 255, 255, 0.14))',
+        boxShadow: '0 25px 60px rgba(0,0,0,1)',
+      }}
       className={`relative w-full ${
         isCompact ? 'max-w-[340px] p-5' : 'max-w-[420px] p-7 sm:p-8'
-      } rounded-[26px] bg-[#0c0f14] border border-cyan-500/30 shadow-[0_25px_60px_rgba(0,0,0,0.95),0_0_30px_rgba(0,240,255,0.15)] text-left select-none font-mono`}
+      } rounded-[28px] border text-left select-none font-mono overflow-hidden ring-1 ring-white/10`}
     >
       <div className="flex justify-between items-center mb-4 border-b border-cyan-500/20 pb-3">
         <div className="flex items-center gap-2">
@@ -569,7 +622,10 @@ export const RoomCreationOverlay: React.FC<RoomCreationOverlayProps> = ({
   });
 
   return (
-    <div className="fixed inset-0 z-[99999] w-full h-full bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in select-none">
+    <div
+      style={{ backgroundColor: '#000000' }}
+      className="fixed inset-0 z-[99999] w-full h-full bg-black flex items-center justify-center p-4 animate-fade-in select-none"
+    >
       <RoomCreationContent
         theme={selectedTheme}
         isCompact={false}
@@ -695,7 +751,10 @@ export const RoomCreationLoadingDemo: React.FC<RoomCreationLoadingDemoProps> = (
   }, [onClose]);
 
   return (
-    <div className="fixed inset-0 z-[99999] w-full h-full bg-[#090a0d] flex flex-col select-none overflow-hidden font-sans text-white">
+    <div
+      style={{ backgroundColor: '#000000' }}
+      className="fixed inset-0 z-[99999] w-full h-full bg-black flex flex-col select-none overflow-hidden font-sans text-white"
+    >
       {/* Top Header Controls Bar */}
       <header className="sticky top-0 z-50 w-full px-4 sm:px-6 py-3.5 bg-[#101217]/95 backdrop-blur-2xl border-b border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-2xl">
         <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-start">
