@@ -8,7 +8,6 @@ import {
   LogIn,
   Info,
   HelpCircle,
-  Palette,
 } from 'lucide-react';
 import { AboutHelpModal, AboutHelpModalType } from './AboutHelpModal';
 import { BackgroundShowcase } from './BackgroundShowcase';
@@ -18,7 +17,6 @@ import { syncEngine } from '../services/syncEngine';
 import { Logo } from './Logo';
 import { getDeviceId } from '../utils/deviceId';
 import { NetworkMode } from './NetworkModeModal';
-import { InstallAppButton } from './InstallAppButton';
 import { RoomCreationOverlay } from './RoomCreationLoading';
 import { haptics } from '../utils/haptics';
 
@@ -90,18 +88,6 @@ export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' 
       >
         <HelpCircle className="w-3.5 h-3.5 text-zinc-400 group-hover:text-amber-400 transition-colors" />
         <span>Help</span>
-      </button>
-
-      <button
-        type="button"
-        onClick={() => setIsThemeShowcaseOpen(true)}
-        className={`inline-flex items-center gap-1.5 rounded-full bg-zinc-900/90 hover:bg-zinc-800 border border-white/[0.08] hover:border-cyan-400/40 text-zinc-300 hover:text-white font-medium transition-all duration-150 active:scale-95 cursor-pointer shadow-sm group ${
-          size === 'compact' ? 'px-2.5 py-1 text-[11px]' : 'px-3 py-1.5 text-xs'
-        }`}
-        title="Change Background Atmosphere & Color Theme"
-      >
-        <Palette className="w-3.5 h-3.5 text-zinc-400 group-hover:text-cyan-400 transition-colors" />
-        <span>Theme</span>
       </button>
     </>
   );
@@ -297,9 +283,8 @@ export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' 
             <Logo size="lg" layout="vertical" variant="titanium" showTagline={false} />
           </a>
 
-          {/* Quick Install & Featured Utility Badges */}
+          {/* Featured Utility Badges */}
           <div className="flex items-center gap-2 flex-wrap justify-center">
-            <InstallAppButton variant="lobby" />
             {buttonPlacement === 'header' && renderFeaturedButtons('normal')}
           </div>
         </div>

@@ -594,12 +594,7 @@ const MoreOptionsMenu: React.FC<MoreOptionsMenuProps> = ({
     };
   }, [isOpen]);
 
-  const accentColor =
-    variant === 'rack'
-      ? '#34d399'
-      : variant === 'aerograde'
-      ? '#e2e8f0'
-      : 'var(--theme-accent, #00f0ff)';
+  const iconColor = '#ff3b5c';
 
   return (
     <div className="relative" ref={menuRef} onClick={(e) => e.stopPropagation()}>
@@ -615,11 +610,11 @@ const MoreOptionsMenu: React.FC<MoreOptionsMenuProps> = ({
         title="More options and session controls"
         className={`group relative flex items-center justify-center rounded-full transition-all duration-200 cursor-pointer active:scale-95 ${
           isOpen
-            ? 'scale-105 drop-shadow-[0_0_10px_currentColor]'
-            : 'hover:scale-[1.03] hover:drop-shadow-[0_0_6px_currentColor]'
+            ? 'scale-105 drop-shadow-[0_0_12px_#ff3b5c]'
+            : 'hover:scale-[1.03] hover:drop-shadow-[0_0_8px_#ff3b5c]'
         }`}
         style={{
-          color: accentColor,
+          color: iconColor,
         }}
       >
         <MoreOptionsCapsuleIcon
