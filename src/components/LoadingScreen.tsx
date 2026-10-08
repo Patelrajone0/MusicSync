@@ -1,5 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
+import { Moon, X } from 'lucide-react';
+import {
+  getStoredBackgroundTheme,
+  applyBackgroundTheme,
+  BackgroundThemeId,
+} from '../types/backgroundThemes';
+import { haptics } from '../utils/haptics';
 
 interface LoadingScreenProps {
   isPreview?: boolean;
@@ -8,6 +14,7 @@ interface LoadingScreenProps {
   onComplete?: () => void;
   statusText?: string;
   minDuration?: number;
+  isOled?: boolean;
 }
 
 export const LoadingScreen: React.FC<LoadingScreenProps> = ({
@@ -17,10 +24,47 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({
   onComplete,
   statusText,
   minDuration = 1800, // 1 complete, elegant animation cycle (~1.8s)
+  isOled: forcedOled,
 }) => {
   const [progressPercent, setProgressPercent] = useState(15);
   const [hasCompletedCycle, setHasCompletedCycle] = useState(false);
   const [isFadingOut, setIsFadingOut] = useState(false);
+  const [currentTheme, setCurrentTheme] = useState<BackgroundThemeId>(getStoredBackgroundTheme);
+  const [isOledMode, setIsOledMode] = useState<boolean>(() => {
+    if (typeof forcedOled === 'boolean') return forcedOled;
+    const stored = getStoredBackgroundTheme();
+    return stored === 'pure-oled-black' || stored === 'midnight-obsidian';
+  });
+
+  // Listen to background theme changes
+  useEffect(() => {
+    const handleThemeChange = (e: any) => {
+      if (e.detail?.themeId) {
+        setCurrentTheme(e.detail.themeId);
+        if (typeof forcedOled !== 'boolean') {
+          setIsOledMode(
+            e.detail.themeId === 'pure-oled-black' || e.detail.themeId === 'midnight-obsidian'
+          );
+        }
+      }
+    };
+    window.addEventListener('musicsync_bg_theme_changed', handleThemeChange);
+    return () => window.removeEventListener('musicsync_bg_theme_changed', handleThemeChange);
+  }, [forcedOled]);
+
+  const handleToggleOled = () => {
+    const nextOled = !isOledMode;
+    setIsOledMode(nextOled);
+    haptics.selection();
+    if (nextOled) {
+      applyBackgroundTheme('pure-oled-black');
+    } else {
+      applyBackgroundTheme('midnight-obsidian');
+    }
+  };
+
+  const isOledActive = forcedOled ?? isOledMode;
+  const isLight = !isOledActive && currentTheme === 'pure-light';
 
   // Smooth, natural progress easing across minDuration
   useEffect(() => {
@@ -76,24 +120,50 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({
 
   const isDone = progressPercent >= 100;
 
+  // Exact 100% pitch black (#000000) for OLED
+  const containerBg = isOledActive
+    ? '#000000'
+    : isLight
+    ? '#f8fafc'
+    : 'var(--bg-primary, #000000)';
+
   return (
     <div
-      className={`fixed inset-0 z-[99999] w-full h-full bg-[#08080a] flex flex-col items-center justify-center select-none overflow-hidden font-sans transition-opacity duration-300 ${
+      data-oled={isOledActive ? 'true' : 'false'}
+      style={{ backgroundColor: containerBg }}
+      className={`fixed inset-0 z-[99999] w-full h-full loading-screen-container flex flex-col items-center justify-center select-none overflow-hidden font-sans transition-opacity duration-300 ${
         isFadingOut ? 'opacity-0 pointer-events-none' : 'opacity-100 animate-fade-in'
       }`}
     >
-      {/* Floating Exit Button (only shown in preview mode) */}
-      {isPreview && onClose && (
-        <div className="absolute top-5 right-5 z-50">
+      {/* Floating Header Controls (only shown in preview mode) */}
+      {isPreview && (
+        <div className="absolute top-4 sm:top-5 right-4 sm:right-5 z-50 flex items-center gap-2">
+          {/* OLED Black Mode Toggle Pill */}
           <button
             type="button"
-            onClick={onClose}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-zinc-900/90 hover:bg-zinc-800 text-zinc-400 hover:text-white border border-zinc-800 text-xs font-medium transition-all cursor-pointer shadow-lg backdrop-blur-md"
-            title="Close Preview (Esc)"
+            onClick={handleToggleOled}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer shadow-md backdrop-blur-md border ${
+              isOledActive
+                ? 'bg-white/10 text-white border-white/30 shadow-[0_0_12px_rgba(255,255,255,0.2)]'
+                : 'bg-zinc-900/80 text-zinc-400 hover:text-white border-white/10'
+            }`}
+            title="Toggle OLED Pure Black mode (#000000)"
           >
-            <X className="w-3.5 h-3.5" />
-            <span>Close Preview</span>
+            <Moon className={`w-3.5 h-3.5 ${isOledActive ? 'text-white' : 'text-zinc-400'}`} />
+            <span>{isOledActive ? 'OLED Black: ON (#000000)' : 'OLED Black: OFF'}</span>
           </button>
+
+          {onClose && (
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-zinc-900/90 hover:bg-zinc-800 text-zinc-400 hover:text-white border border-white/10 text-xs font-medium transition-all cursor-pointer shadow-lg backdrop-blur-md active:scale-95"
+              title="Close Preview (Esc)"
+            >
+              <X className="w-3.5 h-3.5" />
+              <span>Close</span>
+            </button>
+          )}
         </div>
       )}
 
@@ -111,13 +181,25 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({
         {/* Clean, Simple Green Loading Line */}
         <div className="w-48 sm:w-56 space-y-3">
           {/* Minimal 2.5px Recessed Rail Track */}
-          <div className="relative w-full h-[2.5px] rounded-full bg-zinc-800/80 overflow-hidden">
+          <div
+            className={`relative w-full h-[2.5px] rounded-full overflow-hidden transition-all duration-300 ${
+              isOledActive
+                ? 'bg-[#000000] ring-1 ring-white/15'
+                : isLight
+                ? 'bg-slate-200'
+                : 'bg-zinc-800/80'
+            }`}
+          >
             {/* Smooth Sweeping Emerald Laser Beam */}
-            <div className="relative h-full w-2/5 rounded-full bg-gradient-to-r from-emerald-500/20 via-emerald-400 to-teal-300 shadow-[0_0_10px_rgba(52,211,153,0.7)] animate-[greenLaserSweep_1.7s_cubic-bezier(0.4,0,0.2,1)_infinite] will-change-transform" />
+            <div className="relative h-full w-2/5 rounded-full bg-gradient-to-r from-emerald-500/20 via-emerald-400 to-teal-300 shadow-[0_0_12px_rgba(52,211,153,0.85)] animate-[greenLaserSweep_1.7s_cubic-bezier(0.4,0,0.2,1)_infinite] will-change-transform" />
           </div>
 
           {/* Simple, Classic Status Text */}
-          <p className="text-xs text-zinc-400 font-sans tracking-wide">
+          <p
+            className={`text-xs font-sans tracking-wide transition-colors duration-300 ${
+              isLight ? 'text-slate-600' : 'text-zinc-400'
+            }`}
+          >
             {statusText || (isDone ? 'Connected' : 'Connecting...')}
           </p>
         </div>

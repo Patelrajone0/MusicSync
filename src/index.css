@@ -612,6 +612,11 @@ html[data-bg-theme="pure-oled-black"] .glass-panel {
   border-color: rgba(255, 255, 255, 0.12) !important;
 }
 
+html[data-bg-theme="pure-oled-black"] .loading-screen-container,
+.loading-screen-container[data-oled="true"] {
+  background-color: #000000 !important;
+}
+
 /* Eliminate all background light flares and ambient glow on OLED screens so pixels stay 100% OFF */
 html[data-bg-theme="pure-oled-black"] .blur-\[120px\],
 html[data-bg-theme="pure-oled-black"] .blur-3xl,
