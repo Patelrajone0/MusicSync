@@ -1413,17 +1413,31 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
           }`}
         >
           {/* Segmented Top Tab Switcher: Chat vs Spatial (Desktop only; on mobile, navigation is handled by bottom navigation tabs) */}
-          <div className="hidden md:grid grid-cols-2 p-1 rounded-2xl bg-[#090b0e] border border-white/[0.08] text-xs shrink-0">
+          <div
+            style={{
+              backgroundColor: 'var(--bg-surface, rgba(14, 16, 20, 0.55))',
+              borderColor: 'var(--bg-border, rgba(255, 255, 255, 0.10))',
+            }}
+            className="hidden md:grid grid-cols-2 p-1 rounded-2xl border backdrop-blur-2xl text-xs shrink-0 shadow-sm transition-all duration-300"
+          >
             <button
               type="button"
               onClick={() => {
                 setRightTab('chat');
                 setMobileTab('chat');
               }}
+              style={
+                rightTab === 'chat'
+                  ? {
+                      backgroundColor: 'var(--bg-surface-elevated, rgba(255, 255, 255, 0.12))',
+                      borderColor: 'var(--bg-border, rgba(255, 255, 255, 0.18))',
+                    }
+                  : undefined
+              }
               className={`py-1.5 rounded-xl font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                 rightTab === 'chat'
-                  ? 'bg-zinc-800/90 border border-white/[0.15] text-white font-bold shadow-[0_2px_8px_rgba(0,0,0,0.5)]'
-                  : 'text-zinc-400 hover:text-white'
+                  ? 'border text-white font-bold shadow-[0_2px_10px_rgba(0,0,0,0.3)] backdrop-blur-md'
+                  : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
               }`}
             >
               <MessageCircle className="w-3.5 h-3.5" />
@@ -1435,10 +1449,18 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
                 setRightTab('spatial');
                 setMobileTab('spatial');
               }}
+              style={
+                rightTab === 'spatial'
+                  ? {
+                      backgroundColor: 'var(--bg-surface-elevated, rgba(255, 255, 255, 0.12))',
+                      borderColor: 'var(--bg-border, rgba(255, 255, 255, 0.18))',
+                    }
+                  : undefined
+              }
               className={`py-1.5 rounded-xl font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                 rightTab === 'spatial'
-                  ? 'bg-zinc-800/90 border border-white/[0.15] text-white font-bold shadow-[0_2px_8px_rgba(0,0,0,0.5)]'
-                  : 'text-zinc-400 hover:text-white'
+                  ? 'border text-white font-bold shadow-[0_2px_10px_rgba(0,0,0,0.3)] backdrop-blur-md'
+                  : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
               }`}
             >
               <Compass className="w-3.5 h-3.5" />
@@ -1489,7 +1511,11 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
                 onTouchStart={handleRadarTouchStart}
                 onTouchMove={handleRadarTouchMove}
                 onTouchEnd={handleRadarTouchEnd}
-                className={`relative w-full aspect-square rounded-3xl bg-[#090b0e] border border-white/[0.08] overflow-hidden flex items-center justify-center select-none touch-none shadow-inner transition-opacity duration-200 ${
+                style={{
+                  backgroundColor: 'var(--bg-surface, rgba(14, 16, 20, 0.55))',
+                  borderColor: 'var(--bg-border, rgba(255, 255, 255, 0.08))',
+                }}
+                className={`relative w-full aspect-square rounded-3xl border backdrop-blur-2xl overflow-hidden flex items-center justify-center select-none touch-none shadow-inner transition-all duration-200 ${
                   isSpatialEnabled ? 'cursor-crosshair opacity-100' : 'cursor-not-allowed opacity-60'
                 }`}
               >
@@ -1509,7 +1535,13 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
 
                 {/* Center Host Speaker Node */}
                 <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center pointer-events-none z-10">
-                  <div className="relative w-8 h-8 rounded-full bg-[#14171d] border border-white/[0.15] flex items-center justify-center text-xs font-bold text-zinc-200 shadow-[0_0_12px_rgba(0,0,0,0.5)]">
+                  <div
+                    style={{
+                      backgroundColor: 'var(--bg-surface-elevated, rgba(255, 255, 255, 0.1))',
+                      borderColor: 'var(--bg-border, rgba(255, 255, 255, 0.15))',
+                    }}
+                    className="relative w-8 h-8 rounded-full border backdrop-blur-md flex items-center justify-center text-xs font-bold text-zinc-200 shadow-[0_0_12px_rgba(0,0,0,0.5)]"
+                  >
                     <span>PR</span>
                     <span className="absolute -top-1 -right-1 text-amber-400">
                       <Crown className="w-2.5 h-2.5 fill-amber-400" />
@@ -1537,7 +1569,10 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
               <div className="flex items-center justify-between text-xs text-zinc-400 shrink-0">
                 <div className="flex items-center gap-1.5">
                   <span className="font-mono text-emerald-400 font-bold">{distanceMetric}%</span>
-                  <div className="w-20 sm:w-24 h-1.5 rounded-full bg-[#08090c] border border-white/[0.08] overflow-hidden shadow-inner">
+                  <div
+                    style={{ backgroundColor: 'var(--bg-surface, rgba(0, 0, 0, 0.4))' }}
+                    className="w-20 sm:w-24 h-1.5 rounded-full border border-white/[0.08] overflow-hidden shadow-inner"
+                  >
                     <div className="h-full bg-gradient-to-r from-zinc-200 to-emerald-400" style={{ width: `${distanceMetric}%` }} />
                   </div>
                 </div>
@@ -1545,7 +1580,11 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
                 <button
                   type="button"
                   onClick={handleResetNode}
-                  className="flex items-center gap-1 px-3 py-1 rounded-full bg-[#14171d] hover:bg-zinc-800 border border-white/[0.08] hover:border-white/20 text-xs font-semibold text-zinc-300 hover:text-white transition-all cursor-pointer shadow-sm"
+                  style={{
+                    backgroundColor: 'var(--bg-surface-elevated, rgba(255, 255, 255, 0.08))',
+                    borderColor: 'var(--bg-border, rgba(255, 255, 255, 0.10))',
+                  }}
+                  className="flex items-center gap-1 px-3 py-1 rounded-full border hover:border-white/20 text-xs font-semibold text-zinc-300 hover:text-white transition-all cursor-pointer shadow-sm backdrop-blur-md"
                 >
                   <ArrowUp className="w-3 h-3" />
                   <span>Move to Top</span>
@@ -1553,7 +1592,13 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
               </div>
 
               {/* Audio Effects Section (8D Rotation) */}
-              <div className="p-3 rounded-2xl bg-[#090b0e] border border-white/[0.08] space-y-2 shrink-0">
+              <div
+                style={{
+                  backgroundColor: 'var(--bg-surface, rgba(14, 16, 20, 0.55))',
+                  borderColor: 'var(--bg-border, rgba(255, 255, 255, 0.08))',
+                }}
+                className="p-3 rounded-2xl border backdrop-blur-2xl space-y-2 shrink-0 transition-colors duration-300"
+              >
                 <div className="text-[10px] font-mono uppercase text-zinc-400 flex items-center gap-1 font-bold">
                   <Sparkles className="w-3 h-3 text-zinc-400" />
                   <span>Audio Effects</span>
@@ -1594,11 +1639,17 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
             </div>
           )}
 
-          {/* CHAT TAB VIEW */}
+          {/* CHAT TAB VIEW (Theme Frosted Glass & Ambient Blur) */}
           {(mobileTab === 'chat' || (mobileTab !== 'spatial' && rightTab === 'chat')) && (
-            <div className="flex-1 flex flex-col min-h-0 bg-[#090b0e] rounded-3xl border border-white/[0.08] overflow-hidden relative shadow-inner">
-              {/* Top ambient hairline */}
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-36 h-[1px] bg-gradient-to-r from-transparent via-zinc-300/30 to-transparent pointer-events-none" />
+            <div
+              style={{
+                backgroundColor: 'var(--bg-surface, rgba(14, 16, 20, 0.55))',
+                borderColor: 'var(--bg-border, rgba(255, 255, 255, 0.10))',
+              }}
+              className="flex-1 flex flex-col min-h-0 rounded-3xl border backdrop-blur-2xl overflow-hidden relative shadow-2xl transition-all duration-300"
+            >
+              {/* Top ambient glass specular hairline */}
+              <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-white/25 to-transparent pointer-events-none" />
 
               {/* Message scroll container or empty state */}
               <div
@@ -1606,15 +1657,21 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
                 className="flex-1 min-h-0 overflow-y-auto p-3 flex flex-col overscroll-contain"
               >
                 {chatMessages.length === 0 ? (
-                  <div className="flex-1 flex flex-col items-center justify-center text-center p-4 select-none my-auto">
-                    <div className="w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center text-zinc-600 mb-3">
-                      <MessageCircle className="w-14 h-14 sm:w-16 sm:h-16 stroke-[1.2]" />
+                  <div className="flex-1 flex flex-col items-center justify-center text-center p-5 select-none my-auto">
+                    <div
+                      style={{
+                        backgroundColor: 'var(--bg-surface-elevated, rgba(255, 255, 255, 0.05))',
+                        borderColor: 'var(--bg-border, rgba(255, 255, 255, 0.12))',
+                      }}
+                      className="w-16 h-16 sm:w-20 sm:h-20 rounded-3xl border flex items-center justify-center text-zinc-400 mb-3.5 shadow-lg backdrop-blur-xl group transition-all duration-300"
+                    >
+                      <MessageCircle className="w-8 h-8 sm:w-10 sm:h-10 text-zinc-300 group-hover:scale-110 transition-transform duration-300" />
                     </div>
-                    <h3 className="text-base sm:text-lg font-bold text-zinc-200 tracking-tight">
+                    <h3 className="text-base sm:text-lg font-bold text-zinc-100 tracking-tight">
                       No messages yet
                     </h3>
-                    <p className="text-xs sm:text-sm text-zinc-500 mt-1 font-normal">
-                      Start the conversation
+                    <p className="text-xs sm:text-sm text-zinc-400 mt-1 max-w-[200px] leading-relaxed">
+                      Start the conversation with your room listeners
                     </p>
                   </div>
                 ) : (
@@ -1634,15 +1691,26 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
                           <span className="text-[10px] text-zinc-400 font-medium font-mono">
                             {m.isYou ? 'You' : m.userName}
                           </span>
-                          <span className="text-[10px] text-zinc-600 font-mono">
+                          <span className="text-[10px] text-zinc-500 font-mono">
                             {m.time}
                           </span>
                         </div>
                         <div
-                          className={`px-3.5 py-2 rounded-2xl max-w-[85%] break-words text-xs ${
+                          style={
                             m.isYou
-                              ? 'bg-zinc-800/90 border border-zinc-600/30 text-zinc-100 shadow-[0_2px_12px_rgba(0,0,0,0.3)] rounded-br-sm'
-                              : 'bg-[#14171d] border border-white/[0.06] text-zinc-300 rounded-bl-sm'
+                              ? {
+                                  backgroundColor: 'var(--bg-surface-elevated, rgba(255, 255, 255, 0.14))',
+                                  borderColor: 'var(--bg-border, rgba(255, 255, 255, 0.20))',
+                                }
+                              : {
+                                  backgroundColor: 'var(--bg-surface, rgba(255, 255, 255, 0.06))',
+                                  borderColor: 'var(--bg-border, rgba(255, 255, 255, 0.08))',
+                                }
+                          }
+                          className={`px-3.5 py-2.5 rounded-2xl max-w-[85%] break-words text-xs border backdrop-blur-md shadow-sm ${
+                            m.isYou
+                              ? 'text-zinc-100 shadow-[0_2px_12px_rgba(0,0,0,0.25)] rounded-br-sm'
+                              : 'text-zinc-200 rounded-bl-sm'
                           }`}
                         >
                           {m.text}
@@ -1653,8 +1721,14 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
                 )}
               </div>
 
-              {/* Bottom Message Input Bar */}
-              <div className="p-2.5 sm:p-3 border-t border-white/[0.08] bg-[#090b0e] backdrop-blur-md shrink-0">
+              {/* Bottom Message Input Bar with Frosted Blur */}
+              <div
+                style={{
+                  backgroundColor: 'var(--bg-surface, rgba(14, 16, 20, 0.70))',
+                  borderColor: 'var(--bg-border, rgba(255, 255, 255, 0.08))',
+                }}
+                className="p-2.5 sm:p-3 border-t backdrop-blur-2xl shrink-0 transition-colors duration-300"
+              >
                 <form onSubmit={handleSendChat} className="relative flex items-center w-full">
                   <input
                     type="text"
@@ -1665,13 +1739,17 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
                         window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
                       }
                     }}
-                    placeholder="Message"
-                    className="w-full bg-[#12151b] border border-white/[0.08] hover:border-zinc-500/40 focus:border-zinc-300 focus:shadow-[0_0_16px_rgba(255,255,255,0.08)] rounded-full px-4 py-2.5 sm:py-3 text-xs sm:text-sm text-white placeholder:text-zinc-500 focus:outline-none transition-all pr-10"
+                    placeholder="Type a message..."
+                    style={{
+                      backgroundColor: 'var(--bg-surface-elevated, rgba(255, 255, 255, 0.06))',
+                      borderColor: 'var(--bg-border, rgba(255, 255, 255, 0.12))',
+                    }}
+                    className="w-full border hover:border-white/25 focus:border-[var(--theme-accent,#00f0ff)] focus:ring-2 focus:ring-[var(--theme-accent,rgba(0,240,255,0.2))] rounded-full px-4 py-2.5 sm:py-3 text-xs sm:text-sm text-white placeholder:text-zinc-400 focus:outline-none transition-all pr-10 backdrop-blur-xl shadow-inner"
                   />
                   <button
                     type="submit"
                     disabled={!chatInput.trim()}
-                    className="absolute right-2.5 p-1.5 rounded-full text-zinc-400 hover:text-white disabled:opacity-20 disabled:hover:text-zinc-400 transition-all cursor-pointer disabled:cursor-default"
+                    className="absolute right-2.5 p-1.5 rounded-full text-zinc-400 hover:text-[var(--theme-accent,#00f0ff)] disabled:opacity-20 disabled:hover:text-zinc-400 transition-all cursor-pointer disabled:cursor-default active:scale-90"
                     title="Send Message"
                   >
                     <Send className="w-4 h-4" />
