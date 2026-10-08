@@ -597,4 +597,191 @@ button,
   }
 }
 
+/* ==========================================================================
+   True OLED Pure Black Theme (#000000 Zero-Bleed Optimization)
+   ========================================================================== */
+html[data-bg-theme="pure-oled-black"],
+html[data-bg-theme="pure-oled-black"] body,
+html[data-bg-theme="pure-oled-black"] #root {
+  background-color: #000000 !important;
+  color-scheme: dark;
+}
+
+html[data-bg-theme="pure-oled-black"] .glass-panel {
+  background-color: #000000 !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+/* Eliminate all background light flares and ambient glow on OLED screens so pixels stay 100% OFF */
+html[data-bg-theme="pure-oled-black"] .blur-\[120px\],
+html[data-bg-theme="pure-oled-black"] .blur-3xl,
+html[data-bg-theme="pure-oled-black"] .blur-2xl:not([role="dialog"] *) {
+  display: none !important;
+}
+
+html[data-bg-theme="pure-oled-black"] header,
+html[data-bg-theme="pure-oled-black"] aside,
+html[data-bg-theme="pure-oled-black"] footer {
+  background-color: #000000 !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+html[data-bg-theme="pure-oled-black"] aside .bg-\[\#101217\],
+html[data-bg-theme="pure-oled-black"] aside .bg-\[\#0f1115\],
+html[data-bg-theme="pure-oled-black"] aside .bg-zinc-900,
+html[data-bg-theme="pure-oled-black"] aside .bg-\[\#12141a\] {
+  background-color: #000000 !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+/* ==========================================================================
+   Pure Porcelain Light Theme (Almost White Clean High-Contrast Aesthetics)
+   ========================================================================== */
+html[data-bg-theme="pure-light"] {
+  color-scheme: light;
+}
+
+html[data-bg-theme="pure-light"],
+html[data-bg-theme="pure-light"] body,
+html[data-bg-theme="pure-light"] #root {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+}
+
+/* Light Mode Typography Adjustments */
+html[data-bg-theme="pure-light"] .text-white,
+html[data-bg-theme="pure-light"] .text-zinc-100,
+html[data-bg-theme="pure-light"] .text-zinc-200,
+html[data-bg-theme="pure-light"] .text-slate-200 {
+  color: #0f172a;
+}
+
+html[data-bg-theme="pure-light"] .text-zinc-300,
+html[data-bg-theme="pure-light"] .text-slate-300 {
+  color: #334155;
+}
+
+html[data-bg-theme="pure-light"] .text-zinc-400,
+html[data-bg-theme="pure-light"] .text-zinc-500,
+html[data-bg-theme="pure-light"] .text-slate-400 {
+  color: #64748b;
+}
+
+/* Scrollbar on light theme */
+html[data-bg-theme="pure-light"] ::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+html[data-bg-theme="pure-light"] ::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+}
+html[data-bg-theme="pure-light"] ::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Glass Panels & Structural Containers */
+html[data-bg-theme="pure-light"] .glass-panel {
+  background: rgba(255, 255, 255, 0.88) !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Header & Sidebar Light Modes */
+html[data-bg-theme="pure-light"] header {
+  background-color: rgba(255, 255, 255, 0.94) !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04) !important;
+}
+
+html[data-bg-theme="pure-light"] header .bg-zinc-900\/80,
+html[data-bg-theme="pure-light"] header .bg-zinc-900\/60 {
+  background-color: #f1f5f9 !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+  color: #334155 !important;
+}
+
+html[data-bg-theme="pure-light"] aside {
+  background-color: rgba(255, 255, 255, 0.88) !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 2px 0 20px rgba(0, 0, 0, 0.03) !important;
+}
+
+html[data-bg-theme="pure-light"] aside .bg-\[\#101217\],
+html[data-bg-theme="pure-light"] aside .bg-\[\#0f1115\],
+html[data-bg-theme="pure-light"] aside .bg-zinc-900 {
+  background-color: #f1f5f9 !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+  color: #334155 !important;
+}
+
+html[data-bg-theme="pure-light"] aside .bg-\[\#12141a\] {
+  background-color: #e2e8f0 !important;
+  border-color: rgba(0, 0, 0, 0.12) !important;
+  color: #0f172a !important;
+}
+
+/* Lobby Card & Tabs Adaptations */
+html[data-bg-theme="pure-light"] .bg-\[\#111115\]\/95 {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.10) !important;
+}
+
+html[data-bg-theme="pure-light"] .bg-zinc-900\/80,
+html[data-bg-theme="pure-light"] .bg-zinc-900\/60,
+html[data-bg-theme="pure-light"] .bg-zinc-900\/40 {
+  background-color: #f1f5f9 !important;
+  border-color: #e2e8f0 !important;
+}
+
+html[data-bg-theme="pure-light"] .bg-zinc-800 {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Text Inputs */
+html[data-bg-theme="pure-light"] input[type="text"] {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+html[data-bg-theme="pure-light"] input[type="text"]::placeholder {
+  color: #94a3b8 !important;
+}
+
+/* Primary Action Buttons */
+html[data-bg-theme="pure-light"] .bg-zinc-100 {
+  background-color: #0f172a !important;
+  color: #ffffff !important;
+}
+html[data-bg-theme="pure-light"] .bg-zinc-100:hover {
+  background-color: #1e293b !important;
+}
+html[data-bg-theme="pure-light"] .bg-zinc-100 svg {
+  color: #ffffff !important;
+}
+
+/* Queue List Items */
+html[data-bg-theme="pure-light"] .bg-\[\#12151b\]\/50 {
+  background-color: rgba(241, 245, 249, 0.70) !important;
+  border-color: rgba(0, 0, 0, 0.06) !important;
+}
+html[data-bg-theme="pure-light"] .bg-\[\#12151b\]\/50:hover {
+  background-color: rgba(226, 232, 240, 0.90) !important;
+}
+
+/* Bottom Player Bar */
+html[data-bg-theme="pure-light"] footer {
+  background-color: rgba(255, 255, 255, 0.94) !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.04) !important;
+}
+
+html[data-bg-theme="pure-light"] footer .bg-\[\#07080a\] {
+  background-color: #f1f5f9 !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+  color: #334155 !important;
+}
+
+
 

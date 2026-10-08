@@ -289,8 +289,14 @@ export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' 
           </div>
         </div>
 
-        {/* Modern Classic Dark Card */}
-        <div className="bg-[#111115]/95 backdrop-blur-xl border border-white/[0.08] rounded-2xl p-5 sm:p-6 shadow-2xl space-y-4">
+        {/* Modern Classic Card */}
+        <div
+          style={{
+            backgroundColor: 'var(--bg-card, rgba(17, 17, 21, 0.95))',
+            borderColor: 'var(--bg-border, rgba(255, 255, 255, 0.08))',
+          }}
+          className="backdrop-blur-xl border rounded-2xl p-5 sm:p-6 shadow-2xl space-y-4 transition-colors duration-300"
+        >
           
           {/* Segmented Tab: [ Create Room ]  [ Join Room ] */}
           <div className="grid grid-cols-2 p-1 rounded-xl bg-zinc-900/80 border border-white/[0.06] text-xs font-medium">

@@ -1,5 +1,7 @@
 export type BackgroundThemeId =
   | 'midnight-obsidian'
+  | 'pure-light'
+  | 'pure-oled-black'
   | 'cosmic-abyss'
   | 'cyber-nebula'
   | 'titanium-slate'
@@ -48,6 +50,48 @@ export const BACKGROUND_THEMES: BackgroundThemeDefinition[] = [
     previewSwatches: ['#020204', '#14141e', '#00f0ff'],
     accentHex: '#00f0ff',
     accentText: 'text-cyan-400',
+  },
+  {
+    id: 'pure-light',
+    name: 'Pure Porcelain Light',
+    tag: 'ALMOST WHITE · CLEAN LIGHT',
+    badgeColor: 'border-blue-400/40 bg-blue-500/15 text-blue-600',
+    description:
+      'Immaculate porcelain daylight with ultra-clean almost white aesthetics, frosted glass panels, and crisp contrast engineered for light theme lovers.',
+    hexPrimary: '#f8fafc',
+    hexSecondary: '#f1f5f9',
+    hexCard: 'rgba(255, 255, 255, 0.90)',
+    hexElevated: 'rgba(255, 255, 255, 0.98)',
+    hexBorder: 'rgba(15, 23, 42, 0.10)',
+    glowColor1: 'rgba(59, 130, 246, 0.10)',
+    glowColor2: 'rgba(99, 102, 241, 0.08)',
+    radialGradient:
+      'radial-gradient(ellipse 90% 70% at 50% -10%, rgba(226, 232, 240, 0.8), rgba(248, 250, 252, 0))',
+    meshGradient:
+      'radial-gradient(at 0% 0%, rgba(241, 245, 249, 0.95) 0px, transparent 60%), radial-gradient(at 100% 100%, rgba(226, 232, 240, 0.7) 0px, transparent 60%)',
+    previewSwatches: ['#ffffff', '#f1f5f9', '#2563eb'],
+    accentHex: '#2563eb',
+    accentText: 'text-blue-600',
+  },
+  {
+    id: 'pure-oled-black',
+    name: 'True OLED Pure Black',
+    tag: '100% PURE BLACK · TRUE OLED',
+    badgeColor: 'border-zinc-400/40 bg-zinc-500/15 text-zinc-100',
+    description:
+      'Absolute 100% pitch-black (#000000) with 0% pixel luminance. Shuts off OLED pixels completely for zero backlight bleed, infinite contrast, and maximum battery efficiency.',
+    hexPrimary: '#000000',
+    hexSecondary: '#000000',
+    hexCard: 'rgba(0, 0, 0, 0.98)',
+    hexElevated: '#050505',
+    hexBorder: 'rgba(255, 255, 255, 0.14)',
+    glowColor1: 'rgba(0, 0, 0, 0)',
+    glowColor2: 'rgba(0, 0, 0, 0)',
+    radialGradient: 'none',
+    meshGradient: 'none',
+    previewSwatches: ['#000000', '#0a0a0a', '#ffffff'],
+    accentHex: '#ffffff',
+    accentText: 'text-white',
   },
   {
     id: 'cosmic-abyss',
@@ -198,6 +242,20 @@ export function applyBackgroundTheme(themeId: BackgroundThemeId) {
   root.style.setProperty('--bg-radial', theme.radialGradient);
   root.style.setProperty('--bg-mesh', theme.meshGradient);
   root.style.setProperty('--theme-accent', theme.accentHex);
+
+  if (theme.id === 'pure-light') {
+    root.style.setProperty('--text-primary', '#0f172a');
+    root.style.setProperty('--text-secondary', '#334155');
+    root.style.setProperty('--text-muted', '#64748b');
+    root.style.colorScheme = 'light';
+    document.body.style.color = '#0f172a';
+  } else {
+    root.style.setProperty('--text-primary', '#f8fafc');
+    root.style.setProperty('--text-secondary', '#cbd5e1');
+    root.style.setProperty('--text-muted', '#94a3b8');
+    root.style.colorScheme = 'dark';
+    document.body.style.color = '#f1f5f9';
+  }
 
   // Apply to body and root elements
   document.body.style.backgroundColor = theme.hexPrimary;
