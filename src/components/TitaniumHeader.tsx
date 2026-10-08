@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { LogOut, Copy, Check, ChevronDown, Sliders, Sparkles, Cpu, Radio, ShieldCheck, Activity, Palette } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { LogOut, Copy, Check, ChevronDown, Sliders, Sparkles, Cpu, Radio, ShieldCheck, Activity, Palette, MoreVertical } from 'lucide-react';
 import { HeaderBrandLogo } from './HeaderBrandLogo';
 import { SyncStats } from '../types';
 import { haptics } from '../utils/haptics';
@@ -192,7 +192,7 @@ export const TitaniumHeader: React.FC<TitaniumHeaderProps> = ({
             </div>
           </div>
 
-          {/* Right: Theme Switcher & Eject Button */}
+          {/* Right: More Options (3-Dot Menu) */}
           <div className="flex items-center gap-1.5 sm:gap-2">
             {showThemeSwitcher && (
               <ThemeDropdown
@@ -202,17 +202,12 @@ export const TitaniumHeader: React.FC<TitaniumHeaderProps> = ({
                 buttonClass="bg-black/80 hover:bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-zinc-200 rounded-md"
               />
             )}
-
-            {/* Industrial Eject Button */}
-            <button
-              type="button"
-              onClick={handleLeave}
-              className="flex items-center gap-1.5 px-3 py-1 rounded-md bg-black/80 hover:bg-rose-950/40 border border-zinc-800 hover:border-rose-700/50 text-zinc-400 hover:text-rose-300 transition-all cursor-pointer text-xs font-bold active:scale-95 shadow-sm"
-              title="Eject / Leave Room"
-            >
-              <LogOut className="w-3 h-3 text-zinc-400 group-hover:text-rose-400" />
-              <span className="hidden sm:inline text-[10px] tracking-wider uppercase">EJECT</span>
-            </button>
+            <MoreOptionsMenu
+              roomCode={roomCode}
+              onOpenShowcase={onOpenShowcase}
+              onLeaveRoom={handleLeave}
+              variant="rack"
+            />
           </div>
         </div>
       </header>
@@ -277,7 +272,7 @@ export const TitaniumHeader: React.FC<TitaniumHeaderProps> = ({
             </div>
           </div>
 
-          {/* Right: Theme Switcher & Leave Button */}
+          {/* Right: More Options (3-Dot Menu) */}
           <div className="flex items-center gap-1.5 sm:gap-2">
             {showThemeSwitcher && (
               <ThemeDropdown
@@ -287,16 +282,12 @@ export const TitaniumHeader: React.FC<TitaniumHeaderProps> = ({
                 buttonClass="bg-[#101217] hover:bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-zinc-200"
               />
             )}
-
-            <button
-              type="button"
-              onClick={handleLeave}
-              className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#101217] hover:bg-rose-950/30 border border-zinc-800 hover:border-rose-900/50 text-zinc-400 hover:text-rose-300 transition-all cursor-pointer text-xs font-semibold active:scale-95 shadow-sm"
-              title="Leave Room"
-            >
-              <LogOut className="w-3 h-3" />
-              <span className="hidden sm:inline text-[11px]">Leave</span>
-            </button>
+            <MoreOptionsMenu
+              roomCode={roomCode}
+              onOpenShowcase={onOpenShowcase}
+              onLeaveRoom={handleLeave}
+              variant="stealth"
+            />
           </div>
         </div>
       </header>
@@ -366,7 +357,7 @@ export const TitaniumHeader: React.FC<TitaniumHeaderProps> = ({
             </div>
           </div>
 
-          {/* Right: Theme Switcher & Glass Leave Button */}
+          {/* Right: More Options (3-Dot Menu) */}
           <div className="flex items-center gap-1.5 sm:gap-2">
             {showThemeSwitcher && (
               <ThemeDropdown
@@ -376,16 +367,12 @@ export const TitaniumHeader: React.FC<TitaniumHeaderProps> = ({
                 buttonClass="bg-white/[0.05] hover:bg-white/[0.1] border-white/15 text-zinc-200"
               />
             )}
-
-            <button
-              type="button"
-              onClick={handleLeave}
-              className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/[0.05] hover:bg-rose-500/20 border border-white/[0.15] hover:border-rose-400/40 text-zinc-300 hover:text-rose-200 transition-all cursor-pointer text-xs font-semibold active:scale-95 shadow-[0_2px_10px_rgba(0,0,0,0.3)] backdrop-blur-md"
-              title="Leave Room"
-            >
-              <LogOut className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline text-[11px]">Leave</span>
-            </button>
+            <MoreOptionsMenu
+              roomCode={roomCode}
+              onOpenShowcase={onOpenShowcase}
+              onLeaveRoom={handleLeave}
+              variant="aerograde"
+            />
           </div>
         </div>
       </header>
@@ -456,7 +443,7 @@ export const TitaniumHeader: React.FC<TitaniumHeaderProps> = ({
           </div>
         </div>
 
-        {/* Right: Room Controls & Theme Switcher */}
+        {/* Right: Room Controls & More Options (3-Dot Menu) */}
         <div className="flex items-center gap-1.5 sm:gap-2">
           {showThemeSwitcher && (
             <ThemeDropdown
@@ -467,29 +454,12 @@ export const TitaniumHeader: React.FC<TitaniumHeaderProps> = ({
             />
           )}
 
-          {/* Background Atmosphere Theme Switcher */}
-          {onOpenShowcase && (
-            <button
-              type="button"
-              onClick={onOpenShowcase}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-zinc-900/80 hover:bg-zinc-800 border border-white/[0.08] hover:border-cyan-400/40 text-zinc-400 hover:text-cyan-300 transition-all cursor-pointer text-xs font-semibold active:scale-95 shadow-sm"
-              title="Change Background Atmosphere & Palette"
-            >
-              <Palette className="w-3.5 h-3.5 text-zinc-400 hover:text-cyan-400 transition-colors" />
-              <span className="hidden sm:inline text-[11px]">Theme</span>
-            </button>
-          )}
-
-          {/* Leave Room Button */}
-          <button
-            type="button"
-            onClick={handleLeave}
-            className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-900/80 hover:bg-rose-500/15 border border-white/[0.08] hover:border-rose-500/30 text-zinc-400 hover:text-rose-300 transition-all cursor-pointer text-xs font-semibold active:scale-95 shadow-sm"
-            title="Leave Room"
-          >
-            <LogOut className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline text-[11px]">Leave</span>
-          </button>
+          <MoreOptionsMenu
+            roomCode={roomCode}
+            onOpenShowcase={onOpenShowcase}
+            onLeaveRoom={handleLeave}
+            variant="studio"
+          />
         </div>
       </div>
     </header>
@@ -577,6 +547,159 @@ const ThemeDropdown: React.FC<{
                 </button>
               );
             })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// =========================================================================
+// SUBCOMPONENT: MORE OPTIONS MENU (3-DOT POPOVER)
+// =========================================================================
+interface MoreOptionsMenuProps {
+  roomCode: string;
+  onOpenShowcase?: () => void;
+  onLeaveRoom: () => void;
+  variant?: 'studio' | 'rack' | 'stealth' | 'aerograde';
+}
+
+const MoreOptionsMenu: React.FC<MoreOptionsMenuProps> = ({
+  roomCode,
+  onOpenShowcase,
+  onLeaveRoom,
+  variant = 'studio',
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsOpen(false);
+      }
+    };
+    window.addEventListener('mousedown', handleClickOutside);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('mousedown', handleClickOutside);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen]);
+
+  const buttonStyleByVariant = {
+    studio: isOpen
+      ? 'bg-zinc-800 text-white border-cyan-400/50 ring-2 ring-cyan-500/20 shadow-[0_0_12px_rgba(6,182,212,0.25)]'
+      : 'bg-zinc-900/80 hover:bg-zinc-800 border-white/[0.08] hover:border-white/20 text-zinc-400 hover:text-zinc-100 shadow-sm',
+    rack: isOpen
+      ? 'bg-zinc-900 text-white border-zinc-600 rounded-md shadow-inner'
+      : 'bg-black/80 hover:bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-zinc-200 rounded-md',
+    stealth: isOpen
+      ? 'bg-[#181a20] text-zinc-100 border-zinc-700'
+      : 'bg-[#101217] hover:bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-zinc-200',
+    aerograde: isOpen
+      ? 'bg-white/[0.15] text-white border-white/30 backdrop-blur-md shadow-[0_2px_12px_rgba(255,255,255,0.15)]'
+      : 'bg-white/[0.05] hover:bg-white/[0.1] border-white/15 text-zinc-300 hover:text-white backdrop-blur-md',
+  };
+
+  return (
+    <div className="relative" ref={menuRef} onClick={(e) => e.stopPropagation()}>
+      {/* 3-Dot More Options Button */}
+      <button
+        type="button"
+        onClick={() => {
+          haptics.selection();
+          setIsOpen((prev) => !prev);
+        }}
+        aria-label="More options"
+        aria-expanded={isOpen}
+        title="More options"
+        className={`w-8 h-8 rounded-full border flex items-center justify-center transition-all cursor-pointer active:scale-95 ${buttonStyleByVariant[variant]}`}
+      >
+        <MoreVertical className="w-4 h-4 transition-transform duration-200" />
+      </button>
+
+      {/* Floating Options Dropdown Box */}
+      {isOpen && (
+        <div
+          role="menu"
+          aria-orientation="vertical"
+          style={{
+            backgroundColor: 'var(--bg-surface-elevated, rgba(15, 17, 23, 0.96))',
+            borderColor: 'var(--bg-border, rgba(255, 255, 255, 0.12))',
+          }}
+          className="absolute right-0 top-full mt-2 w-56 sm:w-64 rounded-2xl border shadow-[0_16px_50px_rgba(0,0,0,0.85)] p-1.5 z-50 backdrop-blur-2xl animate-popover-spring flex flex-col gap-1 text-left select-none ring-1 ring-white/5"
+        >
+          {/* Header Tag / Room Context */}
+          <div className="px-2.5 py-1.5 border-b border-white/[0.08] flex items-center justify-between">
+            <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400 font-bold">
+              More Options
+            </span>
+            <span className="text-[9px] font-mono text-zinc-400 bg-white/[0.05] px-1.5 py-0.5 rounded border border-white/[0.08]">
+              #{roomCode}
+            </span>
+          </div>
+
+          <div className="flex flex-col gap-0.5 pt-0.5">
+            {/* Option 1: Theme / Atmosphere */}
+            {onOpenShowcase && (
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  setIsOpen(false);
+                  haptics.selection();
+                  onOpenShowcase();
+                }}
+                className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl hover:bg-white/[0.06] text-zinc-200 hover:text-white transition-all cursor-pointer group text-left active:scale-[0.99]"
+              >
+                <div className="w-7 h-7 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 group-hover:bg-cyan-500/20 group-hover:scale-105 transition-all shrink-0">
+                  <Palette className="w-3.5 h-3.5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs font-semibold text-zinc-200 group-hover:text-white flex items-center justify-between">
+                    <span>Theme</span>
+                    <span className="text-[10px] font-mono text-cyan-400 font-medium">Palette</span>
+                  </div>
+                  <p className="text-[10px] text-zinc-400 truncate">
+                    Change ambient background
+                  </p>
+                </div>
+              </button>
+            )}
+
+            {/* Subtle Divider */}
+            {onOpenShowcase && <div className="h-px bg-white/[0.06] my-0.5" />}
+
+            {/* Option 2: Leave Room */}
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                setIsOpen(false);
+                onLeaveRoom();
+              }}
+              className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl hover:bg-rose-500/10 text-zinc-300 hover:text-rose-200 transition-all cursor-pointer group text-left border border-transparent hover:border-rose-500/20 active:scale-[0.99]"
+            >
+              <div className="w-7 h-7 rounded-lg bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400 group-hover:bg-rose-500/20 group-hover:scale-105 transition-all shrink-0">
+                <LogOut className="w-3.5 h-3.5" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-xs font-semibold text-zinc-200 group-hover:text-rose-200 flex items-center justify-between">
+                  <span>Leave Room</span>
+                  <span className="text-[10px] font-mono text-rose-400/80 font-medium">Exit</span>
+                </div>
+                <p className="text-[10px] text-zinc-400 group-hover:text-rose-300/70 truncate">
+                  Disconnect from session
+                </p>
+              </div>
+            </button>
           </div>
         </div>
       )}
