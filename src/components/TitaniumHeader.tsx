@@ -594,11 +594,12 @@ const MoreOptionsMenu: React.FC<MoreOptionsMenuProps> = ({
     };
   }, [isOpen]);
 
-  const iconColor = '#ff3b5c';
+  // Comfortable, warm, refined rose-red that is gentle on the eyes without harsh glare
+  const iconColor = '#fb7185';
 
   return (
     <div className="relative" ref={menuRef} onClick={(e) => e.stopPropagation()}>
-      {/* Uploaded Neon Capsule Options Button */}
+      {/* Uploaded Capsule Options Button */}
       <button
         type="button"
         onClick={() => {
@@ -610,8 +611,8 @@ const MoreOptionsMenu: React.FC<MoreOptionsMenuProps> = ({
         title="More options and session controls"
         className={`group relative flex items-center justify-center rounded-full transition-all duration-200 cursor-pointer active:scale-95 ${
           isOpen
-            ? 'scale-105 drop-shadow-[0_0_12px_#ff3b5c]'
-            : 'hover:scale-[1.03] hover:drop-shadow-[0_0_8px_#ff3b5c]'
+            ? 'scale-105 brightness-110'
+            : 'hover:scale-[1.03] hover:brightness-110'
         }`}
         style={{
           color: iconColor,

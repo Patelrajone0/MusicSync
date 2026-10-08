@@ -24,7 +24,7 @@ export const MoreOptionsCapsuleIcon: React.FC<MoreOptionsCapsuleIconProps> = ({
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       className={`select-none transition-all duration-300 ${
-        glow ? (active ? 'drop-shadow-[0_0_8px_currentColor]' : 'drop-shadow-[0_0_4px_currentColor]') : ''
+        glow ? (active ? 'drop-shadow-[0_0_5px_rgba(251,113,133,0.5)]' : 'drop-shadow-[0_0_3px_rgba(251,113,133,0.35)]') : ''
       } ${className}`}
     >
       {/* Subtle translucent glass capsule background */}
@@ -35,7 +35,7 @@ export const MoreOptionsCapsuleIcon: React.FC<MoreOptionsCapsuleIconProps> = ({
         height="29"
         rx="14.5"
         fill="currentColor"
-        fillOpacity="0.06"
+        fillOpacity="0.04"
       />
 
       {/* Stadium capsule outline */}
@@ -47,7 +47,7 @@ export const MoreOptionsCapsuleIcon: React.FC<MoreOptionsCapsuleIconProps> = ({
         rx="14.5"
         stroke="currentColor"
         strokeWidth="1.8"
-        strokeOpacity={active ? 1 : 0.85}
+        strokeOpacity={active ? 0.95 : 0.8}
       />
 
       {/* 3 Vertical Dots (More Options) */}
