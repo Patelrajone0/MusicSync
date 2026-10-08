@@ -4,6 +4,10 @@ import App from './App';
 import './index.css';
 import { initRippleEffect } from './services/rippleEffect';
 import { registerServiceWorker } from './services/registerServiceWorker';
+import { initBackgroundTheme } from './types/backgroundThemes';
+
+// Initialize background color atmosphere theme
+initBackgroundTheme();
 
 // Initialize global tactile button animations
 initRippleEffect();

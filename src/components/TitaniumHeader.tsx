@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LogOut, Copy, Check, ChevronDown, Sliders, Sparkles, Cpu, Radio, ShieldCheck, Activity } from 'lucide-react';
+import { LogOut, Copy, Check, ChevronDown, Sliders, Sparkles, Cpu, Radio, ShieldCheck, Activity, Palette } from 'lucide-react';
 import { HeaderBrandLogo } from './HeaderBrandLogo';
 import { SyncStats } from '../types';
 import { haptics } from '../utils/haptics';
@@ -461,6 +461,19 @@ export const TitaniumHeader: React.FC<TitaniumHeaderProps> = ({
               onOpenShowcase={onOpenShowcase}
               buttonClass="bg-zinc-900/80 hover:bg-zinc-800 border-white/[0.08] text-zinc-300 hover:text-white"
             />
+          )}
+
+          {/* Background Atmosphere Theme Switcher */}
+          {onOpenShowcase && (
+            <button
+              type="button"
+              onClick={onOpenShowcase}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-zinc-900/80 hover:bg-zinc-800 border border-white/[0.08] hover:border-cyan-400/40 text-zinc-400 hover:text-cyan-300 transition-all cursor-pointer text-xs font-semibold active:scale-95 shadow-sm"
+              title="Change Background Atmosphere & Palette"
+            >
+              <Palette className="w-3.5 h-3.5 text-zinc-400 hover:text-cyan-400 transition-colors" />
+              <span className="hidden sm:inline text-[11px]">Theme</span>
+            </button>
           )}
 
           {/* Leave Room Button */}

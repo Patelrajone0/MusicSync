@@ -50,6 +50,7 @@ import { TitaniumSidebar } from './TitaniumSidebar';
 import { TitaniumSidebarShowcase } from './TitaniumSidebarShowcase';
 import { TitaniumStudioShowcase } from './TitaniumStudioShowcase';
 import { CurvedCornersShowcase } from './CurvedCornersShowcase';
+import { BackgroundShowcase } from './BackgroundShowcase';
 import {
   CurvedCornerStyle,
   CURVED_CORNER_STYLES,
@@ -138,6 +139,7 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
   const [isSidebarShowcaseOpen, setIsSidebarShowcaseOpen] = useState(false);
   const [isStudioShowcaseOpen, setIsStudioShowcaseOpen] = useState(false);
   const [isCornerShowcaseOpen, setIsCornerShowcaseOpen] = useState(false);
+  const [isThemeShowcaseOpen, setIsThemeShowcaseOpen] = useState(false);
   const [cornerStyle, setCornerStyle] = useState<CurvedCornerStyle>(getStoredCornerStyle);
 
   const currentCornerDef =
@@ -842,6 +844,7 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
         onLeaveRoom={() => setShowLeaveConfirm(true)}
         theme="studio"
         showThemeSwitcher={false}
+        onOpenShowcase={() => setIsThemeShowcaseOpen(true)}
       />
 
       {isHeaderShowcaseOpen && (
@@ -889,6 +892,12 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
           <CurvedCornersShowcase
             onClose={() => setIsCornerShowcaseOpen(false)}
             onApplyStyle={(newStyle) => setCornerStyle(newStyle)}
+          />
+        )}
+
+        {isThemeShowcaseOpen && (
+          <BackgroundShowcase
+            onClose={() => setIsThemeShowcaseOpen(false)}
           />
         )}
 

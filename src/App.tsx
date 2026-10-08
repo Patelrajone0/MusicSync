@@ -29,6 +29,7 @@ import { TitaniumSidebarShowcase } from './components/TitaniumSidebarShowcase';
 import { TitaniumStudioShowcase } from './components/TitaniumStudioShowcase';
 import { CurvedCornersShowcase } from './components/CurvedCornersShowcase';
 import { AboutHelpShowcase } from './components/AboutHelpShowcase';
+import { BackgroundShowcase } from './components/BackgroundShowcase';
 
 const SESSION_STORAGE_KEY = 'musicsync_user_session';
 const USER_NAME_STORAGE_KEY = 'musicsync_user_name';
@@ -192,6 +193,24 @@ export function App() {
       const demo = urlParams.get('demo');
       const preview = urlParams.get('preview');
       return demo === 'studio' || demo === 'player' || preview === 'studio' || preview === 'player';
+    } catch {
+      return false;
+    }
+  });
+
+  const [isThemeDemoOpen, setIsThemeDemoOpen] = useState<boolean>(() => {
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const demo = urlParams.get('demo');
+      const preview = urlParams.get('preview');
+      return (
+        demo === 'background' ||
+        demo === 'theme' ||
+        demo === 'bg' ||
+        preview === 'background' ||
+        preview === 'theme' ||
+        preview === 'bg'
+      );
     } catch {
       return false;
     }
@@ -808,6 +827,24 @@ export function App() {
     );
   }
 
+  // If user requested live interactive demo of Background Theme options:
+  if (isThemeDemoOpen) {
+    return (
+      <BackgroundShowcase
+        onClose={() => {
+          setIsThemeDemoOpen(false);
+          try {
+            const url = new URL(window.location.href);
+            url.searchParams.delete('demo');
+            url.searchParams.delete('preview');
+            url.searchParams.delete('bg');
+            window.history.replaceState({}, '', url.pathname + (url.search ? url.search : ''));
+          } catch {}
+        }}
+      />
+    );
+  }
+
   // If user requested live interactive demo of Curved Corners options:
   if (isCornerDemoOpen) {
     return (
@@ -984,7 +1021,8 @@ export function App() {
       onTouchStart={() => {
         if (!isAudioUnlocked) handleUnlockAudio();
       }}
-      className="fixed inset-0 w-full h-full min-h-screen overflow-hidden bg-dark-950 text-slate-100 flex flex-col font-sans select-none pl-[env(safe-area-inset-left,0px)] pr-[env(safe-area-inset-right,0px)]"
+      style={{ backgroundColor: 'var(--bg-primary, #050508)' }}
+      className="fixed inset-0 w-full h-full min-h-screen overflow-hidden text-slate-100 flex flex-col font-sans select-none pl-[env(safe-area-inset-left,0px)] pr-[env(safe-area-inset-right,0px)] transition-colors duration-300"
     >
       <BeatsyncProView
         roomCode={roomCode}

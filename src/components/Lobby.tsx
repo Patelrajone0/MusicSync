@@ -8,8 +8,10 @@ import {
   LogIn,
   Info,
   HelpCircle,
+  Palette,
 } from 'lucide-react';
 import { AboutHelpModal, AboutHelpModalType } from './AboutHelpModal';
+import { BackgroundShowcase } from './BackgroundShowcase';
 import { RoomState, User } from '../types';
 import { socket } from '../services/socket';
 import { syncEngine } from '../services/syncEngine';
@@ -54,6 +56,7 @@ export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' 
   const [pendingRoomReady, setPendingRoomReady] = useState<{ room: RoomState; user: User } | null>(null);
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [activeModal, setActiveModal] = useState<AboutHelpModalType>(null);
+  const [isThemeShowcaseOpen, setIsThemeShowcaseOpen] = useState(false);
   const [buttonPlacement] = useState<'header' | 'footer'>(() => {
     try {
       const p = new URLSearchParams(window.location.search).get('placement');
@@ -87,6 +90,18 @@ export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' 
       >
         <HelpCircle className="w-3.5 h-3.5 text-zinc-400 group-hover:text-amber-400 transition-colors" />
         <span>Help</span>
+      </button>
+
+      <button
+        type="button"
+        onClick={() => setIsThemeShowcaseOpen(true)}
+        className={`inline-flex items-center gap-1.5 rounded-full bg-zinc-900/90 hover:bg-zinc-800 border border-white/[0.08] hover:border-cyan-400/40 text-zinc-300 hover:text-white font-medium transition-all duration-150 active:scale-95 cursor-pointer shadow-sm group ${
+          size === 'compact' ? 'px-2.5 py-1 text-[11px]' : 'px-3 py-1.5 text-xs'
+        }`}
+        title="Change Background Atmosphere & Color Theme"
+      >
+        <Palette className="w-3.5 h-3.5 text-zinc-400 group-hover:text-cyan-400 transition-colors" />
+        <span>Theme</span>
       </button>
     </>
   );
@@ -253,9 +268,15 @@ export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' 
   };
 
   return (
-    <div className="h-full w-full min-h-full bg-[#09090b] text-zinc-200 flex flex-col justify-center items-center px-4 pt-[calc(1.5rem+env(safe-area-inset-top,0px))] pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] pl-[calc(1rem+env(safe-area-inset-left,0px))] pr-[calc(1rem+env(safe-area-inset-right,0px))] relative overflow-y-auto font-sans select-none antialiased">
-      {/* Subtle, dark, atmospheric ambient vignette */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_-15%,rgba(120,119,198,0.07),rgba(0,0,0,0))] pointer-events-none" />
+    <div
+      style={{ backgroundColor: 'var(--bg-primary, #050508)' }}
+      className="h-full w-full min-h-full text-zinc-200 flex flex-col justify-center items-center px-4 pt-[calc(1.5rem+env(safe-area-inset-top,0px))] pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] pl-[calc(1rem+env(safe-area-inset-left,0px))] pr-[calc(1rem+env(safe-area-inset-right,0px))] relative overflow-y-auto font-sans select-none antialiased transition-colors duration-300"
+    >
+      {/* Subtle atmospheric ambient vignette with dynamic gradient */}
+      <div
+        style={{ background: 'var(--bg-radial)' }}
+        className="absolute inset-0 pointer-events-none transition-all duration-500"
+      />
 
       {/* Main Container */}
       <div
@@ -520,6 +541,13 @@ export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' 
         type={activeModal}
         onClose={() => setActiveModal(null)}
       />
+
+      {/* Background Atmosphere & Color Theme Showcase Modal */}
+      {isThemeShowcaseOpen && (
+        <BackgroundShowcase
+          onClose={() => setIsThemeShowcaseOpen(false)}
+        />
+      )}
     </div>
   );
 };

@@ -9,6 +9,14 @@
     --safe-top: env(safe-area-inset-top, 0px);
     --safe-left: env(safe-area-inset-left, 0px);
     --safe-right: env(safe-area-inset-right, 0px);
+    --bg-primary: #050508;
+    --bg-secondary: #0b0b10;
+    --bg-card: #101017;
+    --bg-elevated: #171720;
+    --bg-border: rgba(255, 255, 255, 0.08);
+    --bg-glow-1: rgba(0, 240, 255, 0.08);
+    --bg-glow-2: rgba(99, 102, 241, 0.09);
+    --bg-radial: radial-gradient(ellipse 80% 60% at 50% -15%, rgba(120, 119, 198, 0.09), rgba(0, 0, 0, 0));
   }
 
   html {
@@ -32,13 +40,16 @@
     min-height: 100%;
     min-height: -webkit-fill-available;
     overflow: hidden;
+    background-color: var(--bg-primary, #050508);
+    transition: background-color 0.25s ease-out;
   }
 
   body {
-    background-color: #08080b;
+    background-color: var(--bg-primary, #050508);
     color: #f1f5f9;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     -webkit-font-smoothing: antialiased;
+    transition: background-color 0.25s ease-out;
   }
 }
 
