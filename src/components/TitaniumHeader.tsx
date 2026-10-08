@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { LogOut, Copy, Check, ChevronDown, Sliders, Sparkles, Cpu, Radio, ShieldCheck, Activity, Palette, MoreVertical } from 'lucide-react';
+import { LogOut, Copy, Check, ChevronDown, Sliders, Sparkles, Cpu, Radio, ShieldCheck, Activity, Palette } from 'lucide-react';
 import { HeaderBrandLogo } from './HeaderBrandLogo';
+import { MoreOptionsCapsuleIcon } from './MoreOptionsCapsuleIcon';
 import { SyncStats } from '../types';
 import { haptics } from '../utils/haptics';
 
@@ -593,36 +594,39 @@ const MoreOptionsMenu: React.FC<MoreOptionsMenuProps> = ({
     };
   }, [isOpen]);
 
-  const buttonStyleByVariant = {
-    studio: isOpen
-      ? 'bg-zinc-800 text-white border-cyan-400/50 ring-2 ring-cyan-500/20 shadow-[0_0_12px_rgba(6,182,212,0.25)]'
-      : 'bg-zinc-900/80 hover:bg-zinc-800 border-white/[0.08] hover:border-white/20 text-zinc-400 hover:text-zinc-100 shadow-sm',
-    rack: isOpen
-      ? 'bg-zinc-900 text-white border-zinc-600 rounded-md shadow-inner'
-      : 'bg-black/80 hover:bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-zinc-200 rounded-md',
-    stealth: isOpen
-      ? 'bg-[#181a20] text-zinc-100 border-zinc-700'
-      : 'bg-[#101217] hover:bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-zinc-200',
-    aerograde: isOpen
-      ? 'bg-white/[0.15] text-white border-white/30 backdrop-blur-md shadow-[0_2px_12px_rgba(255,255,255,0.15)]'
-      : 'bg-white/[0.05] hover:bg-white/[0.1] border-white/15 text-zinc-300 hover:text-white backdrop-blur-md',
-  };
+  const accentColor =
+    variant === 'rack'
+      ? '#34d399'
+      : variant === 'aerograde'
+      ? '#e2e8f0'
+      : 'var(--theme-accent, #00f0ff)';
 
   return (
     <div className="relative" ref={menuRef} onClick={(e) => e.stopPropagation()}>
-      {/* 3-Dot More Options Button */}
+      {/* Uploaded Neon Capsule Options Button */}
       <button
         type="button"
         onClick={() => {
           haptics.selection();
           setIsOpen((prev) => !prev);
         }}
-        aria-label="More options"
+        aria-label="Options and session controls"
         aria-expanded={isOpen}
-        title="More options"
-        className={`w-8 h-8 rounded-full border flex items-center justify-center transition-all cursor-pointer active:scale-95 ${buttonStyleByVariant[variant]}`}
+        title="More options and session controls"
+        className={`group relative flex items-center justify-center rounded-full transition-all duration-200 cursor-pointer active:scale-95 ${
+          isOpen
+            ? 'scale-105 drop-shadow-[0_0_10px_currentColor]'
+            : 'hover:scale-[1.03] hover:drop-shadow-[0_0_6px_currentColor]'
+        }`}
+        style={{
+          color: accentColor,
+        }}
       >
-        <MoreVertical className="w-4 h-4 transition-transform duration-200" />
+        <MoreOptionsCapsuleIcon
+          className="w-[58px] sm:w-[64px] h-[26px] sm:h-[28px] transition-transform duration-200"
+          active={isOpen}
+          glow={true}
+        />
       </button>
 
       {/* Floating Options Dropdown Box */}
