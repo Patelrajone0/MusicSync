@@ -20,7 +20,9 @@ export interface BackgroundThemeDefinition {
   glowColor1: string;
   glowColor2: string;
   radialGradient: string;
+  meshGradient: string;
   previewSwatches: [string, string, string];
+  accentHex: string;
   accentText: string;
 }
 
@@ -31,17 +33,20 @@ export const BACKGROUND_THEMES: BackgroundThemeDefinition[] = [
     tag: 'OLED TRUE BLACK · DEFAULT',
     badgeColor: 'border-slate-500/40 bg-slate-500/15 text-slate-200',
     description:
-      'Ultra-deep space true black optimized for OLED displays. Delivers infinite contrast, zero backlight bleed, and crisp crystalline white typography.',
-    hexPrimary: '#050508',
-    hexSecondary: '#0b0b10',
-    hexCard: '#101017',
-    hexElevated: '#171720',
-    hexBorder: 'rgba(255, 255, 255, 0.08)',
-    glowColor1: 'rgba(0, 240, 255, 0.08)',
-    glowColor2: 'rgba(99, 102, 241, 0.09)',
+      'Pure infinite contrast black optimized for OLED displays with zero backlight bleed, crystal-sharp white typography, and subtle cyan-violet specular starlight.',
+    hexPrimary: '#020204',
+    hexSecondary: '#08080d',
+    hexCard: 'rgba(14, 14, 20, 0.85)',
+    hexElevated: 'rgba(22, 22, 30, 0.92)',
+    hexBorder: 'rgba(255, 255, 255, 0.10)',
+    glowColor1: 'rgba(0, 240, 255, 0.18)',
+    glowColor2: 'rgba(99, 102, 241, 0.15)',
     radialGradient:
-      'radial-gradient(ellipse 80% 60% at 50% -15%, rgba(120, 119, 198, 0.09), rgba(0, 0, 0, 0))',
-    previewSwatches: ['#050508', '#101017', '#00f0ff'],
+      'radial-gradient(ellipse 90% 70% at 50% -10%, rgba(120, 119, 198, 0.18), rgba(0, 0, 0, 0))',
+    meshGradient:
+      'radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.12) 0px, transparent 50%), radial-gradient(at 100% 100%, rgba(0, 240, 255, 0.10) 0px, transparent 50%)',
+    previewSwatches: ['#020204', '#14141e', '#00f0ff'],
+    accentHex: '#00f0ff',
     accentText: 'text-cyan-400',
   },
   {
@@ -50,17 +55,20 @@ export const BACKGROUND_THEMES: BackgroundThemeDefinition[] = [
     tag: 'SAPPHIRE HI-FI',
     badgeColor: 'border-blue-400/40 bg-blue-500/15 text-blue-300',
     description:
-      'Deep galactic nocturnal navy blue inspired by deep-sea ocean trenches and cosmic starfields, accented with luminous sapphire and cyan flares.',
-    hexPrimary: '#040814',
-    hexSecondary: '#071024',
-    hexCard: '#0c1933',
-    hexElevated: '#112244',
-    hexBorder: 'rgba(59, 130, 246, 0.18)',
-    glowColor1: 'rgba(37, 99, 235, 0.20)',
-    glowColor2: 'rgba(56, 189, 248, 0.14)',
+      'Vivid nocturnal midnight sapphire and galactic navy blue with luminous cobalt flares, translucent blue glass panels, and cyan ambient halos.',
+    hexPrimary: '#07152b',
+    hexSecondary: '#0d2244',
+    hexCard: 'rgba(13, 29, 56, 0.78)',
+    hexElevated: 'rgba(20, 44, 84, 0.90)',
+    hexBorder: 'rgba(96, 165, 250, 0.32)',
+    glowColor1: 'rgba(37, 99, 235, 0.45)',
+    glowColor2: 'rgba(56, 189, 248, 0.35)',
     radialGradient:
-      'radial-gradient(ellipse 80% 60% at 50% -15%, rgba(37, 99, 235, 0.18), rgba(0, 0, 0, 0))',
-    previewSwatches: ['#040814', '#0c1933', '#38bdf8'],
+      'radial-gradient(ellipse 90% 80% at 50% -10%, rgba(37, 99, 235, 0.42), rgba(0, 0, 0, 0)), radial-gradient(ellipse 70% 60% at 100% 100%, rgba(14, 165, 233, 0.30), rgba(0, 0, 0, 0))',
+    meshGradient:
+      'radial-gradient(at 0% 0%, rgba(37, 99, 235, 0.30) 0px, transparent 60%), radial-gradient(at 100% 100%, rgba(14, 165, 233, 0.25) 0px, transparent 60%)',
+    previewSwatches: ['#07152b', '#132c54', '#38bdf8'],
+    accentHex: '#38bdf8',
     accentText: 'text-blue-400',
   },
   {
@@ -69,37 +77,21 @@ export const BACKGROUND_THEMES: BackgroundThemeDefinition[] = [
     tag: 'SYNTH AMETHYST',
     badgeColor: 'border-purple-400/40 bg-purple-500/15 text-purple-300',
     description:
-      'Dreamlike twilight velvet violet and dark plum with warm electric magenta and lavender glows. Evokes synthwave soundscapes and VIP listening lounges.',
-    hexPrimary: '#0a0614',
-    hexSecondary: '#120b24',
-    hexCard: '#1a1033',
-    hexElevated: '#241644',
-    hexBorder: 'rgba(168, 85, 247, 0.18)',
-    glowColor1: 'rgba(168, 85, 247, 0.20)',
-    glowColor2: 'rgba(236, 72, 153, 0.14)',
+      'Intoxicating deep velvet violet and dark plum with warm electric magenta and violet glows. Gives the entire studio a futuristic synthwave lounge atmosphere.',
+    hexPrimary: '#170b2b',
+    hexSecondary: '#261245',
+    hexCard: 'rgba(34, 16, 62, 0.78)',
+    hexElevated: 'rgba(52, 25, 94, 0.90)',
+    hexBorder: 'rgba(192, 132, 252, 0.32)',
+    glowColor1: 'rgba(168, 85, 247, 0.45)',
+    glowColor2: 'rgba(236, 72, 153, 0.35)',
     radialGradient:
-      'radial-gradient(ellipse 80% 60% at 50% -15%, rgba(168, 85, 247, 0.18), rgba(0, 0, 0, 0))',
-    previewSwatches: ['#0a0614', '#1a1033', '#c084fc'],
+      'radial-gradient(ellipse 90% 80% at 50% -10%, rgba(168, 85, 247, 0.42), rgba(0, 0, 0, 0)), radial-gradient(ellipse 70% 60% at 0% 100%, rgba(236, 72, 153, 0.30), rgba(0, 0, 0, 0))',
+    meshGradient:
+      'radial-gradient(at 0% 0%, rgba(168, 85, 247, 0.30) 0px, transparent 60%), radial-gradient(at 100% 100%, rgba(236, 72, 153, 0.25) 0px, transparent 60%)',
+    previewSwatches: ['#170b2b', '#301657', '#c084fc'],
+    accentHex: '#c084fc',
     accentText: 'text-purple-400',
-  },
-  {
-    id: 'titanium-slate',
-    name: 'Titanium Studio Slate',
-    tag: 'TE STUDIO HARDWARE',
-    badgeColor: 'border-zinc-400/40 bg-zinc-500/15 text-zinc-200',
-    description:
-      'Machined cool titanium and neutral studio graphite. Inspired by Teenage Engineering hardware, Apple Pro Display precision, and surgical brushed steel.',
-    hexPrimary: '#0c0e12',
-    hexSecondary: '#12161d',
-    hexCard: '#191e28',
-    hexElevated: '#212733',
-    hexBorder: 'rgba(255, 255, 255, 0.13)',
-    glowColor1: 'rgba(148, 163, 184, 0.14)',
-    glowColor2: 'rgba(203, 213, 225, 0.09)',
-    radialGradient:
-      'radial-gradient(ellipse 80% 60% at 50% -15%, rgba(148, 163, 184, 0.12), rgba(0, 0, 0, 0))',
-    previewSwatches: ['#0c0e12', '#191e28', '#cbd5e1'],
-    accentText: 'text-zinc-300',
   },
   {
     id: 'aurora-emerald',
@@ -107,17 +99,20 @@ export const BACKGROUND_THEMES: BackgroundThemeDefinition[] = [
     tag: 'BIO-LUMINESCENT',
     badgeColor: 'border-emerald-400/40 bg-emerald-500/15 text-emerald-300',
     description:
-      'Rich nocturnal evergreen depth with bio-luminescent mint and emerald corner auras. Crisp, energizing, and soothing for prolonged late-night listening.',
-    hexPrimary: '#030f0a',
-    hexSecondary: '#061a12',
-    hexCard: '#0a261b',
-    hexElevated: '#0e3324',
-    hexBorder: 'rgba(16, 185, 129, 0.18)',
-    glowColor1: 'rgba(16, 185, 129, 0.20)',
-    glowColor2: 'rgba(52, 211, 153, 0.14)',
+      'Luminous nocturnal emerald forest depth with bio-luminescent mint corner halos, emerald tinted glass containers, and energizing audio reactive lighting.',
+    hexPrimary: '#052016',
+    hexSecondary: '#0c3525',
+    hexCard: 'rgba(10, 48, 34, 0.78)',
+    hexElevated: 'rgba(16, 74, 52, 0.90)',
+    hexBorder: 'rgba(52, 211, 153, 0.32)',
+    glowColor1: 'rgba(16, 185, 129, 0.45)',
+    glowColor2: 'rgba(52, 211, 153, 0.35)',
     radialGradient:
-      'radial-gradient(ellipse 80% 60% at 50% -15%, rgba(16, 185, 129, 0.18), rgba(0, 0, 0, 0))',
-    previewSwatches: ['#030f0a', '#0a261b', '#34d399'],
+      'radial-gradient(ellipse 90% 80% at 50% -10%, rgba(16, 185, 129, 0.42), rgba(0, 0, 0, 0)), radial-gradient(ellipse 70% 60% at 100% 100%, rgba(52, 211, 153, 0.30), rgba(0, 0, 0, 0))',
+    meshGradient:
+      'radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.30) 0px, transparent 60%), radial-gradient(at 100% 100%, rgba(52, 211, 153, 0.25) 0px, transparent 60%)',
+    previewSwatches: ['#052016', '#0f4430', '#34d399'],
+    accentHex: '#34d399',
     accentText: 'text-emerald-400',
   },
   {
@@ -126,18 +121,43 @@ export const BACKGROUND_THEMES: BackgroundThemeDefinition[] = [
     tag: 'ACOUSTIC WARMTH',
     badgeColor: 'border-amber-400/40 bg-amber-500/15 text-amber-300',
     description:
-      'Smoky warm roasted charcoal with glowing molten amber, burnt orange, and copper dusk tones. Gives an intimate, cozy fireside warmth to your music.',
-    hexPrimary: '#0f0906',
-    hexSecondary: '#1a100a',
-    hexCard: '#25170f',
-    hexElevated: '#321f15',
-    hexBorder: 'rgba(245, 158, 11, 0.18)',
-    glowColor1: 'rgba(245, 158, 11, 0.20)',
-    glowColor2: 'rgba(249, 115, 22, 0.14)',
+      'Smoky warm roasted charcoal with glowing molten amber, burnt orange, and copper dusk tones. Gives an intimate, cozy vinyl fireside warmth to your music.',
+    hexPrimary: '#221008',
+    hexSecondary: '#381a0e',
+    hexCard: 'rgba(52, 25, 14, 0.78)',
+    hexElevated: 'rgba(78, 38, 20, 0.90)',
+    hexBorder: 'rgba(251, 191, 36, 0.32)',
+    glowColor1: 'rgba(245, 158, 11, 0.45)',
+    glowColor2: 'rgba(249, 115, 22, 0.35)',
     radialGradient:
-      'radial-gradient(ellipse 80% 60% at 50% -15%, rgba(245, 158, 11, 0.18), rgba(0, 0, 0, 0))',
-    previewSwatches: ['#0f0906', '#25170f', '#fbbf24'],
+      'radial-gradient(ellipse 90% 80% at 50% -10%, rgba(245, 158, 11, 0.42), rgba(0, 0, 0, 0)), radial-gradient(ellipse 70% 60% at 0% 100%, rgba(239, 68, 68, 0.30), rgba(0, 0, 0, 0))',
+    meshGradient:
+      'radial-gradient(at 0% 0%, rgba(245, 158, 11, 0.30) 0px, transparent 60%), radial-gradient(at 100% 100%, rgba(249, 115, 22, 0.25) 0px, transparent 60%)',
+    previewSwatches: ['#221008', '#441f10', '#fbbf24'],
+    accentHex: '#fbbf24',
     accentText: 'text-amber-400',
+  },
+  {
+    id: 'titanium-slate',
+    name: 'Titanium Studio Slate',
+    tag: 'TE STUDIO HARDWARE',
+    badgeColor: 'border-zinc-400/40 bg-zinc-500/15 text-zinc-200',
+    description:
+      'Machined cool titanium and neutral studio graphite. Inspired by Teenage Engineering hardware, Apple Pro Display precision, and surgical brushed steel.',
+    hexPrimary: '#11151f',
+    hexSecondary: '#1a202e',
+    hexCard: 'rgba(24, 30, 44, 0.80)',
+    hexElevated: 'rgba(34, 43, 62, 0.92)',
+    hexBorder: 'rgba(203, 213, 225, 0.25)',
+    glowColor1: 'rgba(148, 163, 184, 0.28)',
+    glowColor2: 'rgba(203, 213, 225, 0.20)',
+    radialGradient:
+      'radial-gradient(ellipse 90% 80% at 50% -10%, rgba(148, 163, 184, 0.28), rgba(0, 0, 0, 0)), radial-gradient(ellipse 70% 60% at 100% 100%, rgba(203, 213, 225, 0.18), rgba(0, 0, 0, 0))',
+    meshGradient:
+      'radial-gradient(at 0% 0%, rgba(148, 163, 184, 0.20) 0px, transparent 60%), radial-gradient(at 100% 100%, rgba(203, 213, 225, 0.15) 0px, transparent 60%)',
+    previewSwatches: ['#11151f', '#21293a', '#cbd5e1'],
+    accentHex: '#cbd5e1',
+    accentText: 'text-zinc-300',
   },
 ];
 
@@ -145,9 +165,10 @@ const THEME_STORAGE_KEY = 'musicsync_bg_theme';
 
 export function getStoredBackgroundTheme(): BackgroundThemeId {
   try {
-    // Check URL override first if testing
     if (typeof window !== 'undefined') {
-      const param = new URLSearchParams(window.location.search).get('bg') || new URLSearchParams(window.location.search).get('theme');
+      const param =
+        new URLSearchParams(window.location.search).get('bg') ||
+        new URLSearchParams(window.location.search).get('theme');
       if (param && BACKGROUND_THEMES.some((t) => t.id === param)) {
         return param as BackgroundThemeId;
       }
@@ -167,12 +188,16 @@ export function applyBackgroundTheme(themeId: BackgroundThemeId) {
   const root = document.documentElement;
   root.style.setProperty('--bg-primary', theme.hexPrimary);
   root.style.setProperty('--bg-secondary', theme.hexSecondary);
+  root.style.setProperty('--bg-surface', theme.hexCard);
   root.style.setProperty('--bg-card', theme.hexCard);
   root.style.setProperty('--bg-elevated', theme.hexElevated);
+  root.style.setProperty('--bg-surface-elevated', theme.hexElevated);
   root.style.setProperty('--bg-border', theme.hexBorder);
   root.style.setProperty('--bg-glow-1', theme.glowColor1);
   root.style.setProperty('--bg-glow-2', theme.glowColor2);
   root.style.setProperty('--bg-radial', theme.radialGradient);
+  root.style.setProperty('--bg-mesh', theme.meshGradient);
+  root.style.setProperty('--theme-accent', theme.accentHex);
 
   // Apply to body and root elements
   document.body.style.backgroundColor = theme.hexPrimary;

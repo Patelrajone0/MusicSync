@@ -397,7 +397,11 @@ export const TitaniumHeader: React.FC<TitaniumHeaderProps> = ({
   // =========================================================================
   return (
     <header
-      className={`shrink-0 bg-[#0e1014]/90 backdrop-blur-2xl border-b border-white/[0.08] px-3 sm:px-5 pt-[env(safe-area-inset-top,0px)] select-none z-30 relative shadow-[0_4px_24px_rgba(0,0,0,0.7)] ${className}`}
+      style={{
+        backgroundColor: 'var(--bg-surface, rgba(14, 16, 20, 0.85))',
+        borderColor: 'var(--bg-border, rgba(255, 255, 255, 0.08))',
+      }}
+      className={`shrink-0 backdrop-blur-2xl border-b px-3 sm:px-5 pt-[env(safe-area-inset-top,0px)] select-none z-30 relative shadow-[0_4px_24px_rgba(0,0,0,0.7)] transition-colors duration-300 ${className}`}
     >
       {/* Precision Brushed Platinum Specular Hairline */}
       <div className="absolute top-[env(safe-area-inset-top,0px)] left-1/2 -translate-x-1/2 w-64 sm:w-96 h-[1.2px] bg-gradient-to-r from-transparent via-zinc-200/50 to-transparent pointer-events-none" />

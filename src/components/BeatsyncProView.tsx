@@ -52,6 +52,11 @@ import { TitaniumStudioShowcase } from './TitaniumStudioShowcase';
 import { CurvedCornersShowcase } from './CurvedCornersShowcase';
 import { BackgroundShowcase } from './BackgroundShowcase';
 import {
+  BACKGROUND_THEMES,
+  BackgroundThemeId,
+  getStoredBackgroundTheme,
+} from '../types/backgroundThemes';
+import {
   CurvedCornerStyle,
   CURVED_CORNER_STYLES,
   getStoredCornerStyle,
@@ -140,7 +145,21 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
   const [isStudioShowcaseOpen, setIsStudioShowcaseOpen] = useState(false);
   const [isCornerShowcaseOpen, setIsCornerShowcaseOpen] = useState(false);
   const [isThemeShowcaseOpen, setIsThemeShowcaseOpen] = useState(false);
+  const [currentBgTheme, setCurrentBgTheme] = useState<BackgroundThemeId>(getStoredBackgroundTheme);
   const [cornerStyle, setCornerStyle] = useState<CurvedCornerStyle>(getStoredCornerStyle);
+
+  const activeThemeDef =
+    BACKGROUND_THEMES.find((t) => t.id === currentBgTheme) || BACKGROUND_THEMES[0];
+
+  useEffect(() => {
+    const handleThemeChange = (e: any) => {
+      if (e.detail?.themeId) {
+        setCurrentBgTheme(e.detail.themeId);
+      }
+    };
+    window.addEventListener('musicsync_bg_theme_changed', handleThemeChange);
+    return () => window.removeEventListener('musicsync_bg_theme_changed', handleThemeChange);
+  }, []);
 
   const currentCornerDef =
     CURVED_CORNER_STYLES.find((c) => c.id === cornerStyle) || CURVED_CORNER_STYLES[0];
@@ -824,10 +843,26 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
   const distanceMetric = Math.round((1 - Math.min(1, Math.sqrt(listenerPos.x * listenerPos.x + listenerPos.y * listenerPos.y) * 0.7)) * 100);
 
   return (
-    <div className="flex-1 w-full h-full min-h-0 bg-dark-950 text-slate-200 flex flex-col font-sans select-none overflow-hidden text-[13px] relative">
-      {/* Background ambient lighting matching Lobby */}
-      <div className="absolute top-1/4 left-1/3 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-electric-cyan/[0.07] rounded-full blur-3xl pointer-events-none z-0" />
-      <div className="absolute bottom-1/4 right-1/4 -translate-x-1/2 translate-y-1/2 w-96 h-96 bg-electric-purple/[0.07] rounded-full blur-3xl pointer-events-none z-0" />
+    <div
+      style={{
+        backgroundColor: activeThemeDef.hexPrimary,
+        backgroundImage: activeThemeDef.meshGradient,
+      }}
+      className="flex-1 w-full h-full min-h-0 text-slate-200 flex flex-col font-sans select-none overflow-hidden text-[13px] relative transition-colors duration-500"
+    >
+      {/* Dynamic atmospheric radial gradient & ambient light orbs */}
+      <div
+        className="absolute inset-0 pointer-events-none transition-all duration-700 ease-out z-0"
+        style={{ background: activeThemeDef.radialGradient }}
+      />
+      <div
+        className="absolute top-1/4 left-1/3 -translate-x-1/2 -translate-y-1/2 w-[520px] h-[520px] rounded-full blur-[120px] pointer-events-none z-0 transition-all duration-700 ease-out opacity-45"
+        style={{ backgroundColor: activeThemeDef.glowColor1 }}
+      />
+      <div
+        className="absolute bottom-1/4 right-1/4 -translate-x-1/2 translate-y-1/2 w-[520px] h-[520px] rounded-full blur-[120px] pointer-events-none z-0 transition-all duration-700 ease-out opacity-40"
+        style={{ backgroundColor: activeThemeDef.glowColor2 }}
+      />
 
       <input
         ref={fileInputRef}
@@ -904,7 +939,7 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
         {/* ========================================================= */}
         {/* COLUMN 2: CENTER (Direct Search & Live Results / Added Songs) */}
         {/* ========================================================= */}
-        <main className={`flex-1 min-w-0 flex flex-col p-2 sm:p-4 gap-2 sm:gap-3 bg-dark-950/40 overflow-hidden relative z-10 ${
+        <main className={`flex-1 min-w-0 flex flex-col p-2 sm:p-4 gap-2 sm:gap-3 bg-black/10 overflow-hidden relative z-10 ${
           mobileTab === 'queue' ? 'flex' : 'hidden md:flex'
         }`}>
           {/* Ambient Corner Flare Glows for Liquid Squircle */}
@@ -917,9 +952,15 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
             </>
           )}
 
-          {/* Universal Search Bar with Adaptive Curved Corners */}
+          {/* Universal Search Bar with Adaptive Curved Corners & Theme Glass */}
           <div className="w-full shrink-0">
-            <div className={`relative w-full h-11 sm:h-12 px-4 flex items-center justify-between transition-all duration-300 ${currentCornerDef.searchContainerClass}`}>
+            <div
+              style={{
+                backgroundColor: activeThemeDef.hexElevated,
+                borderColor: activeThemeDef.hexBorder,
+              }}
+              className={`relative w-full h-11 sm:h-12 px-4 flex items-center justify-between transition-all duration-300 ${currentCornerDef.searchBarRadiusClass} border shadow-sm backdrop-blur-xl`}
+            >
               <div className="flex items-center gap-2.5 min-w-0 flex-1">
                 <Search className={`w-4 h-4 shrink-0 ${currentCornerDef.id === 'neon-kinetic' ? 'text-emerald-400' : currentCornerDef.id === 'organic-capsule' ? 'text-purple-300' : 'text-zinc-400'}`} />
                 <input
@@ -983,7 +1024,13 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
           {/* MAIN CENTER CONTENT AREA: SEARCH RESULTS OR ADDED SONGS (QUEUE) */}
           {searchQuery.trim() ? (
             /* STATE 1: SEARCH RESULTS in Titanium Card */
-            <div className={`flex-1 min-h-0 flex flex-col p-3 sm:p-4 overflow-hidden animate-fade-in ${currentCornerDef.queueCardContainerClass}`}>
+            <div
+              style={{
+                backgroundColor: activeThemeDef.hexCard,
+                borderColor: activeThemeDef.hexBorder,
+              }}
+              className={`flex-1 min-h-0 flex flex-col p-3 sm:p-4 overflow-hidden animate-fade-in backdrop-blur-2xl transition-all duration-300 ${currentCornerDef.queueCardRadiusClass} border shadow-2xl relative`}
+            >
               {/* Top ambient hairline */}
               <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-[1px] bg-gradient-to-r from-transparent via-zinc-200/40 to-transparent pointer-events-none" />
 
@@ -1123,7 +1170,13 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
             </div>
           ) : (
             /* STATE 2: ADDED SONGS / QUEUE in Titanium Card */
-            <div className={`flex-1 min-h-0 flex flex-col p-3 sm:p-4 overflow-hidden ${currentCornerDef.queueCardContainerClass}`}>
+            <div
+              style={{
+                backgroundColor: activeThemeDef.hexCard,
+                borderColor: activeThemeDef.hexBorder,
+              }}
+              className={`flex-1 min-h-0 flex flex-col p-3 sm:p-4 overflow-hidden backdrop-blur-2xl transition-all duration-300 ${currentCornerDef.queueCardRadiusClass} border shadow-2xl relative`}
+            >
               {/* Top ambient hairline */}
               <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-[1px] bg-gradient-to-r from-transparent via-zinc-200/40 to-transparent pointer-events-none" />
 
@@ -1158,13 +1211,27 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
 
               <div className="flex-1 min-h-0 overflow-y-auto space-y-1.5 pr-1 select-none pt-1">
                 {localQueue.length === 0 ? (
-                  <div className="flex-1 min-h-[220px] py-12 flex flex-col items-center justify-center text-center p-6 text-zinc-500">
-                    <div className="relative w-12 h-12 mb-3 rounded-full border border-white/[0.12] bg-[#14171d] flex items-center justify-center text-zinc-400 shadow-[inset_0_1px_3px_rgba(255,255,255,0.08),0_4px_16px_rgba(0,0,0,0.5)]">
-                      <Disc3 className="w-6 h-6 text-zinc-400 animate-spin-slow" />
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.8)] absolute" />
+                  <div className="flex-1 min-h-[220px] py-12 flex flex-col items-center justify-center text-center p-6 text-zinc-500 relative">
+                    {/* Glowing ambient ring behind empty queue icon matching theme */}
+                    <div
+                      className="absolute w-44 h-44 rounded-full blur-2xl pointer-events-none transition-all duration-700 opacity-40"
+                      style={{ backgroundColor: activeThemeDef.glowColor1 }}
+                    />
+                    <div
+                      style={{
+                        backgroundColor: activeThemeDef.hexElevated,
+                        borderColor: activeThemeDef.hexBorder,
+                      }}
+                      className="relative w-12 h-12 mb-3 rounded-full border flex items-center justify-center text-zinc-300 shadow-lg backdrop-blur-md transition-all duration-500"
+                    >
+                      <Disc3 className="w-6 h-6 animate-spin-slow" />
+                      <span
+                        className="w-2 h-2 rounded-full absolute shadow-sm transition-all duration-500"
+                        style={{ backgroundColor: activeThemeDef.accentHex }}
+                      />
                     </div>
                     <p className="text-sm font-semibold text-zinc-200 tracking-tight">No songs in queue</p>
-                    <p className="text-xs text-zinc-500 mt-1">Type in the search bar above to add music</p>
+                    <p className="text-xs text-zinc-400 mt-1">Type in the search bar above to add music</p>
                   </div>
                 ) : (
                   localQueue.map((track, idx) => {
@@ -1336,9 +1403,15 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
         {/* ========================================================= */}
         {/* COLUMN 3: RIGHT (Spatial Audio, 8D Effects & Live Chat)   */}
         {/* ========================================================= */}
-        <aside className={`w-full md:w-72 lg:w-80 shrink-0 bg-[#0c0e12]/95 backdrop-blur-2xl border-l border-white/[0.08] flex flex-col p-2.5 sm:p-3.5 gap-2.5 sm:gap-3 h-full overflow-hidden relative z-10 ${
-          mobileTab === 'spatial' || mobileTab === 'chat' ? 'flex' : 'hidden md:flex'
-        }`}>
+        <aside
+          style={{
+            backgroundColor: activeThemeDef.hexCard,
+            borderColor: activeThemeDef.hexBorder,
+          }}
+          className={`w-full md:w-72 lg:w-80 shrink-0 backdrop-blur-2xl border-l flex flex-col p-2.5 sm:p-3.5 gap-2.5 sm:gap-3 h-full overflow-hidden relative z-10 transition-colors duration-300 ${
+            mobileTab === 'spatial' || mobileTab === 'chat' ? 'flex' : 'hidden md:flex'
+          }`}
+        >
           {/* Segmented Top Tab Switcher: Chat vs Spatial (Desktop only; on mobile, navigation is handled by bottom navigation tabs) */}
           <div className="hidden md:grid grid-cols-2 p-1 rounded-2xl bg-[#090b0e] border border-white/[0.08] text-xs shrink-0">
             <button
@@ -1653,7 +1726,13 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
       </nav>
 
       {/* 4. BOTTOM MASTER PLAYBACK BAR */}
-      <footer className="shrink-0 bg-[#0b0d11]/95 backdrop-blur-2xl border-t border-white/[0.08] px-3 sm:px-6 pt-1.5 sm:pt-2.5 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))] flex flex-col md:flex-row items-center justify-between gap-2 sm:gap-3 z-40 select-none relative shadow-[0_-4px_30px_rgba(0,0,0,0.9)]">
+      <footer
+        style={{
+          backgroundColor: activeThemeDef.hexCard,
+          borderColor: activeThemeDef.hexBorder,
+        }}
+        className="shrink-0 backdrop-blur-2xl border-t px-3 sm:px-6 pt-1.5 sm:pt-2.5 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))] flex flex-col md:flex-row items-center justify-between gap-2 sm:gap-3 z-40 select-none relative shadow-[0_-4px_30px_rgba(0,0,0,0.9)] transition-colors duration-300"
+      >
         {/* Top ambient hairline */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 sm:w-96 h-[1px] bg-gradient-to-r from-transparent via-zinc-200/40 to-transparent pointer-events-none" />
 

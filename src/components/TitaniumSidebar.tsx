@@ -571,7 +571,11 @@ export const TitaniumSidebar: React.FC<TitaniumSidebarProps> = ({
   // =========================================================================
   return (
     <aside
-      className={`w-full md:w-60 lg:w-64 shrink-0 bg-[#0e1014]/90 backdrop-blur-2xl border-r border-white/[0.08] flex-col p-3.5 gap-4 overflow-y-auto relative z-10 select-none shadow-[4px_0_24px_rgba(0,0,0,0.7)] ${
+      style={{
+        backgroundColor: 'var(--bg-surface, rgba(14, 16, 20, 0.85))',
+        borderColor: 'var(--bg-border, rgba(255, 255, 255, 0.08))',
+      }}
+      className={`w-full md:w-60 lg:w-64 shrink-0 backdrop-blur-2xl border-r flex-col p-3.5 gap-4 overflow-y-auto relative z-10 select-none shadow-[4px_0_24px_rgba(0,0,0,0.7)] transition-colors duration-300 ${
         isVisibleOnMobile ? 'flex' : 'hidden md:flex'
       } ${className}`}
     >
