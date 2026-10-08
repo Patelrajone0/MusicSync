@@ -1021,7 +1021,7 @@ export function App() {
       onTouchStart={() => {
         if (!isAudioUnlocked) handleUnlockAudio();
       }}
-      style={{ backgroundColor: 'var(--bg-primary, #050508)' }}
+      style={{ backgroundColor: 'var(--bg-primary, #020204)' }}
       className="fixed inset-0 w-full h-full min-h-screen overflow-hidden text-slate-100 flex flex-col font-sans select-none pl-[env(safe-area-inset-left,0px)] pr-[env(safe-area-inset-right,0px)] transition-colors duration-300"
     >
       <BeatsyncProView

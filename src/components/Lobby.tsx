@@ -269,7 +269,7 @@ export const Lobby: React.FC<LobbyProps> = ({ onRoomReady, initialRoomCode = '' 
 
   return (
     <div
-      style={{ backgroundColor: 'var(--bg-primary, #050508)' }}
+      style={{ backgroundColor: 'var(--bg-primary, #020204)' }}
       className="h-full w-full min-h-full text-zinc-200 flex flex-col justify-center items-center px-4 pt-[calc(1.5rem+env(safe-area-inset-top,0px))] pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] pl-[calc(1rem+env(safe-area-inset-left,0px))] pr-[calc(1rem+env(safe-area-inset-right,0px))] relative overflow-y-auto font-sans select-none antialiased transition-colors duration-300"
     >
       {/* Subtle atmospheric ambient vignette with dynamic gradient */}
