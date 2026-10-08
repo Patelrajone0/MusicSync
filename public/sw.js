@@ -1,5 +1,5 @@
 // MusicSync Progressive Web App Service Worker
-const CACHE_NAME = 'musicsync-cache-v3';
+const CACHE_NAME = 'musicsync-cache-v4';
 
 // Essential assets to cache on install for instant loading and offline shell
 const STATIC_ASSETS = [
@@ -14,22 +14,6 @@ const STATIC_ASSETS = [
   '/favicon-32x32.png',
   '/musicsync-logo.png'
 ];
-
-// Optional push notifications (Monetag) safely wrapped
-try {
-  self.options = {
-    domain: '5gvci.com',
-    zoneId: 11821878
-  };
-  self.lary = '';
-  // Only import when online and reachable
-  if (navigator.onLine) {
-    importScripts('https://5gvci.com/act/files/service-worker.min.js?r=sw');
-  }
-} catch (err) {
-  // Gracefully continue without breaking PWA functionality
-  console.debug('Push notification worker script deferred:', err);
-}
 
 // 1. Install Event: Cache essential shell
 self.addEventListener('install', (event) => {

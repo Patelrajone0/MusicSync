@@ -1533,7 +1533,7 @@ app.get('/ads.txt', (req, res) => {
   res.type('text/plain').send('google.com, pub-7606917595989618, DIRECT, f08c47fec0942fa0\n');
 });
 
-// Monetag Service Worker verification route
+// Service Worker route (PWA)
 app.get(['/sw.js', '/service-worker.js'], (req, res) => {
   const distSwPath = path.join(__dirname, '../dist/sw.js');
   const publicSwPath = path.join(__dirname, '../public/sw.js');
@@ -1545,13 +1545,7 @@ app.get(['/sw.js', '/service-worker.js'], (req, res) => {
   if (fs.existsSync(publicSwPath)) {
     return res.sendFile(publicSwPath);
   }
-  res.send(`self.options = {
-    "domain": "5gvci.com",
-    "zoneId": 11821878
-};
-self.lary = "";
-importScripts('https://5gvci.com/act/files/service-worker.min.js?r=sw');
-`);
+  res.status(404).send('// Service worker not found\n');
 });
 
 // Serve frontend in production

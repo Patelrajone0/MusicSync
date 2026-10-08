@@ -11,28 +11,6 @@
 
       gtag('config', 'G-9VSKEHNW6R');
     </script>
-    <!-- Monetag Ad Tags (Currently Paused - Set __MS_ADS_ENABLED__ = true to re-enable) -->
-    <script>
-      window.__MS_ADS_ENABLED__ = false;
-      window.__MS_TRIGGER_MONETAG__ = function() {
-        if (!window.__MS_ADS_ENABLED__) return;
-        // 1. In-Page Push (Zone 11822158)
-        if (!document.querySelector('script[data-zone="11822158"]')) {
-          var s1 = document.createElement('script');
-          s1.dataset.zone = '11822158';
-          s1.src = 'https://nap5k.com/tag.min.js';
-          document.body.appendChild(s1);
-        }
-        // 2. Web Push Notification Tag (Zone 11821878)
-        if (!document.querySelector('script[src*="5gvci.com"]')) {
-          var s2 = document.createElement('script');
-          s2.src = 'https://5gvci.com/act/files/tag.min.js?z=11821878';
-          s2.setAttribute('data-cfasync', 'false');
-          s2.async = true;
-          document.body.appendChild(s2);
-        }
-      };
-    </script>
     <link rel="icon" type="image/png" sizes="512x512" href="/musicsync-icon-512.png?v=5" />
     <link rel="icon" type="image/png" sizes="192x192" href="/musicsync-icon-192.png?v=5" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png?v=5" />
@@ -51,8 +29,8 @@
     <meta name="application-name" content="MusicSync" />
     <title>MusicSync | Multi-Device Synchronized Music System</title>
     <meta name="description" content="Turn any group of phones, laptops, and speakers into a perfectly synchronized sound system with zero-delay real-time audio playback." />
-    <!-- Google AdSense Verification (Currently Paused - Uncomment when re-enabling) -->
-    <!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7606917595989618" crossorigin="anonymous"></script> -->
+    <!-- Google AdSense -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7606917595989618" crossorigin="anonymous"></script>
     <!-- Critical reset styles to prevent any initial browser white margins/borders -->
     <style>
       *, *::before, *::after {

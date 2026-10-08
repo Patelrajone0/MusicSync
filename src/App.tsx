@@ -21,7 +21,6 @@ import { UserX, WifiOff } from 'lucide-react';
 
 import { userTasteEngine } from './services/userTaste';
 import { getDeviceId } from './utils/deviceId';
-import { triggerMonetagAds, ADS_ENABLED } from './services/adManager';
 import { analytics } from './services/analytics';
 import { LoadingScreen } from './components/LoadingScreen';
 import { RoomCreationLoadingDemo } from './components/RoomCreationLoading';
@@ -345,18 +344,6 @@ export function App() {
     });
   }, [currentUser, currentTrack, isAudioUnlocked]);
 
-  // Ad Timing Controller (Master controlled via ADS_ENABLED in adManager.ts)
-  useEffect(() => {
-    if (!ADS_ENABLED) return;
-    const delayMs = roomCode ? 5 * 60 * 1000 : 30 * 1000;
-    const timer = setTimeout(() => {
-      triggerMonetagAds();
-    }, delayMs);
-
-    return () => {
-      clearTimeout(timer);
-    };
-  }, [roomCode]);
 
   const handleLeaveRoom = () => {
     clearStoredSession();
