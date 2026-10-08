@@ -30,9 +30,29 @@ export interface BackgroundThemeDefinition {
 
 export const BACKGROUND_THEMES: BackgroundThemeDefinition[] = [
   {
+    id: 'pure-oled-black',
+    name: 'True OLED Pure Black',
+    tag: '100% PURE BLACK · DEFAULT',
+    badgeColor: 'border-zinc-400/40 bg-zinc-500/15 text-zinc-100',
+    description:
+      'Absolute 100% pitch-black (#000000) with 0% pixel luminance. Shuts off OLED pixels completely for zero backlight bleed, infinite contrast, and maximum battery efficiency.',
+    hexPrimary: '#000000',
+    hexSecondary: '#000000',
+    hexCard: 'rgba(0, 0, 0, 0.98)',
+    hexElevated: '#050505',
+    hexBorder: 'rgba(255, 255, 255, 0.14)',
+    glowColor1: 'rgba(0, 0, 0, 0)',
+    glowColor2: 'rgba(0, 0, 0, 0)',
+    radialGradient: 'none',
+    meshGradient: 'none',
+    previewSwatches: ['#000000', '#0a0a0a', '#ffffff'],
+    accentHex: '#ffffff',
+    accentText: 'text-white',
+  },
+  {
     id: 'midnight-obsidian',
     name: 'Midnight Obsidian',
-    tag: 'OLED TRUE BLACK · DEFAULT',
+    tag: 'CYAN STARLIGHT · OLED',
     badgeColor: 'border-slate-500/40 bg-slate-500/15 text-slate-200',
     description:
       'Pure infinite contrast black optimized for OLED displays with zero backlight bleed, crystal-sharp white typography, and subtle cyan-violet specular starlight.',
@@ -72,26 +92,6 @@ export const BACKGROUND_THEMES: BackgroundThemeDefinition[] = [
     previewSwatches: ['#ffffff', '#f1f5f9', '#2563eb'],
     accentHex: '#2563eb',
     accentText: 'text-blue-600',
-  },
-  {
-    id: 'pure-oled-black',
-    name: 'True OLED Pure Black',
-    tag: '100% PURE BLACK · TRUE OLED',
-    badgeColor: 'border-zinc-400/40 bg-zinc-500/15 text-zinc-100',
-    description:
-      'Absolute 100% pitch-black (#000000) with 0% pixel luminance. Shuts off OLED pixels completely for zero backlight bleed, infinite contrast, and maximum battery efficiency.',
-    hexPrimary: '#000000',
-    hexSecondary: '#000000',
-    hexCard: 'rgba(0, 0, 0, 0.98)',
-    hexElevated: '#050505',
-    hexBorder: 'rgba(255, 255, 255, 0.14)',
-    glowColor1: 'rgba(0, 0, 0, 0)',
-    glowColor2: 'rgba(0, 0, 0, 0)',
-    radialGradient: 'none',
-    meshGradient: 'none',
-    previewSwatches: ['#000000', '#0a0a0a', '#ffffff'],
-    accentHex: '#ffffff',
-    accentText: 'text-white',
   },
   {
     id: 'cosmic-abyss',
@@ -222,7 +222,7 @@ export function getStoredBackgroundTheme(): BackgroundThemeId {
       return saved as BackgroundThemeId;
     }
   } catch {}
-  return 'midnight-obsidian';
+  return 'pure-oled-black';
 }
 
 export function applyBackgroundTheme(themeId: BackgroundThemeId) {

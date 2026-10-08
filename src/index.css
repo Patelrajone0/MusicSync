@@ -9,18 +9,18 @@
     --safe-top: env(safe-area-inset-top, 0px);
     --safe-left: env(safe-area-inset-left, 0px);
     --safe-right: env(safe-area-inset-right, 0px);
-    --bg-primary: #020204;
-    --bg-secondary: #08080d;
-    --bg-surface: rgba(14, 14, 20, 0.85);
-    --bg-card: rgba(14, 14, 20, 0.85);
-    --bg-elevated: rgba(22, 22, 30, 0.92);
-    --bg-surface-elevated: rgba(22, 22, 30, 0.92);
-    --bg-border: rgba(255, 255, 255, 0.10);
-    --bg-glow-1: rgba(0, 240, 255, 0.18);
-    --bg-glow-2: rgba(99, 102, 241, 0.15);
-    --bg-radial: radial-gradient(ellipse 90% 70% at 50% -10%, rgba(120, 119, 198, 0.18), rgba(0, 0, 0, 0));
-    --bg-mesh: radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.12) 0px, transparent 50%), radial-gradient(at 100% 100%, rgba(0, 240, 255, 0.10) 0px, transparent 50%);
-    --theme-accent: #00f0ff;
+    --bg-primary: #000000;
+    --bg-secondary: #000000;
+    --bg-surface: rgba(0, 0, 0, 0.98);
+    --bg-card: rgba(0, 0, 0, 0.98);
+    --bg-elevated: #050505;
+    --bg-surface-elevated: #050505;
+    --bg-border: rgba(255, 255, 255, 0.14);
+    --bg-glow-1: rgba(0, 0, 0, 0);
+    --bg-glow-2: rgba(0, 0, 0, 0);
+    --bg-radial: none;
+    --bg-mesh: none;
+    --theme-accent: #ffffff;
   }
 
   html {
@@ -44,12 +44,12 @@
     min-height: 100%;
     min-height: -webkit-fill-available;
     overflow: hidden;
-    background-color: var(--bg-primary, #050508);
+    background-color: var(--bg-primary, #000000);
     transition: background-color 0.25s ease-out;
   }
 
   body {
-    background-color: var(--bg-primary, #050508);
+    background-color: var(--bg-primary, #000000);
     color: #f1f5f9;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     -webkit-font-smoothing: antialiased;
