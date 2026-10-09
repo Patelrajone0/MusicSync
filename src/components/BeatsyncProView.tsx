@@ -1091,10 +1091,10 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
                             handleAddSearchResult(track);
                           }
                         }}
-                        className={`flex items-center justify-between p-2 sm:p-2.5 rounded-2xl border transition-all select-none ${
+                        className={`flex items-center justify-between p-2 sm:p-2.5 rounded-2xl border transition-all select-none search-result-card ${
                           isAdded
-                            ? 'bg-emerald-500/[0.08] border-emerald-500/30 shadow-[0_0_12px_rgba(16,185,129,0.1)]'
-                            : 'bg-[#12151b]/60 hover:bg-[#181c24]/90 border-white/[0.05] hover:border-white/[0.15] cursor-pointer group'
+                            ? 'search-result-added bg-emerald-500/[0.08] border-emerald-500/30 shadow-[0_0_12px_rgba(16,185,129,0.1)]'
+                            : 'search-result-idle bg-[#12151b]/60 hover:bg-[#181c24]/90 border-white/[0.05] hover:border-white/[0.15] cursor-pointer group'
                         }`}
                       >
                         {/* Left: Thumbnail & Info */}
@@ -1103,30 +1103,30 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
                             <img
                               src={track.artwork}
                               alt={track.title}
-                              className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl object-cover bg-black/50 shrink-0 shadow-sm border border-white/5"
+                              className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl object-cover bg-black/50 shrink-0 shadow-sm border border-white/5 search-result-artwork"
                               loading="lazy"
                             />
                           ) : (
-                            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-[#14171d] border border-white/[0.08] flex items-center justify-center shrink-0">
+                            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-[#14171d] border border-white/[0.08] flex items-center justify-center shrink-0 search-result-artwork-fallback">
                               <Music className="w-5 h-5 text-zinc-400" />
                             </div>
                           )}
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2">
                               <h4
-                                className={`text-xs sm:text-sm font-semibold truncate leading-tight transition-colors ${
+                                className={`text-xs sm:text-sm font-semibold truncate leading-tight transition-colors search-result-title ${
                                   isAdded ? 'text-emerald-300' : 'text-zinc-100 group-hover:text-white'
                                 }`}
                               >
                                 {cleanTitle}
                               </h4>
                               {isAdded && (
-                                <span className="hidden sm:inline-flex items-center gap-1 text-[9px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold">
+                                <span className="hidden sm:inline-flex items-center gap-1 text-[9px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold search-result-badge-inlist">
                                   In List
                                 </span>
                               )}
                             </div>
-                            <p className="text-[11px] text-zinc-400 truncate leading-tight mt-0.5">
+                            <p className="text-[11px] text-zinc-400 truncate leading-tight mt-0.5 search-result-artist">
                               {track.artist || 'Unknown Artist'}
                             </p>
                           </div>
@@ -1134,7 +1134,7 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
 
                         {/* Right: Duration & Add button */}
                         <div className="flex items-center gap-2.5 sm:gap-3 shrink-0 ml-3">
-                          <span className="text-xs font-mono text-zinc-400">
+                          <span className="text-xs font-mono text-zinc-400 search-result-duration">
                             {track.duration > 0 ? formatTime(track.duration) : '--:--'}
                           </span>
 
@@ -1145,7 +1145,7 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
                                 e.stopPropagation();
                               }}
                               disabled
-                              className="flex items-center gap-1 sm:gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 text-xs font-semibold shadow-[0_0_12px_rgba(16,185,129,0.25)] cursor-default select-none"
+                              className="flex items-center gap-1 sm:gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 text-xs font-semibold shadow-[0_0_12px_rgba(16,185,129,0.25)] cursor-default select-none search-result-btn-added"
                               title="Already added to your list"
                             >
                               <Check className="w-3.5 h-3.5 stroke-[2.5]" />
@@ -1158,7 +1158,7 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
                                 e.stopPropagation();
                                 handleAddSearchResult(track);
                               }}
-                              className="flex items-center gap-1 sm:gap-1.5 px-3 py-1.5 rounded-full bg-[#161a22] hover:bg-zinc-800 active:scale-95 text-zinc-200 hover:text-white border border-white/[0.12] hover:border-white/30 text-xs font-semibold cursor-pointer transition-all shadow-sm"
+                              className="flex items-center gap-1 sm:gap-1.5 px-3 py-1.5 rounded-full bg-[#161a22] hover:bg-zinc-800 active:scale-95 text-zinc-200 hover:text-white border border-white/[0.12] hover:border-white/30 text-xs font-semibold cursor-pointer transition-all shadow-sm search-result-btn-add"
                               title="Add to queue"
                             >
                               <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
@@ -1263,14 +1263,14 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
                         onDrop={(e) => handleDrop(e, idx)}
                         onDragEnd={handleDragEnd}
                         onClick={() => handlePlayTrack(track)}
-                        className={`relative flex items-center justify-between py-2 px-3 rounded-[14px] border transition-all cursor-pointer group select-none ${
+                        className={`relative flex items-center justify-between py-2 px-3 rounded-[14px] border transition-all cursor-pointer group select-none queue-card-row ${
                           isBeingDragged
                             ? 'opacity-40 border-dashed border-zinc-400/80 bg-zinc-900/60 scale-[0.98]'
                             : isDropTarget
                             ? 'bg-zinc-800/70 border-zinc-300 ring-2 ring-zinc-400/50 shadow-[0_0_20px_rgba(255,255,255,0.2)]'
                             : isCurrent
-                            ? 'bg-gradient-to-r from-zinc-800/80 via-zinc-900/90 to-black/80 border border-zinc-400/40 shadow-[0_0_20px_rgba(255,255,255,0.05)] ring-1 ring-white/10'
-                            : 'bg-[#12151b]/50 hover:bg-[#181c24]/80 border-white/[0.05] hover:border-white/[0.12]'
+                            ? 'queue-card-current bg-gradient-to-r from-zinc-800/80 via-zinc-900/90 to-black/80 border border-zinc-400/40 shadow-[0_0_20px_rgba(255,255,255,0.05)] ring-1 ring-white/10'
+                            : 'queue-card-idle bg-[#12151b]/50 hover:bg-[#181c24]/80 border-white/[0.05] hover:border-white/[0.12]'
                         }`}
                       >
                         {/* Drop Target Indicator Bar */}
@@ -1361,7 +1361,7 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
 
                           <div className="min-w-0 flex-1">
                             <span
-                              className={`text-xs sm:text-[13px] truncate block transition-colors ${
+                              className={`text-xs sm:text-[13px] truncate block transition-colors queue-track-title ${
                                 isCurrent
                                   ? 'text-white font-bold drop-shadow-[0_0_8px_rgba(255,255,255,0.2)]'
                                   : 'text-zinc-200 group-hover:text-white font-medium'

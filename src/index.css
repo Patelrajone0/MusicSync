@@ -1262,5 +1262,328 @@ html[data-bg-theme="midnight-obsidian"] .musicsync-eq-bar {
   box-shadow: 0 0 8px rgba(255, 255, 255, 0.45) !important;
 }
 
+/* ==========================================================================
+   Search Outputs & Queue Cards Multi-Theme Optimization
+   ========================================================================== */
+
+.search-result-card {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.search-result-btn-add {
+  display: inline-flex;
+  align-items: center;
+  transition: all 0.15s ease;
+}
+
+.search-result-btn-add:active {
+  transform: scale(0.95);
+}
+
+/* 1. PURE LIGHT THEME: Crisp White Cards, Dark Slate Typography & Prominent Action Buttons */
+html[data-bg-theme="pure-light"] .search-result-card.search-result-idle {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+}
+
+html[data-bg-theme="pure-light"] .search-result-card.search-result-idle:hover {
+  background-color: #f8fafc !important;
+  border-color: #93c5fd !important;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.08) !important;
+}
+
+html[data-bg-theme="pure-light"] .search-result-card.search-result-added {
+  background-color: #f0fdf4 !important;
+  border-color: #86efac !important;
+  box-shadow: 0 1px 3px rgba(16, 185, 129, 0.06) !important;
+}
+
+html[data-bg-theme="pure-light"] .search-result-title {
+  color: #0f172a !important;
+  font-weight: 700 !important;
+}
+
+html[data-bg-theme="pure-light"] .search-result-card.search-result-idle:hover .search-result-title {
+  color: #1d4ed8 !important;
+}
+
+html[data-bg-theme="pure-light"] .search-result-card.search-result-added .search-result-title {
+  color: #047857 !important;
+}
+
+html[data-bg-theme="pure-light"] .search-result-artist {
+  color: #475569 !important;
+  font-weight: 500 !important;
+}
+
+html[data-bg-theme="pure-light"] .search-result-duration {
+  color: #64748b !important;
+  font-weight: 600 !important;
+}
+
+html[data-bg-theme="pure-light"] .search-result-artwork-fallback {
+  background-color: #f1f5f9 !important;
+  border-color: #e2e8f0 !important;
+}
+html[data-bg-theme="pure-light"] .search-result-artwork-fallback svg {
+  color: #2563eb !important;
+}
+
+html[data-bg-theme="pure-light"] .search-result-btn-add {
+  background-color: #0f172a !important;
+  border-color: #0f172a !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.15) !important;
+}
+
+html[data-bg-theme="pure-light"] .search-result-btn-add:hover {
+  background-color: #1e293b !important;
+  border-color: #1e293b !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.22) !important;
+}
+
+html[data-bg-theme="pure-light"] .search-result-btn-add * {
+  color: #ffffff !important;
+}
+
+html[data-bg-theme="pure-light"] .search-result-btn-added {
+  background-color: #dcfce7 !important;
+  border-color: #86efac !important;
+  color: #15803d !important;
+  box-shadow: 0 1px 3px rgba(16, 185, 129, 0.10) !important;
+}
+
+html[data-bg-theme="pure-light"] .search-result-btn-added * {
+  color: #15803d !important;
+}
+
+html[data-bg-theme="pure-light"] .search-result-badge-inlist {
+  background-color: #dcfce7 !important;
+  border-color: #86efac !important;
+  color: #15803d !important;
+}
+
+/* Queue List Items in Pure Light Theme */
+html[data-bg-theme="pure-light"] .queue-card-row.queue-card-idle {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+}
+html[data-bg-theme="pure-light"] .queue-card-row.queue-card-idle:hover {
+  background-color: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+}
+html[data-bg-theme="pure-light"] .queue-card-row.queue-card-current {
+  background: linear-gradient(to right, #eff6ff 0%, #dbeafe 100%) !important;
+  border-color: #93c5fd !important;
+  box-shadow: 0 2px 10px rgba(37, 99, 235, 0.10) !important;
+}
+html[data-bg-theme="pure-light"] .queue-card-row .queue-track-title {
+  color: #0f172a !important;
+}
+html[data-bg-theme="pure-light"] .queue-card-row.queue-card-current .queue-track-title {
+  color: #1d4ed8 !important;
+  font-weight: 700 !important;
+}
+
+/* 2. AURORA EMERALD THEME SEARCH OUTPUTS */
+html[data-bg-theme="aurora-emerald"] .search-result-card.search-result-idle {
+  background-color: rgba(6, 78, 59, 0.15) !important;
+  border-color: rgba(16, 185, 129, 0.20) !important;
+}
+html[data-bg-theme="aurora-emerald"] .search-result-card.search-result-idle:hover {
+  background-color: rgba(6, 78, 59, 0.30) !important;
+  border-color: rgba(16, 185, 129, 0.45) !important;
+  box-shadow: 0 0 16px rgba(16, 185, 129, 0.15) !important;
+}
+html[data-bg-theme="aurora-emerald"] .search-result-title {
+  color: #f0fdf4 !important;
+}
+html[data-bg-theme="aurora-emerald"] .search-result-artist {
+  color: #6ee7b7 !important;
+}
+html[data-bg-theme="aurora-emerald"] .search-result-duration {
+  color: #a7f3d0 !important;
+}
+html[data-bg-theme="aurora-emerald"] .search-result-btn-add {
+  background-color: rgba(16, 185, 129, 0.20) !important;
+  border-color: rgba(52, 211, 153, 0.40) !important;
+  color: #6ee7b7 !important;
+}
+html[data-bg-theme="aurora-emerald"] .search-result-btn-add:hover {
+  background-color: #10b981 !important;
+  border-color: #34d399 !important;
+  color: #022c22 !important;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.4) !important;
+}
+html[data-bg-theme="aurora-emerald"] .search-result-btn-add:hover * {
+  color: #022c22 !important;
+}
+
+/* 3. CYBER NEBULA THEME SEARCH OUTPUTS */
+html[data-bg-theme="cyber-nebula"] .search-result-card.search-result-idle {
+  background-color: rgba(15, 23, 42, 0.65) !important;
+  border-color: rgba(0, 240, 255, 0.15) !important;
+}
+html[data-bg-theme="cyber-nebula"] .search-result-card.search-result-idle:hover {
+  background-color: rgba(30, 41, 59, 0.85) !important;
+  border-color: rgba(217, 70, 239, 0.40) !important;
+  box-shadow: 0 0 16px rgba(0, 240, 255, 0.18) !important;
+}
+html[data-bg-theme="cyber-nebula"] .search-result-title {
+  color: #ffffff !important;
+}
+html[data-bg-theme="cyber-nebula"] .search-result-artist {
+  color: #c084fc !important;
+}
+html[data-bg-theme="cyber-nebula"] .search-result-duration {
+  color: #67e8f9 !important;
+}
+html[data-bg-theme="cyber-nebula"] .search-result-btn-add {
+  background: linear-gradient(135deg, rgba(0, 240, 255, 0.15), rgba(217, 70, 239, 0.20)) !important;
+  border-color: rgba(0, 240, 255, 0.35) !important;
+  color: #67e8f9 !important;
+}
+html[data-bg-theme="cyber-nebula"] .search-result-btn-add:hover {
+  background: linear-gradient(135deg, #00f0ff, #d946ef) !important;
+  border-color: transparent !important;
+  color: #020617 !important;
+  box-shadow: 0 0 14px rgba(0, 240, 255, 0.45) !important;
+}
+html[data-bg-theme="cyber-nebula"] .search-result-btn-add:hover * {
+  color: #020617 !important;
+}
+
+/* 4. SUNSET EMBER THEME SEARCH OUTPUTS */
+html[data-bg-theme="sunset-ember"] .search-result-card.search-result-idle {
+  background-color: rgba(30, 15, 20, 0.65) !important;
+  border-color: rgba(244, 63, 94, 0.18) !important;
+}
+html[data-bg-theme="sunset-ember"] .search-result-card.search-result-idle:hover {
+  background-color: rgba(45, 20, 28, 0.85) !important;
+  border-color: rgba(251, 146, 60, 0.40) !important;
+  box-shadow: 0 0 16px rgba(244, 63, 94, 0.15) !important;
+}
+html[data-bg-theme="sunset-ember"] .search-result-title {
+  color: #fff1f2 !important;
+}
+html[data-bg-theme="sunset-ember"] .search-result-artist {
+  color: #fda4af !important;
+}
+html[data-bg-theme="sunset-ember"] .search-result-duration {
+  color: #fed7aa !important;
+}
+html[data-bg-theme="sunset-ember"] .search-result-btn-add {
+  background: linear-gradient(135deg, rgba(244, 63, 94, 0.20), rgba(251, 146, 60, 0.20)) !important;
+  border-color: rgba(244, 63, 94, 0.35) !important;
+  color: #fecdd3 !important;
+}
+html[data-bg-theme="sunset-ember"] .search-result-btn-add:hover {
+  background: linear-gradient(135deg, #f43f5e, #fb923c) !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 12px rgba(244, 63, 94, 0.4) !important;
+}
+html[data-bg-theme="sunset-ember"] .search-result-btn-add:hover * {
+  color: #ffffff !important;
+}
+
+/* 5. COSMIC ABYSS THEME SEARCH OUTPUTS */
+html[data-bg-theme="cosmic-abyss"] .search-result-card.search-result-idle {
+  background-color: rgba(15, 23, 42, 0.70) !important;
+  border-color: rgba(59, 130, 246, 0.20) !important;
+}
+html[data-bg-theme="cosmic-abyss"] .search-result-card.search-result-idle:hover {
+  background-color: rgba(30, 41, 59, 0.85) !important;
+  border-color: rgba(96, 165, 250, 0.45) !important;
+  box-shadow: 0 0 16px rgba(59, 130, 246, 0.18) !important;
+}
+html[data-bg-theme="cosmic-abyss"] .search-result-title {
+  color: #ffffff !important;
+}
+html[data-bg-theme="cosmic-abyss"] .search-result-artist {
+  color: #93c5fd !important;
+}
+html[data-bg-theme="cosmic-abyss"] .search-result-duration {
+  color: #bfdbfe !important;
+}
+html[data-bg-theme="cosmic-abyss"] .search-result-btn-add {
+  background-color: rgba(37, 99, 235, 0.20) !important;
+  border-color: rgba(96, 165, 250, 0.35) !important;
+  color: #93c5fd !important;
+}
+html[data-bg-theme="cosmic-abyss"] .search-result-btn-add:hover {
+  background-color: #2563eb !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 12px rgba(37, 99, 235, 0.4) !important;
+}
+html[data-bg-theme="cosmic-abyss"] .search-result-btn-add:hover * {
+  color: #ffffff !important;
+}
+
+/* 6. TITANIUM SLATE THEME SEARCH OUTPUTS */
+html[data-bg-theme="titanium-slate"] .search-result-card.search-result-idle {
+  background-color: rgba(24, 24, 27, 0.65) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+html[data-bg-theme="titanium-slate"] .search-result-card.search-result-idle:hover {
+  background-color: rgba(39, 39, 42, 0.85) !important;
+  border-color: rgba(255, 255, 255, 0.18) !important;
+}
+html[data-bg-theme="titanium-slate"] .search-result-title {
+  color: #f4f4f5 !important;
+}
+html[data-bg-theme="titanium-slate"] .search-result-artist {
+  color: #a1a1aa !important;
+}
+html[data-bg-theme="titanium-slate"] .search-result-btn-add {
+  background-color: #27272a !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+  color: #f4f4f5 !important;
+}
+html[data-bg-theme="titanium-slate"] .search-result-btn-add:hover {
+  background-color: #3f3f46 !important;
+  border-color: rgba(255, 255, 255, 0.25) !important;
+  color: #ffffff !important;
+}
+
+/* 7. TRUE OLED BLACK & MIDNIGHT OBSIDIAN SEARCH OUTPUTS */
+html[data-bg-theme="pure-oled-black"] .search-result-card.search-result-idle,
+html[data-bg-theme="midnight-obsidian"] .search-result-card.search-result-idle {
+  background-color: rgba(18, 20, 26, 0.75) !important;
+  border-color: rgba(255, 255, 255, 0.07) !important;
+}
+html[data-bg-theme="pure-oled-black"] .search-result-card.search-result-idle:hover,
+html[data-bg-theme="midnight-obsidian"] .search-result-card.search-result-idle:hover {
+  background-color: rgba(26, 29, 38, 0.95) !important;
+  border-color: rgba(255, 255, 255, 0.18) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6) !important;
+}
+html[data-bg-theme="pure-oled-black"] .search-result-title,
+html[data-bg-theme="midnight-obsidian"] .search-result-title {
+  color: #ffffff !important;
+}
+html[data-bg-theme="pure-oled-black"] .search-result-artist,
+html[data-bg-theme="midnight-obsidian"] .search-result-artist {
+  color: #a1a1aa !important;
+}
+html[data-bg-theme="pure-oled-black"] .search-result-duration,
+html[data-bg-theme="midnight-obsidian"] .search-result-duration {
+  color: #71717a !important;
+}
+html[data-bg-theme="pure-oled-black"] .search-result-btn-add,
+html[data-bg-theme="midnight-obsidian"] .search-result-btn-add {
+  background-color: #181b22 !important;
+  border-color: rgba(255, 255, 255, 0.14) !important;
+  color: #e4e4e7 !important;
+}
+html[data-bg-theme="pure-oled-black"] .search-result-btn-add:hover,
+html[data-bg-theme="midnight-obsidian"] .search-result-btn-add:hover {
+  background-color: #272a34 !important;
+  border-color: rgba(255, 255, 255, 0.28) !important;
+  color: #ffffff !important;
+}
+
 
 
