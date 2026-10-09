@@ -48,6 +48,7 @@ import { TitaniumHeader } from './TitaniumHeader';
 import { TitaniumHeaderShowcase } from './TitaniumHeaderShowcase';
 import { TitaniumSidebar } from './TitaniumSidebar';
 import { TitaniumSidebarShowcase } from './TitaniumSidebarShowcase';
+import { AboutMusicSyncModal } from './AboutMusicSyncModal';
 import { TitaniumStudioShowcase } from './TitaniumStudioShowcase';
 import { CurvedCornersShowcase } from './CurvedCornersShowcase';
 import { BackgroundShowcase } from './BackgroundShowcase';
@@ -140,6 +141,7 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
   // QR Modal & Leave Room Confirmation Modal
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+  const [isAboutModalOpen, setIsAboutModalOpen] = useState(false);
   const [isHeaderShowcaseOpen, setIsHeaderShowcaseOpen] = useState(false);
   const [isSidebarShowcaseOpen, setIsSidebarShowcaseOpen] = useState(false);
   const [isStudioShowcaseOpen, setIsStudioShowcaseOpen] = useState(false);
@@ -877,6 +879,7 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
         roomCode={roomCode}
         syncStats={syncStats}
         onLeaveRoom={() => setShowLeaveConfirm(true)}
+        onOpenAbout={() => setIsAboutModalOpen(true)}
         theme="studio"
         showThemeSwitcher={false}
         onOpenShowcase={() => setIsThemeShowcaseOpen(true)}
@@ -907,6 +910,8 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
           }}
           onOpenQR={() => setIsQRModalOpen(true)}
           onUploadAudio={handleUploadClick}
+          onOpenAbout={() => setIsAboutModalOpen(true)}
+          onLeaveRoom={() => setShowLeaveConfirm(true)}
           theme="studio"
           showThemeSwitcher={false}
         />
@@ -2059,6 +2064,13 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
           </div>
         </div>
       )}
+
+      {/* About MusicSync Modal */}
+      <AboutMusicSyncModal
+        isOpen={isAboutModalOpen}
+        onClose={() => setIsAboutModalOpen(false)}
+        roomCode={roomCode}
+      />
     </div>
   );
 };

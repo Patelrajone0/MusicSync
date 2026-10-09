@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { LogOut, Copy, Check, ChevronDown, Sliders, Sparkles, Cpu, Radio, ShieldCheck, Activity, Palette } from 'lucide-react';
+import { LogOut, Copy, Check, ChevronDown, Sliders, Sparkles, Cpu, Radio, ShieldCheck, Activity, Palette, Info } from 'lucide-react';
 import { HeaderBrandLogo } from './HeaderBrandLogo';
 import { MoreOptionsCapsuleIcon } from './MoreOptionsCapsuleIcon';
 import { SyncStats } from '../types';
 import { haptics } from '../utils/haptics';
+import { AboutMusicSyncModal } from './AboutMusicSyncModal';
 
 export type TitaniumHeaderTheme = 'studio' | 'rack' | 'stealth' | 'aerograde';
 
@@ -64,6 +65,7 @@ export interface TitaniumHeaderProps {
   theme?: TitaniumHeaderTheme;
   onThemeChange?: (newTheme: TitaniumHeaderTheme) => void;
   onOpenShowcase?: () => void;
+  onOpenAbout?: () => void;
   showThemeSwitcher?: boolean;
   className?: string;
 }
@@ -75,6 +77,7 @@ export const TitaniumHeader: React.FC<TitaniumHeaderProps> = ({
   theme: controlledTheme,
   onThemeChange,
   onOpenShowcase,
+  onOpenAbout,
   showThemeSwitcher = false,
   className = '',
 }) => {
@@ -206,6 +209,7 @@ export const TitaniumHeader: React.FC<TitaniumHeaderProps> = ({
             <MoreOptionsMenu
               roomCode={roomCode}
               onOpenShowcase={onOpenShowcase}
+              onOpenAbout={onOpenAbout}
               onLeaveRoom={handleLeave}
               variant="rack"
             />
@@ -286,6 +290,7 @@ export const TitaniumHeader: React.FC<TitaniumHeaderProps> = ({
             <MoreOptionsMenu
               roomCode={roomCode}
               onOpenShowcase={onOpenShowcase}
+              onOpenAbout={onOpenAbout}
               onLeaveRoom={handleLeave}
               variant="stealth"
             />
@@ -371,6 +376,7 @@ export const TitaniumHeader: React.FC<TitaniumHeaderProps> = ({
             <MoreOptionsMenu
               roomCode={roomCode}
               onOpenShowcase={onOpenShowcase}
+              onOpenAbout={onOpenAbout}
               onLeaveRoom={handleLeave}
               variant="aerograde"
             />
@@ -458,6 +464,7 @@ export const TitaniumHeader: React.FC<TitaniumHeaderProps> = ({
           <MoreOptionsMenu
             roomCode={roomCode}
             onOpenShowcase={onOpenShowcase}
+            onOpenAbout={onOpenAbout}
             onLeaveRoom={handleLeave}
             variant="studio"
           />
@@ -561,6 +568,7 @@ const ThemeDropdown: React.FC<{
 interface MoreOptionsMenuProps {
   roomCode: string;
   onOpenShowcase?: () => void;
+  onOpenAbout?: () => void;
   onLeaveRoom: () => void;
   variant?: 'studio' | 'rack' | 'stealth' | 'aerograde';
 }
@@ -568,10 +576,12 @@ interface MoreOptionsMenuProps {
 const MoreOptionsMenu: React.FC<MoreOptionsMenuProps> = ({
   roomCode,
   onOpenShowcase,
+  onOpenAbout,
   onLeaveRoom,
   variant = 'studio',
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isAboutModalOpen, setIsAboutModalOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -634,7 +644,7 @@ const MoreOptionsMenu: React.FC<MoreOptionsMenuProps> = ({
             backgroundColor: 'var(--bg-surface-elevated, rgba(15, 17, 23, 0.96))',
             borderColor: 'var(--bg-border, rgba(255, 255, 255, 0.12))',
           }}
-          className="absolute right-0 top-full mt-2 w-56 sm:w-64 rounded-2xl border shadow-[0_16px_50px_rgba(0,0,0,0.85)] p-1.5 z-50 backdrop-blur-2xl animate-popover-spring flex flex-col gap-1 text-left select-none ring-1 ring-white/5"
+          className="absolute right-0 top-full mt-2 w-64 sm:w-72 rounded-2xl border shadow-[0_16px_50px_rgba(0,0,0,0.85)] p-1.5 z-50 backdrop-blur-2xl animate-popover-spring flex flex-col gap-1 text-left select-none ring-1 ring-white/5"
         >
           {/* Header Tag / Room Context */}
           <div className="px-2.5 py-1.5 border-b border-white/[0.08] flex items-center justify-between">
@@ -677,6 +687,49 @@ const MoreOptionsMenu: React.FC<MoreOptionsMenuProps> = ({
             {/* Subtle Divider */}
             {onOpenShowcase && <div className="h-px bg-white/[0.06] my-0.5" />}
 
+            {/* Option: About MusicSync Section (Directly Above Leave Room) */}
+            <div className="my-1 p-2.5 rounded-xl bg-white/[0.04] border border-cyan-500/20 shadow-sm flex flex-col gap-1.5 text-left">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-cyan-400">
+                  <Info className="w-3.5 h-3.5" />
+                  <span className="text-xs font-bold text-white">About MusicSync</span>
+                </div>
+                <span className="text-[9px] font-mono px-1.5 py-0.2 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-400/30 font-semibold">
+                  Guide & 9 FAQs
+                </span>
+              </div>
+              <p className="text-[10px] text-zinc-300 leading-relaxed">
+                Sync multiple phones & laptops into a unified surround speaker system with zero delay and no app downloads.
+              </p>
+
+              {/* Trending Keywords Quick Badges */}
+              <div className="flex flex-wrap gap-1 text-[9px] font-mono">
+                <span className="px-1.5 py-0.2 rounded bg-black/60 border border-white/5 text-zinc-300">#FreeMusicSync</span>
+                <span className="px-1.5 py-0.2 rounded bg-black/60 border border-white/5 text-zinc-300">#NoEcho</span>
+                <span className="px-1.5 py-0.2 rounded bg-black/60 border border-white/5 text-zinc-300">#NTP</span>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setIsOpen(false);
+                  haptics.selection();
+                  if (onOpenAbout) {
+                    onOpenAbout();
+                  } else {
+                    setIsAboutModalOpen(true);
+                  }
+                }}
+                className="w-full mt-1 py-1.5 px-2 rounded-lg bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/30 text-cyan-300 hover:text-white text-[11px] font-semibold flex items-center justify-between transition-all cursor-pointer group active:scale-[0.98]"
+              >
+                <span>Read Story, Workings & FAQs</span>
+                <span className="group-hover:translate-x-0.5 transition-transform text-cyan-300">↗</span>
+              </button>
+            </div>
+
+            {/* Subtle Divider */}
+            <div className="h-px bg-white/[0.06] my-0.5" />
+
             {/* Option 2: Leave Room */}
             <button
               type="button"
@@ -702,6 +755,15 @@ const MoreOptionsMenu: React.FC<MoreOptionsMenuProps> = ({
             </button>
           </div>
         </div>
+      )}
+
+      {/* Self-contained fallback About Modal */}
+      {!onOpenAbout && (
+        <AboutMusicSyncModal
+          isOpen={isAboutModalOpen}
+          onClose={() => setIsAboutModalOpen(false)}
+          roomCode={roomCode}
+        />
       )}
     </div>
   );

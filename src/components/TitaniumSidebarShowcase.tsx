@@ -342,6 +342,14 @@ export const TitaniumSidebarShowcase: React.FC<TitaniumSidebarShowcaseProps> = (
                             setSavedToast('Upload Triggered (Simulation)');
                             setTimeout(() => setSavedToast(null), 1500);
                           }}
+                          onOpenAbout={() => {
+                            setSavedToast('About MusicSync Triggered (Simulation)');
+                            setTimeout(() => setSavedToast(null), 1500);
+                          }}
+                          onLeaveRoom={() => {
+                            setSavedToast('Leave Room Triggered (Simulation)');
+                            setTimeout(() => setSavedToast(null), 1500);
+                          }}
                           showThemeSwitcher={false}
                           className="w-full h-full"
                         />
@@ -448,6 +456,14 @@ export const TitaniumSidebarShowcase: React.FC<TitaniumSidebarShowcaseProps> = (
               }}
               onUploadAudio={() => {
                 setSavedToast('Upload Triggered (Simulation)');
+                setTimeout(() => setSavedToast(null), 1500);
+              }}
+              onOpenAbout={() => {
+                setSavedToast('About MusicSync Triggered (Simulation)');
+                setTimeout(() => setSavedToast(null), 1500);
+              }}
+              onLeaveRoom={() => {
+                setSavedToast('Leave Room Triggered (Simulation)');
                 setTimeout(() => setSavedToast(null), 1500);
               }}
               showThemeSwitcher={true}
