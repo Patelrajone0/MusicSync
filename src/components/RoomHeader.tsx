@@ -319,8 +319,11 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
           className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 animate-fade-in"
         >
           <div
+            role="dialog"
+            aria-modal="true"
+            data-theme="dark"
             onClick={(e) => e.stopPropagation()}
-            className="bg-dark-900 border border-white/15 rounded-2xl max-w-sm sm:max-w-md w-full max-h-[85vh] shadow-2xl animate-popover-spring overflow-hidden my-auto flex flex-col"
+            className="bg-dark-900 border border-white/15 rounded-2xl max-w-sm sm:max-w-md w-full max-h-[85vh] shadow-2xl animate-popover-spring overflow-hidden my-auto flex flex-col dark-modal"
           >
             {/* Modal Header */}
             <div className="p-3 sm:p-3.5 border-b border-white/10 flex items-center justify-between bg-dark-950/70 shrink-0">
@@ -570,8 +573,11 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
           className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in"
         >
           <div
+            role="dialog"
+            aria-modal="true"
+            data-theme="dark"
             onClick={(e) => e.stopPropagation()}
-            className="bg-dark-900 border border-white/15 rounded-2xl p-5 sm:p-6 max-w-sm w-full shadow-2xl animate-popover-spring space-y-4 my-auto"
+            className="bg-dark-900 border border-white/15 rounded-2xl p-5 sm:p-6 max-w-sm w-full shadow-2xl animate-popover-spring space-y-4 my-auto dark-modal"
           >
             <div className="flex items-center gap-3">
               <div className="p-3 rounded-xl bg-red-500/15 text-red-400 border border-red-500/30 shrink-0">
@@ -617,8 +623,11 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
           className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in"
         >
           <div
+            role="dialog"
+            aria-modal="true"
+            data-theme="dark"
             onClick={(e) => e.stopPropagation()}
-            className="bg-dark-900 border border-white/15 rounded-2xl p-5 sm:p-6 max-w-sm w-full shadow-2xl animate-popover-spring space-y-4 my-auto"
+            className="bg-dark-900 border border-white/15 rounded-2xl p-5 sm:p-6 max-w-sm w-full shadow-2xl animate-popover-spring space-y-4 my-auto dark-modal"
           >
             <div className="flex items-center gap-3">
               <div className="p-3 rounded-xl bg-red-500/15 text-red-400 border border-red-500/30 shrink-0">
@@ -664,8 +673,11 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
           className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in"
         >
           <div
+            role="dialog"
+            aria-modal="true"
+            data-theme="dark"
             onClick={(e) => e.stopPropagation()}
-            className="bg-dark-900 border border-amber-500/30 rounded-2xl p-5 sm:p-6 max-w-sm w-full shadow-2xl shadow-amber-500/10 animate-popover-spring space-y-4 my-auto"
+            className="bg-dark-900 border border-amber-500/30 rounded-2xl p-5 sm:p-6 max-w-sm w-full shadow-2xl shadow-amber-500/10 animate-popover-spring space-y-4 my-auto dark-modal"
           >
             <div className="flex items-center gap-3">
               <div className="p-3 rounded-xl bg-amber-500/15 text-amber-400 border border-amber-500/30 shrink-0">

@@ -217,7 +217,8 @@ export const AboutMusicSyncModal: React.FC<AboutMusicSyncModalProps> = ({
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-3xl bg-[#0c0d12] border border-white/10 rounded-3xl shadow-[0_20px_70px_rgba(0,0,0,0.9),0_0_40px_rgba(6,182,212,0.12)] overflow-hidden flex flex-col max-h-[90vh] text-zinc-200 font-sans"
+        data-theme="dark"
+        className="relative w-full max-w-3xl bg-[#0c0d12] border border-white/10 rounded-3xl shadow-[0_20px_70px_rgba(0,0,0,0.9),0_0_40px_rgba(6,182,212,0.12)] overflow-hidden flex flex-col max-h-[90vh] text-zinc-200 font-sans dark-modal"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Subtle top hairline gradient accent */}

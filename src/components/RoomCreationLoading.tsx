@@ -623,8 +623,9 @@ export const RoomCreationOverlay: React.FC<RoomCreationOverlayProps> = ({
 
   return (
     <div
+      data-theme="dark"
       style={{ backgroundColor: '#000000' }}
-      className="fixed inset-0 z-[99999] w-full h-full bg-black flex items-center justify-center p-4 animate-fade-in select-none"
+      className="fixed inset-0 z-[99999] w-full h-full bg-black flex items-center justify-center p-4 animate-fade-in select-none dark-modal"
     >
       <RoomCreationContent
         theme={selectedTheme}
@@ -752,8 +753,9 @@ export const RoomCreationLoadingDemo: React.FC<RoomCreationLoadingDemoProps> = (
 
   return (
     <div
+      data-theme="dark"
       style={{ backgroundColor: '#000000' }}
-      className="fixed inset-0 z-[99999] w-full h-full bg-black flex flex-col select-none overflow-hidden font-sans text-white"
+      className="fixed inset-0 z-[99999] w-full h-full bg-black flex flex-col select-none overflow-hidden font-sans text-white dark-modal"
     >
       {/* Top Header Controls Bar */}
       <header className="sticky top-0 z-50 w-full px-4 sm:px-6 py-3.5 bg-[#101217]/95 backdrop-blur-2xl border-b border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-2xl">

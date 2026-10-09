@@ -209,7 +209,7 @@ export const AboutHelpShowcase: React.FC<AboutHelpShowcaseProps> = ({ onClose })
   }, [isAboutOpen, isHelpOpen, onClose]);
 
   return (
-    <div className="fixed inset-0 z-[99999] w-full h-full bg-[#08090c] flex flex-col select-none overflow-hidden font-sans text-white">
+    <div data-theme="dark" className="fixed inset-0 z-[99999] w-full h-full bg-[#08090c] flex flex-col select-none overflow-hidden font-sans text-white dark-modal">
       {/* ========================================================================= */}
       {/* TOP CONTROL BAR                                                           */}
       {/* ========================================================================= */}
@@ -968,9 +968,13 @@ export const AboutHelpShowcase: React.FC<AboutHelpShowcaseProps> = ({ onClose })
 
       {/* ========================================================================= */}
       {/* LIVE MODAL 1: "ABOUT MUSICSYNC" POPUP (Interactive Real Preview)          */}
-      {/* ========================================================================= */}
       {isAboutOpen && (
-        <div className="fixed inset-0 z-[100000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
+        <div
+          role="dialog"
+          aria-modal="true"
+          data-theme="dark"
+          className="fixed inset-0 z-[100000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in dark-modal"
+        >
           <div className="relative w-full max-w-lg bg-[#0f1117] border border-cyan-500/30 rounded-2xl shadow-2xl p-6 text-zinc-200 space-y-5 overflow-hidden font-sans">
             {/* Ambient Background Gradient */}
             <div className="absolute -top-24 -right-24 w-60 h-60 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
@@ -1069,7 +1073,12 @@ export const AboutHelpShowcase: React.FC<AboutHelpShowcaseProps> = ({ onClose })
       {/* LIVE MODAL 2: "HELP & TROUBLESHOOTING" DRAWER / MODAL                      */}
       {/* ========================================================================= */}
       {isHelpOpen && (
-        <div className="fixed inset-0 z-[100000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in font-sans">
+        <div
+          role="dialog"
+          aria-modal="true"
+          data-theme="dark"
+          className="fixed inset-0 z-[100000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in font-sans dark-modal"
+        >
           <div className="relative w-full max-w-2xl bg-[#0f1117] border border-amber-500/30 rounded-2xl shadow-2xl p-6 text-zinc-200 flex flex-col max-h-[85vh] overflow-hidden">
             {/* Modal Header */}
             <div className="flex items-center justify-between pb-4 border-b border-zinc-800 shrink-0">

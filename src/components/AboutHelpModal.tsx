@@ -151,8 +151,11 @@ export const AboutHelpModal: React.FC<AboutHelpModalProps> = ({
       className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-5 bg-black/85 backdrop-blur-md animate-fade-in font-sans select-none overflow-y-auto"
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        data-theme="dark"
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-3xl bg-[#0f1015]/95 border border-white/[0.12] rounded-2xl sm:rounded-3xl shadow-[0_20px_70px_rgba(0,0,0,0.85)] overflow-hidden text-zinc-200 flex flex-col max-h-[90vh] my-auto transition-all"
+        className="relative w-full max-w-3xl bg-[#0f1015]/95 border border-white/[0.12] rounded-2xl sm:rounded-3xl shadow-[0_20px_70px_rgba(0,0,0,0.85)] overflow-hidden text-zinc-200 flex flex-col max-h-[90vh] my-auto transition-all dark-modal"
       >
         {/* ================================================================= */}
         {/* MODAL HEADER (DEDICATED PER SECTION - NO TAB SWITCHER BAR)        */}

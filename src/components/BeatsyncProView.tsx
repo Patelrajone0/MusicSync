@@ -2013,7 +2013,10 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
           onClick={() => setShowLeaveConfirm(false)}
         >
           <div
-            className="relative w-full max-w-sm rounded-3xl bg-dark-900/95 backdrop-blur-2xl border border-white/10 p-6 sm:p-7 shadow-[0_0_50px_rgba(0,0,0,0.85),0_0_30px_rgba(244,63,94,0.15)] overflow-hidden animate-scale-up"
+            role="dialog"
+            aria-modal="true"
+            data-theme="dark"
+            className="relative w-full max-w-sm rounded-3xl bg-dark-900/95 backdrop-blur-2xl border border-white/10 p-6 sm:p-7 shadow-[0_0_50px_rgba(0,0,0,0.85),0_0_30px_rgba(244,63,94,0.15)] overflow-hidden animate-scale-up dark-modal"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Ambient top hairline accent */}

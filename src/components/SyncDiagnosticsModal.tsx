@@ -71,8 +71,11 @@ export const SyncDiagnosticsModal: React.FC<SyncDiagnosticsModalProps> = ({
       className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-fadeIn"
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        data-theme="dark"
         onClick={(e) => e.stopPropagation()}
-        className="bg-dark-900 border border-white/10 rounded-2xl max-w-md w-full p-6 shadow-2xl relative animate-modal-spring"
+        className="bg-dark-900 border border-white/10 rounded-2xl max-w-md w-full p-6 shadow-2xl relative animate-modal-spring dark-modal"
       >
         {/* Header */}
         <div className="flex items-center justify-between mb-4">

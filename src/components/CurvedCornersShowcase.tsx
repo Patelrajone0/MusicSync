@@ -66,7 +66,7 @@ export const CurvedCornersShowcase: React.FC<CurvedCornersShowcaseProps> = ({
   }, [onClose]);
 
   return (
-    <div className="fixed inset-0 z-[99999] w-full h-full bg-[#07080b] flex flex-col select-none overflow-hidden font-sans text-white">
+    <div data-theme="dark" className="fixed inset-0 z-[99999] w-full h-full bg-[#07080b] flex flex-col select-none overflow-hidden font-sans text-white dark-modal">
       {/* ========================================================= */}
       {/* 1. TOP HEADER & NAVIGATION */}
       {/* ========================================================= */}

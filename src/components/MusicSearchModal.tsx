@@ -740,8 +740,9 @@ export const MusicSearchModal: React.FC<MusicSearchModalProps> = ({
   const content = (
     <div
       id="universal-music-library"
+      data-theme="dark"
       onClick={(e) => e.stopPropagation()}
-      className={`bg-dark-900 border border-white/10 rounded-2xl flex flex-col shadow-xl overflow-hidden scroll-mt-20 sm:scroll-mt-24 transition-all duration-500 ${
+      className={`bg-dark-900 border border-white/10 rounded-2xl flex flex-col shadow-xl overflow-hidden scroll-mt-20 sm:scroll-mt-24 transition-all duration-500 dark-modal ${
         inline
           ? 'w-full bg-dark-900/60 backdrop-blur-xl'
           : 'max-w-2xl w-full max-h-[88vh] animate-modal-spring'

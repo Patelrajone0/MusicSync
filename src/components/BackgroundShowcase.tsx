@@ -63,8 +63,8 @@ export const BackgroundShowcase: React.FC<BackgroundShowcaseProps> = ({
         }}
         className={`relative w-full max-w-[430px] rounded-3xl border p-4 sm:p-5 backdrop-blur-2xl flex flex-col gap-3.5 animate-modal-spring overflow-hidden ring-1 ${
           isLight
-            ? 'shadow-[0_24px_60px_rgba(15,23,42,0.16)] ring-slate-900/5'
-            : 'shadow-[0_24px_60px_rgba(0,0,0,0.85)] ring-white/10'
+            ? 'light-modal shadow-[0_24px_60px_rgba(15,23,42,0.16)] ring-slate-900/5'
+            : 'dark-modal shadow-[0_24px_60px_rgba(0,0,0,0.85)] ring-white/10'
         }`}
       >
         {/* Specular Top Hairline */}

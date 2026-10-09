@@ -237,8 +237,11 @@ export const PlaybackHistoryModal: React.FC<PlaybackHistoryModalProps> = ({
       className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 pt-[calc(1rem+env(safe-area-inset-top,0px))] pb-[calc(1rem+env(safe-area-inset-bottom,0px))]"
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        data-theme="dark"
         onClick={(e) => e.stopPropagation()}
-        className="bg-dark-900 border border-white/10 rounded-2xl max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-modal-spring"
+        className="bg-dark-900 border border-white/10 rounded-2xl max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-modal-spring dark-modal"
       >
         {/* Modal Header */}
         <div className="p-4 border-b border-white/10 flex items-center justify-between">

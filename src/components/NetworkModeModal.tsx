@@ -99,8 +99,9 @@ export const NetworkModeModal: React.FC<NetworkModeModalProps> = ({
       className="fixed inset-0 z-[9999] bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 pt-[calc(0.75rem+env(safe-area-inset-top,0px))] pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] animate-fade-in"
     >
       <div
+        data-theme="dark"
         onClick={(e) => e.stopPropagation()}
-        className="bg-dark-900/98 border border-white/15 rounded-3xl max-w-lg w-full max-h-[92vh] overflow-y-auto shadow-2xl animate-popover-spring flex flex-col p-4 sm:p-6 select-none my-auto"
+        className="bg-dark-900/98 border border-white/15 rounded-3xl max-w-lg w-full max-h-[92vh] overflow-y-auto shadow-2xl animate-popover-spring flex flex-col p-4 sm:p-6 select-none my-auto dark-modal"
       >
         {/* Modal Header: Displays Current Room Type */}
         <div className="flex items-center justify-between pb-3 border-b border-white/10 mb-4">

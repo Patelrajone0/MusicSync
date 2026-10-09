@@ -119,7 +119,7 @@ export const TitaniumSidebarShowcase: React.FC<TitaniumSidebarShowcaseProps> = (
   }, [onClose]);
 
   return (
-    <div className="fixed inset-0 z-[99999] w-full h-full bg-[#08090c] flex flex-col select-none overflow-hidden font-sans text-white">
+    <div data-theme="dark" className="fixed inset-0 z-[99999] w-full h-full bg-[#08090c] flex flex-col select-none overflow-hidden font-sans text-white dark-modal">
       {/* Top Controls Bar */}
       <header className="sticky top-0 z-50 w-full px-4 sm:px-6 py-3 bg-[#0e1014]/95 backdrop-blur-2xl border-b border-white/[0.08] flex flex-col sm:flex-row items-center justify-between gap-3 shadow-2xl">
         <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-start">
