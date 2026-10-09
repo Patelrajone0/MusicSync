@@ -124,7 +124,7 @@ export const BackgroundShowcase: React.FC<BackgroundShowcaseProps> = ({
         </div>
 
         {/* Theme Options List */}
-        <div className="flex flex-col gap-2 max-h-[58vh] overflow-y-auto pr-0.5 custom-scrollbar">
+        <div className="flex flex-col gap-2 max-h-[52vh] sm:max-h-[56vh] overflow-y-auto pr-1 custom-scrollbar">
           {BACKGROUND_THEMES.map((theme) => {
             const isSelected = theme.id === activeTheme;
 
@@ -143,13 +143,13 @@ export const BackgroundShowcase: React.FC<BackgroundShowcaseProps> = ({
                       }
                     : undefined
                 }
-                className={`w-full text-left p-2.5 sm:p-3 rounded-2xl border transition-all flex items-center justify-between gap-3 cursor-pointer group active:scale-[0.99] ${
+                className={`w-full shrink-0 min-h-[58px] sm:min-h-[60px] text-left px-3 py-2 rounded-2xl border-2 transition-colors duration-150 flex items-center justify-between gap-3 cursor-pointer group active:scale-[0.99] ${
                   isSelected
                     ? isLight
-                      ? 'bg-blue-50/90 border-2 border-blue-600 text-slate-900 shadow-sm ring-1 ring-blue-600/20'
-                      : 'bg-white/[0.08] text-white border-2'
+                      ? 'bg-blue-50/90 border-blue-600 text-slate-900 shadow-sm'
+                      : 'bg-white/[0.08] text-white'
                     : isLight
-                    ? 'bg-white hover:bg-slate-50/80 border-slate-200/90 hover:border-slate-300 text-slate-800 shadow-xs'
+                    ? 'bg-white hover:bg-slate-50/80 border-slate-200 hover:border-slate-300 text-slate-800 shadow-xs'
                     : 'bg-white/[0.03] hover:bg-white/[0.06] border-white/[0.06] hover:border-white/[0.14] text-zinc-300'
                 }`}
               >

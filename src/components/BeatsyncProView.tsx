@@ -936,6 +936,7 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
         {isThemeShowcaseOpen && (
           <BackgroundShowcase
             onClose={() => setIsThemeShowcaseOpen(false)}
+            onApplyTheme={(themeId) => setCurrentBgTheme(themeId)}
           />
         )}
 
