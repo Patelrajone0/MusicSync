@@ -13,8 +13,6 @@ import {
   Cpu,
   ShieldCheck,
   Activity,
-  Info,
-  LogOut,
 } from 'lucide-react';
 import { User } from '../types';
 
@@ -80,8 +78,6 @@ export interface TitaniumSidebarProps {
   onPermissionChange: (permission: 'everyone' | 'admins') => void;
   onOpenQR: () => void;
   onUploadAudio: () => void;
-  onOpenAbout?: () => void;
-  onLeaveRoom?: () => void;
   theme?: TitaniumSidebarTheme;
   onThemeChange?: (theme: TitaniumSidebarTheme) => void;
   onOpenShowcase?: () => void;
@@ -99,8 +95,6 @@ export const TitaniumSidebar: React.FC<TitaniumSidebarProps> = ({
   onPermissionChange,
   onOpenQR,
   onUploadAudio,
-  onOpenAbout,
-  onLeaveRoom,
   theme: controlledTheme,
   onThemeChange,
   onOpenShowcase,
@@ -275,39 +269,6 @@ export const TitaniumSidebar: React.FC<TitaniumSidebarProps> = ({
             <p className="text-[10px] text-zinc-500 leading-tight">Patch file into master queue</p>
           </div>
         </button>
-
-        {/* System Utilities (About & Leave Room) */}
-        <div className="space-y-1.5 pt-2 border-t border-zinc-800/80 shrink-0">
-          {onOpenAbout && (
-            <button
-              type="button"
-              onClick={onOpenAbout}
-              className="w-full p-2 rounded-md border border-zinc-800 hover:border-cyan-500/40 bg-black/80 hover:bg-zinc-900 text-zinc-300 hover:text-white flex items-center gap-2 text-left transition-all cursor-pointer group active:scale-[0.98]"
-            >
-              <Info className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-              <div className="min-w-0 flex-1">
-                <div className="text-[11px] font-bold text-zinc-200 flex items-center justify-between">
-                  <span>ABOUT // MUSICSYNC</span>
-                  <span className="text-[9px] font-mono text-cyan-400">9 FAQS</span>
-                </div>
-                <p className="text-[9px] text-zinc-500 truncate">Website story & engine</p>
-              </div>
-            </button>
-          )}
-
-          {onLeaveRoom && (
-            <button
-              type="button"
-              onClick={onLeaveRoom}
-              className="w-full p-2 rounded-md border border-zinc-800/90 hover:border-rose-500/40 bg-black/80 hover:bg-rose-500/10 text-zinc-400 hover:text-rose-300 flex items-center gap-2 text-left transition-all cursor-pointer group active:scale-[0.98]"
-            >
-              <LogOut className="w-3.5 h-3.5 text-rose-400 shrink-0" />
-              <span className="text-[11px] font-bold text-zinc-300 group-hover:text-rose-200">
-                LEAVE ROOM
-              </span>
-            </button>
-          )}
-        </div>
       </aside>
     );
   }
@@ -451,39 +412,6 @@ export const TitaniumSidebar: React.FC<TitaniumSidebarProps> = ({
             <p className="text-[10px] text-zinc-500 leading-tight">Add music to queue</p>
           </div>
         </button>
-
-        {/* System Utilities (About & Leave Room) */}
-        <div className="space-y-1.5 pt-2 border-t border-zinc-800/80 shrink-0">
-          {onOpenAbout && (
-            <button
-              type="button"
-              onClick={onOpenAbout}
-              className="w-full p-2 rounded-xl border border-zinc-800 hover:border-cyan-500/40 bg-[#101217] hover:bg-[#14171e] text-zinc-300 hover:text-white flex items-center gap-2 text-left transition-all cursor-pointer group active:scale-[0.98]"
-            >
-              <Info className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-              <div className="min-w-0 flex-1">
-                <div className="text-[11px] font-bold text-zinc-200 flex items-center justify-between">
-                  <span>About MusicSync</span>
-                  <span className="text-[9px] font-mono text-cyan-400">9 FAQs</span>
-                </div>
-                <p className="text-[9px] text-zinc-500 truncate">Website story & engine</p>
-              </div>
-            </button>
-          )}
-
-          {onLeaveRoom && (
-            <button
-              type="button"
-              onClick={onLeaveRoom}
-              className="w-full p-2 rounded-xl border border-zinc-800 hover:border-rose-500/40 bg-[#101217] hover:bg-rose-500/10 text-zinc-400 hover:text-rose-300 flex items-center gap-2 text-left transition-all cursor-pointer group active:scale-[0.98]"
-            >
-              <LogOut className="w-3.5 h-3.5 text-rose-400 shrink-0" />
-              <span className="text-[11px] font-semibold text-zinc-300 group-hover:text-rose-200">
-                Leave Room
-              </span>
-            </button>
-          )}
-        </div>
       </aside>
     );
   }
@@ -634,39 +562,6 @@ export const TitaniumSidebar: React.FC<TitaniumSidebarProps> = ({
             <p className="text-[10px] text-zinc-400 leading-tight">Add music to queue</p>
           </div>
         </button>
-
-        {/* System Utilities (About & Leave Room) */}
-        <div className="space-y-1.5 pt-2 border-t border-white/10 shrink-0">
-          {onOpenAbout && (
-            <button
-              type="button"
-              onClick={onOpenAbout}
-              className="w-full p-2 rounded-xl border border-white/10 hover:border-cyan-400/40 bg-white/[0.04] hover:bg-white/[0.08] text-zinc-200 hover:text-white flex items-center gap-2 text-left transition-all cursor-pointer group active:scale-[0.98] backdrop-blur-md"
-            >
-              <Info className="w-3.5 h-3.5 text-cyan-300 shrink-0" />
-              <div className="min-w-0 flex-1">
-                <div className="text-[11px] font-bold text-white flex items-center justify-between">
-                  <span>About MusicSync</span>
-                  <span className="text-[9px] font-mono text-cyan-300">9 FAQs</span>
-                </div>
-                <p className="text-[9px] text-zinc-400 truncate">Website story & engine</p>
-              </div>
-            </button>
-          )}
-
-          {onLeaveRoom && (
-            <button
-              type="button"
-              onClick={onLeaveRoom}
-              className="w-full p-2 rounded-xl border border-white/10 hover:border-rose-500/40 bg-white/[0.04] hover:bg-rose-500/15 text-zinc-300 hover:text-rose-200 flex items-center gap-2 text-left transition-all cursor-pointer group active:scale-[0.98] backdrop-blur-md"
-            >
-              <LogOut className="w-3.5 h-3.5 text-rose-400 shrink-0" />
-              <span className="text-[11px] font-semibold text-zinc-200 group-hover:text-rose-200">
-                Leave Room
-              </span>
-            </button>
-          )}
-        </div>
       </aside>
     );
   }
@@ -821,46 +716,6 @@ export const TitaniumSidebar: React.FC<TitaniumSidebarProps> = ({
           <p className="text-[10px] text-zinc-400 leading-tight">Add music to queue</p>
         </div>
       </button>
-
-      {/* System Utilities (About & Leave Room) */}
-      <div className="space-y-1.5 pt-2 border-t border-white/[0.08] shrink-0">
-        {onOpenAbout && (
-          <button
-            type="button"
-            onClick={onOpenAbout}
-            className="w-full p-2.5 rounded-2xl border border-white/[0.08] hover:border-cyan-400/40 bg-zinc-900/80 hover:bg-zinc-800/90 text-zinc-200 hover:text-white flex items-center gap-2.5 text-left transition-all cursor-pointer group active:scale-[0.98]"
-          >
-            <div className="w-7 h-7 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 shrink-0 group-hover:bg-cyan-500/20 transition-colors">
-              <Info className="w-3.5 h-3.5" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="text-xs font-bold text-white flex items-center justify-between">
-                <span>About MusicSync</span>
-                <span className="text-[9px] font-mono text-cyan-300 bg-cyan-500/10 px-1.5 py-0.2 rounded border border-cyan-400/20">9 FAQs</span>
-              </div>
-              <p className="text-[10px] text-zinc-400 truncate">Website story & engine</p>
-            </div>
-          </button>
-        )}
-
-        {onLeaveRoom && (
-          <button
-            type="button"
-            onClick={onLeaveRoom}
-            className="w-full p-2.5 rounded-2xl border border-white/[0.08] hover:border-rose-500/40 bg-zinc-900/80 hover:bg-rose-500/10 text-zinc-300 hover:text-rose-200 flex items-center gap-2.5 text-left transition-all cursor-pointer group active:scale-[0.98]"
-          >
-            <div className="w-7 h-7 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400 shrink-0 group-hover:bg-rose-500/20 transition-colors">
-              <LogOut className="w-3.5 h-3.5" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <span className="text-xs font-bold text-zinc-200 group-hover:text-rose-200">
-                Leave Room
-              </span>
-              <p className="text-[10px] text-zinc-400 group-hover:text-rose-300/70 truncate">Disconnect from session</p>
-            </div>
-          </button>
-        )}
-      </div>
     </aside>
   );
 };

@@ -910,8 +910,6 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
           }}
           onOpenQR={() => setIsQRModalOpen(true)}
           onUploadAudio={handleUploadClick}
-          onOpenAbout={() => setIsAboutModalOpen(true)}
-          onLeaveRoom={() => setShowLeaveConfirm(true)}
           theme="studio"
           showThemeSwitcher={false}
         />
