@@ -1043,10 +1043,223 @@ html[data-bg-theme="pure-light"] footer .bg-zinc-900\/80 {
   color: #334155 !important;
 }
 
-html[data-bg-theme="pure-light"] footer .bg-\[\#07080a\] {
-  background-color: #f1f5f9 !important;
-  border-color: rgba(0, 0, 0, 0.08) !important;
-  color: #334155 !important;
+/* ==========================================================================
+   MusicSync Live Acoustic Equalizer Waveform Animations
+   ========================================================================== */
+@keyframes musicsyncEqWave1 {
+  0%, 100% {
+    transform: scaleY(0.35);
+  }
+  50% {
+    transform: scaleY(0.92);
+  }
+}
+
+@keyframes musicsyncEqWave2 {
+  0%, 100% {
+    transform: scaleY(0.85);
+  }
+  30% {
+    transform: scaleY(0.30);
+  }
+  70% {
+    transform: scaleY(1.0);
+  }
+}
+
+@keyframes musicsyncEqWave3 {
+  0%, 100% {
+    transform: scaleY(0.45);
+  }
+  40% {
+    transform: scaleY(1.0);
+  }
+  75% {
+    transform: scaleY(0.25);
+  }
+}
+
+@keyframes musicsyncEqWave4 {
+  0%, 100% {
+    transform: scaleY(0.80);
+  }
+  45% {
+    transform: scaleY(0.22);
+  }
+  85% {
+    transform: scaleY(0.65);
+  }
+}
+
+.musicsync-eq-container {
+  display: flex;
+  align-items: center;
+  gap: 2.5px;
+  height: 16px;
+  padding: 0 1.5px;
+  flex-shrink: 0;
+}
+
+.musicsync-eq-bar {
+  width: 3.5px;
+  height: 14px;
+  border-radius: 9999px;
+  display: inline-block;
+  transform-origin: center;
+  will-change: transform;
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+}
+
+.musicsync-eq-bar-1 {
+  animation: musicsyncEqWave1 1.25s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.musicsync-eq-bar-2 {
+  animation: musicsyncEqWave2 0.85s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.musicsync-eq-bar-3 {
+  animation: musicsyncEqWave3 1.05s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.musicsync-eq-bar-4 {
+  animation: musicsyncEqWave4 1.35s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+/* Hover speed boost for lively interactive feedback */
+button:hover .musicsync-eq-bar-1 {
+  animation-duration: 0.9s;
+}
+button:hover .musicsync-eq-bar-2 {
+  animation-duration: 0.65s;
+}
+button:hover .musicsync-eq-bar-3 {
+  animation-duration: 0.8s;
+}
+button:hover .musicsync-eq-bar-4 {
+  animation-duration: 1.0s;
+}
+
+/* Default Dark Theme / Titanium Platinum Bars */
+.musicsync-eq-bar {
+  background: linear-gradient(to top, #71717a 0%, #e4e4e7 60%, #ffffff 100%);
+  box-shadow: 0 0 5px rgba(255, 255, 255, 0.35);
+}
+
+.musicsync-wordmark {
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  background: linear-gradient(to right, #ffffff 0%, #e4e4e7 65%, #a1a1aa 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  transition: all 0.2s ease;
+}
+
+button:hover .musicsync-wordmark {
+  background: linear-gradient(to right, #ffffff 0%, #f4f4f5 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ==========================================================================
+   Theme-Specific Brand Logo & Equalizer Waveform Styling
+   ========================================================================== */
+
+/* 1. PURE LIGHT THEME (Matches Screenshot & Inverts White-Out Text) */
+html[data-bg-theme="pure-light"] .musicsync-eq-bar {
+  background: linear-gradient(to top, #0f172a 0%, #1e3a8a 55%, #2563eb 100%) !important;
+  box-shadow: 0 1px 3px rgba(37, 99, 235, 0.25) !important;
+}
+
+html[data-bg-theme="pure-light"] .musicsync-wordmark {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 65%, #334155 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  color: #0f172a !important;
+}
+
+html[data-bg-theme="pure-light"] button:hover .musicsync-wordmark {
+  background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  color: #2563eb !important;
+}
+
+html[data-bg-theme="pure-light"] header button.musicsync-brand-btn:hover {
+  background-color: rgba(15, 23, 42, 0.04) !important;
+}
+
+html[data-bg-theme="pure-light"] header button.musicsync-brand-btn.border-zinc-800\/80 {
+  background-color: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+}
+
+/* Header Text Inversion for Pure Light Theme */
+html[data-bg-theme="pure-light"] header .bg-clip-text {
+  background-image: none !important;
+  -webkit-text-fill-color: #0f172a !important;
+  color: #0f172a !important;
+}
+
+html[data-bg-theme="pure-light"] header .text-white\/20 {
+  color: #cbd5e1 !important;
+}
+
+/* 2. AURORA EMERALD THEME */
+html[data-bg-theme="aurora-emerald"] .musicsync-eq-bar {
+  background: linear-gradient(to top, #059669 0%, #10b981 60%, #6ee7b7 100%) !important;
+  box-shadow: 0 0 7px rgba(16, 185, 129, 0.5) !important;
+}
+html[data-bg-theme="aurora-emerald"] .musicsync-wordmark {
+  background: linear-gradient(to right, #ffffff 0%, #6ee7b7 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+/* 3. CYBER NEBULA THEME */
+html[data-bg-theme="cyber-nebula"] .musicsync-eq-bar {
+  background: linear-gradient(to top, #00f0ff 0%, #38bdf8 50%, #d946ef 100%) !important;
+  box-shadow: 0 0 8px rgba(0, 240, 255, 0.6) !important;
+}
+html[data-bg-theme="cyber-nebula"] .musicsync-wordmark {
+  background: linear-gradient(to right, #00f0ff 0%, #e879f9 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+/* 4. SUNSET EMBER THEME */
+html[data-bg-theme="sunset-ember"] .musicsync-eq-bar {
+  background: linear-gradient(to top, #f43f5e 0%, #fb923c 60%, #fde047 100%) !important;
+  box-shadow: 0 0 7px rgba(244, 63, 94, 0.5) !important;
+}
+html[data-bg-theme="sunset-ember"] .musicsync-wordmark {
+  background: linear-gradient(to right, #ffffff 0%, #fecdd3 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+/* 5. COSMIC ABYSS THEME */
+html[data-bg-theme="cosmic-abyss"] .musicsync-eq-bar {
+  background: linear-gradient(to top, #1e40af 0%, #3b82f6 60%, #38bdf8 100%) !important;
+  box-shadow: 0 0 7px rgba(56, 189, 248, 0.5) !important;
+}
+html[data-bg-theme="cosmic-abyss"] .musicsync-wordmark {
+  background: linear-gradient(to right, #ffffff 0%, #93c5fd 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+/* 6. TITANIUM SLATE THEME */
+html[data-bg-theme="titanium-slate"] .musicsync-eq-bar {
+  background: linear-gradient(to top, #52525b 0%, #a1a1aa 60%, #ffffff 100%) !important;
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.35) !important;
+}
+
+/* 7. TRUE OLED BLACK & MIDNIGHT OBSIDIAN */
+html[data-bg-theme="pure-oled-black"] .musicsync-eq-bar,
+html[data-bg-theme="midnight-obsidian"] .musicsync-eq-bar {
+  background: linear-gradient(to top, #71717a 0%, #e4e4e7 60%, #ffffff 100%) !important;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.45) !important;
 }
 
 

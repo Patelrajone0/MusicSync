@@ -108,17 +108,17 @@ export const Logo: React.FC<LogoProps> = ({
         <div className={`flex flex-col items-center text-center group select-none ${className}`}>
           <div className="flex flex-col items-center gap-1.5">
             {/* Minimal 5-Bar Titanium Equalizer */}
-            <div className="flex items-center gap-1 h-5 px-1 shrink-0 mb-1">
-              <span className="w-1 h-2 rounded-full bg-zinc-500 animate-pulse" style={{ animationDuration: '1.2s' }} />
-              <span className="w-1 h-4 rounded-full bg-zinc-300 animate-pulse" style={{ animationDuration: '0.8s', animationDelay: '0.2s' }} />
-              <span className="w-1 h-5 rounded-full bg-white animate-pulse" style={{ animationDuration: '1.0s', animationDelay: '0.4s' }} />
-              <span className="w-1 h-3.5 rounded-full bg-zinc-300 animate-pulse" style={{ animationDuration: '1.1s', animationDelay: '0.15s' }} />
-              <span className="w-1 h-2 rounded-full bg-zinc-500 animate-pulse" style={{ animationDuration: '1.3s', animationDelay: '0.3s' }} />
+            <div className="musicsync-eq-container h-5 px-1 shrink-0 mb-1" aria-label="Audio Equalizer">
+              <span className="musicsync-eq-bar musicsync-eq-bar-1 !h-4" />
+              <span className="musicsync-eq-bar musicsync-eq-bar-2 !h-5" />
+              <span className="musicsync-eq-bar musicsync-eq-bar-3 !h-5" />
+              <span className="musicsync-eq-bar musicsync-eq-bar-2 !h-4" />
+              <span className="musicsync-eq-bar musicsync-eq-bar-4 !h-3" />
             </div>
 
             {/* Typography */}
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white flex items-center gap-1">
-              <span>MusicSync</span>
+              <span className="musicsync-wordmark">MusicSync</span>
             </h1>
 
             <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-zinc-500">
