@@ -454,17 +454,6 @@ const DesignCard: React.FC<DesignCardProps> = ({
                 className="w-full bg-transparent text-white text-xs sm:text-sm font-semibold placeholder:text-zinc-500 outline-none"
               />
             </div>
-            <span
-              className={`px-2 py-0.5 rounded-full border text-[9px] font-mono select-none ${
-                style.id === 'neon-kinetic'
-                  ? 'bg-emerald-950/60 border-emerald-500/30 text-emerald-300'
-                  : style.id === 'titanium-chamfer'
-                  ? 'bg-zinc-900 border-zinc-700 text-zinc-300'
-                  : 'bg-zinc-900/80 border-white/10 text-zinc-400'
-              }`}
-            >
-              ⌘K
-            </span>
           </div>
 
           {/* 2. CENTER QUEUE CARD WITH STYLE-SPECIFIC CURVES */}

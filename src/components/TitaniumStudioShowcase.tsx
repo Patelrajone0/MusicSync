@@ -539,9 +539,6 @@ const StudioLayoutPreview: React.FC<StudioLayoutPreviewProps> = ({
                 className="w-full bg-transparent text-white text-xs font-medium placeholder:text-zinc-500 outline-none"
               />
             </div>
-            <span className="px-2 py-0.5 rounded-full bg-zinc-900 border border-white/10 text-[9px] font-mono text-zinc-400">
-              ⌘K
-            </span>
           </div>
 
           {/* Queue Card */}

@@ -991,21 +991,12 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
                       setSearchResults([]);
                       searchInputRef.current?.focus();
                     }}
-                    className="p-1 text-zinc-400 hover:text-white rounded-full hover:bg-white/10 transition-colors text-xs cursor-pointer mr-1"
+                    className="p-1 text-zinc-400 hover:text-white rounded-full hover:bg-white/10 transition-colors text-xs cursor-pointer"
                     title="Clear search"
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
                 )}
-                <kbd className={`px-2 py-0.5 rounded-full border text-[10px] font-mono select-none ${
-                  currentCornerDef.id === 'neon-kinetic'
-                    ? 'bg-emerald-950/60 border-emerald-500/30 text-emerald-300'
-                    : currentCornerDef.id === 'titanium-chamfer'
-                    ? 'bg-zinc-900 border-zinc-700 text-zinc-300'
-                    : 'bg-black/60 border-white/[0.08] text-zinc-400'
-                }`}>
-                  ⌘K
-                </kbd>
               </div>
             </div>
 
