@@ -1017,20 +1017,6 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
                 />
               </div>
               <div className="flex items-center gap-1.5 shrink-0 select-none">
-                {/* Home Theater Movie Mode Action Button */}
-                <button
-                  type="button"
-                  onClick={() => setIsMovieModeOpen(true)}
-                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 hover:border-amber-500/50 text-amber-300 text-xs font-bold transition-all cursor-pointer shadow-sm active:scale-95 shrink-0"
-                  title="Open Home Theater Mode & Movie Audio Sync"
-                >
-                  <Film className="w-3.5 h-3.5 text-amber-400" />
-                  <span className="hidden sm:inline">Movie Mode</span>
-                  <span className="text-[9px] font-mono px-1 py-0.2 rounded-full bg-amber-500/25 text-amber-200 border border-amber-500/40 font-bold">
-                    THEATER
-                  </span>
-                </button>
-
                 {searchQuery && (
                   <button
                     type="button"
