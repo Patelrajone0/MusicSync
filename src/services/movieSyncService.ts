@@ -12,6 +12,14 @@ export interface ChunkUploadProgress {
   error?: string;
 }
 
+const RTC_CONFIG: RTCConfiguration = {
+  iceServers: [
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:stun1.l.google.com:19302' },
+    { urls: 'stun:stun2.l.google.com:19302' },
+  ],
+};
+
 export class MovieSyncService {
   private movieState: MovieState = {
     isActive: false,
@@ -34,6 +42,7 @@ export class MovieSyncService {
 
   // WebRTC Audio Broadcast (Host to Multi-Client)
   private peerConnections: Map<string, RTCPeerConnection> = new Map();
+  private pendingCandidates: Map<string, RTCIceCandidateInit[]> = new Map();
   private hostAudioStreamDestination: MediaStreamAudioDestinationNode | null = null;
   private hostMediaElementSource: MediaElementAudioSourceNode | null = null;
   private clientRemoteStream: MediaStream | null = null;
@@ -103,6 +112,9 @@ export class MovieSyncService {
       // If movie stopped, cleanup client playback
       if (!state.isActive) {
         this.stopClientAudio();
+      } else if (!this.hostVideoElement) {
+        // Client sees an active movie: request audio stream from Host
+        this.requestAudioFromHost();
       }
     });
 
@@ -129,6 +141,22 @@ export class MovieSyncService {
     // WebRTC Signaling Relay
     socket.on('webrtc_signal', async ({ fromUserId, data }: { fromUserId: string; data: any }) => {
       await this.handleWebRTCSignal(fromUserId, data);
+    });
+
+    // Client receives notification that host audio is ready
+    socket.on('movie_host_audio_ready', ({ hostId }: { hostId: string }) => {
+      if (!this.hostVideoElement) {
+        console.log('[MovieSyncService] Host audio ready, requesting audio stream from:', hostId);
+        this.requestAudioFromHost(hostId);
+      }
+    });
+
+    // Host receives audio stream request from a client
+    socket.on('movie_client_requested_audio', ({ clientId }: { clientId: string }) => {
+      if (this.hostVideoElement && clientId) {
+        console.log('[MovieSyncService] Host received audio stream request from client:', clientId);
+        this.initiateWebRTCBroadCastToClient(clientId);
+      }
     });
   }
 
@@ -277,6 +305,9 @@ export class MovieSyncService {
       streamUrl: typeof fileOrUrl === 'string' ? streamUrl : '',
       audioBroadcastMode: this.movieState.audioBroadcastMode,
     });
+
+    // Notify all connected clients that host audio is ready
+    socket.emit('movie_host_ready');
 
     this.notify();
     this.startPeriodicSyncTimer();
@@ -431,15 +462,23 @@ export class MovieSyncService {
 
   // 6. WebRTC P2P Audio Streaming Protocol (Host -> Connected Clients)
   public async initiateWebRTCBroadCastToClient(targetClientId: string) {
-    if (!this.hostAudioStreamDestination) return;
+    if (!this.hostAudioStreamDestination) {
+      this.setupHostAudioCapture();
+    }
+    if (!this.hostAudioStreamDestination) {
+      console.warn('[MovieSyncService] Cannot broadcast WebRTC: destination not ready');
+      return;
+    }
     try {
-      const pc = new RTCPeerConnection({
-        iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
-      });
+      console.log('[MovieSyncService] Initiating WebRTC audio broadcast to client:', targetClientId);
+      const existing = this.peerConnections.get(targetClientId);
+      if (existing) {
+        existing.close();
+      }
 
+      const pc = new RTCPeerConnection(RTC_CONFIG);
       this.peerConnections.set(targetClientId, pc);
 
-      // Add audio track to peer connection
       const stream = this.hostAudioStreamDestination.stream;
       stream.getAudioTracks().forEach((track) => {
         pc.addTrack(track, stream);
@@ -466,19 +505,53 @@ export class MovieSyncService {
     }
   }
 
+  public broadcastAudioToClients(clientIds: string[]) {
+    if (!this.hostVideoElement) return;
+    for (const clientId of clientIds) {
+      if (clientId && clientId !== socket.id) {
+        this.initiateWebRTCBroadCastToClient(clientId);
+      }
+    }
+  }
+
+  public requestAudioFromHost(hostId?: string) {
+    console.log('[MovieSyncService] Requesting movie audio from host:', hostId);
+    socket.emit('movie_request_audio', { hostId });
+  }
+
+  public getClientAudioElement(): HTMLAudioElement | null {
+    return this.clientAudioElement;
+  }
+
+  public async unlockClientAudio() {
+    await spatialTheaterEngine.resumeContext();
+    if (this.clientAudioElement) {
+      try {
+        await this.clientAudioElement.play();
+      } catch (e) {
+        console.warn('[MovieSyncService] Client audio unlock error:', e);
+      }
+    }
+  }
+
   private async handleWebRTCSignal(fromUserId: string, data: any) {
     try {
       if (data.type === 'offer') {
-        // Client receives offer from Host
-        const pc = new RTCPeerConnection({
-          iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
-        });
+        console.log('[MovieSyncService] Client received WebRTC offer from host:', fromUserId);
+        const existing = this.peerConnections.get(fromUserId);
+        if (existing) {
+          existing.close();
+        }
 
+        const pc = new RTCPeerConnection(RTC_CONFIG);
         this.peerConnections.set(fromUserId, pc);
 
         pc.ontrack = (event) => {
-          this.clientRemoteStream = event.streams[0];
-          this.playClientRemoteAudio(event.streams[0]);
+          console.log('[MovieSyncService] Client received remote audio track from host!', event.streams);
+          if (event.streams && event.streams[0]) {
+            this.clientRemoteStream = event.streams[0];
+            this.playClientRemoteAudio(event.streams[0]);
+          }
         };
 
         pc.onicecandidate = (event) => {
@@ -491,6 +564,16 @@ export class MovieSyncService {
         };
 
         await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
+
+        // Flush any buffered candidates that arrived before remoteDescription
+        const buffered = this.pendingCandidates.get(fromUserId) || [];
+        for (const candidate of buffered) {
+          try {
+            await pc.addIceCandidate(new RTCIceCandidate(candidate));
+          } catch (err) {}
+        }
+        this.pendingCandidates.delete(fromUserId);
+
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
 
@@ -499,16 +582,26 @@ export class MovieSyncService {
           data: { type: 'answer', sdp: answer },
         });
       } else if (data.type === 'answer') {
-        // Host receives answer from Client
+        console.log('[MovieSyncService] Host received WebRTC answer from client:', fromUserId);
         const pc = this.peerConnections.get(fromUserId);
         if (pc) {
           await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
+          const buffered = this.pendingCandidates.get(fromUserId) || [];
+          for (const candidate of buffered) {
+            try {
+              await pc.addIceCandidate(new RTCIceCandidate(candidate));
+            } catch (err) {}
+          }
+          this.pendingCandidates.delete(fromUserId);
         }
       } else if (data.type === 'candidate') {
-        // ICE Candidate exchange
         const pc = this.peerConnections.get(fromUserId);
-        if (pc) {
+        if (pc && pc.remoteDescription && pc.remoteDescription.type) {
           await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+        } else {
+          const list = this.pendingCandidates.get(fromUserId) || [];
+          list.push(data.candidate);
+          this.pendingCandidates.set(fromUserId, list);
         }
       }
     } catch (e) {
@@ -518,11 +611,37 @@ export class MovieSyncService {
 
   private playClientRemoteAudio(stream: MediaStream) {
     try {
-      const audioCtx = spatialTheaterEngine.ensureContext();
-      if (!audioCtx) return;
+      console.log('[MovieSyncService] Activating remote audio playback on client device...');
+      // 1. Direct HTMLAudioElement attachment ensures browser activates audio decoding
+      if (!this.clientAudioElement) {
+        this.clientAudioElement = new Audio();
+        this.clientAudioElement.autoplay = true;
+        this.clientAudioElement.volume = 1.0;
+        this.clientAudioElement.muted = false;
+        this.clientAudioElement.setAttribute('playsinline', 'true');
+        this.clientAudioElement.setAttribute('webkit-playsinline', 'true');
+      }
 
-      const streamSource = audioCtx.createMediaStreamSource(stream);
-      spatialTheaterEngine.attachToSource(streamSource, audioCtx.destination);
+      this.clientAudioElement.srcObject = stream;
+      this.clientAudioElement.play().catch((err) => {
+        console.log('[MovieSyncService] Client remote audio autoplay waiting user gesture:', err);
+      });
+
+      // 2. Route into Web Audio API for Spatial Theater 3D Reverb & Surround Speaker Roles
+      const audioCtx = spatialTheaterEngine.ensureContext();
+      if (audioCtx) {
+        if (audioCtx.state === 'suspended') {
+          audioCtx.resume().catch(console.warn);
+        }
+        try {
+          const streamSource = audioCtx.createMediaStreamSource(stream);
+          spatialTheaterEngine.attachToSource(streamSource, audioCtx.destination);
+        } catch (nodeErr) {
+          console.warn('[MovieSyncService] Web Audio spatial chain attach:', nodeErr);
+        }
+      }
+
+      this.notify();
     } catch (e) {
       console.warn('[MovieSyncService] Client remote audio play error:', e);
     }

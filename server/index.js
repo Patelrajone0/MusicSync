@@ -3149,6 +3149,27 @@ io.on('connection', (socket) => {
       });
     }
   });
+
+  // Client requests live movie audio stream from Host
+  socket.on('movie_request_audio', ({ hostId }) => {
+    if (!currentRoomCode) return;
+    const room = rooms.get(currentRoomCode);
+    if (!room) return;
+    const targetHost = hostId || room.hostId;
+    if (targetHost && targetHost !== socket.id) {
+      io.to(targetHost).emit('movie_client_requested_audio', {
+        clientId: socket.id
+      });
+    }
+  });
+
+  // Host notifies all clients that host audio is ready for broadcast
+  socket.on('movie_host_ready', () => {
+    if (!currentRoomCode) return;
+    socket.to(currentRoomCode).emit('movie_host_audio_ready', {
+      hostId: socket.id
+    });
+  });
 });
 
 function serializeRoom(room) {

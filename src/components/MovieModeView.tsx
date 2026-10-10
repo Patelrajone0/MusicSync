@@ -93,6 +93,24 @@ export const MovieModeView: React.FC<MovieModeViewProps> = ({
     }
   }, [isHost, isOpen, movieState.streamUrl]);
 
+  // Host automatically broadcasts WebRTC audio to all connected room devices
+  useEffect(() => {
+    if (isHost && movieState.isActive && users.length > 0) {
+      const clientIds = users
+        .filter((u) => u.id !== currentUser?.id)
+        .map((u) => u.id);
+      movieSyncService.broadcastAudioToClients(clientIds);
+    }
+  }, [isHost, movieState.isActive, users, currentUser?.id]);
+
+  // Client requests live audio stream from Host when movie is active
+  useEffect(() => {
+    if (!isHost && movieState.isActive) {
+      const hostUser = users.find((u) => u.role === 'host');
+      movieSyncService.requestAudioFromHost(hostUser?.id);
+    }
+  }, [isHost, movieState.isActive, users]);
+
   // Handle controls auto-hide during active playback
   const handleMouseMove = () => {
     setIsControlsVisible(true);
@@ -489,7 +507,12 @@ export const MovieModeView: React.FC<MovieModeViewProps> = ({
           </>
         ) : (
           /* CLIENT VIEW (Zero Video Transferred, Pure Synchronized Audio) */
-          <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center bg-gradient-to-b from-zinc-950 via-black to-zinc-950">
+          <div
+            onClick={async () => {
+              await movieSyncService.unlockClientAudio();
+            }}
+            className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center bg-gradient-to-b from-zinc-950 via-black to-zinc-950 cursor-pointer select-none"
+          >
             {/* Dynamic Animated Acoustic Waves */}
             <div className="flex items-center gap-1.5 h-16 mb-5">
               {[35, 75, 50, 95, 60, 85, 45, 90, 65, 40].map((h, i) => (
@@ -508,7 +531,10 @@ export const MovieModeView: React.FC<MovieModeViewProps> = ({
 
             <button
               type="button"
-              onClick={() => setIsSurroundModalOpen(true)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsSurroundModalOpen(true);
+              }}
               className="flex items-center gap-2 mb-2 px-3.5 py-1.5 rounded-full bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 hover:bg-cyan-500/25 transition-all cursor-pointer active:scale-95 shadow-sm"
               title="Tap to change your physical speaker role"
             >
@@ -524,6 +550,11 @@ export const MovieModeView: React.FC<MovieModeViewProps> = ({
             <p className="text-xs text-zinc-400 mt-1 max-w-sm">
               Video is playing exclusively on Host device • Your speaker is playing in perfect lip-sync
             </p>
+
+            <div className="mt-4 px-4 py-2 rounded-full bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-400/40 text-cyan-300 text-xs font-semibold flex items-center gap-2 shadow-[0_0_15px_rgba(6,182,212,0.3)] transition-all animate-pulse">
+              <Volume2 className="w-4 h-4 text-cyan-400" />
+              <span>Tap Anywhere to Listen in Sync</span>
+            </div>
           </div>
         )}
 
