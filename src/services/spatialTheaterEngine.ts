@@ -136,6 +136,20 @@ export class SpatialTheaterEngine {
     });
   }
 
+  public getContext(): AudioContext | null {
+    return this.audioContext;
+  }
+
+  public async resumeContext(): Promise<void> {
+    if (this.audioContext && this.audioContext.state === 'suspended') {
+      try {
+        await this.audioContext.resume();
+      } catch (e) {
+        console.warn('[SpatialTheaterEngine] audioContext resume notice:', e);
+      }
+    }
+  }
+
   public ensureContext(externalCtx?: AudioContext): AudioContext | null {
     if (this.audioContext && this.audioContext.state !== 'closed') {
       return this.audioContext;

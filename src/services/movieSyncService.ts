@@ -35,6 +35,7 @@ export class MovieSyncService {
   // WebRTC Audio Broadcast (Host to Multi-Client)
   private peerConnections: Map<string, RTCPeerConnection> = new Map();
   private hostAudioStreamDestination: MediaStreamAudioDestinationNode | null = null;
+  private hostMediaElementSource: MediaElementAudioSourceNode | null = null;
   private clientRemoteStream: MediaStream | null = null;
   private isBroadcastingWebRTC: boolean = false;
 
@@ -134,7 +135,32 @@ export class MovieSyncService {
   // 2. Host Video Setup (Local Video Only - NEVER Sent to Clients)
   public attachHostVideo(video: HTMLVideoElement) {
     this.hostVideoElement = video;
-    video.crossOrigin = 'anonymous';
+
+    // Never set crossOrigin on local blob: or data: URLs to avoid CORS blocking
+    if (this.movieState.streamUrl && !this.movieState.streamUrl.startsWith('blob:') && !this.movieState.streamUrl.startsWith('data:')) {
+      video.crossOrigin = 'anonymous';
+    } else {
+      video.removeAttribute('crossorigin');
+    }
+
+    // Attach stream URL if one is already active and not yet set
+    if (this.movieState.streamUrl && video.src !== this.movieState.streamUrl) {
+      video.src = this.movieState.streamUrl;
+      video.load();
+    }
+
+    video.onloadedmetadata = () => {
+      this.movieState.duration = video.duration || this.movieState.duration;
+      this.movieState.currentTime = video.currentTime;
+      this.notify();
+    };
+
+    video.oncanplay = () => {
+      if (video.duration && (!this.movieState.duration || this.movieState.duration === 0)) {
+        this.movieState.duration = video.duration;
+        this.notify();
+      }
+    };
 
     video.onplay = () => {
       this.movieState.isPlaying = true;
@@ -158,7 +184,10 @@ export class MovieSyncService {
 
     video.ontimeupdate = () => {
       this.movieState.currentTime = video.currentTime;
-      this.movieState.duration = video.duration || this.movieState.duration;
+      if (video.duration && (!this.movieState.duration || this.movieState.duration === 0)) {
+        this.movieState.duration = video.duration;
+      }
+      this.notify();
     };
 
     // Setup Web Audio Capture for WebRTC P2P Audio Broadcast
@@ -174,13 +203,13 @@ export class MovieSyncService {
 
       if (!this.hostAudioStreamDestination) {
         this.hostAudioStreamDestination = audioCtx.createMediaStreamDestination();
-        const source = audioCtx.createMediaElementSource(this.hostVideoElement);
+      }
+
+      if (!this.hostMediaElementSource) {
+        this.hostMediaElementSource = audioCtx.createMediaElementSource(this.hostVideoElement);
 
         // Route through spatial theater engine
-        const theaterOutput = spatialTheaterEngine.attachToSource(source);
-
-        // Also route to destination for host speakers (if host wants sound)
-        theaterOutput.connect(audioCtx.destination);
+        const theaterOutput = spatialTheaterEngine.attachToSource(this.hostMediaElementSource);
 
         // Route audio track to WebRTC broadcast destination
         theaterOutput.connect(this.hostAudioStreamDestination);
@@ -228,8 +257,15 @@ export class MovieSyncService {
     };
 
     if (this.hostVideoElement) {
+      if (streamUrl.startsWith('blob:') || streamUrl.startsWith('data:')) {
+        this.hostVideoElement.removeAttribute('crossorigin');
+      }
       this.hostVideoElement.src = streamUrl;
       this.hostVideoElement.load();
+      spatialTheaterEngine.resumeContext().catch(console.warn);
+      this.hostVideoElement.play().catch((err) => {
+        console.log('[MovieSyncService] Playback pending user action:', err);
+      });
     }
 
     // Broadcast movie_start to all connected room devices
@@ -264,10 +300,15 @@ export class MovieSyncService {
     this.notify();
   }
 
-  public togglePlayPause() {
+  public async togglePlayPause() {
     if (this.hostVideoElement) {
+      await spatialTheaterEngine.resumeContext();
       if (this.hostVideoElement.paused) {
-        this.hostVideoElement.play().catch(console.warn);
+        try {
+          await this.hostVideoElement.play();
+        } catch (e) {
+          console.warn('[MovieSyncService] play error:', e);
+        }
       } else {
         this.hostVideoElement.pause();
       }
