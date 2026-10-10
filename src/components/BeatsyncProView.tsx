@@ -1034,40 +1034,6 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
               </div>
             </div>
 
-            {/* Active Home Theater Alert Banner */}
-            {movieState.isActive && (
-              <div
-                onClick={() => setIsMovieModeOpen(true)}
-                style={{
-                  backgroundColor: 'var(--bg-surface, rgba(14, 16, 24, 0.95))',
-                  borderColor: 'var(--bg-border, rgba(245, 158, 11, 0.4))',
-                }}
-                className="w-full mt-2 p-2.5 sm:p-3 rounded-2xl border flex items-center justify-between cursor-pointer transition-all shadow-lg hover:border-amber-400 group select-none shrink-0"
-              >
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <div className="w-8 h-8 rounded-xl bg-amber-500/20 border border-amber-500/35 flex items-center justify-center text-amber-300 shrink-0 shadow-[0_0_12px_rgba(245,158,11,0.25)]">
-                    <Film className="w-4 h-4 animate-pulse" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <h4 className="text-xs sm:text-sm font-bold text-white truncate">
-                        {movieState.title || 'Movie Audio Stream Active'}
-                      </h4>
-                      <span className="text-[9px] font-mono px-1.5 py-0.2 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold">
-                        {movieState.isPlaying ? 'PLAYING' : 'PAUSED'}
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-zinc-400 truncate">
-                      Video on Host screen only · Connected speakers synchronized in {mySpeakerRole.toUpperCase()} mode
-                    </p>
-                  </div>
-                </div>
-                <span className="text-xs font-mono font-bold text-amber-300 group-hover:translate-x-0.5 transition-transform shrink-0 ml-2">
-                  Theater Screen →
-                </span>
-              </div>
-            )}
-
             {localQueue.length > 0 && searchQuery.trim() && (
               <div className="flex items-center justify-end px-2 mt-1.5 text-[10px] font-mono select-none">
                 <button
