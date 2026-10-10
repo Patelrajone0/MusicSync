@@ -13,6 +13,7 @@ import {
   Cpu,
   ShieldCheck,
   Activity,
+  Film,
 } from 'lucide-react';
 import { User } from '../types';
 
@@ -78,6 +79,7 @@ export interface TitaniumSidebarProps {
   onPermissionChange: (permission: 'everyone' | 'admins') => void;
   onOpenQR: () => void;
   onUploadAudio: () => void;
+  onOpenMovieMode?: () => void;
   theme?: TitaniumSidebarTheme;
   onThemeChange?: (theme: TitaniumSidebarTheme) => void;
   onOpenShowcase?: () => void;
@@ -95,6 +97,7 @@ export const TitaniumSidebar: React.FC<TitaniumSidebarProps> = ({
   onPermissionChange,
   onOpenQR,
   onUploadAudio,
+  onOpenMovieMode,
   theme: controlledTheme,
   onThemeChange,
   onOpenShowcase,
@@ -269,6 +272,28 @@ export const TitaniumSidebar: React.FC<TitaniumSidebarProps> = ({
             <p className="text-[10px] text-zinc-500 leading-tight">Patch file into master queue</p>
           </div>
         </button>
+
+        {/* Movie Theater Mode Button */}
+        {onOpenMovieMode && (
+          <button
+            type="button"
+            onClick={onOpenMovieMode}
+            className="w-full mt-2 p-2.5 rounded-md border border-amber-500/30 hover:border-amber-500/60 bg-amber-500/10 hover:bg-amber-500/20 flex items-center gap-2.5 text-left transition-all cursor-pointer group active:scale-[0.98] shrink-0 shadow-sm"
+          >
+            <div className="w-7 h-7 rounded bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-300 shrink-0 group-hover:scale-105 transition-transform shadow-[0_0_10px_rgba(245,158,11,0.25)]">
+              <Film className="w-3.5 h-3.5" />
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5">
+                <h4 className="text-xs font-bold text-amber-200 leading-tight uppercase tracking-wider">
+                  HOME THEATER
+                </h4>
+                <span className="text-[9px] font-mono px-1 py-0.2 rounded bg-amber-500/25 text-amber-300 font-bold border border-amber-500/40">5.1 SYNC</span>
+              </div>
+              <p className="text-[10px] text-zinc-400 leading-tight">Movie sync & 3D sound</p>
+            </div>
+          </button>
+        )}
       </aside>
     );
   }
@@ -412,6 +437,26 @@ export const TitaniumSidebar: React.FC<TitaniumSidebarProps> = ({
             <p className="text-[10px] text-zinc-500 leading-tight">Add music to queue</p>
           </div>
         </button>
+
+        {/* Movie Theater Mode Button */}
+        {onOpenMovieMode && (
+          <button
+            type="button"
+            onClick={onOpenMovieMode}
+            className="w-full mt-2 p-2.5 rounded-xl border border-amber-500/30 hover:border-amber-500/60 bg-amber-500/10 hover:bg-amber-500/20 flex items-center gap-2.5 text-left transition-all cursor-pointer group active:scale-[0.98] shrink-0 shadow-sm"
+          >
+            <div className="w-7 h-7 rounded-lg bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-300 shrink-0 group-hover:scale-105 transition-transform shadow-[0_0_10px_rgba(245,158,11,0.25)]">
+              <Film className="w-3.5 h-3.5" />
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5">
+                <h4 className="text-xs font-bold text-amber-200 leading-tight">Home Theater</h4>
+                <span className="text-[9px] font-mono px-1.5 py-0.2 rounded-full bg-amber-500/20 text-amber-300 font-bold border border-amber-500/40">5.1 SYNC</span>
+              </div>
+              <p className="text-[10px] text-zinc-400 leading-tight">Movie sync & 3D sound</p>
+            </div>
+          </button>
+        )}
       </aside>
     );
   }
@@ -562,6 +607,26 @@ export const TitaniumSidebar: React.FC<TitaniumSidebarProps> = ({
             <p className="text-[10px] text-zinc-400 leading-tight">Add music to queue</p>
           </div>
         </button>
+
+        {/* Movie Theater Mode Button */}
+        {onOpenMovieMode && (
+          <button
+            type="button"
+            onClick={onOpenMovieMode}
+            className="w-full mt-2 p-2.5 rounded-2xl border border-amber-500/30 hover:border-amber-500/60 bg-amber-500/10 hover:bg-amber-500/20 flex items-center gap-2.5 text-left transition-all cursor-pointer group active:scale-[0.98] shrink-0 shadow-[0_2px_12px_rgba(0,0,0,0.3)] backdrop-blur-md"
+          >
+            <div className="w-7 h-7 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-300 shrink-0 group-hover:bg-amber-400 group-hover:text-black transition-colors shadow-sm">
+              <Film className="w-3.5 h-3.5" />
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5">
+                <h4 className="text-xs font-bold text-white leading-tight">Home Theater</h4>
+                <span className="text-[9px] font-mono px-1.5 py-0.2 rounded-full bg-amber-500/20 text-amber-300 font-bold border border-amber-500/40">5.1 SYNC</span>
+              </div>
+              <p className="text-[10px] text-zinc-400 leading-tight">Movie sync & 3D sound</p>
+            </div>
+          </button>
+        )}
       </aside>
     );
   }
@@ -716,6 +781,26 @@ export const TitaniumSidebar: React.FC<TitaniumSidebarProps> = ({
           <p className="text-[10px] text-zinc-400 leading-tight">Add music to queue</p>
         </div>
       </button>
+
+      {/* Movie Theater Mode Button */}
+      {onOpenMovieMode && (
+        <button
+          type="button"
+          onClick={onOpenMovieMode}
+          className="w-full mt-2 p-2.5 rounded-2xl border border-amber-500/30 hover:border-amber-500/60 bg-amber-500/10 hover:bg-amber-500/20 flex items-center gap-2.5 text-left transition-all cursor-pointer group active:scale-[0.98] shrink-0 shadow-sm"
+        >
+          <div className="w-7 h-7 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-300 shrink-0 group-hover:bg-amber-400 group-hover:text-black transition-colors shadow-inner">
+            <Film className="w-3.5 h-3.5" />
+          </div>
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5">
+              <h4 className="text-xs font-bold text-white leading-tight">Home Theater</h4>
+              <span className="text-[9px] font-mono px-1.5 py-0.2 rounded-full bg-amber-500/20 text-amber-300 font-bold border border-amber-500/40">5.1 SYNC</span>
+            </div>
+            <p className="text-[10px] text-zinc-400 leading-tight">Movie sync & 3D sound</p>
+          </div>
+        </button>
+      )}
     </aside>
   );
 };

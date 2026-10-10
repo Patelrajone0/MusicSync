@@ -680,6 +680,129 @@ app.delete('/api/tracks/local/:id', (req, res) => {
 });
 
 // ----------------------------------------------------
+// MOVIE AUDIO SYNC ENGINE: LARGE FILE CHUNKING & STREAMING (1GB+)
+// ----------------------------------------------------
+const MOVIES_DIR = path.join(__dirname, 'data', 'movies');
+if (!fs.existsSync(MOVIES_DIR)) {
+  try {
+    fs.mkdirSync(MOVIES_DIR, { recursive: true });
+  } catch (err) {}
+}
+
+const activeChunkSessions = new Map();
+
+// 1. Initialize Chunked Upload Session
+app.post('/api/movies/upload-init', express.json(), (req, res) => {
+  try {
+    const { fileId, fileName, totalChunks, totalBytes } = req.body;
+    if (!fileId || !fileName) {
+      return res.status(400).json({ error: 'fileId and fileName are required' });
+    }
+    const safeName = `${fileId}_${path.basename(fileName)}`;
+    const targetPath = path.join(MOVIES_DIR, safeName);
+
+    if (fs.existsSync(targetPath)) {
+      try { fs.unlinkSync(targetPath); } catch (e) {}
+    }
+
+    activeChunkSessions.set(fileId, {
+      safeName,
+      targetPath,
+      totalChunks: parseInt(totalChunks, 10) || 1,
+      totalBytes: parseInt(totalBytes, 10) || 0,
+      receivedChunks: 0,
+      startedAt: Date.now()
+    });
+
+    res.json({ success: true, fileId, safeName });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 2. Upload Movie Chunk (Direct append with 0MB RAM footprint)
+app.post('/api/movies/upload-chunk', (req, res) => {
+  try {
+    const fileId = req.headers['x-file-id'] || req.query.fileId;
+    let targetPath = null;
+    let session = activeChunkSessions.get(fileId);
+
+    if (session) {
+      targetPath = session.targetPath;
+    } else {
+      const safeName = `movie_${fileId || Date.now()}.mp4`;
+      targetPath = path.join(MOVIES_DIR, safeName);
+    }
+
+    const writeStream = fs.createWriteStream(targetPath, { flags: 'a' });
+    req.pipe(writeStream);
+
+    writeStream.on('finish', () => {
+      if (session) {
+        session.receivedChunks += 1;
+      }
+      res.json({ success: true, chunkReceived: session ? session.receivedChunks : 1 });
+    });
+
+    writeStream.on('error', (err) => {
+      console.error('Error appending movie chunk:', err);
+      res.status(500).json({ error: err.message });
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 3. Finalize Chunked Movie Upload
+app.post('/api/movies/upload-complete', express.json(), (req, res) => {
+  try {
+    const { fileId, fileName } = req.body;
+    const session = activeChunkSessions.get(fileId);
+    const safeName = session ? session.safeName : `${fileId}_${path.basename(fileName || 'movie.mp4')}`;
+    const targetPath = path.join(MOVIES_DIR, safeName);
+
+    if (!fs.existsSync(targetPath)) {
+      return res.status(404).json({ error: 'Movie file not found on disk' });
+    }
+
+    const stats = fs.statSync(targetPath);
+    activeChunkSessions.delete(fileId);
+
+    console.log(`> Full movie uploaded successfully: "${fileName || safeName}" (${(stats.size / 1024 / 1024).toFixed(1)}MB)`);
+
+    res.json({
+      success: true,
+      fileSize: stats.size,
+      streamUrl: `/api/stream/movie/${encodeURIComponent(safeName)}`
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 4. Stream Movie (Full HTTP 206 Partial Content / Range Request Support)
+app.get('/api/stream/movie/:filename', (req, res) => {
+  const safeName = path.basename(req.params.filename);
+  const filePath = path.join(MOVIES_DIR, safeName);
+
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).send('Movie file not found on server');
+  }
+
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Headers', '*');
+  res.setHeader('Access-Control-Expose-Headers', 'Content-Range, Content-Length, Accept-Ranges');
+  res.setHeader('Accept-Ranges', 'bytes');
+
+  res.sendFile(filePath, { acceptRanges: true }, (err) => {
+    if (err && !res.headersSent) {
+      res.status(err.status || 500).send('Error streaming movie');
+    }
+  });
+});
+
+
+// ----------------------------------------------------
 // LANGUAGE FILTERING & CLASSIFICATION (English, Hindi, Gujarati, Punjabi)
 // ----------------------------------------------------
 // STRICT LANGUAGE FILTERING ENGINE:
@@ -1769,6 +1892,7 @@ io.on('connection', (socket) => {
       deviceId,
       name: userName,
       role: 'host',
+      speakerRole: 'all',
       isAudioReady: false,
       avatarColor,
       joinedAt: Date.now(),
@@ -1805,6 +1929,29 @@ io.on('connection', (socket) => {
         scheduledPosition: 0,
         lastPausedPosition: 0,
         duration: 0
+      },
+      movieState: {
+        isActive: false,
+        title: '',
+        fileName: '',
+        fileSize: 0,
+        duration: 0,
+        currentTime: 0,
+        isPlaying: false,
+        isHostVideo: true,
+        audioBroadcastMode: 'webrtc',
+        streamUrl: '',
+        theaterSettings: {
+          enabled: false,
+          preset: 'cinema',
+          spatialWidening: 0.75,
+          dialogueBoost: 0.6,
+          lfeBoost: 0.7,
+          reverbDecay: 2.2,
+          haasDelayMs: 18,
+        },
+        lipSyncOffsetMs: 0,
+        updatedAt: Date.now()
       },
       chatMessages: [initialSystemMessage],
       masterVolume: 0.9,
@@ -1925,6 +2072,7 @@ io.on('connection', (socket) => {
       deviceId: clientDeviceId || existingUser?.deviceId || `dev_${socket.id}`,
       name: finalName,
       role,
+      speakerRole: existingUser?.speakerRole || 'all',
       isAudioReady: existingUser ? existingUser.isAudioReady : false,
       avatarColor: existingUser?.avatarColor || avatarColor,
       joinedAt: existingUser ? existingUser.joinedAt : Date.now(),
@@ -2858,6 +3006,149 @@ io.on('connection', (socket) => {
       }
     }
   });
+
+  // --- MOVIE AUDIO SYNC ENGINE & 3D THEATER SURROUND SOUND EVENTS ---
+  socket.on('set_speaker_role', ({ targetUserId, role }) => {
+    if (!currentRoomCode) return;
+    const room = rooms.get(currentRoomCode);
+    if (!room) return;
+
+    const targetId = targetUserId || socket.id;
+    const targetUser = room.users.get(targetId);
+    if (targetUser) {
+      targetUser.speakerRole = role || 'all';
+      io.to(currentRoomCode).emit('room_users_updated', {
+        users: Array.from(room.users.values()),
+        hostId: room.hostId
+      });
+      io.to(currentRoomCode).emit('speaker_role_updated', {
+        userId: targetId,
+        speakerRole: targetUser.speakerRole
+      });
+    }
+  });
+
+  socket.on('movie_start', (data) => {
+    if (!currentRoomCode) return;
+    const room = rooms.get(currentRoomCode);
+    if (!room) return;
+
+    const user = room.users.get(socket.id);
+    const isHost = Boolean(user && (user.role === 'host' || room.hostId === socket.id));
+    if (!isHost) {
+      return socket.emit('error_message', 'Only the Host can activate Movie Mode.');
+    }
+
+    // Pause standard music queue when entering Movie Mode
+    if (room.playbackState.status === 'playing') {
+      room.playbackState.status = 'paused';
+      room.playbackState.lastPausedPosition = calculateCurrentTrackPosition(room);
+      io.to(currentRoomCode).emit('playback_state_changed', room.playbackState);
+    }
+
+    room.movieState = {
+      isActive: true,
+      title: data?.title || 'Home Theater Movie',
+      fileName: data?.fileName || '',
+      fileSize: data?.fileSize || 0,
+      duration: data?.duration || 0,
+      currentTime: 0,
+      isPlaying: false,
+      isHostVideo: true,
+      audioBroadcastMode: data?.audioBroadcastMode || 'webrtc',
+      streamUrl: data?.streamUrl || '',
+      theaterSettings: data?.theaterSettings || room.movieState?.theaterSettings || {
+        enabled: false,
+        preset: 'cinema',
+        spatialWidening: 0.75,
+        dialogueBoost: 0.6,
+        lfeBoost: 0.7,
+        reverbDecay: 2.2,
+        haasDelayMs: 18,
+      },
+      lipSyncOffsetMs: 0,
+      updatedAt: Date.now()
+    };
+
+    const sysMsg = {
+      id: `msg-${Date.now()}`,
+      userName: 'System',
+      user: { name: 'System', role: 'system', avatarColor: '#00f0ff' },
+      text: `🎬 Movie Mode Activated: "${room.movieState.title}". Video screen renders on Host only · Synchronized audio streaming to all connected devices!`,
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      timestamp: Date.now(),
+      isSystem: true
+    };
+    room.chatMessages.push(sysMsg);
+
+    io.to(currentRoomCode).emit('movie_state_changed', room.movieState);
+    io.to(currentRoomCode).emit('chat_message', sysMsg);
+  });
+
+  socket.on('movie_stop', () => {
+    if (!currentRoomCode) return;
+    const room = rooms.get(currentRoomCode);
+    if (!room) return;
+
+    if (room.movieState) {
+      room.movieState.isActive = false;
+      room.movieState.isPlaying = false;
+      room.movieState.updatedAt = Date.now();
+    }
+
+    const sysMsg = {
+      id: `msg-${Date.now()}`,
+      userName: 'System',
+      user: { name: 'System', role: 'system', avatarColor: '#00f0ff' },
+      text: '🎬 Movie Mode ended. Returned to standard music room mode.',
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      timestamp: Date.now(),
+      isSystem: true
+    };
+    room.chatMessages.push(sysMsg);
+
+    io.to(currentRoomCode).emit('movie_state_changed', room.movieState);
+    io.to(currentRoomCode).emit('chat_message', sysMsg);
+  });
+
+  socket.on('movie_sync', (data) => {
+    if (!currentRoomCode) return;
+    const room = rooms.get(currentRoomCode);
+    if (!room || !room.movieState) return;
+
+    room.movieState.isPlaying = !!data.isPlaying;
+    room.movieState.currentTime = typeof data.currentTime === 'number' ? data.currentTime : room.movieState.currentTime;
+    room.movieState.duration = typeof data.duration === 'number' && data.duration > 0 ? data.duration : room.movieState.duration;
+    room.movieState.updatedAt = Date.now();
+
+    // Broadcast frame-accurate sync state to all clients in the room (excluding host)
+    socket.to(currentRoomCode).emit('movie_sync_state', {
+      isPlaying: room.movieState.isPlaying,
+      currentTime: room.movieState.currentTime,
+      duration: room.movieState.duration,
+      scheduledServerTime: data.scheduledServerTime || Date.now(),
+      playbackRate: data.playbackRate || 1.0
+    });
+  });
+
+  socket.on('movie_theater_update', (settings) => {
+    if (!currentRoomCode) return;
+    const room = rooms.get(currentRoomCode);
+    if (!room || !room.movieState) return;
+
+    room.movieState.theaterSettings = { ...room.movieState.theaterSettings, ...settings };
+    socket.to(currentRoomCode).emit('movie_theater_updated', room.movieState.theaterSettings);
+  });
+
+  // Relay WebRTC audio signaling packets (Offer, Answer, ICE Candidates)
+  socket.on('webrtc_signal', ({ targetUserId, data }) => {
+    if (targetUserId) {
+      io.to(targetUserId).emit('webrtc_signal', {
+        fromUserId: socket.id,
+        data
+      });
+    }
+  });
 });
 
 function serializeRoom(room) {
@@ -2876,7 +3167,8 @@ function serializeRoom(room) {
     masterVolume: typeof room.masterVolume === 'number' ? room.masterVolume : 0.9,
     repeatMode: room.repeatMode || 'off',
     playbackPermission: room.playbackPermission || 'admins',
-    networkMode: room.networkMode || 'local'
+    networkMode: room.networkMode || 'local',
+    movieState: room.movieState || null
   };
 }
 
