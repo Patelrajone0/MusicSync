@@ -46,7 +46,7 @@ import { cleanTrackTitle, searchTracks } from '../services/musicApi';
 import { useFavorites } from '../services/favoritesService';
 import { localMusicService } from '../services/localMusicService';
 import { movieSyncService } from '../services/movieSyncService';
-import { spatialTheaterEngine, THEATER_PRESETS } from '../services/spatialTheaterEngine';
+import { spatialTheaterEngine } from '../services/spatialTheaterEngine';
 import { MovieModeView } from './MovieModeView';
 import { SurroundRoleModal } from './SurroundRoleModal';
 import { NetworkModeModal, NetworkMode } from './NetworkModeModal';
@@ -1665,136 +1665,6 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
                   </div>
                 </div>
               </div>
-
-              {/* 3D THEATER ACOUSTIC MODE */}
-              <div
-                style={{
-                  backgroundColor: isTheaterActive
-                    ? 'rgba(245, 158, 11, 0.12)'
-                    : 'var(--bg-surface, rgba(14, 16, 20, 0.55))',
-                  borderColor: isTheaterActive
-                    ? 'rgba(245, 158, 11, 0.4)'
-                    : 'var(--bg-border, rgba(255, 255, 255, 0.08))',
-                }}
-                className="p-3.5 rounded-2xl border backdrop-blur-2xl space-y-2.5 shrink-0 transition-colors duration-300 shadow-sm"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                    <span className="text-xs font-bold text-white">3D Theater Mode</span>
-                    <span
-                      className={`text-[9px] font-mono px-1.5 py-0.2 rounded-full font-bold uppercase border ${
-                        isTheaterActive
-                          ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
-                          : 'bg-zinc-800 text-zinc-400 border-zinc-700'
-                      }`}
-                    >
-                      {isTheaterActive ? 'ON' : 'OFF'}
-                    </span>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const next = !isTheaterActive;
-                      setIsTheaterActive(next);
-                      movieSyncService.setTheaterMode(next);
-                    }}
-                    aria-label="Toggle 3D Theater Mode"
-                    className={`w-9 h-5 rounded-full transition-colors relative cursor-pointer p-0.5 ${
-                      isTheaterActive
-                        ? 'bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.4)]'
-                        : 'bg-zinc-800'
-                    }`}
-                  >
-                    <span
-                      className={`block w-4 h-4 rounded-full bg-white transition-transform ${
-                        isTheaterActive ? 'translate-x-4' : 'translate-x-0'
-                      }`}
-                    />
-                  </button>
-                </div>
-
-                {/* Preset Chips */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 pt-1">
-                  {(['cinema', 'imax', 'atmos', 'intimate', 'widener'] as TheaterPreset[]).map((p) => {
-                    const preset = THEATER_PRESETS[p];
-                    const isSel = theaterPreset === p;
-
-                    return (
-                      <button
-                        key={p}
-                        type="button"
-                        onClick={() => {
-                          setTheaterPreset(p);
-                          movieSyncService.setTheaterPreset(p);
-                        }}
-                        className={`px-2 py-1 rounded-xl text-[10px] font-bold transition-all cursor-pointer truncate ${
-                          isSel
-                            ? 'bg-amber-400 text-black font-extrabold shadow-[0_0_8px_rgba(245,158,11,0.3)]'
-                            : 'bg-white/5 hover:bg-white/10 text-zinc-300'
-                        }`}
-                      >
-                        {preset.name.split(' ')[0]}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* MULTI-DEVICE SURROUND SOUND SPEAKER ROLES */}
-              <div
-                style={{
-                  backgroundColor: 'var(--bg-surface, rgba(14, 16, 20, 0.55))',
-                  borderColor: 'var(--bg-border, rgba(255, 255, 255, 0.08))',
-                }}
-                className="p-3.5 rounded-2xl border backdrop-blur-2xl space-y-2.5 shrink-0 transition-colors duration-300"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 text-xs font-bold text-white">
-                    <Speaker className="w-3.5 h-3.5 text-cyan-400" />
-                    <span>Surround Speaker Role</span>
-                  </div>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-bold uppercase">
-                    {mySpeakerRole.replace('_', ' ')}
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setIsSurroundModalOpen(true)}
-                    className="flex-1 py-1.5 px-3 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/30 text-cyan-300 text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
-                  >
-                    <span>Tap Physical Position</span>
-                    <span className="text-[10px] font-mono">→</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => spatialTheaterEngine.playSpeakerTestTone(mySpeakerRole)}
-                    className="p-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-zinc-300 hover:text-white transition-colors cursor-pointer"
-                    title="Test speaker audio chime"
-                  >
-                    <Volume2 className="w-3.5 h-3.5 text-cyan-400" />
-                  </button>
-                </div>
-              </div>
-
-              {/* OPEN FULL MOVIE THEATER VIEW BUTTON */}
-              <button
-                type="button"
-                onClick={() => setIsMovieModeOpen(true)}
-                className="w-full p-3 rounded-2xl bg-gradient-to-r from-amber-500/20 via-black to-blue-500/20 hover:from-amber-500/30 hover:to-blue-500/30 border border-amber-500/40 text-amber-300 hover:text-white text-xs font-bold transition-all cursor-pointer flex items-center justify-between shrink-0 shadow-md group"
-              >
-                <div className="flex items-center gap-2">
-                  <Film className="w-4 h-4 text-amber-400" />
-                  <span>Open Cinema Theater Screen</span>
-                </div>
-                <span className="text-xs font-mono group-hover:translate-x-0.5 transition-transform">
-                  Launch →
-                </span>
-              </button>
             </div>
           )}
 
