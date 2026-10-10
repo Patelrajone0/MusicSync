@@ -1,18 +1,18 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   X,
   Volume2,
   Check,
-  Sparkles,
   Speaker,
   Compass,
   Tv,
   Layers,
-  HelpCircle,
+  Sparkles,
 } from 'lucide-react';
 import { SpeakerRole, User } from '../types';
 import { spatialTheaterEngine } from '../services/spatialTheaterEngine';
 import { movieSyncService } from '../services/movieSyncService';
+import { BACKGROUND_THEMES, BackgroundThemeId } from '../types/backgroundThemes';
 
 interface SurroundRoleModalProps {
   isOpen: boolean;
@@ -20,73 +20,52 @@ interface SurroundRoleModalProps {
   currentUser: User | null;
   users: User[];
   isHost: boolean;
-  activeTheme?: string;
+  activeTheme?: BackgroundThemeId;
 }
 
 interface RoleConfig {
   role: SpeakerRole;
   label: string;
   shortLabel: string;
-  channelDesc: string;
-  gridPos: string;
-  acousticBadge: string;
-  color: string;
+  tagline: string;
 }
 
 const ROLES: RoleConfig[] = [
   {
     role: 'front_left',
-    label: 'Front Left Speaker',
-    shortLabel: 'LEFT',
-    channelDesc: 'Left stereo channel · High-shelf presence',
-    gridPos: 'col-start-1 row-start-1',
-    acousticBadge: '8kHz High-Shelf · Pan -85%',
-    color: 'from-blue-500/20 border-blue-400/40 text-blue-300',
+    label: 'Front Left',
+    shortLabel: 'L',
+    tagline: 'Left Stereo Channel',
   },
   {
     role: 'center',
     label: 'Center Dialogue',
-    shortLabel: 'CENTER',
-    channelDesc: 'Dialogue clarity boost · High-pass 120Hz',
-    gridPos: 'col-start-2 row-start-1',
-    acousticBadge: '2.8kHz Vocal EQ · Center Focus',
-    color: 'from-amber-500/20 border-amber-400/40 text-amber-300',
+    shortLabel: 'C',
+    tagline: 'Dialogue & Voices',
   },
   {
     role: 'front_right',
-    label: 'Front Right Speaker',
-    shortLabel: 'RIGHT',
-    channelDesc: 'Right stereo channel · High-shelf presence',
-    gridPos: 'col-start-3 row-start-1',
-    acousticBadge: '8kHz High-Shelf · Pan +85%',
-    color: 'from-blue-500/20 border-blue-400/40 text-blue-300',
+    label: 'Front Right',
+    shortLabel: 'R',
+    tagline: 'Right Stereo Channel',
   },
   {
     role: 'subwoofer',
-    label: 'Subwoofer / LFE',
-    shortLabel: 'SUB / BASS',
-    channelDesc: '24dB/oct low-pass at 120Hz · 55Hz rumble',
-    gridPos: 'col-start-2 row-start-2',
-    acousticBadge: '120Hz Low-Pass · +6dB Sub Rumble',
-    color: 'from-red-500/20 border-rose-400/40 text-rose-300',
+    label: 'Subwoofer',
+    shortLabel: 'SUB',
+    tagline: 'Deep Bass & Impact',
   },
   {
     role: 'surround_left',
-    label: 'Rear Left Surround',
-    shortLabel: 'REAR L',
-    channelDesc: 'Haas +22ms delay · Air dampening filter',
-    gridPos: 'col-start-1 row-start-3',
-    acousticBadge: '+22ms Delay · Pan -95%',
-    color: 'from-purple-500/20 border-purple-400/40 text-purple-300',
+    label: 'Rear Left',
+    shortLabel: 'RL',
+    tagline: 'Surround Ambient',
   },
   {
     role: 'surround_right',
-    label: 'Rear Right Surround',
-    shortLabel: 'REAR R',
-    channelDesc: 'Haas +22ms delay · Air dampening filter',
-    gridPos: 'col-start-3 row-start-3',
-    acousticBadge: '+22ms Delay · Pan +95%',
-    color: 'from-purple-500/20 border-purple-400/40 text-purple-300',
+    label: 'Rear Right',
+    shortLabel: 'RR',
+    tagline: 'Surround Ambient',
   },
 ];
 
@@ -96,20 +75,34 @@ export const SurroundRoleModal: React.FC<SurroundRoleModalProps> = ({
   currentUser,
   users,
   isHost,
+  activeTheme,
 }) => {
+  const [testingRole, setTestingRole] = useState<SpeakerRole | null>(null);
+
   if (!isOpen) return null;
+
+  const activeThemeDef =
+    BACKGROUND_THEMES.find((t) => t.id === activeTheme) || BACKGROUND_THEMES[0];
+  const isLight = activeThemeDef.id === 'pure-light';
 
   const currentRole: SpeakerRole = currentUser?.speakerRole || 'all';
 
   const handleSelectRole = (role: SpeakerRole) => {
     movieSyncService.setSpeakerRole(role);
-    // Play instant acoustic test tone
+    playTestWithAnimation(role);
+  };
+
+  const playTestWithAnimation = (role: SpeakerRole) => {
+    setTestingRole(role);
     spatialTheaterEngine.playSpeakerTestTone(role);
+    setTimeout(() => {
+      setTestingRole(null);
+    }, 1200);
   };
 
   const handleTestTone = (role: SpeakerRole, e: React.MouseEvent) => {
     e.stopPropagation();
-    spatialTheaterEngine.playSpeakerTestTone(role);
+    playTestWithAnimation(role);
   };
 
   // Find devices mapped to each role
@@ -121,40 +114,46 @@ export const SurroundRoleModal: React.FC<SurroundRoleModalProps> = ({
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/80 backdrop-blur-xl animate-fade-in"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/80 backdrop-blur-xl animate-fade-in select-none"
       onClick={onClose}
     >
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
-          backgroundColor: 'var(--bg-surface, rgba(14, 16, 24, 0.95))',
-          borderColor: 'var(--bg-border, rgba(255, 255, 255, 0.12))',
+          backgroundColor: isLight ? '#ffffff' : activeThemeDef.hexElevated,
+          borderColor: isLight ? 'rgba(15, 23, 42, 0.1)' : activeThemeDef.hexBorder,
+          color: isLight ? '#0f172a' : '#f8fafc',
         }}
-        className="relative w-full max-w-xl max-h-[92vh] flex flex-col rounded-3xl border shadow-2xl overflow-hidden backdrop-blur-2xl"
+        className="relative w-full max-w-lg max-h-[90vh] flex flex-col rounded-3xl border shadow-2xl overflow-hidden backdrop-blur-2xl animate-scale-up"
       >
-        {/* Ambient Top Glow */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-80 h-1 bg-gradient-to-r from-transparent via-cyan-400 to-transparent blur-sm pointer-events-none" />
+        {/* Subtle Accent Hairline Top Glow */}
+        <div
+          className="absolute top-0 left-0 right-0 h-1 pointer-events-none opacity-80"
+          style={{
+            background: `linear-gradient(90deg, transparent, ${activeThemeDef.accentHex || '#38bdf8'}, transparent)`,
+          }}
+        />
 
         {/* Modal Header */}
         <div
-          style={{ borderColor: 'var(--bg-border, rgba(255, 255, 255, 0.08))' }}
+          style={{ borderColor: isLight ? 'rgba(15, 23, 42, 0.08)' : 'rgba(255, 255, 255, 0.08)' }}
           className="flex items-center justify-between px-5 py-4 border-b shrink-0"
         >
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-2xl bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shadow-[0_0_12px_rgba(6,182,212,0.3)]">
-              <Speaker className="w-5 h-5" />
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shadow-sm">
+              <Speaker className="w-4 h-4" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-sm sm:text-base font-bold text-white tracking-tight">
-                  Multi-Device Surround Setup
+                <h3 className={`text-sm sm:text-base font-bold tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                  Surround Speaker Position
                 </h3>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 font-bold">
-                  5.1 SURROUND
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-500/15 border border-cyan-500/30 text-cyan-400 font-bold">
+                  5.1 AUDIO
                 </span>
               </div>
-              <p className="text-xs text-zinc-400">
-                Tap your device's physical position in the room
+              <p className={`text-xs ${isLight ? 'text-slate-500' : 'text-zinc-400'}`}>
+                Tap where this device is located in the room
               </p>
             </div>
           </div>
@@ -162,150 +161,172 @@ export const SurroundRoleModal: React.FC<SurroundRoleModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-full text-zinc-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+            className={`p-1.5 rounded-full transition-colors cursor-pointer active:scale-90 ${isLight ? 'text-slate-500 hover:text-slate-900 hover:bg-slate-100' : 'text-zinc-400 hover:text-white hover:bg-white/10'}`}
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Modal Body */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 no-scrollbar">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3.5 no-scrollbar">
           {/* Virtual Cinema Room Stage Layout */}
           <div
             style={{
-              backgroundColor: 'var(--bg-card, rgba(0, 0, 0, 0.6))',
-              borderColor: 'var(--bg-border, rgba(255, 255, 255, 0.08))',
+              backgroundColor: isLight ? '#f8fafc' : 'rgba(0, 0, 0, 0.45)',
+              borderColor: isLight ? 'rgba(15, 23, 42, 0.08)' : 'rgba(255, 255, 255, 0.08)',
             }}
-            className="p-4 rounded-2xl border relative flex flex-col items-center select-none"
+            className="p-3.5 sm:p-4 rounded-2xl border flex flex-col items-center"
           >
-            {/* Movie Screen at Front of Room */}
-            <div className="w-3/4 max-w-xs py-2 px-4 rounded-xl bg-gradient-to-b from-white/20 to-white/5 border border-white/20 text-center mb-5 shadow-[0_0_24px_rgba(255,255,255,0.15)] relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent pointer-events-none animate-pulse" />
-              <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-white uppercase tracking-widest">
-                <Tv className="w-3.5 h-3.5 text-cyan-400" />
-                <span>Movie Screen (Host)</span>
-              </div>
+            {/* Movie Screen (Front of Room) */}
+            <div
+              style={{
+                backgroundColor: isLight ? '#e2e8f0' : 'rgba(255, 255, 255, 0.1)',
+                borderColor: isLight ? 'rgba(15, 23, 42, 0.15)' : 'rgba(255, 255, 255, 0.2)',
+              }}
+              className="w-48 py-1.5 px-3 rounded-lg border text-center mb-4 flex items-center justify-center gap-1.5 shadow-sm"
+            >
+              <Tv className="w-3.5 h-3.5 text-cyan-400" />
+              <span className={`text-[11px] font-bold uppercase tracking-wider ${isLight ? 'text-slate-700' : 'text-zinc-200'}`}>
+                Movie Screen
+              </span>
             </div>
 
-            {/* Interactive 3x3 Surround Sound Speaker Grid */}
-            <div className="grid grid-cols-3 gap-2.5 sm:gap-3 w-full">
+            {/* Speaker Grid (3 Columns) */}
+            <div className="grid grid-cols-3 gap-2 sm:gap-2.5 w-full">
               {ROLES.map((cfg) => {
                 const isSelected = currentRole === cfg.role;
+                const isChiming = testingRole === cfg.role;
                 const devices = getDevicesForRole(cfg.role);
 
                 return (
                   <div
                     key={cfg.role}
                     onClick={() => handleSelectRole(cfg.role)}
-                    className={`relative p-2.5 sm:p-3 rounded-2xl border transition-all cursor-pointer group flex flex-col items-center justify-between text-center min-h-[105px] ${
-                      isSelected
-                        ? 'bg-gradient-to-b from-cyan-500/25 to-blue-600/10 border-cyan-400 shadow-[0_0_20px_rgba(6,182,212,0.35)] ring-2 ring-cyan-400/40'
-                        : 'bg-white/[0.03] hover:bg-white/[0.08] border-white/10 hover:border-white/20'
-                    }`}
+                    style={{
+                      backgroundColor: isSelected
+                        ? isLight
+                          ? '#e0f2fe'
+                          : 'rgba(6, 182, 212, 0.15)'
+                        : isLight
+                        ? '#ffffff'
+                        : 'rgba(255, 255, 255, 0.03)',
+                      borderColor: isSelected
+                        ? isLight
+                          ? '#38bdf8'
+                          : 'rgba(6, 182, 212, 0.6)'
+                        : isLight
+                        ? '#e2e8f0'
+                        : 'rgba(255, 255, 255, 0.08)',
+                    }}
+                    className={`relative p-2.5 rounded-xl border flex flex-col items-center justify-between text-center min-h-[92px] cursor-pointer transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] ${
+                      isSelected ? 'shadow-[0_0_16px_rgba(6,182,212,0.25)] ring-1 ring-cyan-400/40' : ''
+                    } ${isChiming ? 'animate-pulse ring-2 ring-cyan-400' : ''}`}
                   >
-                    {/* Active Selected Checkmark */}
+                    {/* Checkmark badge */}
                     {isSelected && (
-                      <span className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-cyan-400 text-black flex items-center justify-center text-[10px] font-bold shadow-md">
+                      <span className="absolute top-1 right-1 w-3.5 h-3.5 rounded-full bg-cyan-400 text-black flex items-center justify-center text-[9px] font-bold shadow-sm">
                         <Check className="w-2.5 h-2.5 stroke-[3]" />
                       </span>
                     )}
 
-                    <div className="w-full flex flex-col items-center">
+                    <div className="flex flex-col items-center w-full">
                       <span
-                        className={`text-[10px] font-mono font-black tracking-wider px-2 py-0.5 rounded-full mb-1 border ${
+                        className={`text-[9px] font-mono font-black tracking-wider px-1.5 py-0.2 rounded-md mb-0.5 border ${
                           isSelected
-                            ? 'bg-cyan-400/20 text-cyan-300 border-cyan-400/50'
-                            : 'bg-white/5 text-zinc-300 border-white/10'
+                            ? 'bg-cyan-400/25 text-cyan-500 border-cyan-400/50'
+                            : isLight
+                            ? 'bg-slate-100 text-slate-600 border-slate-200'
+                            : 'bg-white/5 text-zinc-400 border-white/10'
                         }`}
                       >
                         {cfg.shortLabel}
                       </span>
                       <h4
-                        className={`text-xs font-bold truncate max-w-full ${
-                          isSelected ? 'text-white' : 'text-zinc-200'
+                        className={`text-[11px] font-bold truncate max-w-full ${
+                          isSelected ? (isLight ? 'text-blue-900' : 'text-white') : isLight ? 'text-slate-800' : 'text-zinc-200'
                         }`}
                       >
                         {cfg.label}
                       </h4>
+                      <p className={`text-[9px] truncate max-w-full ${isLight ? 'text-slate-500' : 'text-zinc-400'}`}>
+                        {cfg.tagline}
+                      </p>
                     </div>
 
-                    {/* Devices currently mapped to this speaker */}
-                    <div className="my-1 flex flex-wrap gap-1 justify-center max-w-full">
-                      {devices.length > 0 ? (
-                        devices.map((d) => (
-                          <span
-                            key={d.id}
-                            className="text-[9px] font-mono px-1.5 py-0.2 rounded-md bg-white/10 text-zinc-300 border border-white/10 truncate max-w-[80px]"
-                            title={d.name}
-                          >
-                            {d.name.split('-')[0]}
-                          </span>
-                        ))
-                      ) : (
-                        <span className="text-[10px] text-zinc-400 italic">
-                          No device
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Test Audio Chime Button */}
+                    {/* Test chime button */}
                     <button
                       type="button"
                       onClick={(e) => handleTestTone(cfg.role, e)}
-                      className="mt-1 w-full flex items-center justify-center gap-1 text-[10px] font-mono py-1 px-2 rounded-lg bg-white/10 hover:bg-white/20 text-zinc-300 hover:text-white transition-colors cursor-pointer"
-                      title="Play acoustic test tone"
+                      className={`mt-1.5 w-full flex items-center justify-center gap-1 text-[9px] font-mono py-0.5 px-1.5 rounded-md transition-colors cursor-pointer active:scale-95 ${
+                        isLight
+                          ? 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                          : 'bg-white/10 hover:bg-white/20 text-zinc-300'
+                      }`}
+                      title="Play test chime"
                     >
-                      <Volume2 className="w-3 h-3 text-cyan-400" />
-                      <span>Test Chime</span>
+                      <Volume2 className="w-2.5 h-2.5 text-cyan-400" />
+                      <span>Test</span>
                     </button>
                   </div>
                 );
               })}
             </div>
 
-            {/* Listener Position Pin at Center of Room */}
-            <div className="mt-4 flex items-center gap-2 text-xs text-zinc-400 font-mono">
-              <Compass className="w-3.5 h-3.5 text-cyan-400 animate-spin-slow" />
-              <span>Center Listening Sweet Spot (Audience)</span>
+            {/* Audience Position Hint */}
+            <div className={`mt-3 flex items-center gap-1.5 text-[11px] font-mono ${isLight ? 'text-slate-500' : 'text-zinc-400'}`}>
+              <Compass className="w-3 h-3 text-cyan-400" />
+              <span>Center Audience Spot</span>
             </div>
           </div>
 
-          {/* Full Stereo Option */}
+          {/* Full Stereo (Default Mix) Card */}
           <div
             onClick={() => handleSelectRole('all')}
             style={{
               backgroundColor:
                 currentRole === 'all'
-                  ? 'rgba(6, 182, 212, 0.12)'
-                  : 'var(--bg-card, rgba(0, 0, 0, 0.4))',
+                  ? isLight
+                    ? '#e0f2fe'
+                    : 'rgba(6, 182, 212, 0.15)'
+                  : isLight
+                  ? '#f8fafc'
+                  : 'rgba(255, 255, 255, 0.03)',
               borderColor:
                 currentRole === 'all'
-                  ? 'rgba(6, 182, 212, 0.5)'
-                  : 'var(--bg-border, rgba(255, 255, 255, 0.08))',
+                  ? isLight
+                    ? '#38bdf8'
+                    : 'rgba(6, 182, 212, 0.5)'
+                  : isLight
+                  ? '#e2e8f0'
+                  : 'rgba(255, 255, 255, 0.08)',
             }}
-            className={`p-3.5 rounded-2xl border flex items-center justify-between cursor-pointer transition-all ${
+            className={`p-3 rounded-xl border flex items-center justify-between cursor-pointer transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] ${
               currentRole === 'all'
-                ? 'shadow-[0_0_16px_rgba(6,182,212,0.25)] ring-1 ring-cyan-400/40'
-                : 'hover:bg-white/[0.04]'
+                ? 'shadow-[0_0_16px_rgba(6,182,212,0.2)] ring-1 ring-cyan-400/40'
+                : ''
             }`}
           >
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-white/10 border border-white/15 flex items-center justify-center text-zinc-200">
-                <Layers className="w-4 h-4" />
+            <div className="flex items-center gap-2.5">
+              <div
+                className={`w-7 h-7 rounded-lg border flex items-center justify-center ${
+                  isLight ? 'bg-white border-slate-200 text-slate-700' : 'bg-white/10 border-white/15 text-zinc-200'
+                }`}
+              >
+                <Layers className="w-3.5 h-3.5" />
               </div>
               <div>
-                <div className="flex items-center gap-2">
-                  <h4 className="text-xs sm:text-sm font-bold text-white">
+                <div className="flex items-center gap-1.5">
+                  <h4 className={`text-xs font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>
                     Full Stereo / Standard
                   </h4>
                   {currentRole === 'all' && (
-                    <span className="text-[10px] font-mono px-2 py-0.2 rounded-full bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-500/40">
+                    <span className="text-[9px] font-mono px-1.5 py-0.2 rounded-full bg-cyan-500/20 text-cyan-400 font-bold border border-cyan-500/40">
                       ACTIVE
                     </span>
                   )}
                 </div>
-                <p className="text-[11px] text-zinc-400">
-                  Plays complete full-range stereo with 3D theater spatial reverb
+                <p className={`text-[10px] ${isLight ? 'text-slate-500' : 'text-zinc-400'}`}>
+                  Plays complete balanced stereo mix on this device
                 </p>
               </div>
             </div>
@@ -313,48 +334,32 @@ export const SurroundRoleModal: React.FC<SurroundRoleModalProps> = ({
             <button
               type="button"
               onClick={(e) => handleTestTone('all', e)}
-              className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-mono text-zinc-300 hover:text-white flex items-center gap-1 cursor-pointer transition-colors"
+              className={`px-2 py-0.5 rounded-md text-[10px] font-mono flex items-center gap-1 transition-colors cursor-pointer active:scale-95 ${
+                isLight ? 'bg-slate-200 hover:bg-slate-300 text-slate-800' : 'bg-white/10 hover:bg-white/20 text-zinc-300'
+              }`}
             >
-              <Volume2 className="w-3.5 h-3.5 text-cyan-400" />
+              <Volume2 className="w-3 h-3 text-cyan-400" />
               <span>Test</span>
             </button>
           </div>
-
-          {/* Acoustic Guide Note */}
-          <div
-            style={{
-              backgroundColor: 'var(--bg-elevated, rgba(255, 255, 255, 0.03))',
-              borderColor: 'var(--bg-border, rgba(255, 255, 255, 0.08))',
-            }}
-            className="p-3 rounded-2xl border text-xs text-zinc-400 flex items-start gap-2.5"
-          >
-            <HelpCircle className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
-            <div className="text-[11px] leading-relaxed">
-              <span className="text-zinc-200 font-semibold">Pro Home Theater Tip:</span> Place one phone near the TV for{' '}
-              <strong className="text-cyan-300">Center Dialogue</strong>, two phones on side tables as{' '}
-              <strong className="text-blue-300">Left & Right</strong>, two behind you as{' '}
-              <strong className="text-purple-300">Rear Surrounds</strong>, and one phone on a wooden table as{' '}
-              <strong className="text-rose-300">Subwoofer</strong> for real cinematic room rumble!
-            </div>
-          </div>
         </div>
 
-        {/* Footer */}
+        {/* Modal Footer */}
         <div
-          style={{ borderColor: 'var(--bg-border, rgba(255, 255, 255, 0.08))' }}
-          className="p-4 border-t flex items-center justify-between shrink-0"
+          style={{ borderColor: isLight ? 'rgba(15, 23, 42, 0.08)' : 'rgba(255, 255, 255, 0.08)' }}
+          className="p-3.5 sm:p-4 border-t flex items-center justify-between shrink-0"
         >
-          <div className="text-xs text-zinc-400">
-            Selected:{' '}
+          <div className={`text-xs ${isLight ? 'text-slate-500' : 'text-zinc-400'}`}>
+            Assigned:{' '}
             <span className="font-mono text-cyan-400 font-bold uppercase">
-              {currentRole.replace('_', ' ')}
+              {currentRole === 'all' ? 'Stereo' : currentRole.replace('_', ' ')}
             </span>
           </div>
 
           <button
             type="button"
             onClick={onClose}
-            className="px-5 py-2 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:brightness-110 active:scale-95 text-black font-extrabold text-xs tracking-wide shadow-[0_0_15px_rgba(6,182,212,0.4)] cursor-pointer transition-all"
+            className="px-5 py-1.5 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:brightness-110 active:scale-95 text-black font-extrabold text-xs tracking-wide shadow-[0_0_14px_rgba(6,182,212,0.35)] cursor-pointer transition-all"
           >
             Done
           </button>

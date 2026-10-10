@@ -3,30 +3,19 @@ import {
   Film,
   Play,
   Pause,
-  Upload,
   Volume2,
   VolumeX,
   Maximize2,
   Minimize2,
   Sparkles,
   Speaker,
-  Compass,
-  Tv,
-  Radio,
-  Check,
-  ChevronDown,
-  RotateCcw,
-  Sliders,
   ShieldCheck,
   X,
-  Clock,
-  Layers,
-  AlertCircle,
-  FileVideo,
+  ChevronRight,
+  RotateCcw,
 } from 'lucide-react';
 import { MovieState, SpeakerRole, TheaterPreset, User } from '../types';
-import { movieSyncService, ChunkUploadProgress } from '../services/movieSyncService';
-import { spatialTheaterEngine, THEATER_PRESETS } from '../services/spatialTheaterEngine';
+import { movieSyncService } from '../services/movieSyncService';
 import { SurroundRoleModal } from './SurroundRoleModal';
 import { BACKGROUND_THEMES, BackgroundThemeId } from '../types/backgroundThemes';
 
@@ -48,47 +37,31 @@ export const MovieModeView: React.FC<MovieModeViewProps> = ({
   currentBgTheme,
 }) => {
   const [movieState, setMovieState] = useState<MovieState>(() => movieSyncService.getState());
-  const [uploadProgress, setUploadProgress] = useState<ChunkUploadProgress>({
-    isUploading: false,
-    progress: 0,
-    uploadedBytes: 0,
-    totalBytes: 0,
-    fileName: '',
-  });
-
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isSurroundModalOpen, setIsSurroundModalOpen] = useState(false);
   const [selectedPreset, setSelectedPreset] = useState<TheaterPreset>('cinema');
   const [isTheaterActive, setIsTheaterActive] = useState(false);
-  const [spatialWidening, setSpatialWidening] = useState(0.75);
-  const [dialogueBoost, setDialogueBoost] = useState(0.6);
-  const [lfeBoost, setLfeBoost] = useState(0.7);
+  const [isControlsVisible, setIsControlsVisible] = useState(true);
+  const [isHostMuted, setIsHostMuted] = useState(false);
+  const [isDraggingFile, setIsDraggingFile] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const controlsTimeoutRef = useRef<any>(null);
 
   const activeThemeDef =
     BACKGROUND_THEMES.find((t) => t.id === currentBgTheme) || BACKGROUND_THEMES[0];
+  const isLight = activeThemeDef.id === 'pure-light';
 
   useEffect(() => {
     const unsubState = movieSyncService.subscribe((state) => {
       setMovieState(state);
       setIsTheaterActive(state.theaterSettings.enabled);
       setSelectedPreset(state.theaterSettings.preset);
-      setSpatialWidening(state.theaterSettings.spatialWidening);
-      setDialogueBoost(state.theaterSettings.dialogueBoost);
-      setLfeBoost(state.theaterSettings.lfeBoost);
     });
 
-    const unsubUpload = movieSyncService.subscribeUpload((progress) => {
-      setUploadProgress(progress);
-    });
-
-    return () => {
-      unsubState();
-      unsubUpload();
-    };
+    return () => unsubState();
   }, []);
 
   // Attach Video Element when Host mounts
@@ -98,12 +71,38 @@ export const MovieModeView: React.FC<MovieModeViewProps> = ({
     }
   }, [isHost, isOpen]);
 
+  // Handle controls auto-hide during playback
+  const handleMouseMove = () => {
+    setIsControlsVisible(true);
+    if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
+    if (movieState.isPlaying) {
+      controlsTimeoutRef.current = setTimeout(() => {
+        setIsControlsVisible(false);
+      }, 3500);
+    }
+  };
+
+  // Keyboard shortcut: Spacebar for instant play/pause toggle
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === 'Space' || e.key === ' ') {
+        const activeEl = document.activeElement as HTMLElement | null;
+        if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA')) return;
+        e.preventDefault();
+        movieSyncService.togglePlayPause();
+      } else if (e.key === 'Escape' && !isSurroundModalOpen) {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, isSurroundModalOpen, movieState.isActive]);
+
   if (!isOpen) return null;
 
-  // Handle File Drag & Drop or Selection
   const handleFilePicked = (file: File) => {
     if (!file) return;
-
     const isVideo = file.type.startsWith('video/') || /\.(mp4|mkv|webm|mov|avi)$/i.test(file.name);
     const isAudio = file.type.startsWith('audio/') || /\.(mp3|wav|flac|aac|m4a|ogg)$/i.test(file.name);
 
@@ -111,9 +110,24 @@ export const MovieModeView: React.FC<MovieModeViewProps> = ({
       alert('Please select a valid video (.mp4, .mkv, .webm) or audio file.');
       return;
     }
-
-    // Local instant playback for zero wait & zero network overhead
     movieSyncService.startMovie(file.name.replace(/\.[^/.]+$/, ''), file, 0, file.size);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDraggingFile(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDraggingFile(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDraggingFile(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleFilePicked(e.dataTransfer.files[0]);
+    }
   };
 
   const handleTogglePlay = () => {
@@ -135,10 +149,6 @@ export const MovieModeView: React.FC<MovieModeViewProps> = ({
     movieSyncService.nudgeLipSync(deltaMs);
   };
 
-  const handleResetNudge = () => {
-    movieSyncService.setLipSyncOffset(0);
-  };
-
   const toggleFullscreen = () => {
     if (!containerRef.current) return;
     if (!document.fullscreenElement) {
@@ -148,15 +158,6 @@ export const MovieModeView: React.FC<MovieModeViewProps> = ({
       document.exitFullscreen().catch(console.warn);
       setIsFullscreen(false);
     }
-  };
-
-  const formatFileSize = (bytes?: number) => {
-    if (!bytes || bytes <= 0) return '';
-    const mb = bytes / (1024 * 1024);
-    if (mb > 1024) {
-      return `${(mb / 1024).toFixed(2)} GB`;
-    }
-    return `${mb.toFixed(1)} MB`;
   };
 
   const formatTime = (secs: number) => {
@@ -171,554 +172,357 @@ export const MovieModeView: React.FC<MovieModeViewProps> = ({
   };
 
   const mySpeakerRole = currentUser?.speakerRole || 'all';
+  const roleDisplay = mySpeakerRole === 'all' ? 'STEREO' : mySpeakerRole.replace('_', ' ').toUpperCase();
+  const progressPercent = movieState.duration > 0 ? (movieState.currentTime / movieState.duration) * 100 : 0;
 
   return (
     <div
       role="dialog"
       aria-modal="true"
       ref={containerRef}
+      onMouseMove={handleMouseMove}
       style={{
-        backgroundColor: activeThemeDef.hexPrimary,
-        color: activeThemeDef.id === 'pure-light' ? '#0f172a' : '#f8fafc',
+        backgroundColor: isLight ? '#f8fafc' : activeThemeDef.hexPrimary,
+        color: isLight ? '#0f172a' : '#f8fafc',
       }}
-      className="fixed inset-0 z-50 flex flex-col w-full h-full min-h-screen overflow-hidden backdrop-blur-3xl animate-fade-in font-sans select-none"
+      className="fixed inset-0 z-50 flex flex-col w-full h-full min-h-screen overflow-hidden backdrop-blur-3xl animate-fade-in font-sans select-none transition-colors duration-300"
     >
-      {/* Top Ambient Hairline Glow */}
+      {/* Dynamic Ambient Ambilight Back-Glow */}
       <div
-        className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-1 rounded-full blur-md pointer-events-none opacity-80"
-        style={{ backgroundColor: activeThemeDef.accentHex }}
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[72vw] h-[55vh] rounded-full blur-[140px] pointer-events-none transition-all duration-700 ease-out"
+        style={{
+          backgroundColor: isTheaterActive ? '#f59e0b' : (activeThemeDef.glowColor1 || activeThemeDef.accentHex || '#38bdf8'),
+          opacity: movieState.isPlaying ? (isLight ? 0.16 : 0.25) : 0.08,
+          transform: `translate(-50%, -50%) scale(${movieState.isPlaying ? 1.05 : 0.95})`,
+        }}
       />
 
-      {/* 1. CINEMA BAR HEADER */}
+      {/* 1. TOP MINIMALIST BAR */}
       <header
         style={{
-          backgroundColor: activeThemeDef.hexCard,
-          borderColor: activeThemeDef.hexBorder,
+          backgroundColor: isLight ? 'rgba(255, 255, 255, 0.92)' : 'rgba(10, 10, 15, 0.85)',
+          borderColor: isLight ? 'rgba(15, 23, 42, 0.08)' : 'rgba(255, 255, 255, 0.08)',
         }}
-        className="shrink-0 px-4 sm:px-6 py-3 border-b flex items-center justify-between backdrop-blur-2xl z-20"
+        className={`shrink-0 px-4 sm:px-6 py-2.5 border-b flex items-center justify-between backdrop-blur-2xl z-30 transition-all duration-300 ${
+          isControlsVisible || !movieState.isPlaying ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 pointer-events-none'
+        }`}
       >
+        {/* Left: Branding & Synced Status */}
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-300 shadow-[0_0_15px_rgba(245,158,11,0.3)]">
-            <Film className="w-5 h-5" />
+          <div className="w-8 h-8 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shadow-sm transition-transform hover:scale-105">
+            <Film className="w-4 h-4" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-sm sm:text-base font-black tracking-tight flex items-center gap-2">
-                <span>Home Theater Mode</span>
+              <h2 className={`text-xs sm:text-sm font-bold tracking-tight truncate max-w-[180px] sm:max-w-xs ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                {movieState.title || 'Home Theater'}
               </h2>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold uppercase">
-                {movieState.isActive ? 'LIVE MOVIE' : 'READY'}
-              </span>
+              {movieState.isActive && (
+                <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.9)] animate-pulse" title="Synchronized Audio Active" />
+              )}
             </div>
-            <p className="text-xs text-zinc-400">
-              Host Video Screen · Ultra-Low Latency Multi-Speaker Audio Sync
+            <p className={`text-[10px] hidden sm:block ${isLight ? 'text-slate-500' : 'text-zinc-400'}`}>
+              Host video screen • Multi-device synced audio
             </p>
           </div>
         </div>
 
-        {/* Right Controls */}
-        <div className="flex items-center gap-2.5">
-          {/* Surround Sound Quick Role Button */}
+        {/* Center: Minimal Sound Mode Selector */}
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          {/* 3D Cinema Toggle */}
           <button
             type="button"
-            onClick={() => setIsSurroundModalOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/30 text-cyan-300 text-xs font-bold transition-all cursor-pointer shadow-sm"
+            onClick={handleToggleTheater}
+            className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border transition-all cursor-pointer active:scale-95 ${
+              isTheaterActive
+                ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-[0_0_12px_rgba(245,158,11,0.25)]'
+                : isLight
+                ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-600'
+                : 'bg-white/5 hover:bg-white/10 border-white/10 text-zinc-400'
+            }`}
+            title="Toggle Web Audio 3D Spatial Theater"
           >
-            <Speaker className="w-3.5 h-3.5 text-cyan-400" />
-            <span className="hidden sm:inline">Speaker Role:</span>
-            <span className="font-mono uppercase text-white font-extrabold">
-              {mySpeakerRole.replace('_', ' ')}
+            <Sparkles className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">3D Cinema</span>
+            <span className={`text-[9px] font-mono px-1.5 py-0.2 rounded font-bold ${isTheaterActive ? 'bg-amber-400 text-black' : 'opacity-60'}`}>
+              {isTheaterActive ? 'ON' : 'OFF'}
             </span>
           </button>
 
-          {/* Fullscreen Button */}
+          {/* Simple Preset Selector (Visible when 3D Cinema is ON) */}
+          {isTheaterActive && (
+            <div className={`hidden md:flex items-center gap-1 p-0.5 rounded-full border transition-all animate-fade-in ${isLight ? 'bg-slate-100/90 border-slate-200' : 'bg-black/60 border-white/10'}`}>
+              {(['cinema', 'atmos', 'intimate'] as TheaterPreset[]).map((p) => {
+                const isSel = selectedPreset === p;
+                const label = p === 'cinema' ? 'Hall' : p === 'atmos' ? 'Atmos' : 'Studio';
+                return (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => handlePresetChange(p)}
+                    className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase transition-all cursor-pointer active:scale-95 ${
+                      isSel
+                        ? 'bg-amber-400 text-black shadow-sm'
+                        : isLight
+                        ? 'text-slate-600 hover:text-slate-900'
+                        : 'text-zinc-400 hover:text-white'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Right: Speaker Role & Compact Actions */}
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          {/* Speaker Role Pill */}
+          <button
+            type="button"
+            onClick={() => setIsSurroundModalOpen(true)}
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border transition-all cursor-pointer active:scale-95 ${
+              isLight
+                ? 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100'
+                : 'bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 border-cyan-500/30'
+            }`}
+            title="Configure speaker room position"
+          >
+            <Speaker className="w-3.5 h-3.5" />
+            <span className="font-mono text-[10px] font-bold uppercase">
+              {roleDisplay}
+            </span>
+          </button>
+
+          {/* Minimal Lip-Sync Calibration */}
+          <div className={`hidden sm:flex items-center gap-1 px-2 py-0.5 rounded-full border text-[11px] font-mono ${isLight ? 'bg-slate-100 border-slate-200 text-slate-700' : 'bg-white/5 border-white/10 text-zinc-300'}`}>
+            <button
+              type="button"
+              onClick={() => handleNudge(-10)}
+              className="hover:text-emerald-400 font-bold px-1 transition-colors cursor-pointer"
+              title="Nudge audio -10ms earlier"
+            >
+              -
+            </button>
+            <span className="font-bold text-emerald-400 min-w-[34px] text-center">
+              {movieState.lipSyncOffsetMs >= 0 ? `+${movieState.lipSyncOffsetMs}` : movieState.lipSyncOffsetMs}ms
+            </span>
+            <button
+              type="button"
+              onClick={() => handleNudge(10)}
+              className="hover:text-emerald-400 font-bold px-1 transition-colors cursor-pointer"
+              title="Nudge audio +10ms later"
+            >
+              +
+            </button>
+          </div>
+
+          {/* Fullscreen Toggle */}
           <button
             type="button"
             onClick={toggleFullscreen}
-            className="p-2 rounded-full hover:bg-white/10 text-zinc-400 hover:text-white transition-colors cursor-pointer"
+            className={`p-1.5 rounded-full transition-colors cursor-pointer active:scale-90 ${isLight ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-200' : 'text-zinc-400 hover:text-white hover:bg-white/10'}`}
             title="Toggle Cinema Fullscreen"
           >
             {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
           </button>
 
-          {/* Close Modal Button */}
+          {/* Close */}
           <button
             type="button"
             onClick={onClose}
-            className="p-2 rounded-full hover:bg-white/10 text-zinc-400 hover:text-white transition-colors cursor-pointer"
-            title="Close Movie View"
+            className={`p-1.5 rounded-full transition-colors cursor-pointer active:scale-90 ${isLight ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-200' : 'text-zinc-400 hover:text-white hover:bg-white/10'}`}
+            title="Exit Home Theater"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
       </header>
 
-      {/* 2. MAIN THEATER STAGE */}
-      <div className="flex-1 min-h-0 flex flex-col lg:flex-row overflow-hidden">
-        {/* LEFT / CENTER: CINEMA SCREEN VIEWPORT */}
-        <div className="flex-1 min-h-0 flex flex-col p-3 sm:p-5 overflow-y-auto no-scrollbar justify-between">
-          {/* VIDEO / CINEMA CONTAINER */}
-          <div
-            style={{
-              backgroundColor: '#000000',
-              borderColor: activeThemeDef.hexBorder,
-            }}
-            className="relative w-full aspect-video max-h-[65vh] rounded-3xl border overflow-hidden flex items-center justify-center shadow-2xl group"
-          >
-            {/* If Host: Native Video Element */}
-            {isHost ? (
-              movieState.isActive ? (
-                <video
-                  ref={videoRef}
-                  playsInline
-                  className="w-full h-full object-contain bg-black cursor-pointer"
-                  onClick={handleTogglePlay}
-                />
-              ) : (
-                /* Host Dropzone for Movie File Selection */
-                <div
-                  onClick={() => fileInputRef.current?.click()}
-                  className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center cursor-pointer hover:bg-white/[0.02] transition-colors"
-                >
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="video/mp4,video/mkv,video/webm,video/quicktime,video/x-msvideo,audio/*"
-                    className="hidden"
-                    onChange={(e) => {
-                      if (e.target.files && e.target.files[0]) {
-                        handleFilePicked(e.target.files[0]);
-                      }
-                    }}
-                  />
-                  <div className="w-16 h-16 rounded-3xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 mb-4 shadow-[0_0_24px_rgba(245,158,11,0.25)] group-hover:scale-105 transition-transform">
-                    <FileVideo className="w-8 h-8" />
-                  </div>
-                  <h3 className="text-base sm:text-lg font-bold text-white mb-1">
-                    Select Full-Length Movie or Audio File
-                  </h3>
-                  <p className="text-xs sm:text-sm text-zinc-400 max-w-md">
-                    Choose any <strong className="text-white">.mp4, .mkv, .webm</strong> or large audio file (1GB+ supported).
-                    The video will play exclusively on your screen while audio syncs to all connected devices.
-                  </p>
-                  <div className="mt-4 flex items-center gap-2">
-                    <span className="text-[10px] font-mono px-3 py-1 rounded-full bg-white/10 text-zinc-300 border border-white/10">
-                      0MB RAM STREAMING
-                    </span>
-                    <span className="text-[10px] font-mono px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 font-bold">
-                      SUB-FRAME LIP-SYNC
-                    </span>
-                  </div>
-                </div>
-              )
-            ) : (
-              /* If Client: Cinema Audio Listening Visualization (Zero Video Downloaded) */
-              <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center bg-gradient-to-b from-[#0a0d14] via-black to-[#05070a]">
-                <div
-                  className="w-24 h-24 rounded-full flex items-center justify-center text-cyan-300 shadow-[0_0_30px_rgba(6,182,212,0.3)] mb-4 animate-pulse relative"
-                  style={{ backgroundColor: 'rgba(6, 182, 212, 0.15)' }}
-                >
-                  <Speaker className="w-10 h-10" />
-                  <span className="absolute inset-0 rounded-full border border-cyan-400/40 animate-ping opacity-30" />
-                </div>
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-bold">
-                    CONNECTED SPEAKER
-                  </span>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/10 text-zinc-300 border border-white/10 font-bold">
-                    ROLE: {mySpeakerRole.toUpperCase()}
-                  </span>
-                </div>
-                <h3 className="text-base sm:text-lg font-bold text-white">
-                  {movieState.title || 'Movie Audio Stream Active'}
-                </h3>
-                <p className="text-xs text-zinc-400 max-w-sm mt-1">
-                  Video is streaming on the Host screen only. Your device is acting as a synchronized{' '}
-                  <strong className="text-cyan-300 font-bold">{mySpeakerRole.replace('_', ' ')}</strong> speaker!
-                </p>
-              </div>
-            )}
-
-            {/* Video Privacy Banner */}
-            <div className="absolute top-3 left-3 pointer-events-none flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/80 backdrop-blur-md border border-white/10 text-[10px] font-mono text-zinc-300 shadow-lg">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Host Video Only · Clients Receive Synced Audio</span>
-            </div>
-
-            {/* Host Play Overlay Controls on Hover */}
-            {isHost && movieState.isActive && (
-              <div className="absolute bottom-3 inset-x-3 p-3 rounded-2xl bg-black/80 backdrop-blur-md border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-between text-xs text-white">
-                <button
-                  type="button"
-                  onClick={handleTogglePlay}
-                  className="flex items-center gap-2 px-3 py-1 rounded-full bg-white text-black font-bold cursor-pointer hover:bg-zinc-200 transition-colors"
-                >
-                  {movieState.isPlaying ? (
-                    <>
-                      <Pause className="w-3.5 h-3.5 fill-current" />
-                      <span>Pause</span>
-                    </>
-                  ) : (
-                    <>
-                      <Play className="w-3.5 h-3.5 fill-current" />
-                      <span>Play</span>
-                    </>
-                  )}
-                </button>
-
-                <div className="flex items-center gap-2 font-mono text-zinc-300">
-                  <span>{formatTime(movieState.currentTime)}</span>
-                  <span>/</span>
-                  <span>{formatTime(movieState.duration)}</span>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* LIP-SYNC FINE CALIBRATION & LATENCY NUDGE BAR */}
-          <div
-            style={{
-              backgroundColor: activeThemeDef.hexCard,
-              borderColor: activeThemeDef.hexBorder,
-            }}
-            className="mt-3 p-3 sm:p-4 rounded-2xl border backdrop-blur-2xl flex flex-col sm:flex-row items-center justify-between gap-3 text-xs"
-          >
-            <div className="flex items-center gap-2">
-              <Clock className="w-4 h-4 text-cyan-400" />
-              <div>
-                <div className="font-bold text-white flex items-center gap-1.5">
-                  <span>Lip-Sync Calibration</span>
-                  <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
-                    NUDGE
-                  </span>
-                </div>
-                <p className="text-[11px] text-zinc-400">
-                  Align Bluetooth/Speaker latency to match host screen lip movements
-                </p>
-              </div>
-            </div>
-
-            {/* Nudge Buttons */}
-            <div className="flex items-center gap-1 bg-black/40 border border-white/10 rounded-full p-1 font-mono">
-              <button
-                type="button"
-                onClick={() => handleNudge(-50)}
-                className="px-2 py-0.5 rounded-full hover:bg-white/10 text-zinc-400 hover:text-white transition-colors cursor-pointer"
-                title="-50ms earlier"
-              >
-                -50
-              </button>
-              <button
-                type="button"
-                onClick={() => handleNudge(-10)}
-                className="px-2 py-0.5 rounded-full hover:bg-white/10 text-zinc-400 hover:text-white transition-colors cursor-pointer"
-                title="-10ms earlier"
-              >
-                -10
-              </button>
-              <button
-                type="button"
-                onClick={() => handleNudge(-5)}
-                className="px-2 py-0.5 rounded-full hover:bg-white/10 text-zinc-400 hover:text-white transition-colors cursor-pointer"
-                title="-5ms earlier"
-              >
-                -5
-              </button>
-              <span className="px-2.5 font-bold text-emerald-400 min-w-[50px] text-center">
-                {movieState.lipSyncOffsetMs >= 0
-                  ? `+${movieState.lipSyncOffsetMs}`
-                  : movieState.lipSyncOffsetMs}
-                ms
-              </span>
-              <button
-                type="button"
-                onClick={() => handleNudge(5)}
-                className="px-2 py-0.5 rounded-full hover:bg-white/10 text-zinc-400 hover:text-white transition-colors cursor-pointer"
-                title="+5ms later"
-              >
-                +5
-              </button>
-              <button
-                type="button"
-                onClick={() => handleNudge(10)}
-                className="px-2 py-0.5 rounded-full hover:bg-white/10 text-zinc-400 hover:text-white transition-colors cursor-pointer"
-                title="+10ms later"
-              >
-                +10
-              </button>
-              <button
-                type="button"
-                onClick={() => handleNudge(50)}
-                className="px-2 py-0.5 rounded-full hover:bg-white/10 text-zinc-400 hover:text-white transition-colors cursor-pointer"
-                title="+50ms later"
-              >
-                +50
-              </button>
-              <button
-                type="button"
-                onClick={handleResetNudge}
-                className="ml-1 p-1 rounded-full hover:bg-white/10 text-zinc-500 hover:text-white transition-colors cursor-pointer"
-                title="Reset to 0ms"
-              >
-                <RotateCcw className="w-3 h-3" />
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* RIGHT: 3D THEATER ACOUSTICS & CONTROL PANEL */}
+      {/* 2. MAIN CINEMA CANVAS (CENTERPIECE) */}
+      <div className="flex-1 min-h-0 flex items-center justify-center p-3 sm:p-6 relative overflow-hidden">
         <div
           style={{
-            backgroundColor: activeThemeDef.hexElevated,
-            borderColor: activeThemeDef.hexBorder,
+            backgroundColor: '#000000',
+            borderColor: isLight ? 'rgba(15, 23, 42, 0.12)' : 'rgba(255, 255, 255, 0.12)',
           }}
-          className="w-full lg:w-96 shrink-0 border-t lg:border-t-0 lg:border-l p-4 sm:p-5 flex flex-col gap-4 overflow-y-auto no-scrollbar backdrop-blur-2xl"
+          className={`relative w-full max-w-5xl aspect-video rounded-3xl border overflow-hidden flex items-center justify-center shadow-2xl transition-all duration-300 ${
+            isDraggingFile ? 'ring-2 ring-amber-400 scale-[1.01]' : ''
+          }`}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
         >
-          {/* 3D THEATER MODE TOGGLE SWITCH */}
-          <div
-            style={{
-              backgroundColor: isTheaterActive
-                ? 'rgba(245, 158, 11, 0.12)'
-                : 'var(--bg-card, rgba(0, 0, 0, 0.4))',
-              borderColor: isTheaterActive
-                ? 'rgba(245, 158, 11, 0.4)'
-                : 'var(--bg-border, rgba(255, 255, 255, 0.08))',
-            }}
-            className="p-4 rounded-3xl border flex items-center justify-between transition-all shadow-lg"
-          >
-            <div className="flex items-center gap-3">
+          {/* HOST VIEW */}
+          {isHost ? (
+            movieState.isActive ? (
+              <video
+                ref={videoRef}
+                playsInline
+                className="w-full h-full object-contain bg-black cursor-pointer"
+                onClick={handleTogglePlay}
+              />
+            ) : (
+              /* Minimalist Movie Dropzone */
               <div
-                className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-all ${
-                  isTheaterActive
-                    ? 'bg-amber-500/25 text-amber-300 shadow-[0_0_15px_rgba(245,158,11,0.4)]'
-                    : 'bg-white/5 text-zinc-400'
-                }`}
+                onClick={() => fileInputRef.current?.click()}
+                className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center cursor-pointer hover:bg-white/[0.02] transition-all group"
               >
-                <Sparkles className="w-5 h-5" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-bold text-white">3D Theater Mode</h3>
-                  <span
-                    className={`text-[9px] font-mono px-1.5 py-0.2 rounded-full font-bold uppercase border ${
-                      isTheaterActive
-                        ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
-                        : 'bg-zinc-800 text-zinc-400 border-zinc-700'
-                    }`}
-                  >
-                    {isTheaterActive ? 'ON' : 'OFF'}
-                  </span>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="video/mp4,video/mkv,video/webm,video/quicktime,video/x-msvideo,audio/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files[0]) {
+                      handleFilePicked(e.target.files[0]);
+                    }
+                  }}
+                />
+
+                <div className="w-16 h-16 rounded-3xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 mb-4 shadow-[0_0_24px_rgba(245,158,11,0.25)] group-hover:scale-110 group-hover:shadow-[0_0_36px_rgba(245,158,11,0.4)] transition-all duration-300">
+                  <Film className="w-8 h-8" />
                 </div>
-                <p className="text-[11px] text-zinc-400">
-                  Web Audio API spatial reverb & acoustic widening
+
+                <h3 className="text-base sm:text-lg font-bold text-white mb-1.5 tracking-tight">
+                  Choose Movie to Play
+                </h3>
+                <p className="text-xs sm:text-sm text-zinc-400 max-w-sm leading-relaxed mb-4">
+                  Video displays on this screen • Audio syncs to all connected room speakers
                 </p>
+
+                <div className="px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-semibold transition-all shadow-sm flex items-center gap-1.5 group-hover:bg-amber-500 group-hover:text-black group-hover:border-amber-400">
+                  <span>Browse .mp4, .mkv, .webm</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </div>
               </div>
-            </div>
-
-            {/* Toggle Switch */}
-            <button
-              type="button"
-              onClick={handleToggleTheater}
-              aria-label="Toggle 3D Theater Mode"
-              className={`w-11 h-6 rounded-full transition-colors relative cursor-pointer p-0.5 ${
-                isTheaterActive
-                  ? 'bg-amber-500 shadow-[0_0_12px_rgba(245,158,11,0.5)]'
-                  : 'bg-zinc-800'
-              }`}
-            >
-              <span
-                className={`block w-5 h-5 rounded-full bg-white transition-transform ${
-                  isTheaterActive ? 'translate-x-5' : 'translate-x-0'
-                }`}
-              />
-            </button>
-          </div>
-
-          {/* THEATER ACOUSTIC PRESETS */}
-          <div className="space-y-2">
-            <label className="text-[10px] font-mono uppercase text-zinc-400 font-bold tracking-wider flex items-center gap-1.5">
-              <Layers className="w-3.5 h-3.5 text-amber-400" />
-              <span>Cinema Acoustic Presets</span>
-            </label>
-
-            <div className="grid grid-cols-1 gap-2">
-              {(Object.keys(THEATER_PRESETS) as TheaterPreset[]).map((key) => {
-                const preset = THEATER_PRESETS[key];
-                const isSelected = selectedPreset === key;
-
-                return (
-                  <div
-                    key={key}
-                    onClick={() => handlePresetChange(key)}
+            )
+          ) : (
+            /* CLIENT VIEW (Zero Video Downloaded, Pure Synchronized Audio) */
+            <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center bg-gradient-to-b from-zinc-950 via-black to-zinc-950">
+              {/* Dynamic Animated Acoustic Waves */}
+              <div className="flex items-center gap-1.5 h-14 mb-4">
+                {[35, 75, 50, 95, 60, 85, 45, 90, 65, 40].map((h, i) => (
+                  <span
+                    key={i}
                     style={{
-                      backgroundColor: isSelected
-                        ? 'rgba(255, 255, 255, 0.08)'
-                        : 'var(--bg-card, rgba(0, 0, 0, 0.25))',
-                      borderColor: isSelected
-                        ? 'rgba(245, 158, 11, 0.5)'
-                        : 'var(--bg-border, rgba(255, 255, 255, 0.06))',
+                      height: movieState.isPlaying ? `${h}%` : '20%',
+                      animationDuration: `${0.6 + (i % 4) * 0.2}s`,
                     }}
-                    className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-center justify-between group ${
-                      isSelected
-                        ? 'shadow-[0_0_14px_rgba(245,158,11,0.25)] ring-1 ring-amber-400/30'
-                        : 'hover:bg-white/[0.04]'
+                    className={`w-1.5 rounded-full bg-gradient-to-t from-cyan-500 to-blue-400 transition-all ${
+                      movieState.isPlaying ? 'animate-pulse' : 'opacity-30'
                     }`}
-                  >
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-white group-hover:text-amber-300 transition-colors">
-                          {preset.name}
-                        </span>
-                        <span
-                          className={`text-[9px] font-mono px-1.5 py-0.2 rounded-full border ${preset.badgeColor}`}
-                        >
-                          {preset.tag.split('·')[0].trim()}
-                        </span>
-                      </div>
-                      <p className="text-[10px] text-zinc-400 mt-0.5 line-clamp-1">
-                        {preset.description}
-                      </p>
-                    </div>
-
-                    {isSelected && (
-                      <span className="w-5 h-5 rounded-full bg-amber-400 text-black flex items-center justify-center shrink-0">
-                        <Check className="w-3 h-3 stroke-[3]" />
-                      </span>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* ACOUSTIC TUNING SLIDERS */}
-          <div
-            style={{
-              backgroundColor: 'var(--bg-card, rgba(0, 0, 0, 0.4))',
-              borderColor: 'var(--bg-border, rgba(255, 255, 255, 0.08))',
-            }}
-            className="p-3.5 rounded-2xl border space-y-3"
-          >
-            <div className="text-[10px] font-mono uppercase text-zinc-400 font-bold tracking-wider flex items-center gap-1.5">
-              <Sliders className="w-3 h-3 text-cyan-400" />
-              <span>Acoustic Equalizer & Widener</span>
-            </div>
-
-            {/* Spatial Widening */}
-            <div className="space-y-1">
-              <div className="flex items-center justify-between text-[11px]">
-                <span className="text-zinc-300">Spatial Widening</span>
-                <span className="font-mono text-cyan-400 font-bold">
-                  {Math.round(spatialWidening * 100)}%
-                </span>
+                  />
+                ))}
               </div>
-              <input
-                type="range"
-                min="0"
-                max="1"
-                step="0.05"
-                value={spatialWidening}
-                onChange={(e) => {
-                  const val = parseFloat(e.target.value);
-                  setSpatialWidening(val);
-                  spatialTheaterEngine.setSpatialWidening(val);
-                }}
-                className="w-full h-1.5 bg-black rounded-lg appearance-none cursor-pointer accent-cyan-400"
-              />
-            </div>
 
-            {/* Dialogue Clarity Boost */}
-            <div className="space-y-1">
-              <div className="flex items-center justify-between text-[11px]">
-                <span className="text-zinc-300">Dialogue Clarity (2.8kHz)</span>
-                <span className="font-mono text-amber-400 font-bold">
-                  {Math.round(dialogueBoost * 100)}%
-                </span>
-              </div>
-              <input
-                type="range"
-                min="0"
-                max="1"
-                step="0.05"
-                value={dialogueBoost}
-                onChange={(e) => {
-                  const val = parseFloat(e.target.value);
-                  setDialogueBoost(val);
-                  spatialTheaterEngine.setDialogueBoost(val);
-                }}
-                className="w-full h-1.5 bg-black rounded-lg appearance-none cursor-pointer accent-amber-400"
-              />
-            </div>
-
-            {/* Cinema Sub-Bass Rumble */}
-            <div className="space-y-1">
-              <div className="flex items-center justify-between text-[11px]">
-                <span className="text-zinc-300">LFE Cinema Bass (55Hz)</span>
-                <span className="font-mono text-rose-400 font-bold">
-                  {Math.round(lfeBoost * 100)}%
-                </span>
-              </div>
-              <input
-                type="range"
-                min="0"
-                max="1"
-                step="0.05"
-                value={lfeBoost}
-                onChange={(e) => {
-                  const val = parseFloat(e.target.value);
-                  setLfeBoost(val);
-                  spatialTheaterEngine.setLfeBoost(val);
-                }}
-                className="w-full h-1.5 bg-black rounded-lg appearance-none cursor-pointer accent-rose-400"
-              />
-            </div>
-          </div>
-
-          {/* CONNECTED SPEAKERS STATUS LIST */}
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between text-[10px] font-mono text-zinc-400 font-bold">
-              <span>CONNECTED SPEAKERS ({users.length})</span>
               <button
                 type="button"
                 onClick={() => setIsSurroundModalOpen(true)}
-                className="text-cyan-400 hover:text-white cursor-pointer transition-colors"
+                className="flex items-center gap-2 mb-2 px-3 py-1 rounded-full bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 hover:bg-cyan-500/25 transition-all cursor-pointer"
+                title="Tap to change your physical speaker role"
               >
-                Change Roles →
+                <Speaker className="w-3.5 h-3.5" />
+                <span className="text-[11px] font-mono font-bold uppercase">
+                  {roleDisplay} CHANNEL
+                </span>
               </button>
+
+              <h3 className="text-sm sm:text-base font-bold text-white tracking-tight">
+                {movieState.title || 'Movie Audio Stream'}
+              </h3>
+              <p className="text-xs text-zinc-400 mt-1 max-w-sm">
+                Video is playing on Host device • Your speaker is playing in sync
+              </p>
             </div>
+          )}
 
-            <div className="space-y-1 max-h-36 overflow-y-auto no-scrollbar">
-              {users.map((u) => {
-                const roleName = (u.speakerRole || 'all').replace('_', ' ');
-                const isMe = u.id === currentUser?.id;
-
-                return (
-                  <div
-                    key={u.id}
-                    className="flex items-center justify-between p-2 rounded-xl bg-white/[0.03] border border-white/5 text-xs"
-                  >
-                    <div className="flex items-center gap-2 truncate">
-                      <span
-                        className="w-2 h-2 rounded-full"
-                        style={{ backgroundColor: u.avatarColor || '#00f0ff' }}
-                      />
-                      <span className="text-zinc-200 truncate font-semibold">
-                        {u.name} {isMe ? '(You)' : ''}
-                      </span>
-                    </div>
-
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-white/5 text-zinc-300 uppercase border border-white/10 shrink-0">
-                      {roleName}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
+          {/* Privacy Notice Pill */}
+          <div className="absolute top-3 left-3 pointer-events-none flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/75 backdrop-blur-md border border-white/10 text-[10px] font-mono text-zinc-300 shadow-sm">
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Host Video Only</span>
           </div>
+
+          {/* Floating Minimalist Cinema Playback Bar (Visible on Hover / Tap) */}
+          {isHost && movieState.isActive && (
+            <div
+              style={{
+                backgroundColor: 'rgba(6, 6, 12, 0.90)',
+                borderColor: 'rgba(255, 255, 255, 0.12)',
+              }}
+              className={`absolute bottom-3 inset-x-3 sm:inset-x-6 p-2.5 sm:p-3 rounded-2xl border backdrop-blur-2xl flex flex-col gap-2 transition-all duration-300 shadow-2xl z-20 ${
+                isControlsVisible || !movieState.isPlaying ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3 pointer-events-none'
+              }`}
+            >
+              {/* Scrubber Progress Bar */}
+              <div
+                className="w-full h-1.5 bg-white/15 hover:h-2 rounded-full overflow-hidden cursor-pointer relative transition-all group/scrub"
+                onClick={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+                  movieSyncService.seek(pct * movieState.duration);
+                }}
+              >
+                <div
+                  className="h-full bg-gradient-to-r from-amber-400 to-amber-300 shadow-[0_0_10px_rgba(245,158,11,0.7)]"
+                  style={{ width: `${progressPercent}%` }}
+                />
+              </div>
+
+              {/* Controls Row */}
+              <div className="flex items-center justify-between text-xs text-white">
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={handleTogglePlay}
+                    className="p-1.5 rounded-full bg-white text-black hover:bg-zinc-200 transition-colors cursor-pointer active:scale-90"
+                    title={movieState.isPlaying ? 'Pause (Space)' : 'Play (Space)'}
+                  >
+                    {movieState.isPlaying ? <Pause className="w-3.5 h-3.5 fill-current" /> : <Play className="w-3.5 h-3.5 fill-current ml-0.5" />}
+                  </button>
+
+                  <div className="font-mono text-[11px] text-zinc-300 flex items-center gap-1">
+                    <span>{formatTime(movieState.currentTime)}</span>
+                    <span className="text-zinc-600">/</span>
+                    <span className="text-zinc-400">{formatTime(movieState.duration)}</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  {/* Host Audio Mute Toggle */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (videoRef.current) {
+                        videoRef.current.muted = !isHostMuted;
+                        setIsHostMuted(!isHostMuted);
+                      }
+                    }}
+                    className="flex items-center gap-1 text-[11px] text-zinc-400 hover:text-white transition-colors cursor-pointer active:scale-95"
+                    title="Mute host laptop screen audio"
+                  >
+                    {isHostMuted ? <VolumeX className="w-3.5 h-3.5 text-rose-400" /> : <Volume2 className="w-3.5 h-3.5" />}
+                    <span className="hidden sm:inline">{isHostMuted ? 'Host Muted' : 'Host Audio'}</span>
+                  </button>
+
+                  {/* Change Movie Button */}
+                  <button
+                    type="button"
+                    onClick={() => movieSyncService.stopMovie()}
+                    className="text-[11px] font-mono text-zinc-400 hover:text-amber-300 transition-colors cursor-pointer active:scale-95"
+                    title="Stop playback and select another movie"
+                  >
+                    Change Movie
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* SURROUND ROLE MODAL */}
+      {/* 3. SURROUND ROLE MODAL */}
       <SurroundRoleModal
         isOpen={isSurroundModalOpen}
         onClose={() => setIsSurroundModalOpen(false)}
