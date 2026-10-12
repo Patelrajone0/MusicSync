@@ -290,7 +290,7 @@ export const TitaniumSidebar: React.FC<TitaniumSidebarProps> = ({
                 </h4>
                 <span className="text-[9px] font-mono px-1 py-0.2 rounded bg-amber-500/25 text-amber-300 font-bold border border-amber-500/40">5.1 SYNC</span>
               </div>
-              <p className="text-[10px] text-zinc-400 leading-tight">Movie sync & 3D sound</p>
+              <p className="text-[10px] text-zinc-400 leading-tight">Up to 5 GB video • 3D sound</p>
             </div>
           </button>
         )}
@@ -453,7 +453,7 @@ export const TitaniumSidebar: React.FC<TitaniumSidebarProps> = ({
                 <h4 className="text-xs font-bold text-amber-200 leading-tight">Home Theater</h4>
                 <span className="text-[9px] font-mono px-1.5 py-0.2 rounded-full bg-amber-500/20 text-amber-300 font-bold border border-amber-500/40">5.1 SYNC</span>
               </div>
-              <p className="text-[10px] text-zinc-400 leading-tight">Movie sync & 3D sound</p>
+              <p className="text-[10px] text-zinc-400 leading-tight">Up to 5 GB video • 3D sound</p>
             </div>
           </button>
         )}
@@ -623,7 +623,7 @@ export const TitaniumSidebar: React.FC<TitaniumSidebarProps> = ({
                 <h4 className="text-xs font-bold text-white leading-tight">Home Theater</h4>
                 <span className="text-[9px] font-mono px-1.5 py-0.2 rounded-full bg-amber-500/20 text-amber-300 font-bold border border-amber-500/40">5.1 SYNC</span>
               </div>
-              <p className="text-[10px] text-zinc-400 leading-tight">Movie sync & 3D sound</p>
+              <p className="text-[10px] text-zinc-400 leading-tight">Up to 5 GB video • 3D sound</p>
             </div>
           </button>
         )}
@@ -797,7 +797,7 @@ export const TitaniumSidebar: React.FC<TitaniumSidebarProps> = ({
               <h4 className="text-xs font-bold text-white leading-tight">Home Theater</h4>
               <span className="text-[9px] font-mono px-1.5 py-0.2 rounded-full bg-amber-500/20 text-amber-300 font-bold border border-amber-500/40">5.1 SYNC</span>
             </div>
-            <p className="text-[10px] text-zinc-400 leading-tight">Movie sync & 3D sound</p>
+            <p className="text-[10px] text-zinc-400 leading-tight">Up to 5 GB video • 3D sound</p>
           </div>
         </button>
       )}

@@ -12,6 +12,9 @@ export interface ChunkUploadProgress {
   error?: string;
 }
 
+export const MAX_MOVIE_FILE_SIZE_BYTES = 5 * 1024 * 1024 * 1024; // 5 GB (5,368,709,120 bytes)
+export const MAX_MOVIE_FILE_SIZE_GB = 5;
+
 const RTC_CONFIG: RTCConfiguration = {
   iceServers: [
     { urls: 'stun:stun.l.google.com:19302' },
@@ -39,6 +42,7 @@ export class MovieSyncService {
   // Host Video Element reference
   private hostVideoElement: HTMLVideoElement | null = null;
   private clientAudioElement: HTMLAudioElement | null = null;
+  private activeBlobUrl: string | null = null;
 
   // WebRTC Audio Broadcast (Host to Multi-Client)
   private peerConnections: Map<string, RTCPeerConnection> = new Map();
@@ -248,7 +252,7 @@ export class MovieSyncService {
     }
   }
 
-  // 3. Start Movie Mode
+  // 3. Start Movie Mode (Supports up to 5 GB files)
   public startMovie(
     title: string,
     fileOrUrl: File | string,
@@ -258,12 +262,21 @@ export class MovieSyncService {
     let streamUrl = '';
     let fileName = '';
 
+    // Revoke previous blob URL if exists to free memory on massive 5 GB files
+    if (this.activeBlobUrl) {
+      try {
+        URL.revokeObjectURL(this.activeBlobUrl);
+      } catch (e) {}
+      this.activeBlobUrl = null;
+    }
+
     if (typeof fileOrUrl === 'string') {
       streamUrl = fileOrUrl;
       fileName = title;
     } else {
       // Local File: Zero memory copy via Object URL
       streamUrl = URL.createObjectURL(fileOrUrl);
+      this.activeBlobUrl = streamUrl;
       fileName = fileOrUrl.name;
       fileSize = fileOrUrl.size;
     }
@@ -316,6 +329,14 @@ export class MovieSyncService {
   public stopMovie() {
     this.movieState.isActive = false;
     this.movieState.isPlaying = false;
+
+    // Revoke active blob URL to release disk/memory handle
+    if (this.activeBlobUrl) {
+      try {
+        URL.revokeObjectURL(this.activeBlobUrl);
+      } catch (e) {}
+      this.activeBlobUrl = null;
+    }
 
     if (this.hostVideoElement) {
       this.hostVideoElement.pause();
@@ -656,12 +677,23 @@ export class MovieSyncService {
     this.peerConnections.clear();
   }
 
-  // 7. Large File Chunked Uploader (1GB+ Movies without Browser Crashes)
+  // 7. Large File Chunked Uploader (Supports up to 5 GB Movies)
   public async uploadChunkedMovie(
     file: File,
     onProgressUpdate?: (progress: number) => void
   ): Promise<{ streamUrl: string; duration: number }> {
-    const CHUNK_SIZE = 4 * 1024 * 1024; // 4MB per chunk
+    if (file.size > MAX_MOVIE_FILE_SIZE_BYTES) {
+      const sizeGb = (file.size / (1024 * 1024 * 1024)).toFixed(2);
+      throw new Error(`File size (${sizeGb} GB) exceeds the 5 GB maximum limit for Home Theater.`);
+    }
+
+    // Scalable chunk sizing for up to 5 GB: 16MB chunks for >2GB, 8MB for >500MB, 4MB otherwise
+    const CHUNK_SIZE = file.size > 2 * 1024 * 1024 * 1024
+      ? 16 * 1024 * 1024
+      : file.size > 500 * 1024 * 1024
+      ? 8 * 1024 * 1024
+      : 4 * 1024 * 1024;
+
     const totalBytes = file.size;
     const totalChunks = Math.ceil(totalBytes / CHUNK_SIZE);
     const fileId = `movie_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
@@ -688,7 +720,8 @@ export class MovieSyncService {
       });
 
       if (!initRes.ok) {
-        throw new Error('Failed to initialize chunked movie upload');
+        const errorData = await initRes.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to initialize chunked movie upload');
       }
 
       // 2. Upload chunks sequentially
@@ -698,14 +731,14 @@ export class MovieSyncService {
         const end = Math.min(start + CHUNK_SIZE, totalBytes);
         const chunkBlob = file.slice(start, end);
 
-        const formData = new FormData();
-        formData.append('fileId', fileId);
-        formData.append('chunkIndex', chunkIndex.toString());
-        formData.append('chunk', chunkBlob);
-
-        const chunkRes = await fetch('/api/movies/upload-chunk', {
+        const chunkRes = await fetch(`/api/movies/upload-chunk?fileId=${encodeURIComponent(fileId)}`, {
           method: 'POST',
-          body: formData,
+          headers: {
+            'x-file-id': fileId,
+            'x-chunk-index': chunkIndex.toString(),
+            'Content-Type': 'application/octet-stream',
+          },
+          body: chunkBlob,
         });
 
         if (!chunkRes.ok) {

@@ -16,10 +16,21 @@ import {
   RotateCcw,
 } from 'lucide-react';
 import { MovieState, SpeakerRole, TheaterPreset, User } from '../types';
-import { movieSyncService } from '../services/movieSyncService';
+import { movieSyncService, MAX_MOVIE_FILE_SIZE_BYTES } from '../services/movieSyncService';
 import { spatialTheaterEngine } from '../services/spatialTheaterEngine';
 import { SurroundRoleModal } from './SurroundRoleModal';
 import { BACKGROUND_THEMES, BackgroundThemeId } from '../types/backgroundThemes';
+
+export const formatFileSize = (bytes?: number): string => {
+  if (!bytes || bytes <= 0) return '0 B';
+  if (bytes < 1024 * 1024) {
+    return `${(bytes / 1024).toFixed(1)} KB`;
+  }
+  if (bytes < 1024 * 1024 * 1024) {
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  }
+  return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+};
 
 interface MovieModeViewProps {
   isOpen: boolean;
@@ -47,6 +58,7 @@ export const MovieModeView: React.FC<MovieModeViewProps> = ({
   const [isHostMuted, setIsHostMuted] = useState(false);
   const [isDraggingFile, setIsDraggingFile] = useState(false);
   const [videoError, setVideoError] = useState<string | null>(null);
+  const [isBuffering, setIsBuffering] = useState(false);
 
   // Local synchronized playback states for 60fps responsive UI
   const [currentTime, setCurrentTime] = useState<number>(0);
@@ -163,13 +175,28 @@ export const MovieModeView: React.FC<MovieModeViewProps> = ({
     if (!file) return;
     setVideoError(null);
 
-    const isVideo = file.type.startsWith('video/') || /\.(mp4|mkv|webm|mov|avi)$/i.test(file.name);
-    const isAudio = file.type.startsWith('audio/') || /\.(mp3|wav|flac|aac|m4a|ogg)$/i.test(file.name);
-
-    if (!isVideo && !isAudio) {
-      alert('Please select a valid video (.mp4, .mkv, .webm) or audio file.');
+    // Validation: enforce up to 5 GB video size limit
+    if (file.size > MAX_MOVIE_FILE_SIZE_BYTES) {
+      const currentGb = (file.size / (1024 * 1024 * 1024)).toFixed(2);
+      setVideoError(
+        `File size (${currentGb} GB) exceeds the 5 GB maximum limit for Home Theater. Please select a movie file within 5 GB.`
+      );
       return;
     }
+
+    const isVideo =
+      file.type.startsWith('video/') ||
+      /\.(mp4|mkv|webm|mov|avi|m4v)$/i.test(file.name);
+    const isAudio =
+      file.type.startsWith('audio/') ||
+      /\.(mp3|wav|flac|aac|m4a|ogg)$/i.test(file.name);
+
+    if (!isVideo && !isAudio) {
+      setVideoError('Please select a valid video (.mp4, .mkv, .webm, .mov) or audio file.');
+      return;
+    }
+
+    setIsBuffering(true);
 
     // Resume Web Audio Context
     await spatialTheaterEngine.resumeContext();
@@ -286,15 +313,20 @@ export const MovieModeView: React.FC<MovieModeViewProps> = ({
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <h2 className={`text-xs sm:text-sm font-bold tracking-tight truncate max-w-[180px] sm:max-w-md ${isLight ? 'text-slate-900' : 'text-white'}`}>
+              <h2 className={`text-xs sm:text-sm font-bold tracking-tight truncate max-w-[150px] sm:max-w-md ${isLight ? 'text-slate-900' : 'text-white'}`}>
                 {movieState.title || 'Home Theater'}
               </h2>
+              {movieState.fileSize && movieState.fileSize > 0 ? (
+                <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 shrink-0">
+                  {formatFileSize(movieState.fileSize)}
+                </span>
+              ) : null}
               {movieState.isActive && (
                 <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.9)] animate-pulse shrink-0" title="Synchronized Audio Active" />
               )}
             </div>
             <p className={`text-[10px] hidden sm:block truncate ${isLight ? 'text-slate-500' : 'text-zinc-400'}`}>
-              Host video screen • Multi-device synced audio
+              Host video screen (Up to 5 GB) • Multi-device synced audio
             </p>
           </div>
         </div>
@@ -426,6 +458,7 @@ export const MovieModeView: React.FC<MovieModeViewProps> = ({
               ref={setVideoRef}
               src={movieState.streamUrl || undefined}
               playsInline
+              preload="metadata"
               className={`w-full h-full max-w-full max-h-full object-contain bg-black cursor-pointer transition-opacity duration-300 ${
                 movieState.isActive ? 'opacity-100' : 'opacity-0 pointer-events-none'
               }`}
@@ -433,7 +466,16 @@ export const MovieModeView: React.FC<MovieModeViewProps> = ({
               onLoadedMetadata={(e) => {
                 const v = e.currentTarget;
                 if (v.duration) setDuration(v.duration);
+                setIsBuffering(false);
               }}
+              onWaiting={() => setIsBuffering(true)}
+              onPlaying={() => {
+                setIsPlaying(true);
+                setIsBuffering(false);
+              }}
+              onSeeking={() => setIsBuffering(true)}
+              onSeeked={() => setIsBuffering(false)}
+              onLoadedData={() => setIsBuffering(false)}
               onTimeUpdate={(e) => {
                 const v = e.currentTarget;
                 setCurrentTime(v.currentTime);
@@ -444,13 +486,26 @@ export const MovieModeView: React.FC<MovieModeViewProps> = ({
               onError={(e) => {
                 const v = e.currentTarget;
                 console.error('[MovieModeView] Video playback error:', v.error);
+                setIsBuffering(false);
                 if (v.error?.code === MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED) {
-                  setVideoError('Video format or codec is not supported by your browser. Please try an .mp4 or .webm file.');
+                  setVideoError('Video format or codec is not supported by your browser. For best performance with large files up to 5 GB, try an MP4 or WebM file.');
                 } else if (v.error) {
-                  setVideoError(`Video error (${v.error.message || 'code ' + v.error.code}). Please choose a supported movie file.`);
+                  setVideoError(`Video error (${v.error.message || 'code ' + v.error.code}). Please choose a supported movie file within 5 GB.`);
                 }
               }}
             />
+
+            {/* High-Bitrate / 5 GB Video Buffering Indicator */}
+            {isBuffering && movieState.isActive && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-30 bg-black/30 backdrop-blur-[2px]">
+                <div className="w-14 h-14 rounded-full border-2 border-amber-400/20 border-t-amber-400 animate-spin flex items-center justify-center shadow-[0_0_25px_rgba(245,158,11,0.5)]">
+                  <Sparkles className="w-5 h-5 text-amber-300 animate-pulse" />
+                </div>
+                <span className="mt-3 px-3 py-1 rounded-full bg-black/80 backdrop-blur-md border border-white/10 text-[11px] font-mono text-zinc-300">
+                  Buffering High-Bitrate Video...
+                </span>
+              </div>
+            )}
 
             {/* Error Notification Banner */}
             {videoError && (
@@ -467,7 +522,7 @@ export const MovieModeView: React.FC<MovieModeViewProps> = ({
               </div>
             )}
 
-            {/* Minimalist Movie Dropzone (Shown when no movie is active) */}
+            {/* Movie Dropzone with 5 GB Support Indicator */}
             {!movieState.isActive && (
               <div
                 onClick={() => fileInputRef.current?.click()}
@@ -478,7 +533,7 @@ export const MovieModeView: React.FC<MovieModeViewProps> = ({
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept="video/mp4,video/mkv,video/webm,video/quicktime,video/x-msvideo,audio/*"
+                  accept="video/mp4,video/mkv,video/webm,video/quicktime,video/x-msvideo,video/x-matroska,video/x-m4v,video/*,audio/*"
                   className="hidden"
                   onChange={(e) => {
                     if (e.target.files && e.target.files[0]) {
@@ -487,20 +542,41 @@ export const MovieModeView: React.FC<MovieModeViewProps> = ({
                   }}
                 />
 
-                <div className="w-20 h-20 rounded-3xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 mb-5 shadow-[0_0_30px_rgba(245,158,11,0.25)] group-hover:scale-110 group-hover:shadow-[0_0_45px_rgba(245,158,11,0.45)] transition-all duration-300">
+                <div className="w-20 h-20 rounded-3xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 mb-4 shadow-[0_0_30px_rgba(245,158,11,0.25)] group-hover:scale-110 group-hover:shadow-[0_0_45px_rgba(245,158,11,0.45)] transition-all duration-300">
                   <Film className="w-10 h-10" />
                 </div>
 
-                <h3 className="text-lg sm:text-xl font-bold text-white mb-2 tracking-tight">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-[11px] font-mono font-bold mb-3 shadow-sm">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
+                  <span>UP TO 5 GB VIDEOS SUPPORTED • 4K & HIGH BITRATE</span>
+                </div>
+
+                <h3 className="text-lg sm:text-2xl font-bold text-white mb-2 tracking-tight">
                   Choose Movie to Play
                 </h3>
-                <p className="text-xs sm:text-sm text-zinc-400 max-w-md leading-relaxed mb-6">
-                  Video displays on this screen in maximum area • Audio syncs to all connected room devices
+                <p className="text-xs sm:text-sm text-zinc-400 max-w-lg leading-relaxed mb-6">
+                  Supports movies and video files up to 5 GB • Fullscreen cinema display on this screen with zero network lag • Synced 5.1 surround sound streamed to all room devices
                 </p>
 
-                <div className="px-5 py-2.5 rounded-full bg-amber-500 hover:bg-amber-400 text-black text-xs font-bold transition-all shadow-[0_0_20px_rgba(245,158,11,0.35)] flex items-center gap-2 group-hover:scale-105 active:scale-95">
-                  <span>Browse .mp4, .mkv, .webm</span>
+                <div className="px-6 py-2.5 rounded-full bg-amber-500 hover:bg-amber-400 text-black text-xs font-bold transition-all shadow-[0_0_25px_rgba(245,158,11,0.4)] flex items-center gap-2 group-hover:scale-105 active:scale-95 mb-6">
+                  <span>Browse Movie (.mp4, .mkv, .webm, .mov — Up to 5 GB)</span>
                   <ChevronRight className="w-4 h-4" />
+                </div>
+
+                {/* Feature highlight pills */}
+                <div className="flex flex-wrap items-center justify-center gap-2 max-w-md">
+                  <span className="px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[11px] font-mono text-zinc-300">
+                    Max 5 GB File Size
+                  </span>
+                  <span className="px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[11px] font-mono text-zinc-300">
+                    Direct Local Playback
+                  </span>
+                  <span className="px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[11px] font-mono text-zinc-300">
+                    Multi-Device 5.1 Synced Audio
+                  </span>
+                  <span className="px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[11px] font-mono text-zinc-300">
+                    Lip-Sync Calibrated
+                  </span>
                 </div>
               </div>
             )}
@@ -547,6 +623,11 @@ export const MovieModeView: React.FC<MovieModeViewProps> = ({
             <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
               {movieState.title || 'Movie Audio Stream'}
             </h3>
+            {movieState.fileSize && movieState.fileSize > 0 ? (
+              <span className="mt-1 px-2.5 py-0.5 rounded-full text-[10px] font-mono bg-white/10 text-cyan-300 border border-cyan-400/20">
+                {formatFileSize(movieState.fileSize)} Cinema Audio
+              </span>
+            ) : null}
             <p className="text-xs text-zinc-400 mt-1 max-w-sm">
               Video is playing exclusively on Host device • Your speaker is playing in perfect lip-sync
             </p>

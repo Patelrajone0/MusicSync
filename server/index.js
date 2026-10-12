@@ -680,9 +680,11 @@ app.delete('/api/tracks/local/:id', (req, res) => {
 });
 
 // ----------------------------------------------------
-// MOVIE AUDIO SYNC ENGINE: LARGE FILE CHUNKING & STREAMING (1GB+)
+// MOVIE AUDIO SYNC ENGINE: LARGE FILE CHUNKING & STREAMING (UP TO 5GB)
 // ----------------------------------------------------
 const MOVIES_DIR = path.join(__dirname, 'data', 'movies');
+const MAX_MOVIE_FILE_SIZE = 5 * 1024 * 1024 * 1024; // 5 GB (5,368,709,120 bytes)
+
 if (!fs.existsSync(MOVIES_DIR)) {
   try {
     fs.mkdirSync(MOVIES_DIR, { recursive: true });
@@ -691,13 +693,21 @@ if (!fs.existsSync(MOVIES_DIR)) {
 
 const activeChunkSessions = new Map();
 
-// 1. Initialize Chunked Upload Session
+// 1. Initialize Chunked Upload Session (Up to 5 GB)
 app.post('/api/movies/upload-init', express.json(), (req, res) => {
   try {
     const { fileId, fileName, totalChunks, totalBytes } = req.body;
     if (!fileId || !fileName) {
       return res.status(400).json({ error: 'fileId and fileName are required' });
     }
+    const parsedBytes = parseInt(totalBytes, 10) || 0;
+    if (parsedBytes > MAX_MOVIE_FILE_SIZE) {
+      const currentGb = (parsedBytes / (1024 * 1024 * 1024)).toFixed(2);
+      return res.status(400).json({
+        error: `File size (${currentGb} GB) exceeds the 5 GB maximum limit for Home Theater.`
+      });
+    }
+
     const safeName = `${fileId}_${path.basename(fileName)}`;
     const targetPath = path.join(MOVIES_DIR, safeName);
 
@@ -709,12 +719,12 @@ app.post('/api/movies/upload-init', express.json(), (req, res) => {
       safeName,
       targetPath,
       totalChunks: parseInt(totalChunks, 10) || 1,
-      totalBytes: parseInt(totalBytes, 10) || 0,
+      totalBytes: parsedBytes,
       receivedChunks: 0,
       startedAt: Date.now()
     });
 
-    res.json({ success: true, fileId, safeName });
+    res.json({ success: true, fileId, safeName, maxAllowedBytes: MAX_MOVIE_FILE_SIZE });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
