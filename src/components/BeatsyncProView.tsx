@@ -944,6 +944,7 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
           onOpenQR={() => setIsQRModalOpen(true)}
           onUploadAudio={handleUploadClick}
           onOpenMovieMode={() => setIsMovieModeOpen(true)}
+          isMovieActive={movieState.isActive}
           theme="studio"
           showThemeSwitcher={false}
         />
@@ -2101,7 +2102,7 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
 
       {/* Home Theater Movie Mode View */}
       <MovieModeView
-        isOpen={isMovieModeOpen}
+        isOpen={isMovieModeOpen || movieState.isActive}
         onClose={() => setIsMovieModeOpen(false)}
         currentUser={currentUser}
         users={users}

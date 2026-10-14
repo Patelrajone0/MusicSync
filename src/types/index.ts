@@ -90,6 +90,8 @@ export interface TheaterSettings {
   haasDelayMs: number; // ms
 }
 
+export type MovieSourceType = 'local' | 'direct' | 'hls' | 'youtube';
+
 export interface MovieState {
   isActive: boolean;
   title: string;
@@ -101,6 +103,8 @@ export interface MovieState {
   isHostVideo: boolean;
   audioBroadcastMode: 'webrtc' | 'stream';
   streamUrl?: string;
+  sourceType?: MovieSourceType;
+  youtubeId?: string;
   theaterSettings: TheaterSettings;
   lipSyncOffsetMs: number;
   updatedAt: number;

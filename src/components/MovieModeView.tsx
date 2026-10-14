@@ -14,8 +14,19 @@ import {
   ChevronRight,
   AlertCircle,
   RotateCcw,
+  PictureInPicture,
+  PictureInPicture2,
+  Globe,
+  Link2,
+  Tv,
+  Loader2,
+  Check,
+  ArrowRight,
+  Layers,
+  Video,
 } from 'lucide-react';
-import { MovieState, SpeakerRole, TheaterPreset, User } from '../types';
+import Hls from 'hls.js';
+import { MovieState, MovieSourceType, SpeakerRole, TheaterPreset, User } from '../types';
 import { movieSyncService, MAX_MOVIE_FILE_SIZE_BYTES } from '../services/movieSyncService';
 import { spatialTheaterEngine } from '../services/spatialTheaterEngine';
 import { SurroundRoleModal } from './SurroundRoleModal';
@@ -31,6 +42,60 @@ export const formatFileSize = (bytes?: number): string => {
   }
   return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
 };
+
+// Preset sample streams for instant testing
+const SAMPLE_STREAM_PRESETS = [
+  {
+    name: 'Big Buck Bunny (MP4)',
+    type: 'direct' as MovieSourceType,
+    url: 'https://vjs.zencdn.net/v/oceans.mp4',
+    badge: 'Direct MP4',
+  },
+  {
+    name: 'Mux Live Test (HLS)',
+    type: 'hls' as MovieSourceType,
+    url: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8',
+    badge: 'HLS .m3u8',
+  },
+  {
+    name: 'Tears of Steel (MP4)',
+    type: 'direct' as MovieSourceType,
+    url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4',
+    badge: 'Direct 4K',
+  },
+  {
+    name: 'YouTube Music / 4K',
+    type: 'youtube' as MovieSourceType,
+    url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+    badge: 'YouTube',
+  },
+];
+
+// Helper to load YouTube Iframe Player API
+function loadYouTubeIframeApi(): Promise<void> {
+  return new Promise((resolve) => {
+    if ((window as any).YT && (window as any).YT.Player) {
+      return resolve();
+    }
+    const existing = document.getElementById('youtube-iframe-api');
+    if (existing) {
+      const interval = setInterval(() => {
+        if ((window as any).YT && (window as any).YT.Player) {
+          clearInterval(interval);
+          resolve();
+        }
+      }, 100);
+      return;
+    }
+    const tag = document.createElement('script');
+    tag.id = 'youtube-iframe-api';
+    tag.src = 'https://www.youtube.com/iframe_api';
+    document.body.appendChild(tag);
+    (window as any).onYouTubeIframeAPIReady = () => {
+      resolve();
+    };
+  });
+}
 
 interface MovieModeViewProps {
   isOpen: boolean;
@@ -50,6 +115,16 @@ export const MovieModeView: React.FC<MovieModeViewProps> = ({
   currentBgTheme,
 }) => {
   const [movieState, setMovieState] = useState<MovieState>(() => movieSyncService.getState());
+  const [displayMode, setDisplayMode] = useState<'cinema' | 'pip'>('cinema');
+  const [activeInputTab, setActiveInputTab] = useState<'local' | 'url'>('url');
+  const [urlInput, setUrlInput] = useState('');
+  const [isLoadingUrl, setIsLoadingUrl] = useState(false);
+  const [urlDetection, setUrlDetection] = useState<{
+    type: MovieSourceType;
+    label: string;
+    icon: 'youtube' | 'hls' | 'direct';
+  } | null>(null);
+
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isSurroundModalOpen, setIsSurroundModalOpen] = useState(false);
   const [selectedPreset, setSelectedPreset] = useState<TheaterPreset>('cinema');
@@ -59,8 +134,9 @@ export const MovieModeView: React.FC<MovieModeViewProps> = ({
   const [isDraggingFile, setIsDraggingFile] = useState(false);
   const [videoError, setVideoError] = useState<string | null>(null);
   const [isBuffering, setIsBuffering] = useState(false);
+  const [isNativePipActive, setIsNativePipActive] = useState(false);
 
-  // Local synchronized playback states for 60fps responsive UI
+  // Synchronized playback states for 60fps responsive UI
   const [currentTime, setCurrentTime] = useState<number>(0);
   const [duration, setDuration] = useState<number>(0);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
@@ -69,6 +145,9 @@ export const MovieModeView: React.FC<MovieModeViewProps> = ({
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const controlsTimeoutRef = useRef<any>(null);
+  const hlsRef = useRef<Hls | null>(null);
+  const ytPlayerRef = useRef<any>(null);
+  const ytTimerRef = useRef<any>(null);
 
   const activeThemeDef =
     BACKGROUND_THEMES.find((t) => t.id === currentBgTheme) || BACKGROUND_THEMES[0];
@@ -78,13 +157,14 @@ export const MovieModeView: React.FC<MovieModeViewProps> = ({
   const setVideoRef = useCallback(
     (el: HTMLVideoElement | null) => {
       videoRef.current = el;
-      if (el && isHost) {
+      if (el && isHost && movieState.sourceType !== 'youtube') {
         movieSyncService.attachHostVideo(el);
       }
     },
-    [isHost]
+    [isHost, movieState.sourceType]
   );
 
+  // Subscribe to movie sync service state
   useEffect(() => {
     const unsubState = movieSyncService.subscribe((state) => {
       setMovieState(state);
@@ -98,32 +178,202 @@ export const MovieModeView: React.FC<MovieModeViewProps> = ({
     return () => unsubState();
   }, []);
 
-  // Ensure video element gets attached when opened or when streamUrl changes
+  // Ensure video element gets attached when opened or when streamUrl changes (non-YouTube)
   useEffect(() => {
-    if (isHost && videoRef.current) {
+    if (isHost && videoRef.current && movieState.sourceType !== 'youtube') {
       movieSyncService.attachHostVideo(videoRef.current);
     }
-  }, [isHost, isOpen, movieState.streamUrl]);
+  }, [isHost, isOpen, movieState.streamUrl, movieState.sourceType]);
+
+  // Handle HLS stream mounting
+  useEffect(() => {
+    if (isHost && movieState.sourceType === 'hls' && movieState.streamUrl && videoRef.current) {
+      if (Hls.isSupported()) {
+        if (hlsRef.current) {
+          hlsRef.current.destroy();
+        }
+        const hls = new Hls({
+          enableWorker: true,
+          lowLatencyMode: true,
+        });
+        hls.loadSource(movieState.streamUrl);
+        hls.attachMedia(videoRef.current);
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          setIsBuffering(false);
+          spatialTheaterEngine.resumeContext().catch(console.warn);
+          videoRef.current?.play().catch(console.warn);
+        });
+        hls.on(Hls.Events.ERROR, (_event, data) => {
+          if (data.fatal) {
+            console.error('[HLS Error]', data);
+            setVideoError(`HLS stream error: ${data.details || 'stream unavailable'}`);
+          }
+        });
+        hlsRef.current = hls;
+      } else if (videoRef.current.canPlayType('application/vnd.apple.mpegurl')) {
+        videoRef.current.src = movieState.streamUrl;
+        videoRef.current.load();
+      }
+    }
+
+    return () => {
+      if (hlsRef.current) {
+        hlsRef.current.destroy();
+        hlsRef.current = null;
+      }
+    };
+  }, [isHost, movieState.sourceType, movieState.streamUrl]);
+
+  // Handle YouTube player mounting
+  useEffect(() => {
+    let isCancelled = false;
+
+    if (movieState.sourceType === 'youtube' && movieState.youtubeId && movieState.isActive) {
+      loadYouTubeIframeApi().then(() => {
+        if (isCancelled) return;
+        const targetDiv = document.getElementById('youtube-theater-mount');
+        if (!targetDiv) return;
+
+        // Destroy previous player instance if any
+        if (ytPlayerRef.current) {
+          try {
+            ytPlayerRef.current.destroy();
+          } catch {}
+          ytPlayerRef.current = null;
+        }
+
+        try {
+          const player = new (window as any).YT.Player('youtube-theater-mount', {
+            videoId: movieState.youtubeId,
+            playerVars: {
+              autoplay: 1,
+              controls: 1,
+              rel: 0,
+              modestbranding: 1,
+              playsinline: 1,
+              enablejsapi: 1,
+              origin: window.location.origin,
+            },
+            events: {
+              onReady: (event: any) => {
+                ytPlayerRef.current = event.target;
+                const d = event.target.getDuration();
+                if (d) setDuration(d);
+                if (movieState.currentTime > 0) {
+                  event.target.seekTo(movieState.currentTime, true);
+                }
+                event.target.playVideo();
+                setIsPlaying(true);
+                setIsBuffering(false);
+              },
+              onStateChange: (event: any) => {
+                // 1 = playing, 2 = paused, 3 = buffering
+                if (event.data === 1) {
+                  setIsPlaying(true);
+                  setIsBuffering(false);
+                  if (isHost) {
+                    movieSyncService.broadcastPlaybackUpdate(
+                      true,
+                      event.target.getCurrentTime(),
+                      event.target.getDuration()
+                    );
+                  }
+                } else if (event.data === 2) {
+                  setIsPlaying(false);
+                  setIsBuffering(false);
+                  if (isHost) {
+                    movieSyncService.broadcastPlaybackUpdate(
+                      false,
+                      event.target.getCurrentTime(),
+                      event.target.getDuration()
+                    );
+                  }
+                } else if (event.data === 3) {
+                  setIsBuffering(true);
+                }
+              },
+              onError: (err: any) => {
+                console.error('[YouTube Player Error]', err);
+                setVideoError('YouTube video failed to embed or is restricted by copyright/region.');
+              },
+            },
+          });
+          ytPlayerRef.current = player;
+        } catch (e) {
+          console.error('[YouTube init error]', e);
+        }
+      });
+
+      // Poll time for YouTube player
+      if (ytTimerRef.current) clearInterval(ytTimerRef.current);
+      ytTimerRef.current = setInterval(() => {
+        if (ytPlayerRef.current && typeof ytPlayerRef.current.getCurrentTime === 'function') {
+          try {
+            const t = ytPlayerRef.current.getCurrentTime();
+            const d = ytPlayerRef.current.getDuration();
+            if (typeof t === 'number') setCurrentTime(t);
+            if (typeof d === 'number' && d > 0 && duration === 0) setDuration(d);
+          } catch {}
+        }
+      }, 500);
+    } else {
+      if (ytPlayerRef.current) {
+        try {
+          ytPlayerRef.current.destroy();
+        } catch {}
+        ytPlayerRef.current = null;
+      }
+      if (ytTimerRef.current) {
+        clearInterval(ytTimerRef.current);
+        ytTimerRef.current = null;
+      }
+    }
+
+    return () => {
+      isCancelled = true;
+      if (ytTimerRef.current) {
+        clearInterval(ytTimerRef.current);
+        ytTimerRef.current = null;
+      }
+    };
+  }, [movieState.sourceType, movieState.youtubeId, movieState.isActive, isHost]);
+
+  // Track Native Picture-in-Picture events
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const onEnterPip = () => setIsNativePipActive(true);
+    const onLeavePip = () => setIsNativePipActive(false);
+
+    video.addEventListener('enterpictureinpicture', onEnterPip);
+    video.addEventListener('leavepictureinpicture', onLeavePip);
+
+    return () => {
+      video.removeEventListener('enterpictureinpicture', onEnterPip);
+      video.removeEventListener('leavepictureinpicture', onLeavePip);
+    };
+  }, []);
 
   // Host automatically broadcasts WebRTC audio to all connected room devices
   useEffect(() => {
-    if (isHost && movieState.isActive && users.length > 0) {
+    if (isHost && movieState.isActive && users.length > 0 && movieState.sourceType !== 'youtube') {
       const clientIds = users
         .filter((u) => u.id !== currentUser?.id)
         .map((u) => u.id);
       movieSyncService.broadcastAudioToClients(clientIds);
     }
-  }, [isHost, movieState.isActive, users, currentUser?.id]);
+  }, [isHost, movieState.isActive, users, currentUser?.id, movieState.sourceType]);
 
   // Client requests live audio stream from Host when movie is active
   useEffect(() => {
-    if (!isHost && movieState.isActive) {
+    if (!isHost && movieState.isActive && movieState.sourceType !== 'youtube') {
       const hostUser = users.find((u) => u.role === 'host');
       movieSyncService.requestAudioFromHost(hostUser?.id);
     }
-  }, [isHost, movieState.isActive, users]);
+  }, [isHost, movieState.isActive, users, movieState.sourceType]);
 
-  // Handle controls auto-hide during active playback
+  // Handle controls auto-hide during active playback in Cinema mode
   const handleMouseMove = () => {
     setIsControlsVisible(true);
     if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
@@ -138,6 +388,18 @@ export const MovieModeView: React.FC<MovieModeViewProps> = ({
   const handleTogglePlay = async () => {
     setVideoError(null);
     await spatialTheaterEngine.resumeContext();
+
+    if (movieState.sourceType === 'youtube' && ytPlayerRef.current) {
+      try {
+        if (isPlaying) {
+          ytPlayerRef.current.pauseVideo();
+        } else {
+          ytPlayerRef.current.playVideo();
+        }
+      } catch {}
+      return;
+    }
+
     if (videoRef.current) {
       if (videoRef.current.paused) {
         try {
@@ -154,7 +416,7 @@ export const MovieModeView: React.FC<MovieModeViewProps> = ({
   };
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || displayMode !== 'cinema') return;
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.code === 'Space' || e.key === ' ') {
         const activeEl = document.activeElement as HTMLElement | null;
@@ -162,14 +424,82 @@ export const MovieModeView: React.FC<MovieModeViewProps> = ({
         e.preventDefault();
         handleTogglePlay();
       } else if (e.key === 'Escape' && !isSurroundModalOpen) {
-        onClose();
+        // Pressing escape minimizes to floating PiP player if playing
+        if (movieState.isActive) {
+          setDisplayMode('pip');
+        } else {
+          onClose();
+        }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, isSurroundModalOpen, movieState.isActive]);
+  }, [isOpen, displayMode, isSurroundModalOpen, movieState.isActive, isPlaying]);
 
-  if (!isOpen) return null;
+  // Auto-detect URL type as user types
+  const detectUrlType = (rawUrl: string) => {
+    const trimmed = rawUrl.trim();
+    if (!trimmed) {
+      setUrlDetection(null);
+      return;
+    }
+
+    if (/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=|shorts\/))([\w-]{11})/i.test(trimmed)) {
+      setUrlDetection({ type: 'youtube', label: 'YouTube Stream', icon: 'youtube' });
+    } else if (trimmed.includes('.m3u8')) {
+      setUrlDetection({ type: 'hls', label: 'HLS Live Stream (.m3u8)', icon: 'hls' });
+    } else if (/\.(mp4|webm|mov|mkv|ogg|m4v)(\?|$)/i.test(trimmed)) {
+      setUrlDetection({ type: 'direct', label: 'Direct Video (MP4 / WebM)', icon: 'direct' });
+    } else {
+      setUrlDetection({ type: 'direct', label: 'Online Video URL', icon: 'direct' });
+    }
+  };
+
+  // Submit and start online video URL stream
+  const handleLoadUrlStream = async (targetUrl?: string) => {
+    const rawUrl = (targetUrl || urlInput).trim();
+    if (!rawUrl) return;
+
+    setVideoError(null);
+    setIsLoadingUrl(true);
+    setIsBuffering(true);
+
+    try {
+      await spatialTheaterEngine.resumeContext();
+
+      // Query server for metadata probe
+      const res = await fetch(`/api/movie/info?url=${encodeURIComponent(rawUrl)}`);
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Failed to inspect video stream URL');
+      }
+
+      const title = data.title || 'Online Video Stream';
+      const sType: MovieSourceType = data.type || 'direct';
+      const yId: string = data.videoId || '';
+
+      if (sType === 'youtube') {
+        movieSyncService.startMovie(title, rawUrl, 0, 0, 'youtube', yId);
+      } else if (sType === 'hls') {
+        movieSyncService.startMovie(title, rawUrl, 0, 0, 'hls');
+      } else {
+        // Direct MP4 / WebM / MOV: check if external or same origin
+        const playUrl = rawUrl.startsWith('http') && !rawUrl.startsWith(window.location.origin)
+          ? `/api/stream/video-proxy?url=${encodeURIComponent(rawUrl)}`
+          : rawUrl;
+        movieSyncService.startMovie(title, playUrl, 0, data.size || 0, 'direct');
+      }
+
+      setUrlInput('');
+    } catch (err: any) {
+      console.error('[MovieModeView] Load URL stream error:', err);
+      setVideoError(err.message || 'Unable to play video from this URL. Check the link and try again.');
+      setIsBuffering(false);
+    } finally {
+      setIsLoadingUrl(false);
+    }
+  };
 
   const handleFilePicked = async (file: File) => {
     if (!file) return;
@@ -206,7 +536,7 @@ export const MovieModeView: React.FC<MovieModeViewProps> = ({
     }
 
     const title = file.name.replace(/\.[^/.]+$/, '');
-    movieSyncService.startMovie(title, file, 0, file.size);
+    movieSyncService.startMovie(title, file, 0, file.size, 'local');
 
     if (videoRef.current) {
       try {
@@ -260,6 +590,25 @@ export const MovieModeView: React.FC<MovieModeViewProps> = ({
     }
   };
 
+  // Native Browser Picture-in-Picture
+  const handleNativePip = async () => {
+    try {
+      if (document.pictureInPictureElement) {
+        await document.exitPictureInPicture();
+        setIsNativePipActive(false);
+      } else if (videoRef.current && document.pictureInPictureEnabled) {
+        await videoRef.current.requestPictureInPicture();
+        setIsNativePipActive(true);
+      } else {
+        // Fallback to in-app floating mini-player
+        setDisplayMode('pip');
+      }
+    } catch (err) {
+      console.warn('Native PiP not available or permission denied, using In-App Floating PiP:', err);
+      setDisplayMode('pip');
+    }
+  };
+
   const formatTime = (secs: number) => {
     if (isNaN(secs) || secs < 0) return '00:00';
     const h = Math.floor(secs / 3600);
@@ -276,6 +625,233 @@ export const MovieModeView: React.FC<MovieModeViewProps> = ({
   const totalDuration = duration || movieState.duration || 0;
   const progressPercent = totalDuration > 0 ? (currentTime / totalDuration) * 100 : 0;
 
+  // Source Type Label & Badge
+  const getSourceBadge = () => {
+    if (movieState.sourceType === 'youtube') return { label: 'YouTube', color: 'bg-red-500/20 text-red-300 border-red-500/40' };
+    if (movieState.sourceType === 'hls') return { label: 'HLS Live', color: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40' };
+    if (movieState.sourceType === 'direct') return { label: 'Online Video', color: 'bg-amber-500/20 text-amber-300 border-amber-500/40' };
+    return { label: 'Local 5 GB', color: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' };
+  };
+
+  if (!isOpen) return null;
+
+  // =========================================================================
+  // RENDER 1: IN-APP PICTURE-IN-PICTURE (PIP) FLOATING MINI-PLAYER WINDOW
+  // Allows watching movie while chatting, browsing files, or adjusting speakers
+  // =========================================================================
+  if (displayMode === 'pip') {
+    return (
+      <div className="fixed inset-0 z-50 pointer-events-none select-none">
+        {/* Floating Mini Player Card (Pointer events enabled on card only) */}
+        <div
+          role="region"
+          aria-label="Picture in Picture Video Player"
+          className="pointer-events-auto absolute bottom-4 right-4 sm:bottom-6 sm:right-6 w-80 sm:w-96 aspect-video rounded-2xl border border-amber-500/40 bg-zinc-950/95 shadow-[0_20px_60px_rgba(0,0,0,0.85)] backdrop-blur-2xl overflow-hidden group transition-all duration-300 ring-1 ring-white/10 hover:ring-amber-500/50 hover:shadow-[0_0_35px_rgba(245,158,11,0.35)] flex flex-col"
+        >
+          {/* Video / YouTube Content Area */}
+          <div className="relative w-full h-full flex-1 bg-black overflow-hidden flex items-center justify-center">
+            {/* Host Video Element */}
+            {isHost && (
+              <video
+                ref={setVideoRef}
+                src={movieState.sourceType !== 'youtube' ? movieState.streamUrl || undefined : undefined}
+                playsInline
+                preload="metadata"
+                className={`w-full h-full object-contain ${
+                  movieState.sourceType === 'youtube' ? 'hidden' : 'block'
+                }`}
+                onClick={handleTogglePlay}
+                onTimeUpdate={(e) => {
+                  const v = e.currentTarget;
+                  setCurrentTime(v.currentTime);
+                  if (v.duration && duration === 0) setDuration(v.duration);
+                }}
+                onPlay={() => setIsPlaying(true)}
+                onPause={() => setIsPlaying(false)}
+              />
+            )}
+
+            {/* YouTube Mount Container */}
+            {movieState.sourceType === 'youtube' && (
+              <div id="youtube-theater-mount" className="w-full h-full" />
+            )}
+
+            {/* Client View (Audio Only Stream Display) */}
+            {!isHost && (
+              <div
+                onClick={async () => {
+                  await movieSyncService.unlockClientAudio();
+                }}
+                className="w-full h-full flex flex-col items-center justify-center p-3 text-center bg-gradient-to-br from-zinc-900 to-black cursor-pointer"
+              >
+                <div className="flex items-center gap-1 h-8 mb-2">
+                  {[40, 80, 55, 95, 60, 85].map((h, i) => (
+                    <span
+                      key={i}
+                      style={{ height: isPlaying ? `${h}%` : '25%' }}
+                      className="w-1.5 rounded-full bg-cyan-400 transition-all duration-200"
+                    />
+                  ))}
+                </div>
+                <span className="text-xs font-bold text-white truncate max-w-[200px]">
+                  {movieState.title || 'Movie Audio'}
+                </span>
+                <span className="text-[10px] text-cyan-300 font-mono mt-0.5">
+                  Synced 5.1 Audio • Host Screen
+                </span>
+              </div>
+            )}
+
+            {/* Top Floating Mini-Bar (Reveals on hover) */}
+            <div className="absolute top-0 inset-x-0 p-2 bg-gradient-to-b from-black/80 via-black/40 to-transparent flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-30">
+              <div className="flex items-center gap-1.5 min-w-0 pr-2">
+                <span className={`px-1.5 py-0.2 rounded text-[9px] font-mono font-bold border shrink-0 ${getSourceBadge().color}`}>
+                  {getSourceBadge().label}
+                </span>
+                <span className="text-[11px] font-semibold text-white truncate max-w-[130px] sm:max-w-[180px]">
+                  {movieState.title}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-1 shrink-0">
+                {/* Surround Speaker Modal */}
+                <button
+                  type="button"
+                  onClick={() => setIsSurroundModalOpen(true)}
+                  className="p-1 rounded-lg bg-white/10 hover:bg-cyan-500/30 text-cyan-300 transition-colors cursor-pointer"
+                  title="Configure Speaker Role"
+                >
+                  <Speaker className="w-3.5 h-3.5" />
+                </button>
+
+                {/* Native OS PiP Button */}
+                {movieState.sourceType !== 'youtube' && (
+                  <button
+                    type="button"
+                    onClick={handleNativePip}
+                    className="p-1 rounded-lg bg-white/10 hover:bg-white/20 text-zinc-300 hover:text-white transition-colors cursor-pointer"
+                    title="Pop out into native OS Picture-in-Picture window"
+                  >
+                    <PictureInPicture2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
+
+                {/* Expand to Cinema Mode */}
+                <button
+                  type="button"
+                  onClick={() => setDisplayMode('cinema')}
+                  className="p-1 rounded-lg bg-white/10 hover:bg-amber-400 text-zinc-200 hover:text-black transition-colors cursor-pointer"
+                  title="Expand to Full Cinema Screen"
+                >
+                  <Maximize2 className="w-3.5 h-3.5" />
+                </button>
+
+                {/* Close Movie / PiP */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    movieSyncService.stopMovie();
+                    onClose();
+                  }}
+                  className="p-1 rounded-lg bg-white/10 hover:bg-rose-500 text-zinc-300 hover:text-white transition-colors cursor-pointer"
+                  title="Close Movie"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Quick Play/Pause Center Indicator on hover */}
+            <button
+              type="button"
+              onClick={handleTogglePlay}
+              className="absolute inset-0 m-auto w-10 h-10 rounded-full bg-black/60 border border-white/20 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 cursor-pointer shadow-lg active:scale-90 z-20"
+            >
+              {isPlaying ? <Pause className="w-4 h-4 fill-current" /> : <Play className="w-4 h-4 fill-current ml-0.5" />}
+            </button>
+          </div>
+
+          {/* Mini Scrubber & Controls Footer */}
+          <div className="px-2.5 py-1.5 bg-zinc-950 border-t border-white/10 flex flex-col gap-1 z-30">
+            {/* Scrubber bar */}
+            <div
+              className="w-full h-1 bg-white/15 hover:h-2 rounded-full overflow-hidden cursor-pointer relative transition-all"
+              onClick={(e) => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+                const targetTime = pct * totalDuration;
+                if (movieState.sourceType === 'youtube' && ytPlayerRef.current) {
+                  ytPlayerRef.current.seekTo(targetTime, true);
+                } else if (videoRef.current) {
+                  videoRef.current.currentTime = targetTime;
+                }
+                movieSyncService.seek(targetTime);
+              }}
+            >
+              <div
+                className="h-full bg-gradient-to-r from-amber-400 to-amber-300"
+                style={{ width: `${progressPercent}%` }}
+              />
+            </div>
+
+            <div className="flex items-center justify-between text-[10px] font-mono text-zinc-400">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleTogglePlay}
+                  className="text-white hover:text-amber-400 transition-colors cursor-pointer"
+                >
+                  {isPlaying ? 'PAUSE' : 'PLAY'}
+                </button>
+                <span>
+                  {formatTime(currentTime)} / {formatTime(totalDuration)}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {isHost && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (videoRef.current) {
+                        videoRef.current.muted = !isHostMuted;
+                        setIsHostMuted(!isHostMuted);
+                      }
+                    }}
+                    className="hover:text-white transition-colors cursor-pointer"
+                    title={isHostMuted ? 'Host audio muted' : 'Mute host audio'}
+                  >
+                    {isHostMuted ? <VolumeX className="w-3 h-3 text-rose-400" /> : <Volume2 className="w-3 h-3" />}
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setDisplayMode('cinema')}
+                  className="text-amber-400 hover:underline cursor-pointer"
+                >
+                  CINEMA
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Surround Sound Modal (Accessible directly from PiP mode) */}
+        <SurroundRoleModal
+          isOpen={isSurroundModalOpen}
+          onClose={() => setIsSurroundModalOpen(false)}
+          currentUser={currentUser}
+          users={users}
+          isHost={isHost}
+          activeTheme={currentBgTheme}
+        />
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // RENDER 2: FULL IMMERSIVE THEATER CINEMA VIEW
+  // =========================================================================
   return (
     <div
       role="dialog"
@@ -300,7 +876,7 @@ export const MovieModeView: React.FC<MovieModeViewProps> = ({
           backgroundColor: isLight ? 'rgba(255, 255, 255, 0.92)' : 'rgba(8, 8, 12, 0.88)',
           borderColor: isLight ? 'rgba(15, 23, 42, 0.1)' : 'rgba(255, 255, 255, 0.12)',
         }}
-        className={`absolute top-0 inset-x-0 z-30 px-4 sm:px-6 py-2.5 border-b backdrop-blur-2xl flex items-center justify-between transition-all duration-300 ${
+        className={`absolute top-0 inset-x-0 z-30 px-3 sm:px-6 py-2.5 border-b backdrop-blur-2xl flex items-center justify-between transition-all duration-300 ${
           isControlsVisible || !movieState.isActive || !isPlaying
             ? 'opacity-100 translate-y-0'
             : 'opacity-0 -translate-y-4 pointer-events-none'
@@ -313,9 +889,14 @@ export const MovieModeView: React.FC<MovieModeViewProps> = ({
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <h2 className={`text-xs sm:text-sm font-bold tracking-tight truncate max-w-[150px] sm:max-w-md ${isLight ? 'text-slate-900' : 'text-white'}`}>
+              <h2 className={`text-xs sm:text-sm font-bold tracking-tight truncate max-w-[130px] sm:max-w-md ${isLight ? 'text-slate-900' : 'text-white'}`}>
                 {movieState.title || 'Home Theater'}
               </h2>
+              {movieState.isActive && (
+                <span className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold border shrink-0 ${getSourceBadge().color}`}>
+                  {getSourceBadge().label}
+                </span>
+              )}
               {movieState.fileSize && movieState.fileSize > 0 ? (
                 <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 shrink-0">
                   {formatFileSize(movieState.fileSize)}
@@ -326,12 +907,12 @@ export const MovieModeView: React.FC<MovieModeViewProps> = ({
               )}
             </div>
             <p className={`text-[10px] hidden sm:block truncate ${isLight ? 'text-slate-500' : 'text-zinc-400'}`}>
-              Host video screen (Up to 5 GB) • Multi-device synced audio
+              Host video screen • YouTube, HLS & up to 5 GB files • Synced 5.1 audio
             </p>
           </div>
         </div>
 
-        {/* Center: Minimal Sound Mode Selector */}
+        {/* Center: Sound Mode Selector */}
         <div className="flex items-center gap-1.5 sm:gap-2">
           {/* 3D Cinema Toggle */}
           <button
@@ -380,7 +961,7 @@ export const MovieModeView: React.FC<MovieModeViewProps> = ({
           )}
         </div>
 
-        {/* Right: Speaker Role & Window Actions */}
+        {/* Right: Speaker Role, PiP, Fullscreen, Close */}
         <div className="flex items-center gap-1.5 sm:gap-2">
           {/* Speaker Role Pill */}
           <button
@@ -399,7 +980,7 @@ export const MovieModeView: React.FC<MovieModeViewProps> = ({
             </span>
           </button>
 
-          {/* Minimal Lip-Sync Calibration */}
+          {/* Lip-Sync Calibration */}
           <div className={`hidden sm:flex items-center gap-1 px-2 py-0.5 rounded-full border text-[11px] font-mono ${isLight ? 'bg-slate-100 border-slate-200 text-slate-700' : 'bg-white/5 border-white/10 text-zinc-300'}`}>
             <button
               type="button"
@@ -422,6 +1003,37 @@ export const MovieModeView: React.FC<MovieModeViewProps> = ({
             </button>
           </div>
 
+          {/* Picture-in-Picture (In-App Floating Mini-Player) */}
+          {movieState.isActive && (
+            <button
+              type="button"
+              onClick={() => setDisplayMode('pip')}
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold border transition-all cursor-pointer active:scale-95 ${
+                isLight
+                  ? 'bg-amber-50 hover:bg-amber-100 border-amber-200 text-amber-800'
+                  : 'bg-amber-500/15 hover:bg-amber-500/25 border-amber-500/30 text-amber-300 shadow-[0_0_10px_rgba(245,158,11,0.2)]'
+              }`}
+              title="Pop out video into floating mini-player while chatting & browsing"
+            >
+              <PictureInPicture className="w-3.5 h-3.5 text-amber-400" />
+              <span className="hidden sm:inline text-[11px]">Pop Out (PiP)</span>
+            </button>
+          )}
+
+          {/* Native OS Picture-in-Picture */}
+          {movieState.isActive && movieState.sourceType !== 'youtube' && (
+            <button
+              type="button"
+              onClick={handleNativePip}
+              className={`p-1.5 rounded-full transition-colors cursor-pointer active:scale-90 ${
+                isLight ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-200' : 'text-zinc-400 hover:text-white hover:bg-white/10'
+              }`}
+              title="Native OS Picture-in-Picture window"
+            >
+              <PictureInPicture2 className="w-4 h-4" />
+            </button>
+          )}
+
           {/* Fullscreen Toggle */}
           <button
             type="button"
@@ -432,35 +1044,43 @@ export const MovieModeView: React.FC<MovieModeViewProps> = ({
             {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
           </button>
 
-          {/* Close */}
+          {/* Close / Minimize */}
           <button
             type="button"
-            onClick={onClose}
+            onClick={() => {
+              if (movieState.isActive) {
+                // Minimize to floating player so party audio / video is not killed
+                setDisplayMode('pip');
+              } else {
+                onClose();
+              }
+            }}
             className={`p-1.5 rounded-full transition-colors cursor-pointer active:scale-90 ${isLight ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-200' : 'text-zinc-400 hover:text-white hover:bg-white/10'}`}
-            title="Exit Home Theater"
+            title={movieState.isActive ? 'Minimize to floating mini-player' : 'Exit Home Theater'}
           >
             <X className="w-4 h-4" />
           </button>
         </div>
       </header>
 
-      {/* 2. MAXIMUM AREA CINEMA CANVAS (Edge-to-Edge Screen Utilization) */}
+      {/* 2. CINEMA CANVAS AREA */}
       <main
         className="flex-1 w-full h-full min-h-0 relative flex items-center justify-center overflow-hidden bg-black"
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
       >
-        {/* HOST VIDEO (Always Mounted in DOM for Instant Playback & Audio Routing) */}
+        {/* HOST VIDEO (Mounted for Direct MP4, HLS, or Local Video) */}
         {isHost ? (
           <>
+            {/* HTML5 Video Element for Direct MP4, HLS, Local Files */}
             <video
               ref={setVideoRef}
-              src={movieState.streamUrl || undefined}
+              src={movieState.sourceType !== 'youtube' ? movieState.streamUrl || undefined : undefined}
               playsInline
               preload="metadata"
               className={`w-full h-full max-w-full max-h-full object-contain bg-black cursor-pointer transition-opacity duration-300 ${
-                movieState.isActive ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                movieState.isActive && movieState.sourceType !== 'youtube' ? 'opacity-100' : 'opacity-0 pointer-events-none hidden'
               }`}
               onClick={handleTogglePlay}
               onLoadedMetadata={(e) => {
@@ -488,21 +1108,30 @@ export const MovieModeView: React.FC<MovieModeViewProps> = ({
                 console.error('[MovieModeView] Video playback error:', v.error);
                 setIsBuffering(false);
                 if (v.error?.code === MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED) {
-                  setVideoError('Video format or codec is not supported by your browser. For best performance with large files up to 5 GB, try an MP4 or WebM file.');
+                  setVideoError('Video format or codec is not supported by your browser. Try a supported MP4, WebM, or HLS stream.');
                 } else if (v.error) {
-                  setVideoError(`Video error (${v.error.message || 'code ' + v.error.code}). Please choose a supported movie file within 5 GB.`);
+                  setVideoError(`Video error (${v.error.message || 'code ' + v.error.code}). Check the URL or choose another video.`);
                 }
               }}
             />
 
-            {/* High-Bitrate / 5 GB Video Buffering Indicator */}
+            {/* YouTube Player Container for YouTube Streams */}
+            <div
+              className={`w-full h-full max-w-full max-h-full flex items-center justify-center ${
+                movieState.isActive && movieState.sourceType === 'youtube' ? 'block' : 'hidden'
+              }`}
+            >
+              <div id="youtube-theater-mount" className="w-full h-full max-w-full max-h-full aspect-video" />
+            </div>
+
+            {/* High-Bitrate Buffering Indicator */}
             {isBuffering && movieState.isActive && (
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-30 bg-black/30 backdrop-blur-[2px]">
                 <div className="w-14 h-14 rounded-full border-2 border-amber-400/20 border-t-amber-400 animate-spin flex items-center justify-center shadow-[0_0_25px_rgba(245,158,11,0.5)]">
                   <Sparkles className="w-5 h-5 text-amber-300 animate-pulse" />
                 </div>
                 <span className="mt-3 px-3 py-1 rounded-full bg-black/80 backdrop-blur-md border border-white/10 text-[11px] font-mono text-zinc-300">
-                  Buffering High-Bitrate Video...
+                  Buffering Video Stream...
                 </span>
               </div>
             )}
@@ -514,22 +1143,20 @@ export const MovieModeView: React.FC<MovieModeViewProps> = ({
                 <div className="text-xs flex-1">{videoError}</div>
                 <button
                   type="button"
-                  onClick={() => fileInputRef.current?.click()}
+                  onClick={() => setVideoError(null)}
                   className="px-2.5 py-1 rounded-lg bg-rose-500 text-white font-bold text-[10px] hover:bg-rose-400 transition-colors shrink-0 cursor-pointer"
                 >
-                  Pick Other
+                  Dismiss
                 </button>
               </div>
             )}
 
-            {/* Movie Dropzone with 5 GB Support Indicator */}
+            {/* ========================================================= */}
+            {/* SETUP / PICKER MODAL (When No Movie is Active) */}
+            {/* Tabs for: 1) Online Video URL Stream, 2) Local 5 GB File */}
+            {/* ========================================================= */}
             {!movieState.isActive && (
-              <div
-                onClick={() => fileInputRef.current?.click()}
-                className={`absolute inset-0 flex flex-col items-center justify-center p-6 text-center cursor-pointer hover:bg-white/[0.02] transition-all group z-20 ${
-                  isDraggingFile ? 'bg-amber-500/10 ring-4 ring-amber-400/40' : ''
-                }`}
-              >
+              <div className="relative z-20 w-full max-w-2xl mx-auto p-4 sm:p-6 flex flex-col items-center text-center">
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -542,47 +1169,179 @@ export const MovieModeView: React.FC<MovieModeViewProps> = ({
                   }}
                 />
 
-                <div className="w-20 h-20 rounded-3xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 mb-4 shadow-[0_0_30px_rgba(245,158,11,0.25)] group-hover:scale-110 group-hover:shadow-[0_0_45px_rgba(245,158,11,0.45)] transition-all duration-300">
-                  <Film className="w-10 h-10" />
+                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-3xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 mb-3 sm:mb-4 shadow-[0_0_30px_rgba(245,158,11,0.25)]">
+                  <Film className="w-8 h-8 sm:w-10 sm:h-10" />
                 </div>
 
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-[11px] font-mono font-bold mb-3 shadow-sm">
-                  <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
-                  <span>UP TO 5 GB VIDEOS SUPPORTED • 4K & HIGH BITRATE</span>
-                </div>
-
-                <h3 className="text-lg sm:text-2xl font-bold text-white mb-2 tracking-tight">
-                  Choose Movie to Play
+                <h3 className="text-xl sm:text-3xl font-extrabold text-white mb-1.5 tracking-tight">
+                  Home Theater & Watch Party
                 </h3>
-                <p className="text-xs sm:text-sm text-zinc-400 max-w-lg leading-relaxed mb-6">
-                  Supports movies and video files up to 5 GB • Fullscreen cinema display on this screen with zero network lag • Synced 5.1 surround sound streamed to all room devices
+                <p className="text-xs sm:text-sm text-zinc-400 max-w-lg leading-relaxed mb-5">
+                  Stream online video URLs or local files up to 5 GB • Full cinema screen with synchronized 5.1 surround sound across all room devices
                 </p>
 
-                <div className="px-6 py-2.5 rounded-full bg-amber-500 hover:bg-amber-400 text-black text-xs font-bold transition-all shadow-[0_0_25px_rgba(245,158,11,0.4)] flex items-center gap-2 group-hover:scale-105 active:scale-95 mb-6">
-                  <span>Browse Movie (.mp4, .mkv, .webm, .mov — Up to 5 GB)</span>
-                  <ChevronRight className="w-4 h-4" />
+                {/* Tab Switcher: Online Video Stream vs Local 5 GB Movie */}
+                <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-zinc-900/90 border border-white/10 mb-5 shadow-inner">
+                  <button
+                    type="button"
+                    onClick={() => setActiveInputTab('url')}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                      activeInputTab === 'url'
+                        ? 'bg-amber-400 text-black shadow-md shadow-amber-400/20'
+                        : 'text-zinc-400 hover:text-white'
+                    }`}
+                  >
+                    <Globe className="w-3.5 h-3.5" />
+                    <span>Online Video URL (YouTube / MP4 / HLS)</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setActiveInputTab('local')}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                      activeInputTab === 'local'
+                        ? 'bg-amber-400 text-black shadow-md shadow-amber-400/20'
+                        : 'text-zinc-400 hover:text-white'
+                    }`}
+                  >
+                    <Video className="w-3.5 h-3.5" />
+                    <span>Local Movie (Up to 5 GB)</span>
+                  </button>
                 </div>
 
+                {/* TAB 1: ONLINE VIDEO URL STREAM */}
+                {activeInputTab === 'url' && (
+                  <div className="w-full max-w-xl p-4 sm:p-5 rounded-2xl bg-zinc-900/60 border border-white/10 backdrop-blur-xl flex flex-col gap-4 shadow-xl">
+                    <div className="flex flex-col gap-2 text-left">
+                      <label className="text-[11px] font-mono font-bold uppercase tracking-wider text-amber-300 flex items-center justify-between">
+                        <span>Video Stream URL</span>
+                        {urlDetection && (
+                          <span className="text-[10px] text-cyan-400 font-bold bg-cyan-500/10 border border-cyan-500/30 px-2 py-0.5 rounded-full flex items-center gap-1">
+                            {urlDetection.label}
+                          </span>
+                        )}
+                      </label>
+
+                      <div className="flex items-center gap-2">
+                        <div className="relative flex-1">
+                          <input
+                            type="text"
+                            value={urlInput}
+                            onChange={(e) => {
+                              setUrlInput(e.target.value);
+                              detectUrlType(e.target.value);
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') handleLoadUrlStream();
+                            }}
+                            placeholder="Paste YouTube link, direct MP4 URL, or HLS (.m3u8)..."
+                            className="w-full px-3.5 py-2.5 rounded-xl bg-black/60 border border-white/15 focus:border-amber-400 focus:ring-1 focus:ring-amber-400 text-xs sm:text-sm text-white placeholder:text-zinc-600 outline-none transition-all pr-8"
+                          />
+                          {urlInput && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setUrlInput('');
+                                setUrlDetection(null);
+                              }}
+                              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 cursor-pointer"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
+
+                        <button
+                          type="button"
+                          disabled={!urlInput.trim() || isLoadingUrl}
+                          onClick={() => handleLoadUrlStream()}
+                          className="px-4 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 disabled:opacity-40 disabled:cursor-not-allowed text-black text-xs font-bold transition-all shadow-[0_0_15px_rgba(245,158,11,0.3)] flex items-center gap-1.5 cursor-pointer shrink-0"
+                        >
+                          {isLoadingUrl ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <>
+                              <span>Play Stream</span>
+                              <ArrowRight className="w-3.5 h-3.5" />
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Quick Preset Samples */}
+                    <div className="flex flex-col gap-1.5 text-left border-t border-white/10 pt-3">
+                      <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-500">
+                        Quick Demo Streams:
+                      </span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {SAMPLE_STREAM_PRESETS.map((sample) => (
+                          <button
+                            key={sample.name}
+                            type="button"
+                            onClick={() => {
+                              setUrlInput(sample.url);
+                              detectUrlType(sample.url);
+                              handleLoadUrlStream(sample.url);
+                            }}
+                            className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 hover:border-amber-500/40 text-[11px] text-zinc-300 hover:text-white transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
+                          >
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                            <span>{sample.name}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* TAB 2: LOCAL 5 GB VIDEO FILE */}
+                {activeInputTab === 'local' && (
+                  <div
+                    onClick={() => fileInputRef.current?.click()}
+                    className={`w-full max-w-xl p-6 rounded-2xl bg-zinc-900/60 border border-white/10 hover:border-amber-400/40 backdrop-blur-xl flex flex-col items-center justify-center cursor-pointer transition-all group/drop ${
+                      isDraggingFile ? 'bg-amber-500/10 ring-4 ring-amber-400/40' : ''
+                    }`}
+                  >
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-[11px] font-mono font-bold mb-3 shadow-sm">
+                      <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
+                      <span>UP TO 5 GB VIDEOS SUPPORTED • ZERO NETWORK LAG</span>
+                    </div>
+
+                    <h4 className="text-base sm:text-lg font-bold text-white mb-1">
+                      Drag & Drop Movie File Here
+                    </h4>
+                    <p className="text-xs text-zinc-400 mb-4 max-w-sm">
+                      Direct local hardware decoding • MP4, MKV, WebM, MOV files up to 5 GB
+                    </p>
+
+                    <div className="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-black text-xs font-bold transition-all shadow-[0_0_20px_rgba(245,158,11,0.3)] flex items-center gap-2 group-hover/drop:scale-105 active:scale-95">
+                      <span>Browse Video File</span>
+                      <ChevronRight className="w-4 h-4" />
+                    </div>
+                  </div>
+                )}
+
                 {/* Feature highlight pills */}
-                <div className="flex flex-wrap items-center justify-center gap-2 max-w-md">
-                  <span className="px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[11px] font-mono text-zinc-300">
-                    Max 5 GB File Size
+                <div className="flex flex-wrap items-center justify-center gap-2 max-w-md mt-6">
+                  <span className="px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] font-mono text-zinc-300">
+                    YouTube & HLS .m3u8
                   </span>
-                  <span className="px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[11px] font-mono text-zinc-300">
-                    Direct Local Playback
+                  <span className="px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] font-mono text-zinc-300">
+                    Up to 5 GB Local Video
                   </span>
-                  <span className="px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[11px] font-mono text-zinc-300">
-                    Multi-Device 5.1 Synced Audio
+                  <span className="px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] font-mono text-zinc-300">
+                    Multi-Device 5.1 Audio
                   </span>
-                  <span className="px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[11px] font-mono text-zinc-300">
-                    Lip-Sync Calibrated
+                  <span className="px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] font-mono text-zinc-300">
+                    Picture-in-Picture Mini-Player
                   </span>
                 </div>
               </div>
             )}
           </>
         ) : (
-          /* CLIENT VIEW (Zero Video Transferred, Pure Synchronized Audio) */
+          /* CLIENT VIEW (Pure Synchronized Audio) */
           <div
             onClick={async () => {
               await movieSyncService.unlockClientAudio();
@@ -623,13 +1382,13 @@ export const MovieModeView: React.FC<MovieModeViewProps> = ({
             <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
               {movieState.title || 'Movie Audio Stream'}
             </h3>
-            {movieState.fileSize && movieState.fileSize > 0 ? (
-              <span className="mt-1 px-2.5 py-0.5 rounded-full text-[10px] font-mono bg-white/10 text-cyan-300 border border-cyan-400/20">
-                {formatFileSize(movieState.fileSize)} Cinema Audio
+            {movieState.isActive && (
+              <span className={`mt-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold border ${getSourceBadge().color}`}>
+                {getSourceBadge().label} Stream
               </span>
-            ) : null}
+            )}
             <p className="text-xs text-zinc-400 mt-1 max-w-sm">
-              Video is playing exclusively on Host device • Your speaker is playing in perfect lip-sync
+              Video is playing on Host device • Your speaker is playing in frame-accurate lip-sync
             </p>
 
             <div className="mt-4 px-4 py-2 rounded-full bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-400/40 text-cyan-300 text-xs font-semibold flex items-center gap-2 shadow-[0_0_15px_rgba(6,182,212,0.3)] transition-all animate-pulse">
@@ -663,7 +1422,9 @@ export const MovieModeView: React.FC<MovieModeViewProps> = ({
                 const rect = e.currentTarget.getBoundingClientRect();
                 const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
                 const targetTime = pct * totalDuration;
-                if (videoRef.current) {
+                if (movieState.sourceType === 'youtube' && ytPlayerRef.current) {
+                  ytPlayerRef.current.seekTo(targetTime, true);
+                } else if (videoRef.current) {
                   videoRef.current.currentTime = targetTime;
                 }
                 movieSyncService.seek(targetTime);
@@ -695,23 +1456,36 @@ export const MovieModeView: React.FC<MovieModeViewProps> = ({
               </div>
 
               <div className="flex items-center gap-3">
-                {/* Host Audio Mute Toggle */}
+                {/* Pop Out to Floating PiP Player */}
                 <button
                   type="button"
-                  onClick={() => {
-                    if (videoRef.current) {
-                      videoRef.current.muted = !isHostMuted;
-                      setIsHostMuted(!isHostMuted);
-                    }
-                  }}
-                  className="flex items-center gap-1 text-[11px] text-zinc-400 hover:text-white transition-colors cursor-pointer active:scale-95"
-                  title="Mute host laptop screen audio"
+                  onClick={() => setDisplayMode('pip')}
+                  className="flex items-center gap-1 text-[11px] text-amber-300 hover:text-amber-200 transition-colors cursor-pointer active:scale-95"
+                  title="Pop out video into floating mini-player"
                 >
-                  {isHostMuted ? <VolumeX className="w-3.5 h-3.5 text-rose-400" /> : <Volume2 className="w-3.5 h-3.5" />}
-                  <span className="hidden sm:inline">{isHostMuted ? 'Host Muted' : 'Host Audio'}</span>
+                  <PictureInPicture className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Mini Player (PiP)</span>
                 </button>
 
-                {/* Change Movie Button */}
+                {/* Host Audio Mute Toggle */}
+                {movieState.sourceType !== 'youtube' && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (videoRef.current) {
+                        videoRef.current.muted = !isHostMuted;
+                        setIsHostMuted(!isHostMuted);
+                      }
+                    }}
+                    className="flex items-center gap-1 text-[11px] text-zinc-400 hover:text-white transition-colors cursor-pointer active:scale-95"
+                    title="Mute host laptop screen audio"
+                  >
+                    {isHostMuted ? <VolumeX className="w-3.5 h-3.5 text-rose-400" /> : <Volume2 className="w-3.5 h-3.5" />}
+                    <span className="hidden sm:inline">{isHostMuted ? 'Host Muted' : 'Host Audio'}</span>
+                  </button>
+                )}
+
+                {/* Change Movie / URL Button */}
                 <button
                   type="button"
                   onClick={() => {
@@ -721,9 +1495,9 @@ export const MovieModeView: React.FC<MovieModeViewProps> = ({
                     setIsPlaying(false);
                   }}
                   className="text-[11px] font-mono text-zinc-400 hover:text-amber-300 transition-colors cursor-pointer active:scale-95"
-                  title="Stop playback and select another movie"
+                  title="Stop playback and select another stream or movie"
                 >
-                  Change Movie
+                  Change Stream
                 </button>
               </div>
             </div>

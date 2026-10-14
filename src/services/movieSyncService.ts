@@ -1,5 +1,5 @@
 import { socket } from './socket';
-import { MovieState, SpeakerRole, TheaterPreset, TheaterSettings } from '../types';
+import { MovieState, MovieSourceType, SpeakerRole, TheaterPreset, TheaterSettings } from '../types';
 import { spatialTheaterEngine } from './spatialTheaterEngine';
 import { syncEngine } from './syncEngine';
 
@@ -252,12 +252,14 @@ export class MovieSyncService {
     }
   }
 
-  // 3. Start Movie Mode (Supports up to 5 GB files)
+  // 3. Start Movie Mode (Supports up to 5 GB files, YouTube, HLS, Direct MP4)
   public startMovie(
     title: string,
     fileOrUrl: File | string,
     duration: number = 0,
-    fileSize: number = 0
+    fileSize: number = 0,
+    sourceType: MovieSourceType = 'local',
+    youtubeId: string = ''
   ) {
     let streamUrl = '';
     let fileName = '';
@@ -292,14 +294,18 @@ export class MovieSyncService {
       isHostVideo: true,
       audioBroadcastMode: 'webrtc',
       streamUrl,
+      sourceType,
+      youtubeId,
       theaterSettings: spatialTheaterEngine.getSettings(),
       lipSyncOffsetMs: 0,
       updatedAt: Date.now(),
     };
 
-    if (this.hostVideoElement) {
+    if (this.hostVideoElement && sourceType !== 'youtube') {
       if (streamUrl.startsWith('blob:') || streamUrl.startsWith('data:')) {
         this.hostVideoElement.removeAttribute('crossorigin');
+      } else {
+        this.hostVideoElement.crossOrigin = 'anonymous';
       }
       this.hostVideoElement.src = streamUrl;
       this.hostVideoElement.load();
@@ -316,6 +322,8 @@ export class MovieSyncService {
       fileSize: this.movieState.fileSize,
       duration: this.movieState.duration,
       streamUrl: typeof fileOrUrl === 'string' ? streamUrl : '',
+      sourceType: this.movieState.sourceType,
+      youtubeId: this.movieState.youtubeId,
       audioBroadcastMode: this.movieState.audioBroadcastMode,
     });
 
@@ -324,6 +332,16 @@ export class MovieSyncService {
 
     this.notify();
     this.startPeriodicSyncTimer();
+  }
+
+  public broadcastPlaybackUpdate(isPlaying: boolean, currentTime: number, duration?: number) {
+    this.movieState.isPlaying = isPlaying;
+    this.movieState.currentTime = currentTime;
+    if (duration !== undefined && duration > 0) {
+      this.movieState.duration = duration;
+    }
+    this.broadcastPlaybackState(isPlaying, currentTime);
+    this.notify();
   }
 
   public stopMovie() {
@@ -408,7 +426,7 @@ export class MovieSyncService {
     this.stopPeriodicSyncTimer();
     // High frequency sync heartbeat (every 800ms) for frame-accurate lip-sync
     this.syncIntervalId = setInterval(() => {
-      if (this.movieState.isActive && this.hostVideoElement) {
+      if (this.movieState.isActive && this.hostVideoElement && this.movieState.sourceType !== 'youtube') {
         this.broadcastPlaybackState(
           !this.hostVideoElement.paused,
           this.hostVideoElement.currentTime

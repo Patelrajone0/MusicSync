@@ -811,6 +811,163 @@ app.get('/api/stream/movie/:filename', (req, res) => {
   });
 });
 
+// 5. Get Online Video / Movie Info (YouTube oEmbed, HLS detection, Direct MP4 headers)
+app.get('/api/movie/info', async (req, res) => {
+  const targetUrl = req.query.url;
+  if (!targetUrl || typeof targetUrl !== 'string') {
+    return res.status(400).json({ error: 'Missing or invalid url parameter' });
+  }
+
+  const trimmed = targetUrl.trim();
+
+  // 1. YouTube Detection & oEmbed Fetch
+  const ytMatch = trimmed.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=|shorts\/))([\w-]{11})/i);
+  if (ytMatch) {
+    const videoId = ytMatch[1];
+    try {
+      const oembedRes = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`, {
+        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
+      });
+      if (oembedRes.ok) {
+        const data = await oembedRes.json();
+        return res.json({
+          success: true,
+          type: 'youtube',
+          videoId,
+          title: data.title || 'YouTube Video',
+          author: data.author_name || 'YouTube',
+          thumbnail: data.thumbnail_url || `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
+          url: `https://www.youtube.com/watch?v=${videoId}`,
+        });
+      }
+    } catch (e) {
+      console.warn('YouTube oembed note:', e.message);
+    }
+    // Fallback if oembed was unreachable
+    return res.json({
+      success: true,
+      type: 'youtube',
+      videoId,
+      title: `YouTube Video (${videoId})`,
+      author: 'YouTube',
+      thumbnail: `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
+      url: `https://www.youtube.com/watch?v=${videoId}`,
+    });
+  }
+
+  // 2. HLS Stream Detection (.m3u8)
+  if (trimmed.includes('.m3u8')) {
+    try {
+      const urlObj = new URL(trimmed);
+      const pathParts = urlObj.pathname.split('/');
+      const cleanName = pathParts[pathParts.length - 1] || 'HLS Live Stream';
+      return res.json({
+        success: true,
+        type: 'hls',
+        title: cleanName.replace(/\.m3u8$/i, '') || 'HLS Live Stream',
+        url: trimmed,
+      });
+    } catch {
+      return res.json({
+        success: true,
+        type: 'hls',
+        title: 'HLS Live Stream',
+        url: trimmed,
+      });
+    }
+  }
+
+  // 3. Direct Video URL (.mp4, .webm, .mov, .mkv, .ogg)
+  try {
+    const probeRes = await fetch(trimmed, {
+      method: 'GET',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Range': 'bytes=0-100',
+      },
+    });
+
+    const cType = probeRes.headers.get('content-type') || '';
+    const cRange = probeRes.headers.get('content-range');
+    let totalSize = 0;
+    if (cRange) {
+      const parts = cRange.split('/');
+      if (parts[1]) totalSize = parseInt(parts[1], 10) || 0;
+    } else if (probeRes.headers.has('content-length')) {
+      totalSize = parseInt(probeRes.headers.get('content-length'), 10) || 0;
+    }
+
+    const isHls = cType.includes('mpegurl') || trimmed.includes('.m3u8');
+
+    const urlObj = new URL(trimmed);
+    const pathSegments = urlObj.pathname.split('/');
+    const rawFileName = decodeURIComponent(pathSegments[pathSegments.length - 1] || 'Online Video');
+    const displayTitle = rawFileName.replace(/\.[^/.]+$/, '') || 'Online Video Stream';
+
+    return res.json({
+      success: true,
+      type: isHls ? 'hls' : 'direct',
+      title: displayTitle,
+      url: trimmed,
+      size: totalSize,
+      contentType: cType || 'video/mp4',
+    });
+  } catch (err) {
+    try {
+      const urlObj = new URL(trimmed);
+      const pathSegments = urlObj.pathname.split('/');
+      const rawFileName = decodeURIComponent(pathSegments[pathSegments.length - 1] || 'Online Video');
+      return res.json({
+        success: true,
+        type: trimmed.includes('.m3u8') ? 'hls' : 'direct',
+        title: rawFileName.replace(/\.[^/.]+$/, '') || 'Online Video Stream',
+        url: trimmed,
+      });
+    } catch {
+      return res.status(400).json({ error: 'Invalid video URL provided' });
+    }
+  }
+});
+
+// 6. Universal Video Stream Proxy (With Range byte requests & CORS for Web Audio API support)
+app.get('/api/stream/video-proxy', async (req, res) => {
+  const targetUrl = req.query.url;
+  if (!targetUrl || typeof targetUrl !== 'string') {
+    return res.status(400).send('Missing url parameter');
+  }
+
+  try {
+    const rangeHeader = req.headers.range;
+    const fetchHeaders = {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      'Accept': '*/*',
+    };
+    if (rangeHeader) {
+      fetchHeaders['Range'] = rangeHeader;
+    }
+
+    const videoRes = await fetch(targetUrl, { headers: fetchHeaders });
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Headers', '*');
+    res.setHeader('Access-Control-Expose-Headers', 'Content-Range, Content-Length, Accept-Ranges');
+    res.setHeader('Accept-Ranges', 'bytes');
+    res.setHeader('Content-Type', videoRes.headers.get('content-type') || 'video/mp4');
+
+    if (videoRes.headers.has('content-length')) {
+      res.setHeader('Content-Length', videoRes.headers.get('content-length'));
+    }
+    if (videoRes.headers.has('content-range')) {
+      res.setHeader('Content-Range', videoRes.headers.get('content-range'));
+    }
+
+    res.status(videoRes.status);
+    Readable.fromWeb(videoRes.body).pipe(res);
+  } catch (err) {
+    console.error('Video proxy error:', err.message);
+    if (!res.headersSent) res.status(500).send('Video proxy streaming error: ' + err.message);
+  }
+});
+
 
 // ----------------------------------------------------
 // LANGUAGE FILTERING & CLASSIFICATION (English, Hindi, Gujarati, Punjabi)
@@ -3067,6 +3224,8 @@ io.on('connection', (socket) => {
       isHostVideo: true,
       audioBroadcastMode: data?.audioBroadcastMode || 'webrtc',
       streamUrl: data?.streamUrl || '',
+      sourceType: data?.sourceType || 'local',
+      youtubeId: data?.youtubeId || '',
       theaterSettings: data?.theaterSettings || room.movieState?.theaterSettings || {
         enabled: false,
         preset: 'cinema',
@@ -3080,11 +3239,23 @@ io.on('connection', (socket) => {
       updatedAt: Date.now()
     };
 
+    const sourceLabel = data?.sourceType === 'youtube'
+      ? 'YouTube Stream'
+      : data?.sourceType === 'hls'
+      ? 'HLS Stream'
+      : data?.sourceType === 'direct'
+      ? 'Online Stream'
+      : 'Local Video';
+
     const sysMsg = {
       id: `msg-${Date.now()}`,
       userName: 'System',
       user: { name: 'System', role: 'system', avatarColor: '#00f0ff' },
-      text: `🎬 Movie Mode Activated: "${room.movieState.title}". Video screen renders on Host only · Synchronized audio streaming to all connected devices!`,
+      text: `🎬 Theater Watch Party Started: "${room.movieState.title}" (${sourceLabel}) · Synchronized audio streaming to all connected devices!`,
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      timestamp: Date.now(),
+      isSystem: true
+    };
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       timestamp: Date.now(),
       isSystem: true

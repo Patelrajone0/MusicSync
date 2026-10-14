@@ -80,6 +80,7 @@ export interface TitaniumSidebarProps {
   onOpenQR: () => void;
   onUploadAudio: () => void;
   onOpenMovieMode?: () => void;
+  isMovieActive?: boolean;
   theme?: TitaniumSidebarTheme;
   onThemeChange?: (theme: TitaniumSidebarTheme) => void;
   onOpenShowcase?: () => void;
@@ -98,6 +99,7 @@ export const TitaniumSidebar: React.FC<TitaniumSidebarProps> = ({
   onOpenQR,
   onUploadAudio,
   onOpenMovieMode,
+  isMovieActive = false,
   theme: controlledTheme,
   onThemeChange,
   onOpenShowcase,
@@ -288,9 +290,19 @@ export const TitaniumSidebar: React.FC<TitaniumSidebarProps> = ({
                 <h4 className="text-xs font-bold text-amber-200 leading-tight uppercase tracking-wider">
                   HOME THEATER
                 </h4>
-                <span className="text-[9px] font-mono px-1 py-0.2 rounded bg-amber-500/25 text-amber-300 font-bold border border-amber-500/40">5.1 SYNC</span>
+                {isMovieActive ? (
+                  <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-amber-400 text-black font-extrabold animate-pulse">
+                    WATCH PARTY ACTIVE
+                  </span>
+                ) : (
+                  <span className="text-[9px] font-mono px-1 py-0.2 rounded bg-amber-500/25 text-amber-300 font-bold border border-amber-500/40">
+                    5.1 SYNC
+                  </span>
+                )}
               </div>
-              <p className="text-[10px] text-zinc-400 leading-tight">Up to 5 GB video • 3D sound</p>
+              <p className="text-[10px] text-zinc-400 leading-tight">
+                {isMovieActive ? 'Tap to view Cinema or PiP' : 'YouTube, HLS & 5 GB video'}
+              </p>
             </div>
           </button>
         )}
