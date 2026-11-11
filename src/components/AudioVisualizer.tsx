@@ -76,12 +76,25 @@ export const AudioVisualizer: React.FC<AudioVisualizerProps> = ({
       context.closePath();
     };
 
+    const isPerfMode = document.documentElement.getAttribute('data-performance-mode') === 'true';
+
     const render = () => {
+      // If paused/stopped, draw static calm baseline once and DO NOT loop requestAnimationFrame
+      if (!isPlaying) {
+        ctx.clearRect(0, 0, width, height);
+        // Draw resting baseline
+        const paddingX = 14;
+        const baseLineY = height - 28;
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+        ctx.fillRect(paddingX, baseLineY, width - paddingX * 2, 1);
+        return;
+      }
+
       animationFrameRef.current = requestAnimationFrame(render);
       ctx.clearRect(0, 0, width, height);
 
       // Determine bar count and geometry based on current canvas width
-      const barCount = Math.min(48, Math.max(22, Math.floor(width / 11.5)));
+      const barCount = isPerfMode ? 24 : Math.min(48, Math.max(22, Math.floor(width / 11.5)));
       const paddingX = 14;
       const usableWidth = width - paddingX * 2;
       const barSlot = usableWidth / barCount;
@@ -100,26 +113,28 @@ export const AudioVisualizer: React.FC<AudioVisualizerProps> = ({
       gridLevels.forEach((lvl) => {
         const y = baseLineY - maxBarHeight * lvl;
         ctx.beginPath();
-        ctx.strokeStyle = lvl === 1.0 ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.035)';
+        ctx.strokeStyle = lvl === 1.0 ? 'rgba(255, 255, 255, 0.06)' : 'rgba(255, 255, 255, 0.025)';
         ctx.moveTo(paddingX, y);
         ctx.lineTo(width - paddingX, y);
         ctx.stroke();
       });
 
-      // 2. Draw Floating Cyber Dust Particles
-      particles.forEach((p) => {
-        p.x += p.vx;
-        p.y += p.vy;
-        if (p.x < 0) p.x = width;
-        if (p.x > width) p.x = 0;
-        if (p.y < 0) p.y = height;
-        if (p.y > height) p.y = 0;
+      // 2. Draw Floating Cyber Dust Particles (Skipped in Performance Mode for 0 CPU lag)
+      if (!isPerfMode) {
+        particles.forEach((p) => {
+          p.x += p.vx;
+          p.y += p.vy;
+          if (p.x < 0) p.x = width;
+          if (p.x > width) p.x = 0;
+          if (p.y < 0) p.y = height;
+          if (p.y > height) p.y = 0;
 
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(0, 240, 255, ${p.alpha * (isPlaying ? 0.7 : 0.25)})`;
-        ctx.fill();
-      });
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(0, 240, 255, ${p.alpha * 0.7})`;
+          ctx.fill();
+        });
+      }
 
       // 3. Audio & FFT Analysis / Synthetic Rhythm Engine
       let hasRealFft = false;

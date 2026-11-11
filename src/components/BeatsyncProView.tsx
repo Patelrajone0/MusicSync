@@ -70,6 +70,7 @@ import {
   getStoredCornerStyle,
   saveStoredCornerStyle,
 } from '../types/cornerStyles';
+import { getPerformanceMode } from '../utils/performanceMode';
 import { analytics } from '../services/analytics';
 import { haptics } from '../utils/haptics';
 
@@ -207,6 +208,16 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
     };
     window.addEventListener('musicsync_corner_style_changed', handleStyleChange);
     return () => window.removeEventListener('musicsync_corner_style_changed', handleStyleChange);
+  }, []);
+
+  const [isPerfMode, setIsPerfMode] = useState<boolean>(getPerformanceMode);
+
+  useEffect(() => {
+    const handlePerfChange = (e: any) => {
+      setIsPerfMode(Boolean(e.detail?.enabled));
+    };
+    window.addEventListener('musicsync_performance_mode_changed', handlePerfChange);
+    return () => window.removeEventListener('musicsync_performance_mode_changed', handlePerfChange);
   }, []);
 
   // Dismiss leave confirmation modal on Escape key press
@@ -885,19 +896,23 @@ export const BeatsyncProView: React.FC<BeatsyncProViewProps> = ({
       }}
       className="flex-1 w-full h-full min-h-0 text-slate-200 flex flex-col font-sans select-none overflow-hidden text-[13px] relative transition-colors duration-500"
     >
-      {/* Dynamic atmospheric radial gradient & ambient light orbs */}
-      <div
-        className="absolute inset-0 pointer-events-none transition-all duration-700 ease-out z-0"
-        style={{ background: activeThemeDef.radialGradient }}
-      />
-      <div
-        className="absolute top-1/4 left-1/3 -translate-x-1/2 -translate-y-1/2 w-[520px] h-[520px] rounded-full blur-[120px] pointer-events-none z-0 transition-all duration-700 ease-out opacity-45"
-        style={{ backgroundColor: activeThemeDef.glowColor1 }}
-      />
-      <div
-        className="absolute bottom-1/4 right-1/4 -translate-x-1/2 translate-y-1/2 w-[520px] h-[520px] rounded-full blur-[120px] pointer-events-none z-0 transition-all duration-700 ease-out opacity-40"
-        style={{ backgroundColor: activeThemeDef.glowColor2 }}
-      />
+      {/* Dynamic atmospheric radial gradient & ambient light orbs (skipped in Performance Mode & OLED Black) */}
+      {!isPerfMode && activeThemeDef.id !== 'pure-oled-black' && (
+        <>
+          <div
+            className="absolute inset-0 pointer-events-none z-0"
+            style={{ background: activeThemeDef.radialGradient }}
+          />
+          <div
+            className="absolute top-1/4 left-1/3 -translate-x-1/2 -translate-y-1/2 w-[380px] h-[380px] rounded-full blur-[80px] pointer-events-none z-0 opacity-25"
+            style={{ backgroundColor: activeThemeDef.glowColor1 }}
+          />
+          <div
+            className="absolute bottom-1/4 right-1/4 -translate-x-1/2 translate-y-1/2 w-[380px] h-[380px] rounded-full blur-[80px] pointer-events-none z-0 opacity-25"
+            style={{ backgroundColor: activeThemeDef.glowColor2 }}
+          />
+        </>
+      )}
 
       <input
         ref={fileInputRef}

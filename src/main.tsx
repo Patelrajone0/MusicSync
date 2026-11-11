@@ -5,6 +5,10 @@ import './index.css';
 import { initRippleEffect } from './services/rippleEffect';
 import { registerServiceWorker } from './services/registerServiceWorker';
 import { initBackgroundTheme } from './types/backgroundThemes';
+import { initPerformanceMode } from './utils/performanceMode';
+
+// Initialize performance mode (checks saved preference or system reduced motion)
+initPerformanceMode();
 
 // Initialize background color atmosphere theme
 initBackgroundTheme();
